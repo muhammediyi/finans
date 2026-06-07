@@ -729,10 +729,11 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 
 /* ─── TAKSIT PLAN ─────────────────────────────────────── */
 .tp-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-.tp-header { display: grid; grid-template-columns: 36px 1fr 1fr 32px; padding: 8px 12px; background: var(--surface3); border-bottom: 1px solid var(--border); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
-.tp-row { display: grid; grid-template-columns: 36px 1fr 1fr 32px; padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; transition: background .1s; }
+.tp-header { display: grid; grid-template-columns: 36px 1fr 80px 1fr 32px; padding: 8px 12px; background: var(--surface3); border-bottom: 1px solid var(--border); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.tp-row { display: grid; grid-template-columns: 36px 1fr 80px 1fr 32px; padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; transition: background .1s; }
 .tp-row:last-child { border-bottom: none; }
 .tp-row:hover { background: var(--surface2); }
+.tp-donem { font-size: 11px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
 .tp-row.tp-past { opacity: .4; }
 .tp-no { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 .tp-input { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--text); font-size: 12px; padding: 3px 7px; width: 100%; transition: all .15s; font-family: var(--sans); }
@@ -5305,6 +5306,7 @@ function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel
       <input type="date" class="tp-input" value="${t.tarih}"
         data-taksit-tip="${tip}" data-taksit-idx="${i}" data-taksit-field="tarih"
         onchange="onTaksitChange(this, '${tip}', ${i}, 'tarih')">
+      <div class="tp-donem" data-taksit-idx="${i}" data-taksit-tip="${tip}">${t.tarih ? (()=>{ const d=new Date(t.tarih+'T00:00:00'); return d.toLocaleDateString('tr-TR',{month:'short',year:'numeric'}); })() : '—'}</div>
       <input type="number" step="0.01" class="tp-input tp-input-tutar${isModified ? ' tp-modified' : ''}" value="${t.tutar}"
         data-taksit-tip="${tip}" data-taksit-idx="${i}" data-taksit-field="tutar"
         oninput="onTaksitChange(this, '${tip}', ${i}, 'tutar')" data-orig="${aylikStr}">
@@ -5315,7 +5317,7 @@ function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel
   rowsEl.innerHTML = `
     <div class="tp-wrap">
       <div class="tp-header">
-        <div>#</div><div>Tarih</div><div style="text-align:right">Tutar</div><div></div>
+        <div>#</div><div>Tarih</div><div>Dönem</div><div style="text-align:right">Tutar</div><div></div>
       </div>
       ${rows}
       <div class="tp-footer">
@@ -5327,6 +5329,17 @@ function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel
 }
 
 function onTaksitChange(el, tip, idx, field) {
+  if(field === 'tarih') {
+    // Dönem hücresini güncelle
+    const row = el.closest('.tp-row');
+    const donemEl = row ? row.querySelector('.tp-donem') : null;
+    if(donemEl && el.value) {
+      const d = new Date(el.value + 'T00:00:00');
+      donemEl.textContent = d.toLocaleDateString('tr-TR', {month:'short', year:'numeric'});
+    } else if(donemEl) {
+      donemEl.textContent = '—';
+    }
+  }
   if(field === 'tutar') {
     const orig = parseFloat(el.dataset.orig) || 0;
     const val = parseFloat(el.value) || 0;
@@ -5352,7 +5365,12 @@ function resetTekTaksit(btn, tip, idx, origTarih, origTutar) {
   const row = btn.closest('.tp-row');
   const tarihInput = row.querySelector('[data-taksit-field="tarih"]');
   const tutarInput = row.querySelector('[data-taksit-field="tutar"]');
-  if(tarihInput) tarihInput.value = origTarih;
+  const donemEl = row.querySelector('.tp-donem');
+  if(tarihInput) { tarihInput.value = origTarih; }
+  if(donemEl && origTarih) {
+    const d = new Date(origTarih + 'T00:00:00');
+    donemEl.textContent = d.toLocaleDateString('tr-TR', {month:'short', year:'numeric'});
+  }
   if(tutarInput) {
     tutarInput.value = origTutar;
     tutarInput.classList.remove('tp-modified');
