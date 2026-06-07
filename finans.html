@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finans Yöneticisi v32</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 :root {
@@ -47,17 +47,17 @@
   --purple-glow: var(--violet-glow);
 
   /* Typography */
-  --text: #eef2ff;
-  --text2: #8896b3;
-  --text3: #3f4d6b;
+  --text: #f0f4ff;
+  --text2: #7d8eaa;
+  --text3: #3a4760;
   --mono: 'JetBrains Mono', monospace;
-  --sans: 'Space Grotesk', sans-serif;
-  --serif: 'Instrument Serif', serif;
+  --sans: 'DM Sans', sans-serif;
+  --serif: 'Playfair Display', serif;
 
   /* Layout */
-  --sidebar-w: 220px;
-  --sidebar-collapsed: 64px;
-  --radius: 16px;
+  --sidebar-w: 232px;
+  --sidebar-collapsed: 60px;
+  --radius: 14px;
   --radius-sm: 10px;
   --radius-xs: 7px;
   --shadow: 0 8px 40px rgba(0,0,0,.6);
@@ -771,91 +771,6 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .toast.error { border-color: rgba(251,113,133,.3); background: rgba(251,113,133,.06); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(24px) scale(.94); } to { opacity: 1; transform: none; } }
 
-/* ─── UI IMPROVEMENTS v19 ─────────────────────────────── */
-/* Better modal header */
-.modal-header {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-}
-.modal-title {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* Form field focus ring improved */
-input:focus, select:focus, textarea:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(251,191,36,.1);
-  background: var(--surface3);
-}
-/* Badge improvements */
-.badge {
-  display: inline-flex; align-items: center;
-  padding: 2px 9px;
-  border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .03em;
-  white-space: nowrap;
-}
-/* Required field star */
-.req { color: var(--danger); margin-left: 2px; }
-/* Info notice box improvement */
-.info-notice {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: rgba(251,191,36,.05);
-  border: 1px solid rgba(251,191,36,.15);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-size: 12px;
-  color: var(--text2);
-  margin-bottom: 14px;
-  line-height: 1.6;
-}
-.info-notice::before { content: '💡'; flex-shrink: 0; }
-/* Depozito panel improved */
-#kira-depozito-panel {
-  transition: all .2s ease;
-}
-/* Currency badge in forms */
-.cur-badge {
-  display: inline-flex; align-items: center;
-  background: rgba(251,191,36,.1);
-  border: 1px solid rgba(251,191,36,.2);
-  color: var(--gold);
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .06em;
-}
-/* Table zebra subtle */
-tbody tr:nth-child(even) { background: rgba(255,255,255,.014); }
-tbody tr:hover { background: var(--surface2) !important; }
-/* Action row improvement */
-.action-row {
-  display: flex; align-items: center; gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-/* Stat hover glow */
-.stat:hover::after {
-  opacity: .7;
-}
-/* Page header improved */
-.page-header h1 {
-  background: linear-gradient(135deg, var(--text) 0%, rgba(238,242,255,.6) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 /* ─── KART VISUAL ─────────────────────────────────────── */
 .kart-card-visual {
   background: linear-gradient(135deg, var(--surface3) 0%, var(--surface4) 100%);
@@ -876,7 +791,7 @@ tbody tr:hover { background: var(--surface2) !important; }
 
 /* ─── MOBILE ──────────────────────────────────────────── */
 @media(max-width:900px) {
-  .sidebar { width: var(--sidebar-collapsed); }
+  .sidebar { width: var(--sidebar-collapsed) !important; }
   .brand-text, .nav-label, .nav-section-label { opacity: 0; pointer-events: none; }
   .main-wrap { margin-left: var(--sidebar-collapsed); }
   .page { padding: 16px 14px 40px; }
@@ -887,9 +802,623 @@ tbody tr:hover { background: var(--surface2) !important; }
   .page { padding: 12px 10px 32px; }
 }
 
-/* ─── FIELD ERROR ─────────────────────────────────────── */
-.field-error { border-color: var(--rose) !important; box-shadow: 0 0 0 3px var(--rose-glow) !important; }
-.field-error-msg { font-size: 10.5px; color: var(--rose); margin-top: 4px; display: block; }
+/* field-error moved to enhanced block */
+
+/* ─── ENHANCED UI v33 ────────────────────────────────── */
+
+/* Body line-height refinement */
+body { line-height: 1.6; letter-spacing: -.01em; }
+
+/* ─── BACKGROUND — richer ambient ────────────────────── */
+body::before {
+  background:
+    radial-gradient(ellipse 70% 55% at 10% 0%, rgba(251,191,36,.06) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 65% at 90% 100%, rgba(45,212,191,.045) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 45% at 55% 45%, rgba(167,139,250,.03) 0%, transparent 65%),
+    radial-gradient(ellipse 30% 30% at 80% 10%, rgba(56,189,248,.025) 0%, transparent 60%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: .018;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── SIDEBAR refined ────────────────────────────────── */
+.sidebar {
+  background: rgba(10,12,20,.97);
+  border-right: 1px solid rgba(255,255,255,.06);
+  backdrop-filter: blur(20px);
+  box-shadow: 4px 0 32px rgba(0,0,0,.4);
+}
+
+.sidebar-brand {
+  padding: 24px 18px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.brand-logo {
+  width: 38px; height: 38px;
+  background: linear-gradient(145deg, #fbbf24 0%, #f59e0b 55%, #d97706 100%);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(251,191,36,.35), 0 4px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+.brand-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--text);
+}
+
+.brand-sub {
+  font-size: 9.5px;
+  color: var(--text3);
+  letter-spacing: .18em;
+  font-weight: 500;
+}
+
+.nav-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: rgba(255,255,255,.22);
+  padding: 12px 12px 4px;
+}
+
+.nav-btn {
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,.45);
+  gap: 10px;
+  margin-bottom: 1px;
+  transition: all .15s ease;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.8);
+}
+
+.nav-btn.active {
+  background: rgba(251,191,36,.12);
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.nav-btn.active::before {
+  width: 2.5px;
+  top: 22%; bottom: 22%;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 10px rgba(251,191,36,.6);
+}
+
+.nav-icon {
+  font-size: 14px;
+  width: 18px;
+  opacity: .8;
+}
+
+.nav-btn.active .nav-icon { opacity: 1; }
+
+/* ─── TOP BAR refined ────────────────────────────────── */
+.topbar {
+  background: rgba(8,10,16,.88);
+  backdrop-filter: blur(28px) saturate(1.6);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  height: 54px;
+  padding: 0 32px;
+  gap: 14px;
+}
+
+.topbar-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,.7);
+  letter-spacing: .01em;
+}
+
+.topbar-date {
+  font-size: 10.5px;
+  color: var(--text3);
+  letter-spacing: .06em;
+}
+
+.topbar-dot {
+  width: 6px; height: 6px;
+  background: var(--teal);
+  box-shadow: 0 0 10px rgba(45,212,191,.7);
+}
+
+/* ─── PAGE improved ──────────────────────────────────── */
+.page { padding: 32px 32px 52px; }
+@media(max-width:900px) { .page { padding: 20px 16px 44px; } }
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  background: linear-gradient(135deg, #f0f4ff 0%, rgba(240,244,255,.55) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-header p {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 5px;
+  font-family: var(--mono);
+  letter-spacing: .04em;
+}
+
+/* ─── STAT CARDS improved ────────────────────────────── */
+.stat {
+  background: rgba(17,21,32,.9);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 14px;
+  padding: 20px 22px 18px;
+  backdrop-filter: blur(12px);
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+
+.stat:hover {
+  border-color: rgba(255,255,255,.12);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 48px rgba(0,0,0,.4);
+}
+
+.stat-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.stat-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 10.5px;
+  color: var(--text3);
+  margin-top: 9px;
+  letter-spacing: .01em;
+}
+
+/* ─── CARDS improved ─────────────────────────────────── */
+.card {
+  background: rgba(14,18,28,.85);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+  transition: border-color .2s;
+}
+
+.card:hover { border-color: rgba(255,255,255,.09); }
+
+.card-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,.28);
+  text-transform: uppercase;
+  letter-spacing: .18em;
+}
+
+/* ─── TABLE improved ─────────────────────────────────── */
+table { font-size: 12.5px; border-collapse: separate; border-spacing: 0; }
+
+thead tr {
+  background: transparent;
+}
+
+th {
+  padding: 11px 16px;
+  color: rgba(255,255,255,.28);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  white-space: nowrap;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.035);
+  color: rgba(240,244,255,.65);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(255,255,255,.028); color: var(--text); }
+tbody tr:nth-child(even) { background: transparent; }
+
+/* ─── FORMS improved ─────────────────────────────────── */
+label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+input, select, textarea {
+  background: rgba(22,27,42,.8);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9px;
+  padding: 10px 13px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  transition: all .15s ease;
+}
+
+input:hover, select:hover { border-color: rgba(255,255,255,.14); }
+
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(251,191,36,.5);
+  box-shadow: 0 0 0 3px rgba(251,191,36,.08);
+  background: rgba(28,34,53,.9);
+}
+
+/* ─── BUTTONS improved ───────────────────────────────── */
+.btn {
+  padding: 9px 20px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  transition: all .15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(145deg, #fbbf24, #f59e0b);
+  color: #0d0900;
+  font-weight: 600;
+  box-shadow: 0 2px 16px rgba(251,191,36,.28), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(145deg, #fcd34d, #fbbf24);
+  box-shadow: 0 4px 24px rgba(251,191,36,.38), inset 0 1px 0 rgba(255,255,255,.25);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.09);
+  color: rgba(255,255,255,.55);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,.09);
+  color: var(--text);
+  border-color: rgba(255,255,255,.15);
+}
+
+.btn-success {
+  background: linear-gradient(145deg, #2dd4bf, #0d9488);
+  color: #03100e;
+  font-weight: 600;
+  box-shadow: 0 2px 14px rgba(45,212,191,.2);
+}
+
+.btn-danger {
+  background: linear-gradient(145deg, #fb7185, #e11d48);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 14px rgba(251,113,133,.2);
+}
+
+/* ─── ACTION ROW ─────────────────────────────────────── */
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* ─── BADGES refined ─────────────────────────────────── */
+.badge {
+  padding: 2px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+/* ─── MODAL improved ─────────────────────────────────── */
+.modal {
+  background: rgba(13,17,27,.97);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 18px;
+  box-shadow: 0 40px 100px rgba(0,0,0,.8), 0 0 0 1px rgba(251,191,36,.07);
+  backdrop-filter: blur(24px);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--text);
+}
+
+.modal-bg {
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* ─── CLOSE BTN ──────────────────────────────────────── */
+.close-btn {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 8px;
+  transition: all .15s;
+}
+.close-btn:hover {
+  background: rgba(251,113,133,.12) !important;
+  border-color: rgba(251,113,133,.25) !important;
+  color: var(--rose) !important;
+}
+
+/* ─── TOAST improved ─────────────────────────────────── */
+.toast {
+  background: rgba(18,23,36,.97);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-size: 13px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.55);
+}
+
+/* ─── SCROLLBAR improved ─────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+
+/* ─── PAGE FADE ──────────────────────────────────────── */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── OD BADGES ──────────────────────────────────────── */
+.od-badge {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* ─── SIDEBAR FOOTER ─────────────────────────────────── */
+.sidebar-footer {
+  padding: 10px 8px;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+.sidebar-time {
+  font-size: 10.5px;
+  color: rgba(255,255,255,.2);
+  letter-spacing: .06em;
+  padding: 5px 10px;
+}
+
+/* ─── INFO NOTICE ────────────────────────────────────── */
+.info-notice {
+  background: rgba(251,191,36,.04);
+  border: 1px solid rgba(251,191,36,.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: rgba(240,244,255,.5);
+  line-height: 1.65;
+}
+
+/* ─── KART VISUAL ────────────────────────────────────── */
+.kart-card-visual {
+  background: linear-gradient(135deg, rgba(28,34,53,.9) 0%, rgba(34,42,66,.9) 100%);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+/* ─── FIELD ERROR ────────────────────────────────────── */
+.field-error { border-color: rgba(251,113,133,.6) !important; box-shadow: 0 0 0 3px rgba(251,113,133,.08) !important; }
+.field-error-msg { font-size: 10px; color: var(--rose); margin-top: 3px; }
+
+/* ─── GRID GAPS ──────────────────────────────────────── */
+.grid-2, .grid-3, .grid-4, .grid-5 { gap: 14px; }
+
+
+/* ─── POLISH v34 ─────────────────────────────────────── */
+
+/* Stat card — top accent stripe per color */
+.stat.s-blue  { border-top: 2px solid rgba(56,189,248,.4); }
+.stat.s-green { border-top: 2px solid rgba(45,212,191,.4); }
+.stat.s-red   { border-top: 2px solid rgba(251,113,133,.4); }
+.stat.s-warn  { border-top: 2px solid rgba(251,146,60,.4); }
+.stat.s-purple{ border-top: 2px solid rgba(167,139,250,.4); }
+.stat::before { display:none; } /* remove old gradient stripe */
+
+/* Page header — subtle underline separator */
+.page-header {
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+  margin-bottom: 28px;
+}
+
+/* Card header separator */
+.card-header {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+/* Nav section — divider line instead of label */
+.nav-section { position: relative; margin-bottom: 2px; }
+.nav-section + .nav-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.04); }
+
+/* Nav btn — pill shape, icon color tinted on active */
+.nav-btn { border-radius: 10px; }
+.nav-btn:hover .nav-icon { opacity: 1; }
+.nav-btn.active .nav-icon { filter: drop-shadow(0 0 4px rgba(251,191,36,.5)); }
+
+/* Topbar — breadcrumb style title */
+.topbar-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.5);
+  letter-spacing: .01em;
+}
+
+/* Input placeholder more visible */
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,.2); opacity: 1; }
+
+/* Select arrow color */
+select { color: var(--text); }
+select option { background: #0f1320; color: var(--text); }
+
+/* Form row labels spacing */
+.form-row { gap: 16px; margin-bottom: 16px; }
+
+/* Buttons — slight letter-spacing */
+.btn { letter-spacing: .015em; }
+.btn-sm { padding: 6px 13px; font-size: 11.5px; }
+
+/* Table — first col bold */
+td:first-child { color: rgba(240,244,255,.8); font-weight: 500; }
+
+/* Table tbl-wrap rounded corners */
+.tbl-wrap {
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.055);
+  overflow: hidden;
+}
+.tbl-wrap table { border-collapse: collapse; }
+
+/* Extre card */
+.extre-card {
+  background: rgba(17,22,36,.7);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+}
+
+/* Progress bar (kart kullanımı) */
+.progress-bar {
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.06);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+
+/* Action row inputs */
+.action-row select, .action-row input {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+/* Modal footer area */
+.modal .btn { min-width: 100px; }
+
+/* Sidebar brand — glow on logo hover */
+.sidebar-brand:hover .brand-logo {
+  box-shadow: 0 0 32px rgba(251,191,36,.5), 0 4px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: box-shadow .2s;
+}
+
+/* Hover row transition */
+tbody tr { transition: background .1s ease; }
+
+/* Back-to-top ghost feel on cards */
+.stat, .card {
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+/* OD popup */
+.od-popup {
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(15,19,32,.97);
+  backdrop-filter: blur(24px);
+}
+
+/* Toggle track */
+.toggle-track {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+/* Tab buttons (if any) */
+.tab-btn {
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  padding: 7px 16px !important;
+  transition: all .15s !important;
+}
+
+/* Section dividers in pages */
+.section-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.2);
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+/* Mono numbers — tabular */
+.mono, .stat-val, td.mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Smooth page transitions */
+.page.active {
+  animation: pageFadeIn .25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ─── SCROLLBAR per-element ───────────────────────────── */
+.sidebar-nav::-webkit-scrollbar { display: none; }
+.modal::-webkit-scrollbar { width: 3px; }
+.modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+
 </style>
 </head>
 <body>
@@ -898,7 +1427,15 @@ tbody tr:hover { background: var(--surface2) !important; }
 <aside class="sidebar" id="main-sidebar">
   <div class="sidebar-modal-overlay" id="sidebar-modal-overlay"></div>
   <div class="sidebar-brand">
-    <div class="brand-logo">💎</div>
+    <div class="brand-logo">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L3 7.5V8L10 18L17 8V7.5L10 2Z" fill="rgba(0,0,0,.3)" stroke="rgba(0,0,0,.2)" stroke-width=".5"/>
+        <path d="M10 2L3 7.5H17L10 2Z" fill="rgba(255,255,255,.35)"/>
+        <path d="M3 7.5L10 18L7 7.5H3Z" fill="rgba(0,0,0,.25)"/>
+        <path d="M17 7.5L10 18L13 7.5H17Z" fill="rgba(0,0,0,.15)"/>
+        <path d="M7 7.5L10 18L13 7.5H7Z" fill="rgba(255,255,255,.15)"/>
+      </svg>
+    </div>
     <div class="brand-text">
       <div class="brand-name">Finans</div>
       <div class="brand-sub">YÖNETİCİ</div>
@@ -908,7 +1445,7 @@ tbody tr:hover { background: var(--surface2) !important; }
     <div class="nav-section">
       <div class="nav-section-label">Genel</div>
       <button class="nav-btn active" onclick="showPage('ozet',this)">
-        <span class="nav-icon">◈</span><span class="nav-label">Özet</span>
+        <span class="nav-icon">⊹</span><span class="nav-label">Özet</span>
       </button>
     </div>
     <div class="nav-section">
@@ -917,7 +1454,7 @@ tbody tr:hover { background: var(--surface2) !important; }
         <span class="nav-icon">💳</span><span class="nav-label">Kredi Kartları</span>
       </button>
       <button id="nav-islemler" class="nav-btn" onclick="showPage('islemler',this)">
-        <span class="nav-icon">↔</span><span class="nav-label">İşlemler</span>
+        <span class="nav-icon">⇄</span><span class="nav-label">İşlemler</span>
       </button>
       <button id="nav-extreler" class="nav-btn" onclick="showPage('extreler',this)">
         <span class="nav-icon">🧾</span><span class="nav-label">Ekstreler</span>
@@ -926,10 +1463,10 @@ tbody tr:hover { background: var(--surface2) !important; }
     <div class="nav-section">
       <div class="nav-section-label">Varlıklar</div>
       <button class="nav-btn" onclick="showPage('mevduat',this)">
-        <span class="nav-icon">⬡</span><span class="nav-label">Mevduat</span>
+        <span class="nav-icon">◆</span><span class="nav-label">Mevduat</span>
       </button>
       <button class="nav-btn" onclick="showPage('hesaplar',this)">
-        <span class="nav-icon">◉</span><span class="nav-label">Banka Hesapları</span>
+        <span class="nav-icon">⊙</span><span class="nav-label">Banka Hesapları</span>
       </button>
     </div>
     <div class="nav-section">
@@ -938,19 +1475,19 @@ tbody tr:hover { background: var(--surface2) !important; }
         <span class="nav-icon">🏠</span><span class="nav-label">Kira</span>
       </button>
       <button class="nav-btn" onclick="showPage('maas',this)">
-        <span class="nav-icon">◎</span><span class="nav-label">Maaş</span>
+        <span class="nav-icon">◑</span><span class="nav-label">Maaş</span>
       </button>
       <button class="nav-btn" onclick="showPage('elden',this)">
-        <span class="nav-icon">⬡</span><span class="nav-label">Elden Ödeme</span>
+        <span class="nav-icon">◇</span><span class="nav-label">Elden Ödeme</span>
       </button>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Krediler</div>
       <button class="nav-btn" onclick="showPage('kmhkredi',this)">
-        <span class="nav-icon">▷</span><span class="nav-label">KMH Kredi</span>
+        <span class="nav-icon">▸</span><span class="nav-label">KMH Kredi</span>
       </button>
       <button class="nav-btn" onclick="showPage('kredi',this)">
-        <span class="nav-icon">◫</span><span class="nav-label">Bireysel Kredi</span>
+        <span class="nav-icon">▪</span><span class="nav-label">Bireysel Kredi</span>
       </button>
     </div>
     <div class="nav-section">
@@ -961,22 +1498,22 @@ tbody tr:hover { background: var(--surface2) !important; }
     </div>
   </nav>
   <div class="sidebar-footer">
-    <div id="gdrive-user-panel" style="display:none;padding:8px 12px;border-top:1px solid var(--border);margin-bottom:6px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <img id="gdrive-avatar" src="" style="width:28px;height:28px;border-radius:50%;display:none">
+    <div id="gdrive-user-panel" style="display:none;padding:10px 10px 6px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+        <img id="gdrive-avatar" src="" style="width:30px;height:30px;border-radius:50%;display:none;border:1px solid rgba(255,255,255,.1)">
         <div style="flex:1;min-width:0">
-          <div id="gdrive-name" style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-          <div id="gdrive-sync-status" style="font-size:10px;color:var(--text3)">Hazir</div>
+          <div id="gdrive-name" style="font-size:11.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="gdrive-sync-status" style="font-size:9.5px;color:var(--text3);margin-top:1px">Hazir</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px">
-        <button onclick="gDriveSyncNow()" style="flex:1;padding:4px 6px;font-size:10px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text2);cursor:pointer" title="Simdi senkronize et">&#x27F3; Sync</button>
-        <button onclick="gDriveSignOut()" style="padding:4px 6px;font-size:10px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text3);cursor:pointer" title="Cikis yap">&#x21A9;</button>
-        <button onclick="gDriveClearClientId()" style="padding:4px 6px;font-size:10px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text3);cursor:pointer" title="Client ID sifirla">⚙</button>
+      <div style="display:flex;gap:5px">
+        <button onclick="gDriveSyncNow()" style="flex:1;padding:5px 6px;font-size:10.5px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.09)'" onmouseout="this.style.background='rgba(255,255,255,.055)'" title="Simdi senkronize et">&#x27F3; Sync</button>
+        <button onclick="gDriveSignOut()" style="padding:5px 8px;font-size:11px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:rgba(255,255,255,.35);cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(251,113,133,.1)';this.style.color='#fb7185'" onmouseout="this.style.background='rgba(255,255,255,.055)';this.style.color='rgba(255,255,255,.35)'" title="Cikis yap">&#x21A9;</button>
+        <button onclick="gDriveClearClientId()" style="padding:5px 8px;font-size:11px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:rgba(255,255,255,.35);cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.09)'" onmouseout="this.style.background='rgba(255,255,255,.055)'" title="Client ID sifirla">⚙</button>
       </div>
     </div>
-    <div id="gdrive-signin-panel" style="padding:8px 12px;border-top:1px solid var(--border);margin-bottom:6px">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-align:center">Coklu cihaz icin</div>
+    <div id="gdrive-signin-panel" style="padding:8px 10px 6px;margin-bottom:4px">
+      <div style="font-size:9.5px;color:rgba(255,255,255,.2);margin-bottom:6px;text-align:center;letter-spacing:.06em;text-transform:uppercase">Çoklu cihaz için</div>
       <div id="gdrive-clientid-row" style="display:none;margin-bottom:6px">
         <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Google Client ID</div>
         <input id="gdrive-clientid-input" type="password" placeholder="xxxxx.apps.googleusercontent.com"
