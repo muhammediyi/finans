@@ -915,10 +915,10 @@ tbody tr:hover { background: var(--surface2) !important; }
       <button class="nav-btn" onclick="showPage('kartlar',this)">
         <span class="nav-icon">💳</span><span class="nav-label">Kredi Kartları</span>
       </button>
-      <button class="nav-btn" onclick="showPage('islemler',this)">
+      <button id="nav-islemler" class="nav-btn" onclick="showPage('islemler',this)">
         <span class="nav-icon">↔</span><span class="nav-label">İşlemler</span>
       </button>
-      <button class="nav-btn" onclick="showPage('extreler',this)">
+      <button id="nav-extreler" class="nav-btn" onclick="showPage('extreler',this)">
         <span class="nav-icon">🧾</span><span class="nav-label">Ekstreler</span>
       </button>
     </div>
@@ -1652,8 +1652,8 @@ tbody tr:hover { background: var(--surface2) !important; }
       <button class="close-btn" onclick="closeModal('modal-kart')">✕</button>
     </div>
     <div class="form-row cols-2">
-      <div><label>Banka</label><select id="kart-banka"></select></div>
-      <div><label>Ürün Tipi</label><select id="kart-tip"></select></div>
+      <div><label>Banka <span style="color:var(--danger)">*</span></label><select id="kart-banka"></select></div>
+      <div><label>Ürün Tipi <span style="color:var(--danger)">*</span></label><select id="kart-tip"></select></div>
     </div>
     <div class="form-row cols-2">
       <div><label>Kart/Hesap Adı <span style="color:var(--danger)">*</span></label><input id="kart-ad" placeholder="örn. Garanti BBVA Bonus"></div>
@@ -3256,6 +3256,14 @@ const PAGE_TITLES = {
   maas: 'Maaş Geliri', kmhkredi: 'KMH Taksitli Kredi', kredi: 'Bireysel Krediler',
   elden: 'Elden Ödemeler', hesaplar: 'Banka Hesapları', tanimlamalar: 'Tanımlamalar'
 };
+function updateSidebarKartNav() {
+  const hasKart = DB.kartlar && DB.kartlar.length > 0;
+  const navIslemler = document.getElementById('nav-islemler');
+  const navExtreler = document.getElementById('nav-extreler');
+  if(navIslemler) navIslemler.style.display = hasKart ? '' : 'none';
+  if(navExtreler) navExtreler.style.display = hasKart ? '' : 'none';
+}
+
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -3274,6 +3282,7 @@ function renderAll() {
   populateEldenHesapSelect();
   populateEldenKisiSelect();
   renderHesapTurFiltreler();
+  updateSidebarKartNav();
 
   // Aktif sayfayı render et
   const activePage = document.querySelector('.page.active');
@@ -3367,9 +3376,11 @@ document.querySelectorAll('.modal-bg').forEach(m => {
 // ========== KARTLAR ==========
 function populateKartModal(kart=null) {
   const bankaEl = document.getElementById('kart-banka');
-  bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
+  bankaEl.innerHTML = '<option value="">Banka seçin…</option>' + DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
   const tipEl = document.getElementById('kart-tip');
-  tipEl.innerHTML = DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
+  tipEl.innerHTML = '<option value="">Ürün tipi seçin…</option>' + DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
+  phInit(bankaEl, 'Banka seçin…');
+  phInit(tipEl, 'Ürün tipi seçin…');
   // Para birimi chip grid oluştur
   const selectedCurs = kart
     ? (kart.paraBirimleri && kart.paraBirimleri.length ? kart.paraBirimleri : (kart.paraBirimi ? [kart.paraBirimi] : [defaultCurrency]))
@@ -3395,6 +3406,10 @@ function populateKartModal(kart=null) {
     extreTypeChange();
   } else {
     document.getElementById('kart-extre-gecerlilik-ay').value = '';
+    bankaEl.value = '';
+    tipEl.value = '';
+    phUpdate(bankaEl);
+    phUpdate(tipEl);
   }
 }
 
@@ -3521,6 +3536,8 @@ function saveKart() {
     ...getKartCurGridValue()
   };
   if(!kart.ad) { showFieldError('kart-ad', 'Kart adı zorunlu'); return; }
+  if(!kart.banka) { showFieldError('kart-banka', 'Banka seçimi zorunlu'); return; }
+  if(!kart.tip) { showFieldError('kart-tip', 'Ürün tipi seçimi zorunlu'); return; }
   if(editKartId) {
     const idx = DB.kartlar.findIndex(k=>k.id===editKartId);
     if(idx>=0) DB.kartlar[idx]=kart;
@@ -3531,6 +3548,7 @@ function saveKart() {
   saveData();
   closeModal('modal-kart');
   renderKartlar();
+  updateSidebarKartNav();
 }
 
 function editKart(id) {
@@ -3545,6 +3563,7 @@ function deleteKart(id) {
     DB.kartlar = DB.kartlar.filter(k=>k.id!==id);
     saveData();
     renderKartlar();
+    updateSidebarKartNav();
   });
 }
 
@@ -4955,7 +4974,7 @@ function renderMaas() {
 // vade: sayı
 // aylikTaksit: hesaplanan standart tutar
 // preserveManuel: düzenlemede mevcut satırları koru
-function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel) {
+function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel, odemeGunTip) {
   const prefix = tip === 'kmh' ? 'kmhkredi' : 'kredi';
   const container = document.getElementById(prefix + '-taksit-plani');
   const rowsEl = document.getElementById(prefix + '-taksit-rows');
@@ -4977,7 +4996,17 @@ function renderKrediTaksitPlani(tip, ilkTarih, vade, aylikTaksit, preserveManuel
     } else {
       const dt = new Date(ilkTarih+'T00:00:00');
       dt.setMonth(dt.getMonth()+i);
-      tarih = localDateStr(dt);
+      if(odemeGunTip && (odemeGunTip === 'ilerle' || odemeGunTip === 'geri')) {
+        const tatilSet = getTatilSet();
+        if(!isIsBgunu(dt, tatilSet)) {
+          const shifted = nextIsBgunu(dt, tatilSet, odemeGunTip !== 'geri');
+          tarih = localDateStr(shifted);
+        } else {
+          tarih = localDateStr(dt);
+        }
+      } else {
+        tarih = localDateStr(dt);
+      }
       tutar = aylikStr;
     }
     taksitData.push({ tarih, tutar });
@@ -5130,7 +5159,7 @@ function calcKmhKredi(preserveManuel=false) {
     `Efektif aylık faiz: <b>%${(aylikFaiz*100).toFixed(3)}</b> &nbsp;|&nbsp; KKDF <b>%${kkdfYuzde}</b> + BSMV <b>%${bsmvYuzde}</b> &nbsp;|&nbsp; Aylık taksit: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b> &nbsp;|&nbsp; Toplam faiz: <b class="red">${fmt(toplamFaiz)}</b> &nbsp;|&nbsp; Toplam borç: <b>${fmt(toplamBorc)}</b>${bitisTarihStr}${odemeGunTipLabel}`;
 
   if(ilkEkstre && vade) {
-    renderKrediTaksitPlani('kmh', ilkEkstre, vade, aylikTaksit, preserveManuel);
+    renderKrediTaksitPlani('kmh', ilkEkstre, vade, aylikTaksit, preserveManuel, odemeGunTipVal);
   }
 }
 
@@ -5419,7 +5448,7 @@ function calcKredi(preserveManuel=false) {
     `Efektif aylık faiz: <b>%${(aylikFaiz*100).toFixed(3)}</b> &nbsp;|&nbsp; KKDF <b>%${kkdfYuzde}</b> + BSMV <b>%${bsmvYuzde}</b> &nbsp;|&nbsp; Aylık taksit: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b> &nbsp;|&nbsp; Toplam faiz: <b class="red">${fmt(toplamFaiz)}</b> &nbsp;|&nbsp; Toplam borç: <b>${fmt(toplamBorc)}</b>${bitisTarihStr}${odemeGunTipKrLabel}`;
 
   if(ilkTaksit && vade) {
-    renderKrediTaksitPlani('kredi', ilkTaksit, vade, aylikTaksit, preserveManuel);
+    renderKrediTaksitPlani('kredi', ilkTaksit, vade, aylikTaksit, preserveManuel, odemeGunTipKrVal);
   }
 }
 
@@ -8218,6 +8247,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   renderHesapTurTablo();
   // Hesap filtre butonları
   renderHesapTurFiltreler();
+  updateSidebarKartNav();
 
   // Set default date for elden and islem
   document.getElementById('elden-tarih').value = localDateStr(new Date());
