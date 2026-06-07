@@ -2449,7 +2449,14 @@ function loadData() {
   } catch(e) { return defaultData(); }
 }
 
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+  // Drive push — sadece giriş yapılmışsa, debounce ile
+  if (typeof gDriveReady === 'function' && gDriveReady()) {
+    clearTimeout(gSaveTimer);
+    gSaveTimer = setTimeout(gDriveSaveNow, 1500);
+  }
+}
 
 function defaultData() {
   return {
@@ -7583,7 +7590,7 @@ async function gDriveLoadFromDrive() {
     const remoteDB = await res.json();
     // Merge: remote wins, but apply local migrations
     DB = applyMigrations(remoteDB);
-    saveData(); // persist to localStorage as cache
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); // cache locally, Drive push'u tetikleme
     renderPage(document.querySelector('.nav-btn.active')?.dataset?.page || 'ozet');
     renderOzet();
     gDriveSetStatus('Senkronize edildi ✓', 'var(--success, #4ade80)');
@@ -7635,14 +7642,9 @@ async function gDriveSaveNow() {
 
 function gDriveSyncNow() { gDriveLoadFromDrive(); }
 
-// ---- Override saveData to also schedule a Drive push ----
-const _origSaveData = saveData;
-function saveData() {
-  _origSaveData();                  // always keep localStorage copy
-  if (!gDriveReady()) return;
-  clearTimeout(gSaveTimer);
-  gSaveTimer = setTimeout(gDriveSaveNow, 1500);  // debounce: 1.5s after last change
-}
+// ---- saveData artık Drive push'u da tetikler ----
+// NOT: saveData fonksiyonu 2452. satırda tanımlı, burada monkey-patch YOK.
+// Bunun yerine orijinal saveData'yı gDriveAwareSave ile değiştirdik (aşağıda patch edildi).
 
 // ---- Apply migrations to remote data (same logic as loadData) ----
 function applyMigrations(d) {
