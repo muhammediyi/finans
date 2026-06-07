@@ -3031,6 +3031,23 @@ function showPage(id, btn) {
   renderPage(id);
 }
 
+function renderAll() {
+  // Tüm populate/select'leri güncelle
+  loadCurrencyConfig();
+  populateCurrencySelects();
+  populateKategoriSelects();
+  populateEldenHesapSelect();
+  renderHesapTurFiltreler();
+
+  // Aktif sayfayı render et
+  const activePage = document.querySelector('.page.active');
+  const activeId = activePage ? activePage.id.replace('page-', '') : 'ozet';
+  renderPage(activeId);
+
+  // Özet her zaman güncel kalsın
+  if(activeId !== 'ozet') renderOzet();
+}
+
 function renderPage(id) {
   if(id==='ozet') renderOzet();
   else if(id==='kartlar') renderKartlar();
@@ -7454,8 +7471,7 @@ async function gDriveLoadFromDrive() {
     const remoteDB = await res.json();
     // applyMigrations içinde FORMAT_CONFIG ve currency da uygulanır
     DB = applyMigrations(remoteDB);
-    renderPage(document.querySelector('.nav-btn.active')?.dataset?.page || 'ozet');
-    renderOzet();
+    renderAll();
     gDriveSetStatus('Senkronize edildi ✓', 'var(--success, #4ade80)');
     setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
   } catch(e) {
