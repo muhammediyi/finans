@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finans Yöneticisi v29</title>
+<title>Finans Yöneticisi v32</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
@@ -1334,7 +1334,9 @@ tbody tr:hover { background: var(--surface2) !important; }
         <div style="margin-bottom:12px;font-size:12px;color:var(--text3)">
           Kullanılabilir belirteçler:
           <span class="badge" style="font-family:var(--mono);margin:0 2px">dd</span> gün &nbsp;
+          <span class="badge" style="font-family:var(--mono);margin:0 2px">d</span> gün (sıfırsız) &nbsp;
           <span class="badge" style="font-family:var(--mono);margin:0 2px">MM</span> ay &nbsp;
+          <span class="badge" style="font-family:var(--mono);margin:0 2px">M</span> ay (sıfırsız) &nbsp;
           <span class="badge" style="font-family:var(--mono);margin:0 2px">yyyy</span> yıl (4 hane) &nbsp;
           <span class="badge" style="font-family:var(--mono);margin:0 2px">yy</span> yıl (2 hane)
         </div>
@@ -1358,6 +1360,7 @@ tbody tr:hover { background: var(--surface2) !important; }
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
             <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('dd/MM/yyyy')">dd/MM/yyyy</button>
             <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('dd.MM.yyyy')">dd.MM.yyyy</button>
+            <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('d.M.yyyy')">d.M.yyyy</button>
             <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('MM/dd/yyyy')">MM/dd/yyyy</button>
             <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('yyyy-MM-dd')">yyyy-MM-dd</button>
             <button class="btn btn-ghost btn-sm" onclick="setTarihFormat('dd MM yyyy')">dd MM yyyy</button>
@@ -1843,9 +1846,27 @@ tbody tr:hover { background: var(--surface2) !important; }
     </div>
     <div class="form-row cols-4">
       <div><label>Tür</label><select id="kira-tur"><option value="gelir">Gelir</option><option value="gider">Gider</option></select></div>
-      <div><label>Para Birimi <span style="color:var(--danger)">*</span></label><select id="kira-para-birimi"></select></div>
+      <div>
+        <label>Para Birimi</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span id="kira-para-birimi-badge" style="font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap">TRY ₺</span>
+          <select id="kira-para-birimi" style="display:none;width:100%"></select>
+        </div>
+      </div>
       <div><label>Aylık Tutar <span style="color:var(--danger)">*</span></label><input id="kira-tutar" type="text" class="money-input" data-decimals="2" placeholder="12.500,00"></div>
       <div><label>Ödeme Günü (1-31)</label><input id="kira-gun" type="number" min="1" max="31" placeholder="15"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div>
+        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+        <select id="kira-hesap" onchange="onKiraHesapChange()">
+          <option value="">— Hesap Seçin —</option>
+        </select>
+      </div>
+      <div id="kira-pb-manual-wrap" style="display:none">
+        <label>Para Birimi (manuel)</label>
+        <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange()"></select>
+      </div>
     </div>
     <div class="form-row">
       <div><label>Açıklama</label><input id="kira-aciklama" placeholder="örn. Dükkan kirası..."></div>
@@ -1917,22 +1938,34 @@ tbody tr:hover { background: var(--surface2) !important; }
     </div>
     <div class="form-row cols-2">
       <div><label>Açıklama <span style="color:var(--danger)">*</span></label><input id="maas-aciklama" placeholder="örn. Maaş, Ek Gelir, Prim..."></div>
-      <div><label>Tutar <span style="color:var(--danger)">*</span></label>
-        <div style="display:flex;gap:8px">
-          <input id="maas-tutar" type="text" class="money-input" data-decimals="2" style="flex:1">
-          <select id="maas-para-birimi" style="width:120px;flex-shrink:0"></select>
-        </div>
+      <div>
+        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+        <select id="maas-hesap" onchange="onMaasHesapChange()">
+          <option value="">— Hesap Seçin —</option>
+        </select>
       </div>
     </div>
     <div class="form-row cols-2">
-      <div><label>Tür</label>
+      <div><label>Tutar <span style="color:var(--danger)">*</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="maas-tutar" type="text" class="money-input" data-decimals="2" style="flex:1">
+          <span id="maas-para-birimi-badge" style="font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap;flex-shrink:0">TRY ₺</span>
+          <select id="maas-para-birimi" style="width:120px;flex-shrink:0;display:none"></select>
+        </div>
+        <div id="maas-pb-manual-row" style="margin-top:6px;display:none">
+          <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Para Birimi (manuel)</label>
+          <select id="maas-para-birimi-manual" style="margin-top:3px" onchange="onMaasPbManualChange()"></select>
+        </div>
+      </div>
+      <div>
+        <label>Tür</label>
         <select id="maas-tur" onchange="maasTypeChange()">
           <option value="surekli">Sürekli (Aylık)</option>
           <option value="tekseferlik">Tek Seferlik</option>
         </select>
       </div>
-      <div id="maas-gun-wrap"><label>Ödeme Günü <span style="color:var(--danger)">*</span></label><input id="maas-gun" type="number" min="1" max="31" placeholder="15"></div>
     </div>
+    <div class="form-row cols-1" id="maas-gun-wrap"><label>Ödeme Günü <span style="color:var(--danger)">*</span></label><input id="maas-gun" type="number" min="1" max="31" placeholder="15" style="max-width:180px"></div>
     <div class="form-row cols-2" id="maas-tarih-wrap">
       <div><label>Başlangıç <span style="color:var(--danger)">*</span></label><input id="maas-baslangic" type="date"></div>
       <div id="maas-bitis-wrap"><label>Bitiş <span style="color:var(--text3);font-size:10px">(boş = süresiz)</span></label><input id="maas-bitis" type="date"></div>
@@ -2143,7 +2176,13 @@ tbody tr:hover { background: var(--surface2) !important; }
     </div>
     <div class="form-row cols-2">
       <div><label>Tutar <span style="color:var(--danger)">*</span></label><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
-      <div><label>Para Birimi</label><select id="elden-para-birimi"></select></div>
+      <div id="elden-pb-wrap">
+        <label>Para Birimi</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <select id="elden-para-birimi" style="flex:1"></select>
+          <span id="elden-para-birimi-badge" style="display:none;font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap"></span>
+        </div>
+      </div>
     </div>
 
     <!-- ÖDEME YÖNTEMİ -->
@@ -2185,7 +2224,7 @@ tbody tr:hover { background: var(--surface2) !important; }
       <div class="form-row">
         <div>
           <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-          <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase" oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
         </div>
       </div>
       <div class="form-row">
@@ -2493,12 +2532,6 @@ function populateCurrencySelects() {
   // varsayılan para birimi select
   const pbSel = document.getElementById('para-birimi-select');
   if(pbSel) { pbSel.innerHTML = opts; pbSel.value = defaultCurrency; }
-  // maaş para birimi (modal kapalıyken da doldur)
-  const maasPb = document.getElementById('maas-para-birimi');
-  if(maasPb && !maasPb.options.length) {
-    maasPb.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${CURRENCY_CONFIG[c.code]?.symbol||''}</option>`).join('');
-    maasPb.value = defaultCurrency || 'TRY';
-  }
 }
 
 // ========== HELPERS ==========
@@ -2584,12 +2617,16 @@ function applyFormatToken(pattern, dt) {
   const yyyy = String(dt.getFullYear());
   const yy = yyyy.slice(-2);
   const MM = String(dt.getMonth()+1).padStart(2,'0');
+  const M  = String(dt.getMonth()+1);
   const dd = String(dt.getDate()).padStart(2,'0');
+  const d  = String(dt.getDate());
   return pattern
     .replace('yyyy', yyyy)
     .replace('yy', yy)
     .replace('MM', MM)
-    .replace('dd', dd);
+    .replace('M', M)
+    .replace('dd', dd)
+    .replace('d', d);
 }
 
 function applyTimeToken(pattern, dt) {
@@ -2690,6 +2727,50 @@ function bindMoneyInputs(container) {
       if(this.value.trim() === '') { this.value = ''; return; }
       this.value = fmtMoneyCustom(n, decimals, FORMAT_CONFIG.ondalikAyrac || ',', FORMAT_CONFIG.binlikAyrac ?? '.');
     });
+    // Yazarken canlı formatla: binlik ayraçları otomatik ekle
+    el.addEventListener('input', function() {
+      const ondalikAyrac = FORMAT_CONFIG.ondalikAyrac || ',';
+      const binlikAyrac  = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
+      const decimals     = parseInt(this.dataset.decimals ?? FORMAT_CONFIG.ondalikBasamak ?? '2');
+      const raw = this.value;
+      // İmleç pozisyonunu koru
+      const cursorPos = this.selectionStart;
+      const beforeCursor = raw.slice(0, cursorPos);
+      // Sadece rakam, ondalık ayraç ve eksi bırak
+      const cleaned = raw.replace(new RegExp('[^0-9\\' + ondalikAyrac + '\\-]', 'g'), '');
+      const parts = cleaned.split(ondalikAyrac);
+      let intPart  = parts[0].replace(/^-/, '');
+      const neg    = cleaned.startsWith('-');
+      const hasDec = cleaned.includes(ondalikAyrac);
+      const decPart = parts[1] !== undefined ? parts[1].slice(0, decimals) : '';
+      // Binlik ayraç ekle (boşsa ya da yok işaretliyse atla)
+      if(binlikAyrac !== '' && intPart.length > 3) {
+        intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, binlikAyrac);
+      }
+      const formatted = (neg ? '-' : '') + intPart + (hasDec ? ondalikAyrac + decPart : '');
+      if(formatted !== raw) {
+        this.value = formatted;
+        // İmleç: silinenleri ve eklenen ayraçları hesaba kat
+        const removed = beforeCursor.replace(new RegExp('[^0-9\\' + ondalikAyrac + '\\-]', 'g'), '').length;
+        let newPos = 0; let cnt = 0;
+        for(let i = 0; i < formatted.length; i++) {
+          const ch = formatted[i];
+          if(ch !== binlikAyrac || binlikAyrac === '') cnt++;
+          else continue;
+          if(ch === '-' || ch === ondalikAyrac || /\d/.test(ch)) cnt++;
+          else continue;
+          if(cnt >= removed + 1) { newPos = i + 1; break; }
+          newPos = i + 1;
+        }
+        // Daha sade: orijinal imleç = temizlenmiş karakter sayısına en yakın konum
+        let charsBefore = 0; let finalPos = 0;
+        for(let i = 0; i < formatted.length && charsBefore < beforeCursor.replace(new RegExp('[^0-9\\' + ondalikAyrac + '\\-]', 'g'), '').length; i++) {
+          if(formatted[i] !== binlikAyrac) charsBefore++;
+          finalPos = i + 1;
+        }
+        this.setSelectionRange(finalPos, finalPos);
+      }
+    });
     // Sadece sayısal karakter, ondalık ayraç, eksi izin ver
     el.addEventListener('keypress', function(e) {
       const allowed = '0123456789' + (FORMAT_CONFIG.ondalikAyrac || ',') + '-';
@@ -2724,6 +2805,18 @@ function syncSaatAyracFromFormat() {
   if(sf.includes('h')) sel.value = 'h';
   else if(sf.includes('.')) sel.value = '.';
   else sel.value = ':';
+}
+
+function syncTarihAyrac() {
+  const ayrac = document.getElementById('ga-tarih-ayrac').value;
+  const input = document.getElementById('ga-tarih-format');
+  if(!input) return;
+  let fmt = input.value || 'dd/MM/yyyy';
+  // Mevcut formatdaki ayraçları (/, ., -, boşluk) yeni ayraçla değiştir
+  // Yalnızca token harfleri arasındaki ayraçları değiştir
+  fmt = fmt.replace(/(?<=[dMy])([\/\.\- ])(?=[dMy])/g, ayrac);
+  input.value = fmt;
+  updateGoruntuPreview();
 }
 
 function syncSaatAyrac() {
@@ -4295,7 +4388,7 @@ function openEldenModal() {
 function openKiraModal(id=null) {
   editKiraId = id;
   document.getElementById('kira-modal-title').textContent = id ? 'Kontrat Düzenle' : 'Kira Kontratı Ekle';
-  // Para birimi select doldur
+  // Para birimi select doldur (manuel seçim için hidden select)
   const pbSel = document.getElementById('kira-para-birimi');
   if(pbSel) {
     if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
@@ -4309,12 +4402,13 @@ function openKiraModal(id=null) {
     if(k) {
       document.getElementById('kira-baslangic').value = k.baslangic;
       document.getElementById('kira-bitis').value = k.bitis;
-      // tutar stored as signed; derive tur from sign
       document.getElementById('kira-tur').value = k.tutar >= 0 ? 'gelir' : 'gider';
       setMoneyInput('kira-tutar', Math.abs(k.tutar));
       document.getElementById('kira-gun').value = k.gun;
       document.getElementById('kira-aciklama').value = k.aciklama||'';
       document.getElementById('kira-pasif').checked = !!k.pasif;
+      // Banka hesabı seçimi ve para birimi
+      _populateKiraHesapSel(k.hesapId||'', k.paraBirimi||defaultCurrency||'TRY');
       if(pbSel) pbSel.value = k.paraBirimi || defaultCurrency || 'TRY';
       // Depozito
       const depVar = !!k.depozito;
@@ -4336,10 +4430,12 @@ function openKiraModal(id=null) {
     document.getElementById('kira-gun').value='';
     document.getElementById('kira-aciklama').value='';
     document.getElementById('kira-pasif').checked=false;
+    _populateKiraHesapSel('', defaultCurrency||'TRY');
     if(pbSel) pbSel.value = defaultCurrency || 'TRY';
     document.getElementById('kira-depozito-var').checked=false;
     toggleKiraDepozito();
   }
+  bindMoneyInputs(document.getElementById('modal-kira'));
   openModal('modal-kira');
 }
 
@@ -4347,7 +4443,8 @@ function saveKira() {
   const tur = document.getElementById('kira-tur').value;
   const absTutar = getMoneyInput('kira-tutar')||0;
   const tutar = tur==='gider' ? -Math.abs(absTutar) : Math.abs(absTutar);
-  const paraBirimi = document.getElementById('kira-para-birimi').value || defaultCurrency || 'TRY';
+  const paraBirimi = getKiraPb();
+  const hesapId = (document.getElementById('kira-hesap')||{}).value || null;
 
   // Depozito
   const depVar = document.getElementById('kira-depozito-var').checked;
@@ -4368,6 +4465,7 @@ function saveKira() {
     bitis: document.getElementById('kira-bitis').value,
     tutar,
     paraBirimi,
+    hesapId: hesapId || null,
     gun: parseInt(document.getElementById('kira-gun').value)||15,
     aciklama: document.getElementById('kira-aciklama').value.trim(),
     pasif: document.getElementById('kira-pasif').checked,
@@ -4490,16 +4588,9 @@ function openMaasModal() {
   document.getElementById('maas-tekseferlik-tarih-wrap').style.display = 'none';
   document.getElementById('maas-pasif').checked = false;
   document.getElementById('maas-pasif-visible').checked = false;
-  // Para birimi
-  const maasPb = document.getElementById('maas-para-birimi');
-  if(maasPb) {
-    if(ALL_CURRENCIES.length) {
-      maasPb.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
-    } else {
-      maasPb.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
-    }
-    maasPb.value = defaultCurrency || 'TRY';
-  }
+  // Banka hesabı ve para birimi
+  _populateMaasHesapSel('', defaultCurrency || 'TRY');
+  bindMoneyInputs(document.getElementById('modal-maas'));
   openModal('modal-maas');
 }
 
@@ -4545,7 +4636,8 @@ function saveMaas() {
     maas = {
       id: editMaasId || uid(),
       aciklama, tutar,
-      paraBirimi: (document.getElementById('maas-para-birimi')||{}).value || defaultCurrency || 'TRY',
+      paraBirimi: getMaasPb(),
+      hesapId: (document.getElementById('maas-hesap')||{}).value || null,
       tur: 'tekseferlik',
       gun: new Date(tekseferlikTarih+'T00:00:00').getDate(),
       baslangic: tekseferlikTarih,
@@ -4560,7 +4652,8 @@ function saveMaas() {
     maas = {
       id: editMaasId || uid(),
       aciklama, tutar,
-      paraBirimi: (document.getElementById('maas-para-birimi')||{}).value || defaultCurrency || 'TRY',
+      paraBirimi: getMaasPb(),
+      hesapId: (document.getElementById('maas-hesap')||{}).value || null,
       tur: 'surekli',
       gun,
       baslangic,
@@ -4587,16 +4680,8 @@ function editMaas(id) {
   document.getElementById('maas-modal-title').textContent = 'Maaş Düzenle';
   document.getElementById('maas-aciklama').value = m.aciklama||'';
   setMoneyInput('maas-tutar', m.tutar);
-  // Para birimi
-  const maasPb = document.getElementById('maas-para-birimi');
-  if(maasPb) {
-    if(ALL_CURRENCIES.length) {
-      maasPb.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
-    } else {
-      maasPb.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
-    }
-    maasPb.value = m.paraBirimi || defaultCurrency || 'TRY';
-  }
+  // Banka hesabı ve para birimi
+  _populateMaasHesapSel(m.hesapId||'', m.paraBirimi||defaultCurrency||'TRY');
   const isTekSeferlik = m.tur === 'tekseferlik';
   document.getElementById('maas-tur').value = isTekSeferlik ? 'tekseferlik' : 'surekli';
   if(isTekSeferlik) {
@@ -4614,6 +4699,7 @@ function editMaas(id) {
   }
   document.getElementById('maas-pasif').checked = !!m.pasif;
   document.getElementById('maas-pasif-visible').checked = !!m.pasif;
+  bindMoneyInputs(document.getElementById('modal-maas'));
   document.getElementById('modal-maas').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
 
@@ -5381,7 +5467,14 @@ function saveElden() {
     kategori: document.getElementById('elden-kategori').value||null,
     tur,
     tutar,
-    paraBirimi: (document.getElementById('elden-para-birimi')||{}).value || defaultCurrency || 'TRY',
+    paraBirimi: (()=>{
+      // Havale + hesap seçiliyse hesabın para birimini al
+      if(yontem==='havale' && hesapId) {
+        const h = (DB.hesaplar||[]).find(x=>x.id===hesapId);
+        if(h && h.paraBirimi) return h.paraBirimi;
+      }
+      return (document.getElementById('elden-para-birimi')||{}).value || defaultCurrency || 'TRY';
+    })(),
     yontem,
     hesapId,
     karsiIban,
@@ -5430,6 +5523,8 @@ function editElden(id) {
   document.getElementById('elden-hesap').value = e.hesapId||'';
   document.getElementById('elden-karsi-iban').value = e.karsiIban||'';
   document.getElementById('elden-karsi-ad').value = e.karsiAd||'';
+  // Para birimi badge'ını güncelle
+  onEldenHesapChangePb();
   // Hesap bilgilerini otomatik doldur
   if(yontem==='havale' && e.hesapId) onEldenHesapChange();
   else document.getElementById('elden-hesap-bilgi-wrap').style.display = 'none';
@@ -6675,7 +6770,139 @@ function renderOzet() {
     '<div style="color:var(--text3);font-size:12px;padding:12px">Bu ay nakit akışı yok</div>';
 }
 
-// ========== BANKA HESAPLARI ==========
+// ========== HESAP SELECT HELPERS ==========
+function getAktifHesapOptions(placeholder='— Hesap Seçin —') {
+  const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
+  return '<option value="">' + placeholder + '</option>' +
+    aktifler.map(h => {
+      const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
+      const pb = h.paraBirimi||'TRY';
+      const cfg = CURRENCY_CONFIG[pb];
+      const sym = cfg ? cfg.symbol : pb;
+      return `<option value="${h.id}" data-pb="${pb}">${bankaAd ? bankaAd+' · ' : ''}${h.ad} (${pb} ${sym})</option>`;
+    }).join('');
+}
+
+function _setPbBadge(badgeId, selectId, code) {
+  const badge = document.getElementById(badgeId);
+  const sel   = document.getElementById(selectId);
+  const cfg   = CURRENCY_CONFIG[code] || { symbol: code };
+  if(badge) { badge.textContent = code + ' ' + cfg.symbol; }
+  if(badge && sel) {
+    if(code) { badge.style.display=''; sel.style.display='none'; }
+    else     { badge.style.display='none'; sel.style.display=''; }
+  }
+}
+
+function onMaasHesapChange() {
+  const hesapId = document.getElementById('maas-hesap').value;
+  const manualRow = document.getElementById('maas-pb-manual-row');
+  if(hesapId) {
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
+    _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', pb);
+    if(manualRow) manualRow.style.display = 'none';
+  } else {
+    // No account selected — show manual picker
+    _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', '');
+    if(manualRow) manualRow.style.display = '';
+  }
+}
+
+function onMaasPbManualChange() {
+  const val = (document.getElementById('maas-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
+  _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', val);
+}
+
+function getMaasPb() {
+  const hesapId = document.getElementById('maas-hesap').value;
+  if(hesapId) {
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    return (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
+  }
+  return (document.getElementById('maas-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
+}
+
+function onKiraHesapChange() {
+  const hesapId = document.getElementById('kira-hesap').value;
+  const manualWrap = document.getElementById('kira-pb-manual-wrap');
+  if(hesapId) {
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
+    _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', pb);
+    if(manualWrap) manualWrap.style.display = 'none';
+  } else {
+    _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', '');
+    if(manualWrap) manualWrap.style.display = '';
+  }
+}
+
+function onKiraPbManualChange() {
+  const val = (document.getElementById('kira-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
+  _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', val);
+}
+
+function getKiraPb() {
+  const hesapId = document.getElementById('kira-hesap').value;
+  if(hesapId) {
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    return (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
+  }
+  return (document.getElementById('kira-para-birimi-manual')||{}).value
+    || (document.getElementById('kira-para-birimi')||{}).value
+    || defaultCurrency || 'TRY';
+}
+
+function _fillPbManualSelect(selectId, currentCode) {
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const opts = (typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length)
+    ? ALL_CURRENCIES.map(c => {
+        const cfg = CURRENCY_CONFIG[c.code] || {};
+        return `<option value="${c.code}">${c.code} ${cfg.symbol||''}</option>`;
+      }).join('')
+    : '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
+  sel.innerHTML = opts;
+  if(currentCode) sel.value = currentCode;
+}
+
+function _populateMaasHesapSel(currentHesapId, currentPb) {
+  const sel = document.getElementById('maas-hesap');
+  if(!sel) return;
+  sel.innerHTML = getAktifHesapOptions();
+  if(currentHesapId) sel.value = currentHesapId;
+  _fillPbManualSelect('maas-para-birimi-manual', currentPb || defaultCurrency || 'TRY');
+  onMaasHesapChange();
+}
+
+function _populateKiraHesapSel(currentHesapId, currentPb) {
+  const sel = document.getElementById('kira-hesap');
+  if(!sel) return;
+  sel.innerHTML = getAktifHesapOptions();
+  if(currentHesapId) sel.value = currentHesapId;
+  _fillPbManualSelect('kira-para-birimi-manual', currentPb || defaultCurrency || 'TRY');
+  onKiraHesapChange();
+}
+
+function onEldenHesapChangePb() {
+  // Para birimi badge/select toggle based on selected elden-hesap
+  const hesapId = document.getElementById('elden-hesap').value;
+  const badge = document.getElementById('elden-para-birimi-badge');
+  const sel   = document.getElementById('elden-para-birimi');
+  if(hesapId && badge && sel) {
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
+    const cfg = CURRENCY_CONFIG[pb] || { symbol: pb };
+    badge.textContent = pb + ' ' + cfg.symbol;
+    badge.style.display = '';
+    sel.style.display = 'none';
+  } else if(badge && sel) {
+    badge.style.display = 'none';
+    sel.style.display = '';
+  }
+}
+
+
 
 // Türk IBAN parse: TR(2) + kontrol(2) + rezerv(1) + bankaKodu(4) + şube(5) + hesapNo(12) = 26 hane
 function parseIban(raw) {
@@ -6769,7 +6996,17 @@ const IBAN_BANKA_MAP = {
 };
 
 function onIbanInput() {
-  const raw = document.getElementById('hesap-iban').value;
+  const inp = document.getElementById('hesap-iban');
+  // Boşlukları anında sil, imleci koru
+  const pos = inp.selectionStart;
+  const before = inp.value;
+  const stripped = before.replace(/\s+/g, '').toUpperCase();
+  if(stripped !== before) {
+    const removed = before.slice(0, pos).replace(/\s+/g, '').length;
+    inp.value = stripped;
+    inp.setSelectionRange(removed, removed);
+  }
+  const raw = inp.value;
   const parsed = parseIban(raw);
   const statusEl = document.getElementById('hesap-iban-status');
   const parsedRow = document.getElementById('hesap-parsed-row');
@@ -7158,6 +7395,10 @@ function onEldenYontemChange() {
   document.getElementById('elden-karsi-iban-wrap').style.display = havale ? '' : 'none';
   if(!havale) {
     document.getElementById('elden-hesap-bilgi-wrap').style.display = 'none';
+    // Nakit'e geçince hesap seçimini sıfırla ve para birimi dropdown'ı geri getir
+    const sel = document.getElementById('elden-hesap');
+    if(sel) sel.value = '';
+    onEldenHesapChangePb();
   } else {
     // Seçili hesap varsa bilgileri doldur
     onEldenHesapChange();
@@ -7167,6 +7408,7 @@ function onEldenYontemChange() {
 function onEldenHesapChange() {
   const hesapId = document.getElementById('elden-hesap').value;
   const bilgiWrap = document.getElementById('elden-hesap-bilgi-wrap');
+  onEldenHesapChangePb(); // Para birimi badge güncelle
   if(!hesapId) {
     bilgiWrap.style.display = 'none';
     return;
@@ -7473,6 +7715,8 @@ async function gDriveLoadFromDrive() {
     renderAll();
     gDriveSetStatus('Senkronize edildi ✓', 'var(--success, #4ade80)');
     setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
+    // Format config yüklendikten sonra saati güncelle
+    if(typeof updateClockFn === 'function') updateClockFn();
   } catch(e) {
     console.error('Drive load error:', e);
     gDriveSetStatus('Yükleme hatası', 'var(--danger)');
@@ -7553,6 +7797,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(cl) cl.textContent = t;
     if(td) td.textContent = d;
   }
+  window.updateClockFn = updateClock;
   updateClock();
   setInterval(updateClock, 15000);
 });
