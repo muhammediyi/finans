@@ -2452,13 +2452,18 @@ function applyMigrations(d) {
     defT.forEach(dt => { if(!d.tatiller.find(t => t.id === dt.id)) d.tatiller.push(dt); });
   }
 
-  // ── Migrate: subeKodu 4 hane -> 5 hane ──────────────────────────────────
+  // ── Migrate: IBAN'dan subeKodu/hesapNo yeniden parse et ────────────────────
+  // TR IBAN: [4]=0 [5:9]=bankaKodu [9]=rezerv [10:14]=subeKodu [14:26]=hesapNo
   if(d.hesaplar.length) {
     d.hesaplar = d.hesaplar.map(h => {
-      if(h.iban && h.subeKodu && h.subeKodu.length === 4) {
+      if(h.iban) {
         const s = h.iban.replace(/\s+/g,'').toUpperCase();
         if(/^TR\d{24}$/.test(s)) {
-          return { ...h, subeKodu: s.slice(9,14), hesapNo: h.hesapNo || s.slice(14,26) };
+          return {
+            ...h,
+            subeKodu: s.slice(10,14),   // 4 hane şube kodu
+            hesapNo: h.hesapNo || s.slice(14,26)
+          };
         }
       }
       return h;
@@ -2531,7 +2536,7 @@ function defaultHesapTurleri() {
 }
 
 function defaultBankalar() {
-  // TCMB Ödeme Sistemleri Katılımcıları (2025) — ibanKod: IBAN'daki 4 haneli banka kodu
+  // TCMB Ödeme Sistemleri Katılımcıları (2025) — ibanKod: IBAN[5:9] konumundaki 4 haneli banka kodu
   return [
     {id:'b1',  tam:'Akbank T.A.Ş.',                                      kisa:'Akbank',               ibanKod:'0046'},
     {id:'b2',  tam:'Aktif Yatırım Bankası A.Ş.',                          kisa:'Aktifbank',             ibanKod:'0143'},
@@ -5036,10 +5041,17 @@ function resetKrediTaksitler() {
 
 // ========== KMH KREDİSİ ==========
 function getKmhKartlar() {
-  // KMH tipindeki kartları döndür
-  const kmhTip = DB.urunTipler.find(t=>t.kod==='KMH');
-  if(!kmhTip) return DB.kartlar; // fallback: tüm kartlar
-  return DB.kartlar.filter(k=>k.tip===kmhTip.id);
+  // Banka hesapları içinden KMH limiti tanımlı olanları döndür
+  return (DB.hesaplar||[]).filter(h=>
+    h.durum !== 'kapali' &&
+    (h.kmhLimit > 0 || (h.kmhLimitGecmisi && h.kmhLimitGecmisi.length > 0))
+  );
+}
+
+// kmhId ile banka hesabını getir (KMH kredileri için)
+// Geriye dönük uyumluluk: önce hesaplarda, bulamazsa kartlarda ara
+function getKmhHesap(id) {
+  return (DB.hesaplar||[]).find(h=>h.id===id) || DB.kartlar.find(k=>k.id===id) || null;
 }
 
 // Standart anuüite (eşit taksit) formülü
@@ -5093,8 +5105,14 @@ function openKmhKrediModal(id=null) {
   editKmhKrediId = id;
   const sel = document.getElementById('kmhkredi-kmh');
   const kmhKartlar = getKmhKartlar();
+
+  if(!kmhKartlar.length && !id) {
+    showToast('⚠️ KMH limiti tanımlı banka hesabı bulunamadı. Lütfen önce banka hesabına KMH limiti tanımlayın.', 'error');
+    return;
+  }
+
   sel.innerHTML = '<option value="">-- KMH Hesabı Seçin --</option>' +
-    kmhKartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
+    kmhKartlar.map(k=>`<option value="${k.id}">${k.ad}${k.kmhLimit ? ' — Limit: '+fmt(k.kmhLimit) : ''}</option>`).join('');
 
   if(id) {
     const kr = (DB.krediler||[]).find(x=>x.id===id);
@@ -5202,7 +5220,7 @@ function renderKmhKredi() {
     <div class="stat"><div class="stat-label">Aktif KMH Kredisi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
 
   document.getElementById('kmhkredi-tbody').innerHTML = DB.krediler.length ? DB.krediler.map(kr=>{
-    const kmhKart = getKart(kr.kmhId);
+    const kmhKart = getKmhHesap(kr.kmhId);
     const taksitler = getKrediTaksitler(kr);
     const kalan = taksitler.filter(t=>t.tarih>=todayStr).reduce((s,t)=>s+t.tutar,0);
     const odenmisSayisi = taksitler.filter(t=>t.tarih<todayStr).length;
@@ -5239,7 +5257,7 @@ function renderKmhKrediPlan(todayStr) {
 
   const gruplar = new Map();
   DB.krediler.forEach(kr=>{
-    const kmhKart = getKart(kr.kmhId);
+    const kmhKart = getKmhHesap(kr.kmhId);
     const kmhAd = kmhKart ? kmhKart.ad : 'Bilinmeyen KMH';
     if(!gruplar.has(kr.kmhId)) gruplar.set(kr.kmhId, {ad:kmhAd, renk:kmhKart?.renk||'var(--accent)', krediler:[]});
     gruplar.get(kr.kmhId).krediler.push(kr);
@@ -6854,7 +6872,7 @@ function renderOzet() {
 
   // KMH Kredileri — yaklaşan taksitler
   (DB.krediler||[]).forEach(kr=>{
-    const kmhKart = getKart(kr.kmhId);
+    const kmhKart = getKmhHesap(kr.kmhId);
     getKrediTaksitler(kr).forEach(t=>{
       const dt = new Date(t.tarih+'T00:00:00');
       if(dt>=today&&dt<=end30) upcoming.push({tarih:dt, aciklama:`${kr.aciklama} (${kmhKart?kmhKart.ad:'KMH'}) — ${t.no}/${kr.vade}. Taksit`, tur:'KMH Kredi', tutar:-t.tutar, tip:'kmh', id:kr.id, key:t.no});
@@ -6910,14 +6928,15 @@ function renderOzet() {
 function parseIban(raw) {
   const iban = raw.replace(/\s+/g,'').toUpperCase();
   if(!/^TR\d{24}$/.test(iban)) return null;
-  // TR IBAN yapısı: TR(2) + kontrol(2) + rezerv(1) + bankaKodu(4) + şube(5) + hesapNo(12) = 26
+  // TR IBAN yapısı: TR(2) + kontrol(2) + sıfır(1) + bankaKodu(4) + rezerv(1) + subeKodu(4) + hesapNo(12) = 26
+  // Index:          0-1     2-3           4            5-8            9            10-13          14-25
   return {
     iban,
     ulke: 'TR',
     kontrolHane: iban.slice(2,4),
-    rezerv: iban.slice(4,5),          // 1 hane rezerv
-    bankaKodu: iban.slice(5,9),       // 4 hane banka kodu
-    subeKodu: iban.slice(9,14),       // 5 hane şube kodu
+    bankaKodu: iban.slice(5,9),       // 4 hane banka kodu — ibanKod ile birebir eşleşir
+    rezerv: iban.slice(9,10),         // 1 hane rezerv (daima 0)
+    subeKodu: iban.slice(10,14),      // 4 hane şube kodu
     hesapNo: iban.slice(14,26),       // 12 hane hesap no
     formatli: iban.replace(/(.{4})/g,'$1 ').trim()
   };
