@@ -5745,7 +5745,10 @@ function deleteTatil(id) {
 
 function renderTanimlamalar() {
   renderKategoriGrid();
-  document.getElementById('banka-tbody').innerHTML = DB.bankalar.map((b,i)=>`<tr>
+  renderHesapTurTablo();
+  renderTumOranTablolari();
+
+  document.getElementById('banka-tbody').innerHTML = (DB.bankalar||[]).map((b,i)=>`<tr>
     <td class="mono">${i+1}</td>
     <td>${b.tam}</td>
     <td>${b.kisa}</td>
@@ -5756,13 +5759,13 @@ function renderTanimlamalar() {
       <button class="btn btn-ghost btn-sm" onclick="editBanka('${b.id}')" style="margin-right:4px">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="deleteBanka('${b.id}')">🗑</button>
     </td>
-  </tr>`).join('');
+  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
-  document.getElementById('urun-tip-tbody').innerHTML = DB.urunTipler.map(t=>`<tr>
+  document.getElementById('urun-tip-tbody').innerHTML = (DB.urunTipler||[]).map(t=>`<tr>
     <td>${t.ad}</td>
     <td><span class="badge badge-blue">${t.kod}</span></td>
     <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editUrunTip('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteUrunTip('${t.id}')">🗑</button></td>
-  </tr>`).join('');
+  </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   const krediTipTbody = document.getElementById('kredi-tip-tbody');
   if(krediTipTbody) {
@@ -5773,17 +5776,16 @@ function renderTanimlamalar() {
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 
-  const sorted = [...DB.tatiller].sort((a,b)=>a.tarih.localeCompare(b.tarih));
+  const sorted = [...(DB.tatiller||[])].sort((a,b)=>a.tarih.localeCompare(b.tarih));
   document.getElementById('tatil-tbody').innerHTML = sorted.map(t=>`<tr>
     <td class="mono">${fmtDate(t.tarih)}</td>
     <td>${t.aciklama}</td>
     <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editTatil('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteTatil('${t.id}')">🗑</button></td>
-  </tr>`).join('');
+  </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   // Para birimi yönetim tablosu
   const pbTbody = document.getElementById('para-birimi-tbody');
   if(pbTbody) {
-    // Tüm para birimleri: varsayılanlar + özel
     const allCodes = Object.keys(CURRENCY_CONFIG);
     pbTbody.innerHTML = allCodes.map(code => {
       const cfg = CURRENCY_CONFIG[code];
@@ -5808,7 +5810,7 @@ function renderTanimlamalar() {
           </div>
         </td>
       </tr>`;
-    }).join('');
+    }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 }
 
