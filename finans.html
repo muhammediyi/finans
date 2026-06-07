@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finans Yöneticisi</title>
+<title>Finans Yöneticisi v29</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
@@ -2352,7 +2352,8 @@ tbody tr:hover { background: var(--surface2) !important; }
 <script>
 
 // ========== DATA ==========
-const STORAGE_KEY = 'finans_v4';
+// localStorage artık yalnızca gdrive_client_id ve gdrive_token için kullanılır.
+// Tüm finans verisi Google Drive'da saklanır.
 
 // ========== BANKA ŞUBE VERİSİ ==========
 // Yapı: { [ibanKod]: [{k: subeKodu, a: subeAdi}, ...] }
@@ -2407,70 +2408,69 @@ function getKmhFaizOrani(tarihStr){ return getOranByTarih(DB.kmhFaizOranlari||DE
 
 // =====================================================
 
+// loadData: Başlangıçta boş veri döner. Gerçek veri Drive bağlandıktan sonra async yüklenir.
 function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData();
-    if(!d.ozelExtreler) d.ozelExtreler = [];
-    // Migrate: extraGunGecmis yoksa ekle
-    d.kartlar.forEach(k=>{ if(!k.extraGunGecmis) k.extraGunGecmis = []; });
-    if(!d.krediler) d.krediler = [];
-    if(!d.bireyselKrediler) d.bireyselKrediler = [];
-    if(!d.eldenler) d.eldenler = [];
-    if(!d.paraBirimleri) d.paraBirimleri = [];
-    if(!d.krediTipleri)  d.krediTipleri  = defaultKrediTipleri();
-    if(!d.kategoriler) d.kategoriler = defaultKategoriler();
-    if(!d.hesapTurleri)   d.hesapTurleri   = defaultHesapTurleri();
-    if(!d.stopajOranlari) d.stopajOranlari = DEFAULT_STOPAJ_ORANLARI;
-    if(!d.kkdfOranlari)   d.kkdfOranlari   = DEFAULT_KKDF_ORANLARI;
-    if(!d.bsmvOranlari)   d.bsmvOranlari   = DEFAULT_BSMV_ORANLARI;
-    if(!d.kmhFaizOranlari)d.kmhFaizOranlari= DEFAULT_KMH_FAIZ_ORANLARI;
-    if(!d.hesaplar)       d.hesaplar       = defaultHesaplar();
-    if(!d.subeler)        d.subeler        = {};
-    // Migrate: yeni default kiralar eksikse ekle
-    const defaultK = defaultKiralar();
-    defaultK.forEach(dk => {
-      if(!d.kiralar.find(k => k.id === dk.id)) {
-        d.kiralar.push(dk);
-      }
-    });
-    // Migrate: 2026 tatilleri eksikse ekle
-    const defaultT = defaultTatiller();
-    defaultT.forEach(dt => {
-      if(!d.tatiller.find(t => t.id === dt.id)) {
-        d.tatiller.push(dt);
-      }
-    });
-    // Migrate: subeKodu 4 hane -> 5 hane (IBAN'dan yeniden parse et)
-    if(d.hesaplar && d.hesaplar.length) {
-      d.hesaplar = d.hesaplar.map(h => {
-        if(h.iban && h.subeKodu && h.subeKodu.length === 4) {
-          const s = h.iban.replace(/\s+/g,'').toUpperCase();
-          if(/^TR\d{24}$/.test(s)) {
-            return { ...h, subeKodu: s.slice(9,14), hesapNo: h.hesapNo || s.slice(14,26) };
-          }
+  return defaultData();
+}
+
+// applyMigrations: Drive'dan gelen veriyi normalize et, FORMAT_CONFIG ve currency'yi uygula
+function applyMigrations(d) {
+  if(!d) return defaultData();
+  if(!d.ozelExtreler)    d.ozelExtreler    = [];
+  if(d.kartlar) d.kartlar.forEach(k=>{ if(!k.extraGunGecmis) k.extraGunGecmis = []; });
+  if(!d.krediler)        d.krediler        = [];
+  if(!d.bireyselKrediler)d.bireyselKrediler= [];
+  if(!d.eldenler)        d.eldenler        = [];
+  if(!d.paraBirimleri)   d.paraBirimleri   = [];
+  if(!d.krediTipleri)    d.krediTipleri    = [];
+  if(!d.kategoriler)     d.kategoriler     = [];
+  if(!d.hesapTurleri)    d.hesapTurleri    = [];
+  if(!d.stopajOranlari)  d.stopajOranlari  = [];
+  if(!d.kkdfOranlari)    d.kkdfOranlari    = [];
+  if(!d.bsmvOranlari)    d.bsmvOranlari    = [];
+  if(!d.kmhFaizOranlari) d.kmhFaizOranlari = [];
+  if(!d.hesaplar)        d.hesaplar        = [];
+  if(!d.subeler)         d.subeler         = {};
+  if(!d.kiralar)         d.kiralar         = [];
+  if(!d.tatiller)        d.tatiller        = [];
+  if(!d.islemler)        d.islemler        = [];
+  if(!d.kartlar)         d.kartlar         = [];
+  if(!d.maaslar)         d.maaslar         = [];
+  if(!d.mevduatlar)      d.mevduatlar      = [];
+  if(!d.bankalar)        d.bankalar        = [];
+  // Migrate: subeKodu 4 hane -> 5 hane
+  if(d.hesaplar && d.hesaplar.length) {
+    d.hesaplar = d.hesaplar.map(h => {
+      if(h.iban && h.subeKodu && h.subeKodu.length === 4) {
+        const s = h.iban.replace(/\s+/g,'').toUpperCase();
+        if(/^TR\d{24}$/.test(s)) {
+          return { ...h, subeKodu: s.slice(9,14), hesapNo: h.hesapNo || s.slice(14,26) };
         }
-        return h;
-      });
-    }
-    // Migrate: mevcut bankalarda ibanKod eksikse default listesinden tamamla
-    if(d.bankalar && d.bankalar.length) {
-      const defBankalar = defaultBankalar();
-      const defMap = {};
-      defBankalar.forEach(b => { defMap[b.id] = b; });
-      d.bankalar = d.bankalar.map(b => {
-        if(!b.ibanKod && defMap[b.id] && defMap[b.id].ibanKod) {
-          return { ...b, ibanKod: defMap[b.id].ibanKod };
-        }
-        return b;
-      });
-    }
-    return d;
-  } catch(e) { return defaultData(); }
+      }
+      return h;
+    });
+  }
+  // Migrate: bankalar ibanKod
+  if(d.bankalar && d.bankalar.length) {
+    const defBankalar = defaultBankalar();
+    const defMap = {};
+    defBankalar.forEach(b => { defMap[b.id] = b; });
+    d.bankalar = d.bankalar.map(b => {
+      if(!b.ibanKod && defMap[b.id] && defMap[b.id].ibanKod) {
+        return { ...b, ibanKod: defMap[b.id].ibanKod };
+      }
+      return b;
+    });
+  }
+  // FORMAT_CONFIG Drive verisinden uygula (localStorage'a yazmadan)
+  if(d._formatConfig) FORMAT_CONFIG = {...FORMAT_CONFIG, ...d._formatConfig};
+  // Para birimi Drive verisinden uygula
+  if(d._currency) defaultCurrency = d._currency;
+  return d;
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-  // Drive push — sadece giriş yapılmışsa, debounce ile
+  // Tüm kayıt Drive'a gider — localStorage kullanılmaz
   if (typeof gDriveReady === 'function' && gDriveReady()) {
     clearTimeout(gSaveTimer);
     gSaveTimer = setTimeout(gDriveSaveNow, 1500);
@@ -2480,9 +2480,9 @@ function saveData() {
 function defaultData() {
   return {
     bankalar: defaultBankalar(),
-    hesapTurleri: defaultHesapTurleri(),
+    hesapTurleri: [],
     urunTipler: [{id:'ut1',ad:'Kredi Kartı',kod:'KK'},{id:'ut2',ad:'Kredili Mevduat Hesabı',kod:'KMH'}],
-    krediTipleri: defaultKrediTipleri(),
+    krediTipleri: [],
     tatiller: defaultTatiller(),
     kartlar: [], islemler: [],
     mevduatlar: defaultMevduatlar(),
@@ -2492,12 +2492,12 @@ function defaultData() {
     krediler: [],
     bireyselKrediler: [],
     paraBirimleri: [],
-    kategoriler: defaultKategoriler(),
-    stopajOranlari: DEFAULT_STOPAJ_ORANLARI,
-    kkdfOranlari:   DEFAULT_KKDF_ORANLARI,
-    bsmvOranlari:   DEFAULT_BSMV_ORANLARI,
-    kmhFaizOranlari:DEFAULT_KMH_FAIZ_ORANLARI,
-    hesaplar: defaultHesaplar(),
+    kategoriler: [],
+    stopajOranlari: [],
+    kkdfOranlari:   [],
+    bsmvOranlari:   [],
+    kmhFaizOranlari:[],
+    hesaplar: [],
     subeler: {}
   };
 }
@@ -2709,14 +2709,18 @@ function loadCurrencyConfig() {
 }
 
 // defaultCurrency = para birimi tanımsız hesaplar için varsayılan
-var defaultCurrency = localStorage.getItem('finans_currency') || 'TRY';
+var defaultCurrency = 'TRY'; // Drive'dan yüklenir, localStorage kullanılmaz
 
 // DEFAULT_CURRENCY_CONFIG ve DB tanımlandıktan sonra yükle
 loadCurrencyConfig();
 
 function setParaBirimi(code) {
   defaultCurrency = code;
-  localStorage.setItem('finans_currency', code);
+  // DB'ye yaz ve Drive'a sync et
+  if(typeof DB !== 'undefined') {
+    DB._currency = code;
+    if(typeof saveData === 'function') saveData();
+  }
   const preview = document.getElementById('para-birimi-preview');
   if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, code);
   const activePage = document.querySelector('.page.active');
@@ -2803,15 +2807,21 @@ var FORMAT_CONFIG = {
 };
 
 function loadFormatConfig() {
-  try {
-    const saved = localStorage.getItem('finans_format_config');
-    if(saved) FORMAT_CONFIG = {...FORMAT_CONFIG, ...JSON.parse(saved)};
-  } catch(e) {}
+  // FORMAT_CONFIG ve currency Drive'dan gelir (applyMigrations içinde uygulanır)
+  // Burada sadece DB'de zaten yüklüyse uygula (sayfa yenilemesiz geçiş için)
+  if(typeof DB !== 'undefined') {
+    if(DB._formatConfig) FORMAT_CONFIG = {...FORMAT_CONFIG, ...DB._formatConfig};
+    if(DB._currency) defaultCurrency = DB._currency;
+  }
 }
 loadFormatConfig();
 
 function saveFormatConfig() {
-  localStorage.setItem('finans_format_config', JSON.stringify(FORMAT_CONFIG));
+  // Sadece DB'ye yaz, saveData Drive'a gönderir
+  if(typeof DB !== 'undefined') {
+    DB._formatConfig = FORMAT_CONFIG;
+    if(typeof saveData === 'function') saveData();
+  }
 }
 
 function applyFormatToken(pattern, dt) {
@@ -7659,9 +7669,9 @@ async function gDriveLoadFromDrive() {
   try {
     const file = await gDriveFindFile();
     if (!file) {
-      // No remote file yet — push local data
-      gDriveSetStatus('İlk yükleme...', 'var(--accent)');
-      await gDriveSaveNow();
+      // Drive'da henüz dosya yok — boş veri ile devam et, kullanıcı veri girdikçe oluşacak
+      gDriveSetStatus('Hazır (yeni)', 'var(--success, #4ade80)');
+      setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
       return;
     }
     gDriveFileId = file.id;
@@ -7670,9 +7680,8 @@ async function gDriveLoadFromDrive() {
     );
     if (!res) return;
     const remoteDB = await res.json();
-    // Merge: remote wins, but apply local migrations
+    // applyMigrations içinde FORMAT_CONFIG ve currency da uygulanır
     DB = applyMigrations(remoteDB);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); // cache locally, Drive push'u tetikleme
     renderPage(document.querySelector('.nav-btn.active')?.dataset?.page || 'ozet');
     renderOzet();
     gDriveSetStatus('Senkronize edildi ✓', 'var(--success, #4ade80)');
@@ -7724,28 +7733,7 @@ async function gDriveSaveNow() {
 
 function gDriveSyncNow() { gDriveLoadFromDrive(); }
 
-// ---- saveData artık Drive push'u da tetikler ----
-// NOT: saveData fonksiyonu 2452. satırda tanımlı, burada monkey-patch YOK.
-// Bunun yerine orijinal saveData'yı gDriveAwareSave ile değiştirdik (aşağıda patch edildi).
-
-// ---- Apply migrations to remote data (same logic as loadData) ----
-function applyMigrations(d) {
-  if(!d.ozelExtreler) d.ozelExtreler = [];
-  if(d.kartlar) d.kartlar.forEach(k=>{ if(!k.extraGunGecmis) k.extraGunGecmis = []; });
-  if(!d.krediler) d.krediler = [];
-  if(!d.bireyselKrediler) d.bireyselKrediler = [];
-  if(!d.eldenler) d.eldenler = [];
-  if(!d.paraBirimleri) d.paraBirimleri = [];
-  if(!d.krediTipleri)  d.krediTipleri  = defaultKrediTipleri();
-  if(!d.kategoriler) d.kategoriler = defaultKategoriler();
-  if(!d.hesapTurleri)   d.hesapTurleri   = defaultHesapTurleri();
-  if(!d.stopajOranlari) d.stopajOranlari = DEFAULT_STOPAJ_ORANLARI;
-  if(!d.kkdfOranlari)   d.kkdfOranlari   = DEFAULT_KKDF_ORANLARI;
-  if(!d.bsmvOranlari)   d.bsmvOranlari   = DEFAULT_BSMV_ORANLARI;
-  if(!d.kmhFaizOranlari)d.kmhFaizOranlari= DEFAULT_KMH_FAIZ_ORANLARI;
-  if(!d.hesaplar)       d.hesaplar       = defaultHesaplar();
-  return d;
-}
+// applyMigrations ve saveData yukarıda (loadData yakınında) tanımlıdır.
 
 document.addEventListener('DOMContentLoaded', ()=>{
   gDriveInit();
