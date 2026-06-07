@@ -575,7 +575,7 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
   border-radius: 20px;
   padding: 30px;
   width: 100%;
-  max-width: 660px;
+  max-width: 680px;
   max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(251,191,36,.06);
@@ -1285,7 +1285,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Nav section — divider line instead of label */
 .nav-section { position: relative; margin-bottom: 2px; }
-.nav-section + .nav-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.04); }
+.nav-section + .nav-section { margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.035); }
 
 /* Nav btn — pill shape, icon color tinted on active */
 .nav-btn { border-radius: 10px; }
@@ -1419,6 +1419,780 @@ tbody tr { transition: background .1s ease; }
 .modal::-webkit-scrollbar { width: 3px; }
 .modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
 
+
+/* ─── MİNİ KİŞİ POPUP ────────────────────────────────── */
+#mini-kisi-popup {
+  position: fixed;
+  z-index: 3000;
+  width: 420px;
+  max-width: calc(100vw - 24px);
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12,15,26,.97);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.7), 0 0 0 1px rgba(251,191,36,.06);
+  backdrop-filter: blur(28px) saturate(1.4);
+  animation: miniPopupIn .18s cubic-bezier(.34,1.2,.64,1);
+  overflow: hidden;
+}
+@keyframes miniPopupIn {
+  from { opacity: 0; transform: scale(.93) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+#mini-kisi-popup.closing {
+  animation: miniPopupOut .15s ease forwards;
+}
+@keyframes miniPopupOut {
+  to { opacity: 0; transform: scale(.95) translateY(-6px); }
+}
+
+.mkp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+.mkp-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.mkp-close {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  color: var(--text3);
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .14s;
+  flex-shrink: 0;
+}
+.mkp-close:hover { background: rgba(251,113,133,.12); border-color: rgba(251,113,133,.25); color: var(--rose); }
+
+.mkp-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+}
+.mkp-list::-webkit-scrollbar { width: 3px; }
+.mkp-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+
+.mkp-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.mkp-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .12s;
+  border: 1px solid transparent;
+}
+/* .mkp-item hover handled by .mkp-item-wrap */
+/* .mkp-item.selected handled by .mkp-item-wrap.selected */
+
+.mkp-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(251,191,36,.2), rgba(251,191,36,.08));
+  border: 1px solid rgba(251,191,36,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.mkp-info { flex: 1; min-width: 0; }
+.mkp-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mkp-meta {
+  font-size: 10.5px;
+  color: var(--text3);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mkp-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.mkp-item:hover .mkp-actions { opacity: 1; }
+.mkp-act-btn {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 6px;
+  color: var(--text3);
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all .12s;
+}
+.mkp-act-btn:hover { background: rgba(255,255,255,.1); color: var(--text); }
+.mkp-act-btn.del:hover { background: rgba(251,113,133,.12); border-color: rgba(251,113,133,.25); color: var(--rose); }
+
+.mkp-add-section {
+  padding: 10px 10px 12px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+.mkp-add-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(251,191,36,.07);
+  border: 1px solid rgba(251,191,36,.15);
+  border-radius: 9px;
+  color: var(--gold);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .14s;
+  font-family: var(--sans);
+  letter-spacing: .01em;
+}
+.mkp-add-toggle:hover { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.25); }
+
+.mkp-add-form {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+}
+.mkp-add-form.open { display: flex; }
+.mkp-add-form input {
+  padding: 8px 11px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  background: rgba(22,27,42,.9);
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--text);
+}
+.mkp-add-form input:focus {
+  border-color: rgba(251,191,36,.4);
+  box-shadow: 0 0 0 2px rgba(251,191,36,.07);
+  outline: none;
+}
+.mkp-add-btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.mkp-save-btn {
+  flex: 1;
+  padding: 8px;
+  background: linear-gradient(145deg, #fbbf24, #f59e0b);
+  border: none;
+  border-radius: 8px;
+  color: #0d0900;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .14s;
+}
+.mkp-save-btn:hover { background: linear-gradient(145deg, #fcd34d, #fbbf24); }
+.mkp-cancel-btn {
+  padding: 8px 14px;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  color: var(--text3);
+  font-size: 12.5px;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .14s;
+}
+.mkp-cancel-btn:hover { background: rgba(255,255,255,.09); color: var(--text2); }
+
+#mini-kisi-backdrop {
+  position: fixed; inset: 0; z-index: 2999;
+  cursor: default;
+}
+
+/* MKP — kişi IBAN satırları */
+.mkp-iban-section {
+  padding: 0 10px 6px;
+  margin-top: -2px;
+}
+.mkp-iban-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.055);
+  margin-bottom: 4px;
+  font-size: 11.5px;
+}
+.mkp-iban-code {
+  font-family: var(--mono);
+  color: var(--teal);
+  letter-spacing: .04em;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mkp-iban-label {
+  font-size: 10px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.mkp-iban-copy {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.mkp-iban-copy:hover { background: rgba(45,212,191,.12); color: var(--teal); }
+.mkp-iban-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.mkp-iban-del:hover { background: rgba(251,113,133,.12); color: var(--rose); }
+
+.mkp-iban-add-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+.mkp-iban-input {
+  flex: 1;
+  padding: 5px 9px !important;
+  font-size: 11.5px !important;
+  font-family: var(--mono) !important;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-radius: 7px !important;
+  height: 30px;
+}
+.mkp-iban-label-input {
+  width: 90px !important;
+  flex-shrink: 0;
+  padding: 5px 8px !important;
+  font-size: 11px !important;
+  border-radius: 7px !important;
+  height: 30px;
+}
+.mkp-iban-add-btn {
+  flex-shrink: 0;
+  padding: 0 10px;
+  height: 30px;
+  background: rgba(45,212,191,.12);
+  border: 1px solid rgba(45,212,191,.2);
+  border-radius: 7px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .13s;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+.mkp-iban-add-btn:hover { background: rgba(45,212,191,.2); }
+
+.mkp-item-wrap {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+  overflow: hidden;
+  transition: border-color .12s;
+}
+.mkp-item-wrap:hover { border-color: rgba(255,255,255,.07); }
+.mkp-item-wrap.selected { border-color: rgba(251,191,36,.2); background: rgba(251,191,36,.04); }
+.mkp-item { border-radius: 0; border: none; margin-bottom: 0; }
+.mkp-item-wrap:hover .mkp-item { background: rgba(255,255,255,.03); }
+.mkp-item-wrap.selected .mkp-item { background: transparent; }
+
+.mkp-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  transition: all .12s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.mkp-expand-btn:hover { background: rgba(255,255,255,.06); color: var(--text2); }
+
+/* ── IBAN Chip Picker ─────────────────────────── */
+.iban-picker-wrap {
+  display: none;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.iban-picker-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 6px;
+}
+.iban-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.iban-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface3);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.iban-chip:hover { border-color: var(--accent2); background: var(--surface4,var(--surface3)); }
+.iban-chip.active { border-color: var(--accent2); background: var(--accent2-fade,rgba(99,179,237,.12)); }
+.iban-chip-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  flex-shrink: 0;
+  transition: border-color .15s, background .15s;
+}
+.iban-chip.active .iban-chip-dot {
+  border-color: var(--accent2);
+  background: var(--accent2);
+}
+.iban-chip-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: .04em;
+}
+.iban-chip-lbl {
+  font-size: 10px;
+  color: var(--text3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface2);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   KAPSAMLI İYİLEŞTİRME v35 — Premium Dark Finance Dashboard
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --transition: all .18s cubic-bezier(.4,0,.2,1);
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  background: linear-gradient(180deg, rgba(12,15,26,.98) 0%, rgba(9,11,20,.99) 100%);
+  border-right: 1px solid rgba(255,255,255,.055);
+  box-shadow: 4px 0 40px rgba(0,0,0,.5), 1px 0 0 rgba(255,255,255,.03);
+}
+
+.sidebar-brand {
+  padding: 22px 16px 18px;
+  background: linear-gradient(135deg, rgba(251,191,36,.055) 0%, transparent 60%);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.brand-logo {
+  background: linear-gradient(145deg, #fde68a 0%, #fbbf24 40%, #d97706 100%);
+  box-shadow: 0 0 0 1px rgba(251,191,36,.3), 0 0 28px rgba(251,191,36,.22), 0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35);
+  transition: var(--transition);
+}
+.sidebar-brand:hover .brand-logo {
+  box-shadow: 0 0 0 1px rgba(251,191,36,.5), 0 0 40px rgba(251,191,36,.35), 0 6px 24px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35);
+  transform: scale(1.04);
+}
+.brand-name { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.88); }
+.brand-sub { font-size: 8.5px; letter-spacing: .25em; color: rgba(251,191,36,.45); margin-top: 3px; }
+
+.nav-section-label { font-size: 8.5px; letter-spacing: .22em; color: rgba(255,255,255,.18); padding: 12px 14px 4px; }
+
+.nav-btn {
+  padding: 8px 12px 8px 10px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: rgba(255,255,255,.38);
+  gap: 9px;
+  margin-bottom: 1px;
+  transition: var(--transition);
+}
+.nav-btn:hover { background: rgba(255,255,255,.055); color: rgba(255,255,255,.78); }
+.nav-btn.active {
+  background: linear-gradient(135deg, rgba(251,191,36,.14) 0%, rgba(251,191,36,.06) 100%);
+  color: #fbbf24;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(251,191,36,.08);
+}
+.nav-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 25%; bottom: 25%;
+  width: 2px;
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 12px rgba(251,191,36,.7);
+}
+.nav-icon { font-size: 13px; width: 18px; text-align: center; transition: var(--transition); }
+.nav-btn.active .nav-icon { filter: drop-shadow(0 0 5px rgba(251,191,36,.65)); }
+
+.sidebar-footer { border-top: 1px solid rgba(255,255,255,.045); background: rgba(0,0,0,.15); }
+.sidebar-time { font-size: 10px; color: rgba(255,255,255,.16); letter-spacing: .1em; padding: 6px 14px; }
+
+/* ─── TOPBAR ─────────────────────────────────────────────── */
+.topbar {
+  height: 52px;
+  padding: 0 30px;
+  background: rgba(7,9,17,.92);
+  border-bottom: 1px solid rgba(255,255,255,.045);
+  backdrop-filter: blur(32px) saturate(1.8);
+  box-shadow: 0 1px 0 rgba(255,255,255,.03), 0 4px 24px rgba(0,0,0,.2);
+}
+.topbar-title { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.38); letter-spacing: .06em; text-transform: uppercase; }
+.topbar-dot { width: 5px; height: 5px; background: var(--teal); box-shadow: 0 0 8px rgba(45,212,191,.9), 0 0 3px rgba(45,212,191,1); }
+
+/* ─── PAGE ───────────────────────────────────────────────── */
+.page { padding: 30px 30px 60px; }
+@media(max-width:900px) { .page { padding: 18px 14px 48px; } }
+
+.page-header {
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-header h1 {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  background: linear-gradient(135deg, rgba(240,244,255,.92) 0%, rgba(240,244,255,.45) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-header p { font-size: 11px; color: rgba(255,255,255,.22); margin-top: 5px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+/* ─── STAT CARDS ─────────────────────────────────────────── */
+.stat {
+  background: linear-gradient(145deg, rgba(18,22,38,.9) 0%, rgba(13,17,28,.95) 100%);
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 14px;
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+.stat::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(145deg, rgba(255,255,255,.025) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.stat:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.stat.s-blue   { border-top: 1.5px solid rgba(56,189,248,.5); }
+.stat.s-green  { border-top: 1.5px solid rgba(45,212,191,.5); }
+.stat.s-red    { border-top: 1.5px solid rgba(251,113,133,.5); }
+.stat.s-warn   { border-top: 1.5px solid rgba(251,146,60,.5); }
+.stat.s-purple { border-top: 1.5px solid rgba(167,139,250,.5); }
+.stat::before  { display: none; }
+.stat-label { font-size: 9px; font-weight: 700; letter-spacing: .2em; color: rgba(255,255,255,.28); text-transform: uppercase; margin-bottom: 12px; }
+.stat-val { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.stat-sub { font-size: 10px; color: rgba(255,255,255,.25); margin-top: 10px; }
+.stat:hover .stat-val.green  { text-shadow: 0 0 20px rgba(45,212,191,.4); }
+.stat:hover .stat-val.red    { text-shadow: 0 0 20px rgba(251,113,133,.4); }
+.stat:hover .stat-val.blue   { text-shadow: 0 0 20px rgba(56,189,248,.4); }
+.stat:hover .stat-val.warn   { text-shadow: 0 0 20px rgba(251,146,60,.4); }
+.stat:hover .stat-val.purple { text-shadow: 0 0 20px rgba(167,139,250,.4); }
+
+/* ─── CARD ───────────────────────────────────────────────── */
+.card {
+  background: linear-gradient(160deg, rgba(16,20,34,.9) 0%, rgba(12,15,26,.95) 100%);
+  border: 1px solid rgba(255,255,255,.058);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s ease;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+  pointer-events: none;
+}
+.card:hover { border-color: rgba(255,255,255,.09); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.045); }
+.card-title { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.25); text-transform: uppercase; letter-spacing: .22em; }
+
+/* ─── TABLE ──────────────────────────────────────────────── */
+.tbl-wrap { border-radius: 10px; border: 1px solid rgba(255,255,255,.05); overflow: hidden; background: rgba(8,10,18,.4); }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead tr { background: rgba(255,255,255,.025); }
+th { padding: 10px 15px; color: rgba(255,255,255,.25); font-size: 8.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; }
+td { padding: 11px 15px; border-bottom: 1px solid rgba(255,255,255,.03); color: rgba(240,244,255,.6); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background .1s ease; }
+tbody tr:hover td { background: rgba(255,255,255,.025); color: rgba(240,244,255,.85); }
+td:first-child { color: rgba(240,244,255,.82); font-weight: 500; }
+
+/* ─── FORMS ──────────────────────────────────────────────── */
+label { font-size: 9.5px; font-weight: 700; letter-spacing: .14em; color: rgba(255,255,255,.28); text-transform: uppercase; margin-bottom: 6px; display: block; }
+input, select, textarea {
+  background: rgba(16,20,36,.8);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9px;
+  padding: 10px 13px;
+  color: rgba(240,244,255,.9);
+  font-family: var(--sans);
+  font-size: 13px;
+  transition: var(--transition);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.2);
+}
+input:hover, select:hover, textarea:hover { border-color: rgba(255,255,255,.13); background: rgba(20,25,44,.8); }
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(251,191,36,.45);
+  box-shadow: 0 0 0 3px rgba(251,191,36,.08), inset 0 1px 3px rgba(0,0,0,.2);
+  background: rgba(24,30,52,.9);
+  outline: none;
+  color: #f0f4ff;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,.18); opacity: 1; }
+select { cursor: pointer; color: rgba(240,244,255,.85); }
+select option { background: #0d1120; color: #f0f4ff; }
+.form-row { gap: 14px; margin-bottom: 14px; }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  padding: 9px 20px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  letter-spacing: .01em; transition: var(--transition); position: relative;
+  overflow: hidden; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(255,255,255,.1); pointer-events: none; }
+.btn:active { transform: scale(.97) translateY(1px); }
+.btn-primary {
+  background: linear-gradient(165deg, #fcd34d 0%, #fbbf24 40%, #d97706 100%);
+  color: #0c0800; font-weight: 700;
+  box-shadow: 0 2px 20px rgba(251,191,36,.3), 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover { background: linear-gradient(165deg, #fde68a 0%, #fcd34d 40%, #fbbf24 100%); box-shadow: 0 4px 28px rgba(251,191,36,.42), inset 0 1px 0 rgba(255,255,255,.3); transform: translateY(-1px); }
+.btn-ghost { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.5); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.btn-ghost:hover { background: rgba(255,255,255,.09); color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.14); }
+.btn-success { background: linear-gradient(165deg, #5eead4 0%, #2dd4bf 40%, #0d9488 100%); color: #021a16; font-weight: 700; box-shadow: 0 2px 16px rgba(45,212,191,.22), inset 0 1px 0 rgba(255,255,255,.2); }
+.btn-success:hover { background: linear-gradient(165deg, #99f6e4 0%, #5eead4 40%, #2dd4bf 100%); box-shadow: 0 4px 24px rgba(45,212,191,.32); transform: translateY(-1px); }
+.btn-danger { background: linear-gradient(165deg, #fda4af 0%, #fb7185 40%, #e11d48 100%); color: #fff; font-weight: 700; box-shadow: 0 2px 14px rgba(251,113,133,.22), inset 0 1px 0 rgba(255,255,255,.15); }
+.btn-danger:hover { box-shadow: 0 4px 22px rgba(251,113,133,.32); transform: translateY(-1px); }
+.btn-sm { padding: 5px 12px; font-size: 11.5px; border-radius: 7px; }
+
+/* ─── ACTION ROW ─────────────────────────────────────────── */
+.action-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.action-row select, .action-row input { height: 34px; padding: 0 11px; font-size: 12px; border-radius: 8px; }
+
+/* ─── BADGES ─────────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: .05em; white-space: nowrap; }
+.badge-blue   { background: rgba(56,189,248,.1);  color: rgba(125,211,252,.9); border: 1px solid rgba(56,189,248,.15); }
+.badge-green  { background: rgba(45,212,191,.1);  color: rgba(94,234,212,.9);  border: 1px solid rgba(45,212,191,.15); }
+.badge-red    { background: rgba(251,113,133,.1); color: rgba(253,164,175,.9); border: 1px solid rgba(251,113,133,.15); }
+.badge-warn   { background: rgba(251,146,60,.1);  color: rgba(253,186,116,.9); border: 1px solid rgba(251,146,60,.15); }
+.badge-purple { background: rgba(167,139,250,.1); color: rgba(196,181,253,.9); border: 1px solid rgba(167,139,250,.15); }
+
+/* ─── MODAL ──────────────────────────────────────────────── */
+.modal-bg { background: rgba(0,0,0,.75); backdrop-filter: blur(20px) saturate(1.3); }
+.modal {
+  background: linear-gradient(160deg, rgba(14,18,32,.98) 0%, rgba(10,13,24,.99) 100%);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 18px;
+  padding: 28px 30px;
+  box-shadow: 0 48px 120px rgba(0,0,0,.85), 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(32px);
+}
+.modal-header { border-bottom: 1px solid rgba(255,255,255,.055); padding-bottom: 18px; margin-bottom: 22px; }
+.modal-title { font-size: 15px; font-weight: 700; letter-spacing: -.02em; color: rgba(240,244,255,.92); }
+.close-btn { width: 30px; height: 30px; background: rgba(255,255,255,.055) !important; border: 1px solid rgba(255,255,255,.08) !important; border-radius: 8px; color: rgba(255,255,255,.35) !important; }
+.close-btn:hover { background: rgba(251,113,133,.1) !important; border-color: rgba(251,113,133,.25) !important; color: var(--rose) !important; }
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+.toast { background: rgba(16,20,36,.97); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 500; backdrop-filter: blur(24px); box-shadow: 0 20px 56px rgba(0,0,0,.6); bottom: 22px; right: 22px; }
+.toast.success { border-color: rgba(45,212,191,.28); background: rgba(14,28,26,.97); }
+.toast.error   { border-color: rgba(251,113,133,.28); background: rgba(28,12,18,.97); }
+
+/* ─── OD BADGES ──────────────────────────────────────────── */
+.od-badge { padding: 3px 9px; border-radius: 5px; font-size: 10px; font-weight: 700; letter-spacing: .04em; border: 1px solid transparent; }
+.od-odendi   { background: rgba(45,212,191,.08);  color: rgba(94,234,212,.9);  border-color: rgba(45,212,191,.18); }
+.od-bekliyor { background: rgba(56,189,248,.08);  color: rgba(125,211,252,.9); border-color: rgba(56,189,248,.18); }
+.od-gecikti  { background: rgba(251,113,133,.08); color: rgba(253,164,175,.9); border-color: rgba(251,113,133,.18); }
+.od-ertelendi{ background: rgba(251,146,60,.08);  color: rgba(253,186,116,.9); border-color: rgba(251,146,60,.18); }
+.od-kismi    { background: rgba(167,139,250,.08); color: rgba(196,181,253,.9); border-color: rgba(167,139,250,.18); }
+.od-iptal    { background: rgba(107,114,128,.07); color: rgba(156,163,175,.8); border-color: rgba(107,114,128,.15); }
+
+/* ─── TABS ───────────────────────────────────────────────── */
+.tab-bar { background: rgba(12,15,26,.9); border: 1px solid rgba(255,255,255,.06); border-radius: 11px; padding: 3px; }
+.tab-btn { padding: 6px 16px !important; border-radius: 8px !important; font-size: 12px !important; font-weight: 500 !important; color: rgba(255,255,255,.35) !important; transition: var(--transition) !important; }
+.tab-btn.active { background: rgba(255,255,255,.07) !important; color: rgba(240,244,255,.88) !important; box-shadow: 0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important; }
+
+/* ─── TOGGLE ─────────────────────────────────────────────── */
+.toggle-track { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); box-shadow: inset 0 1px 3px rgba(0,0,0,.3); }
+.toggle-track::after { background: rgba(255,255,255,.4); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.toggle-switch input:checked + .toggle-track { background: linear-gradient(135deg, #fbbf24, #d97706); border-color: rgba(251,191,36,.4); box-shadow: 0 0 12px rgba(251,191,36,.2); }
+.toggle-switch input:checked + .toggle-track::after { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.toggle-wrap { padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.04); transition: border-color .15s; }
+.toggle-wrap:hover { border-color: rgba(255,255,255,.07); }
+
+/* ─── PROGRESS ───────────────────────────────────────────── */
+.progress-bar { height: 3px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ─── INFO BOX ───────────────────────────────────────────── */
+.info-box { background: rgba(56,189,248,.04); border: 1px solid rgba(56,189,248,.12); border-radius: 10px; padding: 12px 15px; font-size: 12px; color: rgba(240,244,255,.5); line-height: 1.65; }
+.info-box.warn { background: rgba(251,146,60,.04); border-color: rgba(251,146,60,.14); }
+.info-box.success { background: rgba(45,212,191,.04); border-color: rgba(45,212,191,.14); }
+
+/* ─── OD POPUP ───────────────────────────────────────────── */
+.od-popup { border-radius: 13px; border: 1px solid rgba(255,255,255,.1); background: rgba(13,16,30,.98); backdrop-filter: blur(28px); box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+
+/* ─── EXTRE CARD ─────────────────────────────────────────── */
+.extre-card { background: linear-gradient(145deg, rgba(16,20,34,.8) 0%, rgba(12,15,26,.85) 100%); border: 1px solid rgba(255,255,255,.055); border-radius: 12px; padding: 18px; }
+
+/* ─── TAKSIT ─────────────────────────────────────────────── */
+.tp-wrap { border: 1px solid rgba(255,255,255,.055); border-radius: 10px; overflow: hidden; background: rgba(8,10,18,.3); }
+.tp-header { background: rgba(255,255,255,.025); border-bottom: 1px solid rgba(255,255,255,.05); }
+.tp-row:hover { background: rgba(255,255,255,.025); }
+.tp-input:focus { border-color: rgba(251,191,36,.4); background: rgba(22,28,50,.9); }
+.tp-footer { background: rgba(255,255,255,.02); border-top: 1px solid rgba(255,255,255,.05); }
+
+/* ─── DIVIDER ────────────────────────────────────────────── */
+.divider { border: none; height: 1px; background: rgba(255,255,255,.05); margin: 20px 0; }
+
+/* ─── FIELD ERROR ────────────────────────────────────────── */
+.field-error { border-color: rgba(251,113,133,.5) !important; box-shadow: 0 0 0 3px rgba(251,113,133,.07) !important; }
+.field-error-msg { font-size: 9.5px; color: rgba(253,164,175,.8); margin-top: 4px; letter-spacing: .03em; }
+
+/* ─── SECTION TITLE ──────────────────────────────────────── */
+.section-title { font-size: 8.5px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: rgba(255,255,255,.18); margin-bottom: 12px; margin-top: 24px; }
+
+/* ─── CURRENCY CHIPS ─────────────────────────────────────── */
+.cur-chip { padding: 5px 11px; border-radius: 7px; border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.04); font-size: 11px; color: rgba(255,255,255,.45); transition: var(--transition); }
+.cur-chip:hover { border-color: rgba(251,191,36,.3); color: rgba(255,255,255,.8); }
+.cur-chip.selected { border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.09); color: rgba(251,191,36,.9); }
+.cur-chip.default-mark { border-color: rgba(45,212,191,.4); background: rgba(45,212,191,.09); color: rgba(94,234,212,.9); }
+
+/* ─── KART VISUAL ────────────────────────────────────────── */
+.kart-card-visual { background: linear-gradient(145deg, rgba(22,28,50,.95) 0%, rgba(16,20,38,.98) 100%); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 22px; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+
+/* ─── IBAN CHIP PICKER v2 ────────────────────────────────── */
+.iban-picker-wrap { margin-top: 7px; padding: 10px 12px; background: rgba(10,13,24,.7); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.iban-picker-label { font-size: 8.5px; font-weight: 700; color: rgba(255,255,255,.22); text-transform: uppercase; letter-spacing: .18em; margin-bottom: 7px; }
+.iban-chip { padding: 7px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.04); gap: 7px; transition: var(--transition); }
+.iban-chip:hover { border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06); }
+.iban-chip.active { border-color: rgba(45,212,191,.4); background: rgba(45,212,191,.09); box-shadow: 0 0 12px rgba(45,212,191,.08); }
+.iban-chip-dot { width: 6px; height: 6px; border: 1.5px solid rgba(255,255,255,.25); }
+.iban-chip.active .iban-chip-dot { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 6px rgba(45,212,191,.5); }
+.iban-chip-val { font-size: 11px; letter-spacing: .05em; color: rgba(240,244,255,.7); }
+.iban-chip.active .iban-chip-val { color: rgba(94,234,212,.9); }
+.iban-chip-lbl { font-size: 9.5px; color: rgba(255,255,255,.3); padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,.05); }
+
+/* ─── MKP ────────────────────────────────────────────────── */
+#mini-kisi-popup { background: linear-gradient(160deg, rgba(13,16,30,.98) 0%, rgba(10,13,24,.99) 100%); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 32px 80px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.04); }
+.mkp-header { border-bottom: 1px solid rgba(255,255,255,.055); background: rgba(255,255,255,.02); }
+.mkp-avatar { background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,191,36,.06)); border: 1px solid rgba(251,191,36,.18); box-shadow: 0 0 12px rgba(251,191,36,.08); }
+.mkp-item-wrap { border-radius: 10px; border: 1px solid transparent; margin-bottom: 3px; }
+.mkp-item-wrap:hover { border-color: rgba(255,255,255,.06); }
+.mkp-item-wrap.selected { border-color: rgba(251,191,36,.2); background: rgba(251,191,36,.04); }
+.mkp-add-toggle { background: rgba(251,191,36,.06); border: 1px solid rgba(251,191,36,.14); border-radius: 8px; }
+.mkp-add-toggle:hover { background: rgba(251,191,36,.11); border-color: rgba(251,191,36,.25); }
+
+/* ─── GRID ───────────────────────────────────────────────── */
+.grid-2, .grid-3, .grid-4, .grid-5 { gap: 12px; }
+
+/* ─── SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.09); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
+
+/* ─── MONO NUMBERS ───────────────────────────────────────── */
+.mono, .stat-val { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+/* ─── ANIMATION ──────────────────────────────────────────── */
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.page.active { animation: pageFadeIn .22s cubic-bezier(.4,0,.2,1); }
+
+/* ─── MOBILE ─────────────────────────────────────────────── */
+@media(max-width:900px) {
+  .sidebar { width: var(--sidebar-collapsed) !important; }
+  .brand-text, .nav-label, .nav-section-label { opacity: 0; pointer-events: none; }
+  .main-wrap { margin-left: var(--sidebar-collapsed); }
+  .topbar { padding: 0 16px; }
+  .modal { padding: 20px 18px; border-radius: 14px; }
+}
+@media(max-width:600px) {
+  .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -1526,7 +2300,7 @@ tbody tr { transition: background .1s ease; }
         Google ile Giris
       </button>
     </div>
-    <div class="sidebar-time" id="sidebar-clock">--:--</div>
+    <div class="sidebar-time" id="sidebar-clock" style="text-align:center;letter-spacing:.08em">--:--</div>
   </div>
 </aside>
 
@@ -1534,19 +2308,21 @@ tbody tr { transition: background .1s ease; }
 <div class="main-wrap">
   <!-- Top Bar -->
   <div class="topbar">
-    <span class="topbar-title" id="topbar-title">Finansal Özet</span>
+    <span class="topbar-title" id="topbar-title" style="display:inline-flex;align-items:center;gap:7px"><span id="topbar-icon" style="font-size:13px;opacity:.7">⊹</span><span id="topbar-label">Finansal Özet</span></span>
     <div class="topbar-sep"></div>
     <div class="topbar-dot"></div>
-    <span class="topbar-date" id="topbar-date"></span>
+    <span class="topbar-date" id="topbar-date" style="font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.28)"></span>
   </div>
 
 <!-- ÖZET -->
 <div id="page-ozet" class="page active">
   <div class="page-header">
-    <h1>Finansal Özet</h1>
-    <p id="ozet-date"></p>
+    <div class="page-header-left">
+      <h1>Finansal Özet</h1>
+      <p id="ozet-date"></p>
+    </div>
   </div>
-  <div class="grid-5" id="ozet-stats" style="margin-bottom:20px"></div>
+  <div class="grid-5" id="ozet-stats" style="margin-bottom:16px"></div>
   <div class="grid-2" style="margin-bottom:16px">
     <div class="card">
       <div class="card-header"><span class="card-title">Kart Limit Kullanımı</span></div>
@@ -2451,7 +3227,7 @@ tbody tr { transition: background .1s ease; }
           <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
           <div style="display:flex;gap:6px">
             <select id="kira-kisi" onchange="onKiraKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-            <button class="btn btn-ghost btn-sm" onclick="showTab('tab-kisiler',null);showPage('tanimlamalar',null)" title="Kişi Yönetimi" style="flex-shrink:0">⚙</button>
+            <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'kira-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
           </div>
         </div>
         <div>
@@ -2467,6 +3243,10 @@ tbody tr { transition: background .1s ease; }
               oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
               onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
             <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+          <div id="kira-iban-picker" class="iban-picker-wrap">
+            <div class="iban-picker-label">IBAN Seçin</div>
+            <div id="kira-iban-chips" class="iban-chips"></div>
           </div>
         </div>
       </div>
@@ -2626,7 +3406,7 @@ tbody tr { transition: background .1s ease; }
           <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
           <div style="display:flex;gap:6px">
             <select id="maas-kisi" onchange="onMaasKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-            <button class="btn btn-ghost btn-sm" onclick="showTab('tab-kisiler',null);showPage('tanimlamalar',null)" title="Kişi Yönetimi" style="flex-shrink:0">⚙</button>
+            <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'maas-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
           </div>
         </div>
         <div>
@@ -2642,6 +3422,10 @@ tbody tr { transition: background .1s ease; }
               oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
               onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
             <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+          <div id="maas-iban-picker" class="iban-picker-wrap">
+            <div class="iban-picker-label">IBAN Seçin</div>
+            <div id="maas-iban-chips" class="iban-chips"></div>
           </div>
         </div>
       </div>
@@ -2928,7 +3712,7 @@ tbody tr { transition: background .1s ease; }
           <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
           <div style="display:flex;gap:6px">
             <select id="elden-kisi" onchange="onEldenKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-            <button class="btn btn-ghost btn-sm" onclick="showTab('tab-kisiler',null);showPage('tanimlamalar',null)" title="Kişi Yönetimi" style="flex-shrink:0">⚙</button>
+            <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'elden-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
           </div>
         </div>
         <div>
@@ -2945,6 +3729,10 @@ tbody tr { transition: background .1s ease; }
               onblur="formatIbanView(this)"
               onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
             <button class="btn btn-ghost btn-sm" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+          <div id="elden-iban-picker" class="iban-picker-wrap">
+            <div class="iban-picker-label">IBAN Seçin</div>
+            <div id="elden-iban-chips" class="iban-chips"></div>
           </div>
           <div id="elden-karsi-iban-uyari" style="display:none;font-size:11px;color:var(--warn);margin-top:4px">⚠ Kişi seçilmeden girilen IBAN kaydedilebilir ancak kişiyle ilişkilendirilmez.</div>
         </div>
@@ -3935,8 +4723,12 @@ function showPage(id, btn) {
     const navBtn = document.querySelector(`.nav-btn[onclick*="'${id}'"]`);
     if(navBtn) navBtn.classList.add('active');
   }
-  const tb = document.getElementById('topbar-title');
-  if(tb) tb.textContent = PAGE_TITLES[id] || id;
+  // Topbar icon + label update
+  const _navIcons = {ozet:'⊹',kartlar:'💳',islemler:'⇄',extreler:'🧾',mevduat:'◆',hesaplar:'⊙',kira:'🏠',maas:'◑',elden:'◇',kmhkredi:'▸',kredi:'▪',tanimlamalar:'⚙'};
+  const iconEl = document.getElementById('topbar-icon');
+  const labelEl = document.getElementById('topbar-label');
+  if(iconEl && _navIcons[id]) iconEl.textContent = _navIcons[id];
+  if(labelEl) labelEl.textContent = PAGE_TITLES[id] || id;
   // URL hash güncelle (popstate döngüsünü önlemek için kontrol)
   if(location.hash !== '#' + id) {
     try { history.pushState({page: id}, '', '#' + id); }
@@ -7144,64 +7936,77 @@ function populateEldenKisiSelect() {
   phSet(sel, 'Kişi seçin…', sel.value||'');
 }
 
+
+// ─── IBAN PICKER SHARED HELPER ─────────────────────────────────
+function renderIbanPicker(kisiId, pickerWrapId, chipsId, ibanInputId) {
+  const pickerWrap = document.getElementById(pickerWrapId);
+  const chipsEl    = document.getElementById(chipsId);
+  if (!pickerWrap || !chipsEl) return;
+
+  if (!kisiId) { pickerWrap.style.display = 'none'; return; }
+
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if (!kisi || !kisi.ibanlar || !kisi.ibanlar.length) {
+    pickerWrap.style.display = 'none';
+    return;
+  }
+
+  const currentIban = (document.getElementById(ibanInputId)||{}).value
+    ? document.getElementById(ibanInputId).value.replace(/\s+/g,'').toUpperCase() : '';
+
+  pickerWrap.style.display = '';
+  chipsEl.innerHTML = kisi.ibanlar.map((ib) => {
+    const raw = ib.iban ? ib.iban.replace(/\s+/g,'').toUpperCase() : (typeof ib === 'string' ? ib.replace(/\s+/g,'').toUpperCase() : '');
+    const fmt = raw.replace(/(.{4})/g,'$1 ').trim();
+    const isActive = currentIban === raw;
+    const etiket = ib.etiket || '';
+    return `<div class="iban-chip${isActive?' active':''}"
+      onclick="selectIbanChip('${ibanInputId}','${raw}','${pickerWrapId}','${chipsId}','${kisiId}')">
+      <div class="iban-chip-dot"></div>
+      <span class="iban-chip-val">${fmt}</span>
+      ${etiket ? `<span class="iban-chip-lbl">${etiket}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  // Tek IBAN varsa otomatik seç
+  if (kisi.ibanlar.length === 1 && !currentIban) {
+    const raw = kisi.ibanlar[0].iban
+      ? kisi.ibanlar[0].iban.replace(/\s+/g,'').toUpperCase()
+      : (typeof kisi.ibanlar[0] === 'string' ? kisi.ibanlar[0].replace(/\s+/g,'').toUpperCase() : '');
+    const inp = document.getElementById(ibanInputId);
+    if (inp && raw) { inp.value = raw; formatIbanView(inp); }
+    renderIbanPicker(kisiId, pickerWrapId, chipsId, ibanInputId);
+    return;
+  }
+}
+
+function selectIbanChip(ibanInputId, rawIban, pickerWrapId, chipsId, kisiId) {
+  const inp = document.getElementById(ibanInputId);
+  if (!inp) return;
+  inp.value = rawIban;
+  formatIbanView(inp);
+  renderIbanPicker(kisiId, pickerWrapId, chipsId, ibanInputId);
+}
+
 function onEldenKisiChange() {
   const kisiId = document.getElementById('elden-kisi').value;
-  // Uyarıyı gizle
   const uyariEl = document.getElementById('elden-karsi-iban-uyari');
-  if(uyariEl) uyariEl.style.display = 'none';
-  if(!kisiId) {
+  if (uyariEl) uyariEl.style.display = 'none';
+  if (!kisiId) {
     document.getElementById('elden-karsi-ad').value = '';
     document.getElementById('elden-karsi-iban').value = '';
+    const p = document.getElementById('elden-iban-picker');
+    if (p) p.style.display = 'none';
     return;
   }
   const k = (DB.kisiler||[]).find(x=>x.id===kisiId);
-  if(!k) return;
+  if (!k) return;
   document.getElementById('elden-karsi-ad').value = k.ad||'';
-  // Birden fazla IBAN varsa kullanıcıya seçtir; tekse otomatik doldur
-  if(k.ibanlar && k.ibanlar.length === 1) {
-    const ibanEl = document.getElementById('elden-karsi-iban');
-    ibanEl.value = k.ibanlar[0].iban;
-    formatIbanView(ibanEl);
-  } else if(k.ibanlar && k.ibanlar.length > 1) {
-    // IBAN seçim dropdown göster
-    const ibanEl = document.getElementById('elden-karsi-iban');
-    ibanEl.value = '';
-    // Tooltip bilgisi
-    showEldenKisiIbanSecim(k);
-  }
+  document.getElementById('elden-karsi-iban').value = '';
+  renderIbanPicker(kisiId, 'elden-iban-picker', 'elden-iban-chips', 'elden-karsi-iban');
 }
 
-function showEldenKisiIbanSecim(kisi) {
-  // Basit bir seçim diyalogu — mevcut karsi iban alanına seçim menüsü açar
-  const ibanlar = kisi.ibanlar||[];
-  if(!ibanlar.length) return;
-  const popup = document.createElement('div');
-  popup.style.cssText = 'position:fixed;z-index:99999;background:var(--surface3);border:1px solid var(--border2);border-radius:10px;padding:10px;min-width:280px;box-shadow:var(--shadow)';
-  popup.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">IBAN Seçin — ${kisi.ad}</div>` +
-    ibanlar.map((ib,i)=>`<div onclick="selectKisiIban('${ib.iban}',popupEl)" data-iban="${ib.iban}" style="padding:8px 10px;border-radius:7px;cursor:pointer;margin-bottom:4px;background:var(--surface2);border:1px solid var(--border)">
-      <div style="font-family:var(--mono);font-size:12px;color:var(--accent2)">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</div>
-      ${ib.etiket?`<div style="font-size:10px;color:var(--text3)">${ib.etiket}</div>`:''}
-    </div>`).join('');
-  // position near the iban input
-  const ibanEl = document.getElementById('elden-karsi-iban');
-  const r = ibanEl.getBoundingClientRect();
-  popup.style.top = (r.bottom+6)+'px';
-  popup.style.left = r.left+'px';
-  window._kisiIbanPopup = popup;
-  document.body.appendChild(popup);
-  // Close on outside click
-  setTimeout(()=>{
-    document.addEventListener('click', function _(ev){
-      if(!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('click',_); }
-    });
-  }, 50);
-}
-
-function selectKisiIban(iban, _unused) {
-  const ibanEl = document.getElementById('elden-karsi-iban');
-  if(ibanEl) { ibanEl.value = iban; formatIbanView(ibanEl); }
-  if(window._kisiIbanPopup) { window._kisiIbanPopup.remove(); window._kisiIbanPopup=null; }
-}
+// showEldenKisiIbanSecim ve selectKisiIban — renderIbanPicker chip sistemiyle değiştirildi
 
 // ========== PARA BİRİMİ YÖNETİMİ ==========
 let editParaBirimiKod = null;
@@ -8205,17 +9010,18 @@ function copyMaasHesapIban() {
 
 function onMaasKisiChange() {
   const kisiId = document.getElementById('maas-kisi').value;
-  if(!kisiId) return;
-  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
-  if(!kisi) return;
-  const adEl = document.getElementById('maas-karsi-ad');
-  if(adEl && !adEl.value) adEl.value = kisi.ad || '';
-  // İlk IBAN varsa doldur
-  const ibanEl = document.getElementById('maas-karsi-iban');
-  if(ibanEl && !ibanEl.value && kisi.ibanlar && kisi.ibanlar.length > 0) {
-    ibanEl.value = kisi.ibanlar[0].replace(/\s+/g,'').toUpperCase();
-    formatIbanView(ibanEl);
+  if (!kisiId) {
+    document.getElementById('maas-karsi-ad').value = '';
+    document.getElementById('maas-karsi-iban').value = '';
+    const p = document.getElementById('maas-iban-picker');
+    if (p) p.style.display = 'none';
+    return;
   }
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if (!kisi) return;
+  document.getElementById('maas-karsi-ad').value = kisi.ad || '';
+  document.getElementById('maas-karsi-iban').value = '';
+  renderIbanPicker(kisiId, 'maas-iban-picker', 'maas-iban-chips', 'maas-karsi-iban');
 }
 
 function onKiraYontemChange() {
@@ -8250,16 +9056,18 @@ function onKiraHesapFullChange() {
 
 function onKiraKisiChange() {
   const kisiId = document.getElementById('kira-kisi').value;
-  if(!kisiId) return;
-  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
-  if(!kisi) return;
-  const adEl = document.getElementById('kira-karsi-ad');
-  if(adEl && !adEl.value) adEl.value = kisi.ad || '';
-  const ibanEl = document.getElementById('kira-karsi-iban');
-  if(ibanEl && !ibanEl.value && kisi.ibanlar && kisi.ibanlar.length > 0) {
-    ibanEl.value = kisi.ibanlar[0].replace(/\s+/g,'').toUpperCase();
-    formatIbanView(ibanEl);
+  if (!kisiId) {
+    document.getElementById('kira-karsi-ad').value = '';
+    document.getElementById('kira-karsi-iban').value = '';
+    const p = document.getElementById('kira-iban-picker');
+    if (p) p.style.display = 'none';
+    return;
   }
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if (!kisi) return;
+  document.getElementById('kira-karsi-ad').value = kisi.ad || '';
+  document.getElementById('kira-karsi-iban').value = '';
+  renderIbanPicker(kisiId, 'kira-iban-picker', 'kira-iban-chips', 'kira-karsi-iban');
 }
 
 function copyKiraHesapIban() {
@@ -9346,7 +10154,292 @@ document.addEventListener('DOMContentLoaded', ()=>{
   updateClock();
   setInterval(updateClock, 15000);
 });
+
+// ═══ MİNİ KİŞİ POPUP ══════════════════════════════════════
+let _mkpTargetSelectId = null;  // hangi select'i güncelleyecek
+let _mkpEditId = null;          // düzenleme modu
+
+function openMiniKisiPopup(triggerEl, targetSelectId) {
+  _mkpTargetSelectId = targetSelectId;
+  _mkpEditId = null;
+  const popup = document.getElementById('mini-kisi-popup');
+  const backdrop = document.getElementById('mini-kisi-backdrop');
+
+  // Pozisyon hesapla — trigger butonun altına veya üstüne
+  popup.style.display = 'flex';
+  backdrop.style.display = 'block';
+
+  const rect = triggerEl.getBoundingClientRect();
+  const popupW = 360;
+  const popupH = Math.min(600, window.innerHeight * 0.8);
+  const margin = 8;
+
+  // Yatay: sağa yasla, ekran dışına taşmasın
+  let left = rect.right - popupW;
+  if (left < margin) left = margin;
+  if (left + popupW > window.innerWidth - margin) left = window.innerWidth - popupW - margin;
+
+  // Dikey: alta sığıyorsa alt, değilse üst
+  let top = rect.bottom + 6;
+  if (top + popupH > window.innerHeight - margin) {
+    top = rect.top - popupH - 6;
+  }
+  if (top < margin) top = margin;
+
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+
+  // Form & expanded state sıfırla
+  _mkpExpanded = {};
+  document.getElementById('mkp-add-form').classList.remove('open');
+  document.getElementById('mkp-ad').value = '';
+  document.getElementById('mkp-tel').value = '';
+  document.getElementById('mkp-not').value = '';
+
+  mkpRenderList();
+}
+
+function closeMiniKisiPopup() {
+  const popup = document.getElementById('mini-kisi-popup');
+  const backdrop = document.getElementById('mini-kisi-backdrop');
+  popup.classList.add('closing');
+  setTimeout(() => {
+    popup.style.display = 'none';
+    popup.classList.remove('closing');
+    backdrop.style.display = 'none';
+    _mkpTargetSelectId = null;
+    _mkpEditId = null;
+  }, 140);
+}
+
+// Track which kisi's IBAN section is expanded
+let _mkpExpanded = {};
+
+function mkpRenderList() {
+  const list = document.getElementById('mkp-list');
+  const kisiler = DB.kisiler || [];
+  const currentVal = _mkpTargetSelectId ? (document.getElementById(_mkpTargetSelectId)||{}).value : '';
+
+  if (!kisiler.length) {
+    list.innerHTML = '<div class="mkp-empty">Henüz kayıtlı kişi yok.<br>Aşağıdan ekleyebilirsiniz.</div>';
+    return;
+  }
+
+  list.innerHTML = kisiler.map(k => {
+    const initials = k.ad.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const ibans = k.ibanlar || [];
+    const ibanCount = ibans.length;
+    const meta = [k.tel, ibanCount ? ibanCount + ' IBAN' : ''].filter(Boolean).join(' · ');
+    const isSelected = currentVal === k.id;
+    const isExpanded = !!_mkpExpanded[k.id];
+
+    const ibanListHtml = ibans.map((ib, i) => `
+      <div class="mkp-iban-row">
+        <span class="mkp-iban-code" title="${ib.iban}">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</span>
+        ${ib.etiket ? `<span class="mkp-iban-label">${ib.etiket}</span>` : ''}
+        <button class="mkp-iban-copy" onclick="mkpCopyIban('${ib.iban}')" title="Kopyala">⎘</button>
+        <button class="mkp-iban-del" onclick="mkpDeleteIban('${k.id}',${i});event.stopPropagation()" title="Sil">✕</button>
+      </div>`).join('');
+
+    const ibanSection = isExpanded ? `
+      <div class="mkp-iban-section" onclick="event.stopPropagation()">
+        ${ibanListHtml}
+        <div class="mkp-iban-add-row">
+          <input class="mkp-iban-input" id="mkp-iban-val-${k.id}" placeholder="TR00 0000 … IBAN" autocomplete="off"
+            onkeydown="if(event.key==='Enter'){mkpAddIban('${k.id}');event.preventDefault()}">
+          <input class="mkp-iban-label-input" id="mkp-iban-lbl-${k.id}" placeholder="Etiket" autocomplete="off"
+            onkeydown="if(event.key==='Enter'){mkpAddIban('${k.id}');event.preventDefault()}">
+          <button class="mkp-iban-add-btn" onclick="mkpAddIban('${k.id}');event.stopPropagation()">+ Ekle</button>
+        </div>
+      </div>` : '';
+
+    return `<div class="mkp-item-wrap${isSelected?' selected':''}">
+      <div class="mkp-item" onclick="mkpSelectKisi('${k.id}')">
+        <div class="mkp-avatar">${initials||'?'}</div>
+        <div class="mkp-info">
+          <div class="mkp-name">${k.ad}</div>
+          ${meta ? `<div class="mkp-meta">${meta}</div>` : ''}
+        </div>
+        <div class="mkp-actions" onclick="event.stopPropagation()">
+          ${ibanCount > 0 || true ? `<button class="mkp-expand-btn" onclick="mkpToggleIban('${k.id}')" title="${isExpanded?'Gizle':'IBAN göster'}">${isExpanded?'▴':'▾'} IBAN</button>` : ''}
+          <button class="mkp-act-btn" onclick="mkpEditKisi('${k.id}')" title="Düzenle">✏</button>
+          <button class="mkp-act-btn del" onclick="mkpDeleteKisi('${k.id}')" title="Sil">✕</button>
+        </div>
+      </div>
+      ${ibanSection}
+    </div>`;
+  }).join('');
+}
+
+function mkpToggleIban(kisiId) {
+  _mkpExpanded[kisiId] = !_mkpExpanded[kisiId];
+  mkpRenderList();
+  // Focus on iban input if just opened
+  if (_mkpExpanded[kisiId]) {
+    setTimeout(() => {
+      const inp = document.getElementById('mkp-iban-val-' + kisiId);
+      if (inp) inp.focus();
+    }, 30);
+  }
+}
+
+function mkpAddIban(kisiId) {
+  const valEl = document.getElementById('mkp-iban-val-' + kisiId);
+  const lblEl = document.getElementById('mkp-iban-lbl-' + kisiId);
+  if (!valEl) return;
+  const raw = valEl.value.replace(/\s+/g,'').toUpperCase();
+  if (!raw) { valEl.focus(); return; }
+  const lbl = lblEl ? lblEl.value.trim() : '';
+  const k = (DB.kisiler||[]).find(x=>x.id===kisiId);
+  if (!k) return;
+  if (!k.ibanlar) k.ibanlar = [];
+  k.ibanlar.push({ iban: raw, etiket: lbl });
+  saveData();
+  populateEldenKisiSelect();
+  try { renderKisilerGrid(); } catch(e) {}
+  mkpRenderList();
+  // Keep expanded after add
+  _mkpExpanded[kisiId] = true;
+  setTimeout(() => {
+    const inp = document.getElementById('mkp-iban-val-' + kisiId);
+    if (inp) inp.focus();
+  }, 30);
+  showToast('IBAN eklendi ✓');
+}
+
+function mkpDeleteIban(kisiId, idx) {
+  const k = (DB.kisiler||[]).find(x=>x.id===kisiId);
+  if (!k || !k.ibanlar) return;
+  k.ibanlar.splice(idx, 1);
+  saveData();
+  populateEldenKisiSelect();
+  try { renderKisilerGrid(); } catch(e) {}
+  _mkpExpanded[kisiId] = true;
+  mkpRenderList();
+}
+
+function mkpCopyIban(iban) {
+  navigator.clipboard.writeText(iban)
+    .then(()=>showToast('IBAN kopyalandı ✓'))
+    .catch(()=>showToast('Kopyalanamadı', 'error'));
+}
+
+function mkpSelectKisi(id) {
+  if (!_mkpTargetSelectId) return;
+  const sel = document.getElementById(_mkpTargetSelectId);
+  if (!sel) return;
+  sel.value = id;
+  // onchange tetikle
+  sel.dispatchEvent(new Event('change'));
+  closeMiniKisiPopup();
+}
+
+function mkpToggleAddForm() {
+  const form = document.getElementById('mkp-add-form');
+  const isOpen = form.classList.contains('open');
+  if (isOpen) {
+    form.classList.remove('open');
+    _mkpEditId = null;
+    document.getElementById('mkp-ad').value = '';
+    document.getElementById('mkp-tel').value = '';
+    document.getElementById('mkp-not').value = '';
+  } else {
+    form.classList.add('open');
+    setTimeout(() => document.getElementById('mkp-ad').focus(), 50);
+  }
+}
+
+function mkpEditKisi(id) {
+  const k = (DB.kisiler||[]).find(x=>x.id===id);
+  if (!k) return;
+  _mkpEditId = id;
+  const form = document.getElementById('mkp-add-form');
+  form.classList.add('open');
+  document.getElementById('mkp-ad').value  = k.ad  || '';
+  document.getElementById('mkp-tel').value = k.tel || '';
+  document.getElementById('mkp-not').value = k.not || '';
+  setTimeout(() => document.getElementById('mkp-ad').focus(), 50);
+}
+
+function mkpSaveKisi() {
+  const ad = document.getElementById('mkp-ad').value.trim();
+  if (!ad) { document.getElementById('mkp-ad').classList.add('field-error'); setTimeout(()=>document.getElementById('mkp-ad').classList.remove('field-error'),1500); return; }
+  if (!DB.kisiler) DB.kisiler = [];
+
+  if (_mkpEditId) {
+    const idx = DB.kisiler.findIndex(x=>x.id===_mkpEditId);
+    if (idx >= 0) {
+      DB.kisiler[idx] = { ...DB.kisiler[idx], ad,
+        tel: document.getElementById('mkp-tel').value.trim(),
+        not: document.getElementById('mkp-not').value.trim()
+      };
+    }
+    _mkpEditId = null;
+  } else {
+    DB.kisiler.push({
+      id: uid(), ad,
+      tel: document.getElementById('mkp-tel').value.trim(),
+      not: document.getElementById('mkp-not').value.trim(),
+      ibanlar: []
+    });
+  }
+
+  saveData();
+  // Tüm kişi select'lerini güncelle
+  populateEldenKisiSelect();
+  if (typeof populateKiraKisiSelects === 'function') populateKiraKisiSelects();
+  if (typeof populateMaasKisiSelects === 'function') populateMaasKisiSelects();
+  // Genel populate
+  try { populateKategoriSelects(); } catch(e) {}
+
+  // Form sıfırla
+  document.getElementById('mkp-ad').value = '';
+  document.getElementById('mkp-tel').value = '';
+  document.getElementById('mkp-not').value = '';
+  document.getElementById('mkp-add-form').classList.remove('open');
+  mkpRenderList();
+  showToast('Kişi kaydedildi ✓');
+}
+
+function mkpDeleteKisi(id) {
+  showConfirm('Bu kişiyi silmek istiyor musunuz?', () => {
+    DB.kisiler = (DB.kisiler||[]).filter(x=>x.id!==id);
+    saveData();
+    populateEldenKisiSelect();
+    try { populateKiraKisiSelects(); } catch(e) {}
+    try { populateMaasKisiSelects(); } catch(e) {}
+    renderKisilerGrid();
+    mkpRenderList();
+    showToast('Kişi silindi');
+  });
+}
+
 </script>
 </div><!-- /main-wrap -->
+
+<!-- ═══ MİNİ KİŞİ POPUP ════════════════════════════════ -->
+<div id="mini-kisi-backdrop" onclick="closeMiniKisiPopup()" style="display:none"></div>
+<div id="mini-kisi-popup" style="display:none">
+  <div class="mkp-header">
+    <div class="mkp-title">👤 Karşı Taraf Yönetimi</div>
+    <button class="mkp-close" onclick="closeMiniKisiPopup()">✕</button>
+  </div>
+  <div class="mkp-list" id="mkp-list"></div>
+  <div class="mkp-add-section">
+    <button class="mkp-add-toggle" id="mkp-add-toggle" onclick="mkpToggleAddForm()">
+      <span>+</span> Yeni Kişi Ekle
+    </button>
+    <div class="mkp-add-form" id="mkp-add-form">
+      <input id="mkp-ad" placeholder="Ad Soyad / Kurum Adı *" autocomplete="off">
+      <input id="mkp-tel" placeholder="Telefon (isteğe bağlı)" autocomplete="off">
+      <input id="mkp-not" placeholder="Not (isteğe bağlı)" autocomplete="off">
+      <div class="mkp-add-btns">
+        <button class="mkp-cancel-btn" onclick="mkpToggleAddForm()">İptal</button>
+        <button class="mkp-save-btn" onclick="mkpSaveKisi()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
