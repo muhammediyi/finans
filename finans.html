@@ -1539,9 +1539,8 @@ tbody tr:hover { background: var(--surface2) !important; }
       <button class="close-btn" onclick="closeModal('modal-kmhkredi')">✕</button>
     </div>
     <div class="info-box">💡 KMH (Kredili Mevduat Hesabı) üzerinden kullanılan nakit kredi. Seçtiğiniz KMH hesabının <b>ek limitini</b> kullanır.</div>
-    <div class="form-row cols-2">
+    <div class="form-row cols-1">
       <div><label>KMH Hesabı <span style="color:var(--danger)">*</span></label><select id="kmhkredi-kmh"></select></div>
-      <div><label>Açıklama <span style="color:var(--danger)">*</span></label><input id="kmhkredi-aciklama" placeholder="örn. İhtiyaç Kredisi..."></div>
     </div>
     <div class="form-row cols-3">
       <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><input id="kmhkredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="50.000,00" oninput="calcKmhKredi()"></div>
@@ -4864,14 +4863,17 @@ function openKmhKrediModal(id=null) {
   }
 
   sel.innerHTML = '<option value="">-- KMH Hesabı Seçin --</option>' +
-    kmhKartlar.map(k=>`<option value="${k.id}">${k.ad}${k.kmhLimit ? ' — Limit: '+fmt(k.kmhLimit) : ''}</option>`).join('');
+    kmhKartlar.map(k=>{
+      const bankaAd = getBanka(k.banka) || '';
+      const limitStr = k.kmhLimit ? ' — Limit: '+fmt(k.kmhLimit) : '';
+      return `<option value="${k.id}">${bankaAd ? bankaAd+' · ' : ''}${k.ad}${limitStr}</option>`;
+    }).join('');
 
   if(id) {
     const kr = (DB.krediler||[]).find(x=>x.id===id);
     if(kr) {
       document.getElementById('kmhkredi-modal-title').textContent = 'KMH Kredisi Düzenle';
       sel.value = kr.kmhId;
-      document.getElementById('kmhkredi-aciklama').value = kr.aciklama||'';
       setMoneyInput('kmhkredi-anapara', kr.anaPara);
       document.getElementById('kmhkredi-faiz').value = kr.faizOran;
       document.getElementById('kmhkredi-vade').value = kr.vade;
@@ -4883,7 +4885,6 @@ function openKmhKrediModal(id=null) {
     }
   } else {
     document.getElementById('kmhkredi-modal-title').textContent = 'KMH Taksitli Kredi Ekle';
-    document.getElementById('kmhkredi-aciklama').value = '';
     setMoneyInput('kmhkredi-anapara', '');
     document.getElementById('kmhkredi-faiz').value = getKmhFaizOrani(localDateStr(new Date()));
     document.getElementById('kmhkredi-vade').value = '';
@@ -4899,7 +4900,6 @@ function openKmhKrediModal(id=null) {
 
 function saveKmhKredi() {
   const kmhId = document.getElementById('kmhkredi-kmh').value;
-  const aciklama = document.getElementById('kmhkredi-aciklama').value.trim();
   const anaPara = getMoneyInput('kmhkredi-anapara')||0;
   const faizOran = parseFloat(document.getElementById('kmhkredi-faiz').value)||0;
   const vade = parseInt(document.getElementById('kmhkredi-vade').value)||0;
@@ -4909,7 +4909,6 @@ function saveKmhKredi() {
   const odemeGunTip = document.getElementById('kmhkredi-odeme-gun-tip').value;
 
   if(!kmhId) { showFieldError('kmhkredi-kmh', 'KMH hesabı seçiniz'); return; }
-  if(!aciklama) { showFieldError('kmhkredi-aciklama', 'Açıklama zorunlu'); return; }
   if(!anaPara) { showFieldError('kmhkredi-anapara', 'Ana para zorunlu'); return; }
   if(!faizOran) { showFieldError('kmhkredi-faiz', 'Faiz oranı zorunlu'); return; }
   if(!vade) { showFieldError('kmhkredi-vade', 'Vade zorunlu'); return; }
@@ -4923,7 +4922,7 @@ function saveKmhKredi() {
 
   const kredi = {
     id: editKmhKrediId || uid(),
-    kmhId, aciklama, anaPara, faizOran, kkdf, bsmv, vade, ilkEkstre,
+    kmhId, anaPara, faizOran, kkdf, bsmv, vade, ilkEkstre,
     odemeGunTip: odemeGunTip || '',
     aylikTaksit: parseFloat(aylikTaksit.toFixed(2)),
     toplamBorc: parseFloat(toplamBorc.toFixed(2)),
