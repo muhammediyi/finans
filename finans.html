@@ -2246,21 +2246,39 @@ tbody tr:hover { background: var(--surface2) !important; }
 
 <!-- Şube Tanımlamaları Modal -->
 <div class="modal-bg" id="modal-sube">
-  <div class="modal" style="max-width:680px;max-height:80vh;display:flex;flex-direction:column">
+  <div class="modal" style="max-width:680px;max-height:88vh;display:flex;flex-direction:column">
     <div class="modal-header">
       <div class="modal-title" id="sube-modal-title">Şube Tanımlamaları</div>
       <button class="close-btn" onclick="closeModal('modal-sube')">✕</button>
     </div>
-    <div style="padding:0 0 12px;flex-shrink:0">
+    <div style="padding:0 0 10px;flex-shrink:0">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px" id="sube-modal-banka-info"></div>
-      <input id="sube-arama" placeholder="🔍 Şube adı veya kodu ara..." oninput="filterSubeList()" style="width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-size:13px">
+      <!-- Şube Ekle / Düzenle Formu -->
+      <div style="display:flex;gap:8px;align-items:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px">
+        <div style="flex:0 0 110px">
+          <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Şube Kodu</label>
+          <input id="sube-yeni-kod" placeholder="örn. 00123" maxlength="10" style="width:100%;padding:6px 9px;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;box-sizing:border-box">
+        </div>
+        <div style="flex:1">
+          <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">Şube Adı</label>
+          <input id="sube-yeni-ad" placeholder="örn. Ankara Kızılay Şubesi" style="width:100%;padding:6px 9px;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;box-sizing:border-box" onkeydown="if(event.key==='Enter')saveSubeForm()">
+        </div>
+        <input type="hidden" id="sube-edit-orig-kod">
+        <button id="sube-kaydet-btn" class="btn btn-primary btn-sm" onclick="saveSubeForm()" style="flex-shrink:0;white-space:nowrap">Ekle</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sube-yeni-kod').value='';document.getElementById('sube-yeni-ad').value='';document.getElementById('sube-edit-orig-kod').value='';document.getElementById('sube-kaydet-btn').textContent='Ekle'" style="flex-shrink:0">✕</button>
+      </div>
+      <input id="sube-arama" placeholder="🔍 Şube adı veya kodu ara..." oninput="filterSubeList()" style="width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-size:13px;box-sizing:border-box">
     </div>
     <div style="overflow-y:auto;flex:1">
       <table style="width:100%">
-        <thead><tr><th style="font-size:11px;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Şube Kodu</th><th style="font-size:11px;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Şube Adı</th></tr></thead>
+        <thead><tr>
+          <th style="font-size:11px;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Şube Kodu</th>
+          <th style="font-size:11px;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Şube Adı</th>
+          <th style="font-size:11px;color:var(--text3);padding:6px 8px;border-bottom:1px solid var(--border);width:70px"></th>
+        </tr></thead>
         <tbody id="sube-list-tbody"></tbody>
       </table>
-      <div id="sube-bos-mesaj" style="display:none;text-align:center;padding:24px;color:var(--text3)">Bu banka için şube verisi bulunamadı.</div>
+      <div id="sube-bos-mesaj" style="display:none;text-align:center;padding:24px;color:var(--text3)">Henüz şube eklenmedi. Yukarıdaki formu kullanın.</div>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px;flex-shrink:0">
       <button class="btn btn-ghost" onclick="closeModal('modal-sube')">Kapat</button>
@@ -2407,6 +2425,7 @@ function loadData() {
     if(!d.bsmvOranlari)   d.bsmvOranlari   = DEFAULT_BSMV_ORANLARI;
     if(!d.kmhFaizOranlari)d.kmhFaizOranlari= DEFAULT_KMH_FAIZ_ORANLARI;
     if(!d.hesaplar)       d.hesaplar       = defaultHesaplar();
+    if(!d.subeler)        d.subeler        = {};
     // Migrate: yeni default kiralar eksikse ekle
     const defaultK = defaultKiralar();
     defaultK.forEach(dk => {
@@ -2478,7 +2497,8 @@ function defaultData() {
     kkdfOranlari:   DEFAULT_KKDF_ORANLARI,
     bsmvOranlari:   DEFAULT_BSMV_ORANLARI,
     kmhFaizOranlari:DEFAULT_KMH_FAIZ_ORANLARI,
-    hesaplar: defaultHesaplar()
+    hesaplar: defaultHesaplar(),
+    subeler: {}
   };
 }
 function defaultHesaplar() {
@@ -5678,7 +5698,7 @@ function renderElden() {
 // ========== ŞUBE VERİLERİ ==========
 function getSubeAdFromKodlar(bankaKodu, subeKodu) {
   if(!bankaKodu || !subeKodu) return '';
-  const list = BANKA_SUBELER[bankaKodu];
+  const list = (DB.subeler && DB.subeler[bankaKodu]) || [];
   if(!list) return '';
   const match = list.find(s => s.k === subeKodu);
   return match ? match.a : '';
@@ -5698,13 +5718,20 @@ function openSubeModal(bankaId) {
   subeModalBankaId = bankaId;
   const b = DB.bankalar.find(x => x.id === bankaId);
   if(!b) return;
-  const ibanKod = b.ibanKod || '';
-  const list = BANKA_SUBELER[ibanKod] || [];
-  subeListTumu = list;
   document.getElementById('sube-modal-title').textContent = b.kisa + ' — Şubeler';
-  document.getElementById('sube-modal-banka-info').textContent = 'IBAN Kodu: ' + (ibanKod||'—') + ' · Toplam: ' + list.length + ' şube';
   document.getElementById('sube-arama').value = '';
   document.getElementById('modal-sube').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
+  refreshSubeModal();
+}
+
+function refreshSubeModal() {
+  const b = DB.bankalar.find(x => x.id === subeModalBankaId);
+  if(!b) return;
+  const ibanKod = b.ibanKod || '';
+  const list = (DB.subeler && DB.subeler[ibanKod]) || [];
+  subeListTumu = [...list];
+  document.getElementById('sube-modal-banka-info').textContent = 'IBAN Kodu: ' + (ibanKod||'—') + ' · Toplam: ' + list.length + ' şube';
+  document.getElementById('sube-arama').value = '';
   renderSubeList(list);
 }
 
@@ -5726,7 +5753,62 @@ function renderSubeList(list) {
   tbody.innerHTML = list.map(s => `<tr style="border-bottom:1px solid var(--border)">
     <td class="mono" style="padding:5px 8px;font-size:12px;color:var(--accent);white-space:nowrap">${s.k}</td>
     <td style="padding:5px 8px;font-size:12px;color:var(--text)">${s.a}</td>
+    <td style="padding:5px 4px;white-space:nowrap;text-align:right">
+      <button class="btn btn-ghost btn-sm" onclick="editSube('${s.k}')" style="margin-right:2px;font-size:11px">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSube('${s.k}')" style="font-size:11px">🗑</button>
+    </td>
   </tr>`).join('');
+}
+
+function editSube(kod) {
+  const b = DB.bankalar.find(x => x.id === subeModalBankaId);
+  if(!b || !b.ibanKod) return;
+  const list = DB.subeler[b.ibanKod] || [];
+  const s = list.find(x => x.k === kod);
+  if(!s) return;
+  document.getElementById('sube-yeni-kod').value = s.k;
+  document.getElementById('sube-yeni-ad').value = s.a;
+  document.getElementById('sube-edit-orig-kod').value = s.k;
+  document.getElementById('sube-kaydet-btn').textContent = 'Güncelle';
+  document.getElementById('sube-yeni-kod').focus();
+}
+
+function deleteSube(kod) {
+  const b = DB.bankalar.find(x => x.id === subeModalBankaId);
+  if(!b || !b.ibanKod) return;
+  if(!DB.subeler[b.ibanKod]) return;
+  DB.subeler[b.ibanKod] = DB.subeler[b.ibanKod].filter(s => s.k !== kod);
+  saveData();
+  renderTanimlamalar();
+  refreshSubeModal();
+}
+
+function saveSubeForm() {
+  const b = DB.bankalar.find(x => x.id === subeModalBankaId);
+  if(!b) return;
+  const ibanKod = b.ibanKod || '';
+  if(!ibanKod) { alert('Bu bankanın IBAN kodu yok, önce IBAN kodunu tanımlayın.'); return; }
+  const kod = document.getElementById('sube-yeni-kod').value.trim();
+  const ad  = document.getElementById('sube-yeni-ad').value.trim();
+  if(!kod || !ad) { alert('Şube kodu ve adı zorunludur.'); return; }
+  if(!DB.subeler[ibanKod]) DB.subeler[ibanKod] = [];
+  const origKod = document.getElementById('sube-edit-orig-kod').value;
+  if(origKod) {
+    // edit mode: remove old, add new
+    DB.subeler[ibanKod] = DB.subeler[ibanKod].filter(s => s.k !== origKod);
+  } else {
+    // add mode: check duplicate
+    if(DB.subeler[ibanKod].find(s => s.k === kod)) { alert('Bu şube kodu zaten var.'); return; }
+  }
+  DB.subeler[ibanKod].push({k: kod, a: ad});
+  DB.subeler[ibanKod].sort((a,b) => a.k.localeCompare(b.k));
+  document.getElementById('sube-yeni-kod').value = '';
+  document.getElementById('sube-yeni-ad').value = '';
+  document.getElementById('sube-edit-orig-kod').value = '';
+  document.getElementById('sube-kaydet-btn').textContent = 'Ekle';
+  saveData();
+  renderTanimlamalar();
+  refreshSubeModal();
 }
 
 let editBankaId = null;
@@ -5889,7 +5971,7 @@ function renderTanimlamalar() {
     <td>${b.tam}</td>
     <td>${b.kisa}</td>
     <td class="mono" style="letter-spacing:.05em;color:var(--accent)">${b.ibanKod||'<span style="color:var(--text3)">—</span>'}</td>
-    <td style="font-size:11px;color:var(--text3)">${b.ibanKod && BANKA_SUBELER[b.ibanKod] ? BANKA_SUBELER[b.ibanKod].length + ' şube' : '—'}</td>
+    <td style="font-size:11px;color:var(--text3)">${b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length ? DB.subeler[b.ibanKod].length + ' şube' : '—'}</td>
     <td style="white-space:nowrap">
       <button class="btn btn-ghost btn-sm" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları">🏢</button>
       <button class="btn btn-ghost btn-sm" onclick="editBanka('${b.id}')" style="margin-right:4px">✏️</button>
