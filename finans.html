@@ -1859,7 +1859,18 @@ tbody tr:hover { background: var(--surface2) !important; }
     <div class="form-row cols-3">
       <div><label>Tür</label><select id="kira-tur"><option value="gelir">Gelir</option><option value="gider">Gider</option></select></div>
       <div><label>Aylık Tutar <span style="color:var(--danger)">*</span></label><input id="kira-tutar" type="text" class="money-input" data-decimals="2" placeholder="12.500,00"></div>
-      <div><label>Ödeme Günü (1-31)</label><input id="kira-gun" type="number" min="1" max="31" placeholder="15"></div>
+      <div><label>Ödeme Günü (1-31)</label><input id="kira-gun" type="number" min="1" max="31" placeholder="15" oninput="onKiraGunChange()"></div>
+    </div>
+    <div id="kira-gun-kisa-ay-wrap" style="display:none;margin-top:-8px;margin-bottom:14px;display:none">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:0;white-space:nowrap">Ay 29/30/31 yoksa</label>
+        <select id="kira-gun-kisa-ay-davranis" style="max-width:220px;margin:0">
+          <option value="son-gun">O Ayın Son Günü</option>
+          <option value="onceki">Önceki İş Günü</option>
+          <option value="sonraki">Sonraki Ayın 1'i</option>
+        </select>
+      </div>
+      <div id="kira-gun-kisa-ay-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
     </div>
     <div class="form-row cols-2">
       <div>
@@ -3074,6 +3085,7 @@ function initAllSelectPlaceholders() {
     ['para-birimi-select',   'Para birimi seçin…'],
     ['kat-tur',              null],
     ['kira-depozito-durum',  null],
+    ['kira-gun-kisa-ay-davranis', null],
     ['maas-gun-kisa-ay-davranis', null],
   ];
   map.forEach(([id, label]) => {
@@ -4572,6 +4584,10 @@ function openKiraModal(id=null) {
       document.getElementById('kira-gun').value = k.gun;
       document.getElementById('kira-aciklama').value = k.aciklama||'';
       document.getElementById('kira-pasif').checked = !!k.pasif;
+      // Kısa ay davranışı
+      const kisaDavranisEl = document.getElementById('kira-gun-kisa-ay-davranis');
+      if(kisaDavranisEl) kisaDavranisEl.value = k.kisaAyDavranis || 'son-gun';
+      onKiraGunChange();
       // Banka hesabı seçimi ve para birimi
       _populateKiraHesapSel(k.hesapId||'', k.paraBirimi||defaultCurrency||'TRY');
       // Depozito
@@ -4594,6 +4610,10 @@ function openKiraModal(id=null) {
     document.getElementById('kira-gun').value='';
     document.getElementById('kira-aciklama').value='';
     document.getElementById('kira-pasif').checked=false;
+    const kisaDavranisElN = document.getElementById('kira-gun-kisa-ay-davranis');
+    if(kisaDavranisElN) kisaDavranisElN.value = 'son-gun';
+    const kisaWrapN = document.getElementById('kira-gun-kisa-ay-wrap');
+    if(kisaWrapN) kisaWrapN.style.display = 'none';
     _populateKiraHesapSel('', defaultCurrency||'TRY');
     document.getElementById('kira-depozito-var').checked=false;
     toggleKiraDepozito();
@@ -4630,6 +4650,10 @@ function saveKira() {
     paraBirimi,
     hesapId: hesapId || null,
     gun: parseInt(document.getElementById('kira-gun').value)||15,
+    kisaAyDavranis: (()=>{
+      const gun = parseInt(document.getElementById('kira-gun').value)||15;
+      return gun > 28 ? ((document.getElementById('kira-gun-kisa-ay-davranis')||{}).value || 'son-gun') : undefined;
+    })(),
     aciklama: document.getElementById('kira-aciklama').value.trim(),
     pasif: document.getElementById('kira-pasif').checked,
     depozito
@@ -4660,12 +4684,33 @@ function deleteKira(id) {
 // Bir kontratin belirli yil/ay icinde odeme gunu var mi?
 function kiraPayInMonth(k, year, month) {
   if(k.pasif) return null;
-  // Use the day of month from the contract; clamp to last day
   const lastDay = new Date(year, month+1, 0).getDate();
-  const day = Math.min(k.gun, lastDay);
-  const payDt = new Date(year, month, day);
+  let day, nextMonth = false;
+  if(k.gun <= lastDay) {
+    day = k.gun;
+  } else {
+    // Gün bu ayda yok — kisaAyDavranis uygula
+    const davranis = k.kisaAyDavranis || 'son-gun';
+    if(davranis === 'son-gun') {
+      day = lastDay;
+    } else if(davranis === 'onceki') {
+      const tatilSet = getTatilSet();
+      let dt = new Date(year, month, lastDay);
+      while(!isIsBgunu(dt, tatilSet)) dt.setDate(dt.getDate()-1);
+      day = dt.getDate();
+    } else if(davranis === 'sonraki') {
+      // Sonraki ayın 1'ine kaydır — o ay için ödeme yok, sonraki aya taşındı
+      nextMonth = true;
+      day = 1;
+    }
+  }
+  let payDt;
+  if(nextMonth) {
+    payDt = new Date(year, month+1, 1);
+  } else {
+    payDt = new Date(year, month, day);
+  }
   const payStr = localDateStr(payDt);
-  // Contract active range: baslangic <= payStr <= bitis
   if(payStr >= k.baslangic && payStr <= k.bitis) return payDt;
   return null;
 }
@@ -6807,11 +6852,31 @@ function kontratAylariHesapla(k, yil) {
     // Kontrat aktif mi bu ayda?
     if(baslangic && ayStr < baslangic) continue;
     if(bitis && ayStr > bitis) continue;
-    // Ödeme tarihi hesapla
+    // Ödeme tarihi hesapla — kısa ay davranışı
     const gun = k.gun || 1;
     const lastDay = new Date(yil, ay+1, 0).getDate();
-    const payGun  = Math.min(gun, lastDay);
-    const payTarih = ayStr+'-'+String(payGun).padStart(2,'0');
+    let payGun, nextMon = false;
+    if(gun <= lastDay) {
+      payGun = gun;
+    } else {
+      const davranis = k.kisaAyDavranis || 'son-gun';
+      if(davranis === 'son-gun') {
+        payGun = lastDay;
+      } else if(davranis === 'onceki') {
+        const tatilSet = getTatilSet();
+        let dt = new Date(yil, ay, lastDay);
+        while(!isIsBgunu(dt, tatilSet)) dt.setDate(dt.getDate()-1);
+        payGun = dt.getDate();
+      } else if(davranis === 'sonraki') {
+        nextMon = true;
+        payGun = 1;
+      } else {
+        payGun = lastDay;
+      }
+    }
+    const payTarih = nextMon
+      ? (yil+'-'+String(ay+2).padStart(2,'0')+'-01').replace(/(\d{4})-13-/, s => (yil+1)+'-01-')
+      : ayStr+'-'+String(payGun).padStart(2,'0');
     aylar.push({ ay: ayStr, tarih: payTarih, tutar: k.tutar });
   }
   return aylar;
@@ -6967,7 +7032,20 @@ function kontratPlanFormAc(ay, islem) {
   const [yilStr, ayStr] = ay.split('-');
   const gun = k.gun || 1;
   const lastDay = new Date(parseInt(yilStr), parseInt(ayStr), 0).getDate();
-  const payGun = Math.min(gun, lastDay);
+  let payGun;
+  if(gun <= lastDay) {
+    payGun = gun;
+  } else {
+    const davranis = k.kisaAyDavranis || 'son-gun';
+    if(davranis === 'onceki') {
+      const tatilSet = getTatilSet();
+      let dt = new Date(parseInt(yilStr), parseInt(ayStr)-1, lastDay);
+      while(!isIsBgunu(dt, tatilSet)) dt.setDate(dt.getDate()-1);
+      payGun = dt.getDate();
+    } else {
+      payGun = lastDay;
+    }
+  }
   const orijTarih = ay+'-'+String(payGun).padStart(2,'0');
   const mevcutTarih = ov.tarih || orijTarih;
   const mevcutTutar = Math.abs(ov.tutar !== undefined ? ov.tutar : k.tutar);
@@ -7151,9 +7229,10 @@ function renderOzet() {
   DB.kiralar.forEach(k=>{
     if(k.pasif) return;
     for(let offset=0;offset<=1;offset++){
-      const d=new Date(year,month+offset,k.gun);
+      const d = kiraPayInMonth(k, year, month+offset);
+      if(!d) continue;
       const ds=localDateStr(d);
-      if(d>=today&&d<=end30&&ds>=k.baslangic&&ds<=k.bitis) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:'Kira', tutar:k.tutar, tip:'kira', id:k.id, key:ds.slice(0,7)});
+      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:'Kira', tutar:k.tutar, tip:'kira', id:k.id, key:ds.slice(0,7)});
     }
   });
 
@@ -7199,9 +7278,10 @@ function renderOzet() {
   const cashItems = [];
   DB.kiralar.forEach(k=>{
     if(k.pasif) return;
-    const pd=new Date(year,month,k.gun);
+    const pd = kiraPayInMonth(k, year, month);
+    if(!pd) return;
     const ps=localDateStr(pd);
-    if(ps>=k.baslangic&&ps<=k.bitis) cashItems.push({gun:k.gun,aciklama:k.aciklama||'Kira',tutar:k.tutar});
+    if(ps>=k.baslangic&&ps<=k.bitis) cashItems.push({gun:pd.getDate(),aciklama:k.aciklama||'Kira',tutar:k.tutar});
   });
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
@@ -7273,11 +7353,15 @@ function getMaasPb() {
 
 function onKiraHesapChange() {
   const hesapId = document.getElementById('kira-hesap').value;
+  const pbWrap = document.getElementById('kira-pb-manual-wrap');
   if(hesapId) {
     const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
     const manualSel = document.getElementById('kira-para-birimi-manual');
     if(manualSel) { manualSel.value = pb; phUpdate(manualSel); }
+    if(pbWrap) pbWrap.style.display = 'none';
+  } else {
+    if(pbWrap) pbWrap.style.display = '';
   }
 }
 
@@ -7285,6 +7369,21 @@ function onKiraPbManualChange() {
   // Para birimi değişince phUpdate ile renk güncelle
   const sel = document.getElementById('kira-para-birimi-manual');
   if(sel) phUpdate(sel);
+}
+
+function onKiraGunChange() {
+  const gun = parseInt(document.getElementById('kira-gun').value)||0;
+  const kisaWrap = document.getElementById('kira-gun-kisa-ay-wrap');
+  const kisaBilgi = document.getElementById('kira-gun-kisa-ay-bilgi');
+  if(gun > 28) {
+    if(kisaWrap) kisaWrap.style.display = '';
+    const etkilenenAylar = [];
+    if(gun >= 29) etkilenenAylar.push('Şubat');
+    if(gun === 31) etkilenenAylar.push('Nisan, Haziran, Eylül, Kasım');
+    if(kisaBilgi) kisaBilgi.textContent = `⚠ ${gun}. gün bazı aylarda (${etkilenenAylar.join('; ')}) yoktur.`;
+  } else {
+    if(kisaWrap) kisaWrap.style.display = 'none';
+  }
 }
 
 function getKiraPb() {
