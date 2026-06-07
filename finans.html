@@ -2215,7 +2215,7 @@ tbody tr:hover { background: var(--surface2) !important; }
 
 <!-- Elden Modal -->
 <div class="modal-bg" id="modal-elden">
-  <div class="modal">
+  <div class="modal" style="max-width:780px">
     <div class="modal-header">
       <div class="modal-title" id="elden-modal-title">Elden Ödeme Ekle</div>
       <button class="close-btn" onclick="closeModal('modal-elden')">✕</button>
@@ -2286,10 +2286,14 @@ tbody tr:hover { background: var(--surface2) !important; }
       <div class="form-row">
         <div>
           <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-          <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-            oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-            onblur="formatIbanView(this)"
-            onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+              oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput()"
+              onblur="formatIbanView(this)"
+              onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+            <button class="btn btn-ghost btn-sm" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+          <div id="elden-karsi-iban-uyari" style="display:none;font-size:11px;color:var(--warn);margin-top:4px">⚠ Kişi seçilmeden girilen IBAN kaydedilebilir ancak kişiyle ilişkilendirilmez.</div>
         </div>
       </div>
     </div>
@@ -4537,6 +4541,8 @@ function openEldenModal() {
   document.getElementById('elden-hesap-bilgi-wrap').style.display = 'none';
   document.getElementById('elden-karsi-iban').value = '';
   document.getElementById('elden-karsi-ad').value = '';
+  const uyariEl = document.getElementById('elden-karsi-iban-uyari');
+  if(uyariEl) uyariEl.style.display = 'none';
   populateEldenHesapSelect();
   populateEldenKisiSelect();
   // Para birimi
@@ -6196,6 +6202,7 @@ function renderKisiIbanList() {
         <div style="font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.05em">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</div>
         ${ib.etiket?`<div style="font-size:10px;color:var(--text3);margin-top:1px">${ib.etiket}</div>`:''}
       </div>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('IBAN kopyalandı ✓'))" title="Kopyala">📋</button>
       <button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="_kisiIbanlar.splice(${i},1);renderKisiIbanList()">✕</button>
     </div>`).join('');
 }
@@ -6288,6 +6295,9 @@ function populateEldenKisiSelect() {
 
 function onEldenKisiChange() {
   const kisiId = document.getElementById('elden-kisi').value;
+  // Uyarıyı gizle
+  const uyariEl = document.getElementById('elden-karsi-iban-uyari');
+  if(uyariEl) uyariEl.style.display = 'none';
   if(!kisiId) {
     document.getElementById('elden-karsi-ad').value = '';
     document.getElementById('elden-karsi-iban').value = '';
@@ -7897,6 +7907,30 @@ function copyEldenHesapIban() {
     showToast('IBAN kopyalandı ✓');
   });
 }
+
+function copyEldenKarsiIban() {
+  const el = document.getElementById('elden-karsi-iban');
+  if(!el) return;
+  const raw = el.value.replace(/\s+/g,'').toUpperCase();
+  if(!raw) { showToast('Kopyalanacak IBAN yok', 'error'); return; }
+  navigator.clipboard.writeText(raw).then(()=>showToast('IBAN kopyalandı ✓')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = raw; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('IBAN kopyalandı ✓');
+  });
+}
+
+function onEldenKarsiIbanInput() {
+  const ibanEl = document.getElementById('elden-karsi-iban');
+  const uyariEl = document.getElementById('elden-karsi-iban-uyari');
+  const kisiEl = document.getElementById('elden-kisi');
+  if(!uyariEl) return;
+  const hasIban = ibanEl && ibanEl.value.replace(/\s+/g,'').length > 0;
+  const hasKisi = kisiEl && kisiEl.value;
+  uyariEl.style.display = (hasIban && !hasKisi) ? '' : 'none';
+}
+
 
 function populateEldenHesapSelect() {
   const sel = document.getElementById('elden-hesap');
