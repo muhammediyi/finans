@@ -5649,7 +5649,7 @@ function renderKmhKrediPlan(todayStr) {
         ${grup.ad} — KMH Taksit Planı
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>Dönem</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
+        <thead><tr><th>Dönem</th><th>Taksit Tarihi</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
         <tbody>`;
 
     aylar.forEach((ayData, ay)=>{
@@ -5662,6 +5662,7 @@ function renderKmhKrediPlan(todayStr) {
         const t = ayData.taksitler[0];
         html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':''}">
           <td class="mono" style="color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel}</td>
+          <td class="mono" style="color:${gecti?'var(--text3)':'var(--text2)'}">${fmtDate(t.tarih)}</td>
           <td class="mono">${t.no}/${grup.krediler.find(x=>x.id===t.krediId)?.vade||'?'}</td>
           <td class="mono ${gecti?'':'warn'}">${fmt(t.tutar)}</td>
           <td>${odToggleBtn('kmh', t.krediId, t.no, t.tarih, t.tutar, grup.ad+' #'+t.no)}</td>
@@ -5670,12 +5671,14 @@ function renderKmhKrediPlan(todayStr) {
         html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':'background:rgba(42,58,82,0.3)'}">
           <td class="mono" style="font-weight:700;color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel} <span style="color:var(--text3);font-size:10px">(${ayData.taksitler.length} kredi)</span></td>
           <td></td>
+          <td></td>
           <td class="mono" style="font-weight:700;color:${gecti?'var(--text3)':'var(--warn)'}">${fmt(ayData.toplam)}</td>
           <td></td>
         </tr>`;
         ayData.taksitler.forEach(t=>{
           html += `<tr style="background:var(--surface2)">
             <td></td>
+            <td class="mono" style="font-size:11px;color:var(--text3)">${fmtDate(t.tarih)}</td>
             <td class="mono" style="font-size:11px">${t.no}/${grup.krediler.find(x=>x.id===t.krediId)?.vade||'?'}</td>
             <td class="mono" style="font-size:11px">${fmt(t.tutar)}</td>
             <td></td>
@@ -5931,7 +5934,7 @@ function renderKredi() {
   });
 
   let html = `<div class="tbl-wrap"><table>
-    <thead><tr><th>Dönem</th><th>Kredi</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
+    <thead><tr><th>Dönem</th><th>Taksit Tarihi</th><th>Kredi</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
     <tbody>`;
 
   aylar.forEach((ayData, ay)=>{
@@ -5944,6 +5947,7 @@ function renderKredi() {
       const t = ayData.taksitler[0];
       html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':''}">
         <td class="mono" style="color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel}</td>
+        <td class="mono" style="color:${gecti?'var(--text3)':'var(--text2)'}">${fmtDate(t.tarih)}</td>
         <td style="color:var(--text2)">${t.krediAciklama}</td>
         <td class="mono">${t.no}/${t.vade}</td>
         <td class="mono ${gecti?'':'warn'}">${fmt(t.tutar)}</td>
@@ -5952,6 +5956,7 @@ function renderKredi() {
     } else {
       html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':'background:rgba(42,58,82,0.3)'}">
         <td class="mono" style="font-weight:700;color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel}</td>
+        <td></td>
         <td style="color:var(--text3);font-size:11px">${ayData.taksitler.length} kredi</td>
         <td></td>
         <td class="mono" style="font-weight:700;color:${gecti?'var(--text3)':'var(--warn)'}">${fmt(ayData.toplam)}</td>
@@ -5960,6 +5965,7 @@ function renderKredi() {
       ayData.taksitler.forEach(t=>{
         html += `<tr style="background:var(--surface2)">
           <td></td>
+          <td class="mono" style="font-size:11px;color:var(--text3)">${fmtDate(t.tarih)}</td>
           <td style="color:var(--text3);font-size:11px;padding-left:20px">↳ ${t.krediAciklama}</td>
           <td class="mono" style="font-size:11px">${t.no}/${t.vade}</td>
           <td class="mono" style="font-size:11px">${fmt(t.tutar)}</td>
