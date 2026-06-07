@@ -1874,14 +1874,63 @@ tbody tr:hover { background: var(--surface2) !important; }
     </div>
     <div class="form-row cols-2">
       <div>
-        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-        <select id="kira-hesap" onchange="onKiraHesapChange()">
+        <label>Para Birimi</label>
+        <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange()"></select>
+      </div>
+      <div id="kira-pb-manual-wrap" style="display:none"></div>
+    </div>
+    <hr class="divider" style="margin:12px 0">
+    <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Ödeme Yöntemi</div>
+    <div class="form-row cols-2">
+      <div>
+        <label>Yöntem</label>
+        <select id="kira-yontem" onchange="onKiraYontemChange()">
+          <option value="nakit">💵 Nakit</option>
+          <option value="havale">🏦 Havale / EFT</option>
+        </select>
+      </div>
+      <div id="kira-hesap-wrap" style="display:none">
+        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
+        <select id="kira-hesap" onchange="onKiraHesapFullChange()">
           <option value="">— Hesap Seçin —</option>
         </select>
       </div>
-      <div id="kira-pb-manual-wrap">
-        <label>Para Birimi</label>
-        <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange()"></select>
+    </div>
+    <div id="kira-hesap-iban-wrap" style="display:none">
+      <div class="form-row">
+        <div>
+          <label>Hesap IBAN</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <code id="kira-hesap-iban-display" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;word-break:break-all">—</code>
+            <button class="btn btn-ghost btn-sm" onclick="copyKiraHesapIban()" title="Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="kira-karsi-wrap" style="display:none">
+      <div class="form-row cols-2" style="align-items:flex-end">
+        <div>
+          <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
+          <div style="display:flex;gap:6px">
+            <select id="kira-kisi" onchange="onKiraKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="showTab('tab-kisiler',null);showPage('tanimlamalar',null)" title="Kişi Yönetimi" style="flex-shrink:0">⚙</button>
+          </div>
+        </div>
+        <div>
+          <label>Karşı Taraf Adı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+          <input id="kira-karsi-ad" placeholder="Ad Soyad / Şirket adı">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="kira-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+              oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
+              onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+            <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="form-row">
@@ -1956,14 +2005,8 @@ tbody tr:hover { background: var(--surface2) !important; }
       <div class="modal-title" id="maas-modal-title">Maaş Geliri Ekle</div>
       <button class="close-btn" onclick="closeModal('modal-maas')">✕</button>
     </div>
-    <div class="form-row cols-2">
+    <div class="form-row cols-1">
       <div><label>Açıklama <span style="color:var(--danger)">*</span></label><input id="maas-aciklama" placeholder="örn. Maaş, Ek Gelir, Prim..."></div>
-      <div>
-        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-        <select id="maas-hesap" onchange="onMaasHesapChange()">
-          <option value="">— Hesap Seçin —</option>
-        </select>
-      </div>
     </div>
     <div class="form-row cols-2">
       <div><label>Tutar <span style="color:var(--danger)">*</span></label>
@@ -2008,6 +2051,63 @@ tbody tr:hover { background: var(--surface2) !important; }
       <div><label>Ödeme Tarihi <span style="color:var(--danger)">*</span></label><input id="maas-tekseferlik-tarih" type="date"></div>
     </div>
     <input type="checkbox" id="maas-pasif" style="display:none">
+    <!-- ÖDEME YÖNTEMİ -->
+    <hr class="divider" style="margin:12px 0">
+    <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Ödeme / Tahsilat Yöntemi</div>
+    <div class="form-row cols-2">
+      <div>
+        <label>Yöntem</label>
+        <select id="maas-yontem" onchange="onMaasYontemChange()">
+          <option value="nakit">💵 Nakit</option>
+          <option value="havale">🏦 Havale / EFT (IBAN)</option>
+        </select>
+      </div>
+      <div id="maas-hesap-wrap" style="display:none">
+        <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
+        <select id="maas-hesap" onchange="onMaasHesapChange()">
+          <option value="">— Hesap Seçin —</option>
+        </select>
+      </div>
+    </div>
+    <!-- Hesap IBAN gösterimi -->
+    <div id="maas-hesap-bilgi-wrap" style="display:none">
+      <div class="form-row">
+        <div>
+          <label>Hesap IBAN</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <code id="maas-hesap-iban-display" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;word-break:break-all">—</code>
+            <button class="btn btn-ghost btn-sm" onclick="copyMaasHesapIban()" title="Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Karşı taraf -->
+    <div id="maas-karsi-wrap" style="display:none">
+      <div class="form-row cols-2" style="align-items:flex-end">
+        <div>
+          <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
+          <div style="display:flex;gap:6px">
+            <select id="maas-kisi" onchange="onMaasKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="showTab('tab-kisiler',null);showPage('tanimlamalar',null)" title="Kişi Yönetimi" style="flex-shrink:0">⚙</button>
+          </div>
+        </div>
+        <div>
+          <label>Karşı Taraf Adı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+          <input id="maas-karsi-ad" placeholder="Ad Soyad / Şirket adı">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="maas-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+              oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
+              onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+            <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="maas-pasif-wrap" class="toggle-wrap">
       <label class="toggle-switch">
         <input type="checkbox" id="maas-pasif-visible" onchange="document.getElementById('maas-pasif').checked=this.checked">
@@ -4594,6 +4694,44 @@ function openKiraModal(id=null) {
       onKiraGunChange();
       // Banka hesabı seçimi ve para birimi
       _populateKiraHesapSel(k.hesapId||'', k.paraBirimi||defaultCurrency||'TRY');
+      // Ödeme yöntemi geri yükle
+      const kiraEditYontem = k.odemeYontem || (k.hesapId ? 'havale' : 'nakit');
+      const kiraYontemEl = document.getElementById('kira-yontem');
+      if(kiraYontemEl) kiraYontemEl.value = kiraEditYontem;
+      // Kişi seçimi doldur
+      const kiraKisiSelEdit = document.getElementById('kira-kisi');
+      if(kiraKisiSelEdit) {
+        const kisilerE = DB.kisiler||[];
+        kiraKisiSelEdit.innerHTML = kisilerE.map(ki=>`<option value="${ki.id}">${ki.ad}${ki.ibanlar&&ki.ibanlar.length?' ('+ki.ibanlar.length+' IBAN)':''}</option>`).join('');
+        phSet(kiraKisiSelEdit, 'Kişi seçin…', k.kisiId||'');
+      }
+      if(kiraEditYontem === 'havale') {
+        const kiraHW = document.getElementById('kira-hesap-wrap');
+        const kiraKW = document.getElementById('kira-karsi-wrap');
+        if(kiraHW) kiraHW.style.display = '';
+        if(kiraKW) kiraKW.style.display = '';
+        const kiraKAdEl = document.getElementById('kira-karsi-ad');
+        const kiraKIbanEl = document.getElementById('kira-karsi-iban');
+        if(kiraKAdEl) kiraKAdEl.value = k.karsiAd||'';
+        if(kiraKIbanEl) { kiraKIbanEl.value = k.karsiIban||''; if(k.karsiIban) formatIbanView(kiraKIbanEl); }
+        // IBAN göster
+        if(k.hesapId) {
+          const kiraHesapObj = (DB.hesaplar||[]).find(h=>h.id===k.hesapId);
+          const kiraIbanWrap = document.getElementById('kira-hesap-iban-wrap');
+          if(kiraHesapObj && kiraHesapObj.iban && kiraIbanWrap) {
+            kiraIbanWrap.style.display = '';
+            const kiraIbanDisplay = document.getElementById('kira-hesap-iban-display');
+            if(kiraIbanDisplay) kiraIbanDisplay.textContent = kiraHesapObj.iban.replace(/(.{4})/g,'$1 ').trim();
+          }
+        }
+      } else {
+        const kiraHW = document.getElementById('kira-hesap-wrap');
+        const kiraKW = document.getElementById('kira-karsi-wrap');
+        const kiraIbanWrap = document.getElementById('kira-hesap-iban-wrap');
+        if(kiraHW) kiraHW.style.display = 'none';
+        if(kiraKW) kiraKW.style.display = 'none';
+        if(kiraIbanWrap) kiraIbanWrap.style.display = 'none';
+      }
       // Depozito
       const depVar = !!k.depozito;
       document.getElementById('kira-depozito-var').checked = depVar;
@@ -4620,6 +4758,26 @@ function openKiraModal(id=null) {
     const kisaWrapN = document.getElementById('kira-gun-kisa-ay-wrap');
     if(kisaWrapN) kisaWrapN.style.display = 'none';
     _populateKiraHesapSel('', defaultCurrency||'TRY');
+    // Ödeme yöntemi sıfırla
+    const kiraNewYontemEl = document.getElementById('kira-yontem');
+    if(kiraNewYontemEl) kiraNewYontemEl.value = 'nakit';
+    const kiraNewHesapWrap = document.getElementById('kira-hesap-wrap');
+    const kiraNewKarsiWrap = document.getElementById('kira-karsi-wrap');
+    const kiraNewIbanWrap = document.getElementById('kira-hesap-iban-wrap');
+    if(kiraNewHesapWrap) kiraNewHesapWrap.style.display = 'none';
+    if(kiraNewKarsiWrap) kiraNewKarsiWrap.style.display = 'none';
+    if(kiraNewIbanWrap) kiraNewIbanWrap.style.display = 'none';
+    const kiraNewKAdEl = document.getElementById('kira-karsi-ad');
+    const kiraNewKIbanEl = document.getElementById('kira-karsi-iban');
+    if(kiraNewKAdEl) kiraNewKAdEl.value = '';
+    if(kiraNewKIbanEl) kiraNewKIbanEl.value = '';
+    // Kişi seçimi doldur
+    const kiraKisiSelNew = document.getElementById('kira-kisi');
+    if(kiraKisiSelNew) {
+      const kisilerN = DB.kisiler||[];
+      kiraKisiSelNew.innerHTML = kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+      phSet(kiraKisiSelNew, 'Kişi seçin…', '');
+    }
     document.getElementById('kira-depozito-var').checked=false;
     _fillPbManualSelect('kira-depozito-pb', defaultCurrency||'TRY');
     toggleKiraDepozito();
@@ -4649,13 +4807,22 @@ function saveKira() {
     };
   }
 
+  const kiraOdemeYontem = (document.getElementById('kira-yontem')||{}).value || 'nakit';
+  const kiraKarsiAd = kiraOdemeYontem === 'havale' ? ((document.getElementById('kira-karsi-ad')||{}).value || '') : '';
+  const kiraKarsiIban = kiraOdemeYontem === 'havale' ? ((document.getElementById('kira-karsi-iban')||{}).value.replace(/\s+/g,'').toUpperCase() || '') : '';
+  const kiraKisiId = kiraOdemeYontem === 'havale' ? ((document.getElementById('kira-kisi')||{}).value || null) : null;
+
   const kira = {
     id: editKiraId || uid(),
     baslangic: document.getElementById('kira-baslangic').value,
     bitis: document.getElementById('kira-bitis').value,
     tutar,
     paraBirimi,
-    hesapId: hesapId || null,
+    hesapId: kiraOdemeYontem === 'havale' ? (hesapId || null) : null,
+    odemeYontem: kiraOdemeYontem,
+    karsiAd: kiraKarsiAd,
+    karsiIban: kiraKarsiIban,
+    kisiId: kiraKisiId,
     gun: parseInt(document.getElementById('kira-gun').value)||15,
     kisaAyDavranis: (()=>{
       const gun = parseInt(document.getElementById('kira-gun').value)||15;
@@ -4811,6 +4978,26 @@ function openMaasModal() {
   document.getElementById('maas-tekseferlik-tarih-wrap').style.display = 'none';
   document.getElementById('maas-pasif').checked = false;
   document.getElementById('maas-pasif-visible').checked = false;
+  // Ödeme yöntemi sıfırla
+  const maasYontemEl = document.getElementById('maas-yontem');
+  if(maasYontemEl) maasYontemEl.value = 'nakit';
+  const maasHesapWrap = document.getElementById('maas-hesap-wrap');
+  const maasKarsiWrap = document.getElementById('maas-karsi-wrap');
+  const maasHesapBilgiWrap = document.getElementById('maas-hesap-bilgi-wrap');
+  if(maasHesapWrap) maasHesapWrap.style.display = 'none';
+  if(maasKarsiWrap) maasKarsiWrap.style.display = 'none';
+  if(maasHesapBilgiWrap) maasHesapBilgiWrap.style.display = 'none';
+  const maasKarsiAdEl = document.getElementById('maas-karsi-ad');
+  const maasKarsiIbanEl = document.getElementById('maas-karsi-iban');
+  if(maasKarsiAdEl) maasKarsiAdEl.value = '';
+  if(maasKarsiIbanEl) maasKarsiIbanEl.value = '';
+  // Kişi select doldur
+  const maasKisiSel = document.getElementById('maas-kisi');
+  if(maasKisiSel) {
+    const kisiler = DB.kisiler||[];
+    maasKisiSel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+    phSet(maasKisiSel, 'Kişi seçin…', '');
+  }
   // Banka hesabı ve para birimi
   _populateMaasHesapSel('', defaultCurrency || 'TRY');
   bindMoneyInputs(document.getElementById('modal-maas'));
@@ -4887,6 +5074,12 @@ function saveMaas() {
   if(!aciklama) { showFieldError('maas-aciklama', 'Açıklama zorunlu'); return; }
   if(!tutar) { showFieldError('maas-tutar', 'Tutar zorunlu'); return; }
 
+  const odemeYontem = (document.getElementById('maas-yontem')||{}).value || 'nakit';
+  const hesapIdVal = odemeYontem === 'havale' ? ((document.getElementById('maas-hesap')||{}).value || null) : null;
+  const karsiAd = odemeYontem === 'havale' ? ((document.getElementById('maas-karsi-ad')||{}).value || '') : '';
+  const karsiIban = odemeYontem === 'havale' ? ((document.getElementById('maas-karsi-iban')||{}).value.replace(/\s+/g,'').toUpperCase() || '') : '';
+  const kisiId = odemeYontem === 'havale' ? ((document.getElementById('maas-kisi')||{}).value || null) : null;
+
   let maas;
   if(isTekSeferlik) {
     const tekseferlikTarih = document.getElementById('maas-tekseferlik-tarih').value;
@@ -4895,7 +5088,8 @@ function saveMaas() {
       id: editMaasId || uid(),
       aciklama, tutar,
       paraBirimi: getMaasPb(),
-      hesapId: (document.getElementById('maas-hesap')||{}).value || null,
+      hesapId: hesapIdVal,
+      odemeYontem, karsiAd, karsiIban, kisiId,
       tur: 'tekseferlik',
       gun: new Date(tekseferlikTarih+'T00:00:00').getDate(),
       baslangic: tekseferlikTarih,
@@ -4911,7 +5105,8 @@ function saveMaas() {
       id: editMaasId || uid(),
       aciklama, tutar,
       paraBirimi: getMaasPb(),
-      hesapId: (document.getElementById('maas-hesap')||{}).value || null,
+      hesapId: hesapIdVal,
+      odemeYontem, karsiAd, karsiIban, kisiId,
       tur: 'surekli',
       gun,
       kisaAyDavranis: gun > 28 ? ((document.getElementById('maas-gun-kisa-ay-davranis')||{}).value || 'son-gun') : undefined,
@@ -4974,6 +5169,35 @@ function editMaas(id) {
   }
   document.getElementById('maas-pasif').checked = !!m.pasif;
   document.getElementById('maas-pasif-visible').checked = !!m.pasif;
+  // Ödeme yöntemi geri yükle
+  const editYontemEl = document.getElementById('maas-yontem');
+  const editYontem = m.odemeYontem || 'nakit';
+  if(editYontemEl) editYontemEl.value = editYontem;
+  const editHesapWrap = document.getElementById('maas-hesap-wrap');
+  const editKarsiWrap = document.getElementById('maas-karsi-wrap');
+  const editHesapBilgiWrap = document.getElementById('maas-hesap-bilgi-wrap');
+  if(editYontem === 'havale') {
+    if(editHesapWrap) editHesapWrap.style.display = '';
+    if(editKarsiWrap) editKarsiWrap.style.display = '';
+    // Karşı taraf alanları
+    const karsiAdEl = document.getElementById('maas-karsi-ad');
+    const karsiIbanEl = document.getElementById('maas-karsi-iban');
+    if(karsiAdEl) karsiAdEl.value = m.karsiAd || '';
+    if(karsiIbanEl) { karsiIbanEl.value = m.karsiIban || ''; if(m.karsiIban) formatIbanView(karsiIbanEl); }
+    // Hesap bilgisi - IBAN göster
+    if(m.hesapId) {
+      const hesap = (DB.hesaplar||[]).find(h=>h.id===m.hesapId);
+      if(hesap && hesap.iban && editHesapBilgiWrap) {
+        editHesapBilgiWrap.style.display = '';
+        const ibanDisplayEl = document.getElementById('maas-hesap-iban-display');
+        if(ibanDisplayEl) ibanDisplayEl.textContent = hesap.iban.replace(/(.{4})/g,'$1 ').trim();
+      }
+    }
+  } else {
+    if(editHesapWrap) editHesapWrap.style.display = 'none';
+    if(editKarsiWrap) editKarsiWrap.style.display = 'none';
+    if(editHesapBilgiWrap) editHesapBilgiWrap.style.display = 'none';
+  }
   bindMoneyInputs(document.getElementById('modal-maas'));
   document.getElementById('modal-maas').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
@@ -7362,7 +7586,122 @@ function getMaasPb() {
   return (document.getElementById('maas-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
 }
 
-function onKiraHesapChange() {
+function onMaasYontemChange() {
+  const yontem = document.getElementById('maas-yontem').value;
+  const havale = yontem === 'havale';
+  const hesapWrap = document.getElementById('maas-hesap-wrap');
+  const karsiWrap = document.getElementById('maas-karsi-wrap');
+  if(hesapWrap) hesapWrap.style.display = havale ? '' : 'none';
+  if(karsiWrap) karsiWrap.style.display = havale ? '' : 'none';
+  if(!havale) {
+    document.getElementById('maas-hesap-bilgi-wrap').style.display = 'none';
+    const sel = document.getElementById('maas-hesap');
+    if(sel) sel.value = '';
+    onMaasHesapChange();
+  } else {
+    onMaasHesapFullChange();
+  }
+}
+
+function onMaasHesapFullChange() {
+  const hesapId = document.getElementById('maas-hesap').value;
+  const bilgiWrap = document.getElementById('maas-hesap-bilgi-wrap');
+  onMaasHesapChange();
+  if(!hesapId) { if(bilgiWrap) bilgiWrap.style.display = 'none'; return; }
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(!hesap) { if(bilgiWrap) bilgiWrap.style.display = 'none'; return; }
+  const ibanFormatted = hesap.iban ? hesap.iban.replace(/(.{4})/g,'$1 ').trim() : '—';
+  const ibanDisplayEl = document.getElementById('maas-hesap-iban-display');
+  if(ibanDisplayEl) ibanDisplayEl.textContent = ibanFormatted;
+  if(bilgiWrap) bilgiWrap.style.display = hesap.iban ? '' : 'none';
+}
+
+function copyMaasHesapIban() {
+  const el = document.getElementById('maas-hesap-iban-display');
+  if(!el) return;
+  const raw = el.textContent.replace(/\s+/g,'');
+  if(!raw || raw==='—') return;
+  navigator.clipboard.writeText(raw).then(()=>showToast('IBAN kopyalandı ✓')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = raw; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('IBAN kopyalandı ✓');
+  });
+}
+
+function onMaasKisiChange() {
+  const kisiId = document.getElementById('maas-kisi').value;
+  if(!kisiId) return;
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if(!kisi) return;
+  const adEl = document.getElementById('maas-karsi-ad');
+  if(adEl && !adEl.value) adEl.value = kisi.ad || '';
+  // İlk IBAN varsa doldur
+  const ibanEl = document.getElementById('maas-karsi-iban');
+  if(ibanEl && !ibanEl.value && kisi.ibanlar && kisi.ibanlar.length > 0) {
+    ibanEl.value = kisi.ibanlar[0].replace(/\s+/g,'').toUpperCase();
+    formatIbanView(ibanEl);
+  }
+}
+
+function onKiraYontemChange() {
+  const yontem = document.getElementById('kira-yontem').value;
+  const havale = yontem === 'havale';
+  const hesapWrap = document.getElementById('kira-hesap-wrap');
+  const karsiWrap = document.getElementById('kira-karsi-wrap');
+  if(hesapWrap) hesapWrap.style.display = havale ? '' : 'none';
+  if(karsiWrap) karsiWrap.style.display = havale ? '' : 'none';
+  if(!havale) {
+    document.getElementById('kira-hesap-iban-wrap').style.display = 'none';
+    const sel = document.getElementById('kira-hesap');
+    if(sel) sel.value = '';
+    onKiraHesapChange();
+  } else {
+    onKiraHesapFullChange();
+  }
+}
+
+function onKiraHesapFullChange() {
+  const hesapId = document.getElementById('kira-hesap').value;
+  const ibanWrap = document.getElementById('kira-hesap-iban-wrap');
+  onKiraHesapChange();
+  if(!hesapId) { if(ibanWrap) ibanWrap.style.display = 'none'; return; }
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(!hesap) { if(ibanWrap) ibanWrap.style.display = 'none'; return; }
+  const ibanFormatted = hesap.iban ? hesap.iban.replace(/(.{4})/g,'$1 ').trim() : '—';
+  const ibanDisplayEl = document.getElementById('kira-hesap-iban-display');
+  if(ibanDisplayEl) ibanDisplayEl.textContent = ibanFormatted;
+  if(ibanWrap) ibanWrap.style.display = hesap.iban ? '' : 'none';
+}
+
+function onKiraKisiChange() {
+  const kisiId = document.getElementById('kira-kisi').value;
+  if(!kisiId) return;
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if(!kisi) return;
+  const adEl = document.getElementById('kira-karsi-ad');
+  if(adEl && !adEl.value) adEl.value = kisi.ad || '';
+  const ibanEl = document.getElementById('kira-karsi-iban');
+  if(ibanEl && !ibanEl.value && kisi.ibanlar && kisi.ibanlar.length > 0) {
+    ibanEl.value = kisi.ibanlar[0].replace(/\s+/g,'').toUpperCase();
+    formatIbanView(ibanEl);
+  }
+}
+
+function copyKiraHesapIban() {
+  const el = document.getElementById('kira-hesap-iban-display');
+  if(!el) return;
+  const raw = el.textContent.replace(/\s+/g,'');
+  if(!raw || raw==='—') return;
+  navigator.clipboard.writeText(raw).then(()=>showToast('IBAN kopyalandı ✓')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = raw; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('IBAN kopyalandı ✓');
+  });
+}
+
+
   const hesapId = document.getElementById('kira-hesap').value;
   const pbWrap = document.getElementById('kira-pb-manual-wrap');
   if(hesapId) {
