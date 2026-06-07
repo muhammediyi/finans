@@ -1903,15 +1903,21 @@ tbody tr:hover { background: var(--surface2) !important; }
             <input id="kira-depozito-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
           </div>
           <div>
-            <label>Ödeme Tarihi <span style="color:var(--text3);font-size:10px">(depozito ne zaman ödendi)</span></label>
-            <input id="kira-depozito-odeme-tarih" type="date">
+            <label>Para Birimi</label>
+            <select id="kira-depozito-pb"></select>
           </div>
         </div>
         <div class="form-row cols-2">
           <div>
+            <label>Ödeme Tarihi <span style="color:var(--text3);font-size:10px">(depozito ne zaman ödendi)</span></label>
+            <input id="kira-depozito-odeme-tarih" type="date">
+          </div>
+          <div>
             <label>Planlanan Geri Alım Tarihi <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
             <input id="kira-depozito-geri-tarih" type="date">
           </div>
+        </div>
+        <div class="form-row cols-2">
           <div>
             <label>Geri Alım Durumu</label>
             <select id="kira-depozito-durum">
@@ -1920,8 +1926,6 @@ tbody tr:hover { background: var(--surface2) !important; }
               <option value="kesildi">Kesildi (Kısmen/Tamamen)</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div>
             <label>Depozito Notu <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
             <input id="kira-depozito-not" placeholder="örn. 1 aylık kira bedeli...">
@@ -4594,6 +4598,7 @@ function openKiraModal(id=null) {
       const depVar = !!k.depozito;
       document.getElementById('kira-depozito-var').checked = depVar;
       toggleKiraDepozito();
+      _fillPbManualSelect('kira-depozito-pb', (k.depozito&&k.depozito.paraBirimi)||k.paraBirimi||defaultCurrency||'TRY');
       if(depVar && k.depozito) {
         setMoneyInput('kira-depozito-tutar', k.depozito.tutar||'');
         document.getElementById('kira-depozito-odeme-tarih').value = k.depozito.odemeTarih||'';
@@ -4616,6 +4621,7 @@ function openKiraModal(id=null) {
     if(kisaWrapN) kisaWrapN.style.display = 'none';
     _populateKiraHesapSel('', defaultCurrency||'TRY');
     document.getElementById('kira-depozito-var').checked=false;
+    _fillPbManualSelect('kira-depozito-pb', defaultCurrency||'TRY');
     toggleKiraDepozito();
   }
   bindMoneyInputs(document.getElementById('modal-kira'));
@@ -4635,6 +4641,7 @@ function saveKira() {
   if(depVar) {
     depozito = {
       tutar: getMoneyInput('kira-depozito-tutar')||0,
+      paraBirimi: (document.getElementById('kira-depozito-pb')||{}).value || getKiraPb(),
       odemeTarih: document.getElementById('kira-depozito-odeme-tarih').value||'',
       geriTarih: document.getElementById('kira-depozito-geri-tarih').value||'',
       durum: document.getElementById('kira-depozito-durum').value||'bekliyor',
@@ -4746,7 +4753,8 @@ function renderKira() {
       const depDurum = k.depozito.durum||'bekliyor';
       const depCls = depDurum==='alindi'?'badge-green':depDurum==='kesildi'?'badge-red':'badge-warn';
       const depLabel = depDurum==='alindi'?'Alındı':depDurum==='kesildi'?'Kesildi':'Bekliyor';
-      depBadge = `<div style="font-size:11px"><span class="badge ${depCls}">${depLabel}</span><div style="font-size:10px;color:var(--text3);margin-top:2px">${fmtCur(k.depozito.tutar,cur)}</div></div>`;
+      const depCur = k.depozito.paraBirimi || cur;
+      depBadge = `<div style="font-size:11px"><span class="badge ${depCls}">${depLabel}</span><div style="font-size:10px;color:var(--text3);margin-top:2px">${fmtCur(k.depozito.tutar,depCur)}</div></div>`;
     }
     return `<tr>
       <td class="mono">${fmtDate(k.baslangic)}</td>
@@ -7325,14 +7333,17 @@ function _setPbBadge(badgeId, selectId, code) {
 function onMaasHesapChange() {
   const hesapId = document.getElementById('maas-hesap').value;
   const manualRow = document.getElementById('maas-pb-manual-row');
+  const badge = document.getElementById('maas-para-birimi-badge');
+  const sel   = document.getElementById('maas-para-birimi');
   if(hesapId) {
     const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
     _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', pb);
     if(manualRow) manualRow.style.display = 'none';
   } else {
-    // No account selected — show manual picker
-    _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', '');
+    // Hesap yok — badge ve inline select'i gizle, sadece manual row göster
+    if(badge) badge.style.display = 'none';
+    if(sel)   sel.style.display   = 'none';
     if(manualRow) manualRow.style.display = '';
   }
 }
