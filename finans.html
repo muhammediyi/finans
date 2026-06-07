@@ -1609,7 +1609,7 @@ tbody tr:hover { background: var(--surface2) !important; }
       </div>
     </div>
     <div class="form-row">
-      <div><label>Açıklama <span style="color:var(--danger)">*</span></label><input id="kredi-aciklama" placeholder="örn. Araç Kredisi..."></div>
+      <div><label>Açıklama</label><input id="kredi-aciklama" placeholder="örn. Araç Kredisi..."></div>
     </div>
     <div class="form-row cols-3">
       <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><input id="kredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="200.000,00" oninput="calcKredi()"></div>
@@ -3388,10 +3388,23 @@ function updateSidebarKartNav() {
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  if(btn) btn.classList.add('active');
+  const pageEl = document.getElementById('page-'+id);
+  if(!pageEl) return;
+  pageEl.classList.add('active');
+  if(btn) {
+    btn.classList.add('active');
+  } else {
+    // btn verilmemişse nav butonunu id'den bul ve aktifle
+    const navBtn = document.querySelector(`.nav-btn[onclick*="'${id}'"]`);
+    if(navBtn) navBtn.classList.add('active');
+  }
   const tb = document.getElementById('topbar-title');
   if(tb) tb.textContent = PAGE_TITLES[id] || id;
+  // URL hash güncelle (popstate döngüsünü önlemek için kontrol)
+  if(location.hash !== '#' + id) {
+    try { history.pushState({page: id}, '', '#' + id); }
+    catch(e) { location.hash = id; }
+  }
   renderPage(id);
 }
 
@@ -5434,7 +5447,7 @@ function calcKmhKredi(preserveManuel=false) {
   const bsmvYuzde = parseFloat(document.getElementById('kmhkredi-bsmv').value)||5;
   const ilkEkstre = document.getElementById('kmhkredi-ilk-ekstre').value;
 
-  if(!anaPara||!faizYuzde||!vade) {
+  if(!anaPara||!vade) {
     document.getElementById('kmhkredi-preview').innerHTML = 'Değerleri girin, taksit otomatik hesaplanacak.';
     document.getElementById('kmhkredi-taksit-plani').style.display = 'none';
     return;
@@ -5523,7 +5536,7 @@ function saveKmhKredi() {
 
   if(!kmhId) { showFieldError('kmhkredi-kmh', 'KMH hesabı seçiniz'); return; }
   if(!anaPara) { showFieldError('kmhkredi-anapara', 'Ana para zorunlu'); return; }
-  if(!faizOran) { showFieldError('kmhkredi-faiz', 'Faiz oranı zorunlu'); return; }
+  if(faizOran === null || faizOran === undefined || isNaN(parseFloat(document.getElementById('kmhkredi-faiz').value))) { showFieldError('kmhkredi-faiz', 'Faiz oranı zorunlu'); return; }
   if(!vade) { showFieldError('kmhkredi-vade', 'Vade zorunlu'); return; }
   if(!ilkEkstre) { showFieldError('kmhkredi-ilk-ekstre', 'İlk ekstre tarihi zorunlu'); return; }
 
@@ -5726,7 +5739,7 @@ function calcKredi(preserveManuel=false) {
   const bsmvYuzde = parseFloat(document.getElementById('kredi-bsmv').value)||5;
   const ilkTaksit = document.getElementById('kredi-ilk-taksit').value;
 
-  if(!anaPara||!faizYuzde||!vade) {
+  if(!anaPara||!vade) {
     document.getElementById('kredi-preview').innerHTML = 'Değerleri girin, taksit otomatik hesaplanacak.';
     document.getElementById('kredi-taksit-plani').style.display = 'none';
     return;
@@ -5814,9 +5827,9 @@ function saveKredi() {
   const ilkTaksit = document.getElementById('kredi-ilk-taksit').value;
   const odemeGunTipKr = document.getElementById('kredi-odeme-gun-tip').value;
 
-  if(!aciklama) { showFieldError('kredi-aciklama', 'Açıklama zorunlu'); return; }
+
   if(!anaPara) { showFieldError('kredi-anapara', 'Ana para zorunlu'); return; }
-  if(!faizOran) { showFieldError('kredi-faiz', 'Faiz oranı zorunlu'); return; }
+  if(faizOran === null || faizOran === undefined || isNaN(parseFloat(document.getElementById('kredi-faiz').value))) { showFieldError('kredi-faiz', 'Faiz oranı zorunlu'); return; }
   if(!vade) { showFieldError('kredi-vade', 'Vade zorunlu'); return; }
   if(!ilkTaksit) { showFieldError('kredi-ilk-taksit', 'İlk taksit tarihi zorunlu'); return; }
 
@@ -5920,7 +5933,7 @@ function renderKredi() {
   const tumTaksitler = [];
   DB.bireyselKrediler.forEach(kr=>{
     getBireyselKrediTaksitler(kr).forEach(t=>{
-      tumTaksitler.push({...t, krediAciklama: kr.aciklama||'Kredi', krediId: kr.id, vade: kr.vade});
+      tumTaksitler.push({...t, krediAciklama: kr.aciklama||'', krediId: kr.id, vade: kr.vade});
     });
   });
   tumTaksitler.sort((a,b)=>a.tarih.localeCompare(b.tarih));
@@ -8764,6 +8777,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Para birimi önizleme
   const preview = document.getElementById('para-birimi-preview');
   if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
+
+  // ── Hash tabanlı sayfa yönlendirme ──────────────────────────
+  const VALID_PAGES = ['ozet','kartlar','islemler','extreler','mevduat','hesaplar',
+                       'kira','maas','elden','kmhkredi','kredi','tanimlamalar'];
+
+  function navigateToHash() {
+    const hash = location.hash.replace('#', '').split('?')[0];
+    const page = VALID_PAGES.includes(hash) ? hash : 'ozet';
+    showPage(page, null);
+  }
+
+  // Geri/ileri tarayıcı tuşu
+  window.addEventListener('popstate', navigateToHash);
+
+  // İlk yükleme: hash varsa o sayfaya git, yoksa ozet
+  navigateToHash();
+  // ────────────────────────────────────────────────────────────
 
   // Clock
   function updateClock() {
