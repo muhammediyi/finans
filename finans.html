@@ -697,7 +697,7 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .od-kismi    { background:rgba(167,139,250,.12); color:var(--violet); }
 .od-iptal    { background:rgba(107,114,128,.1);  color:var(--text3); }
 
-.od-popup { position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:12px;min-width:220px;animation:modalBgIn .15s ease; }
+.od-popup { position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:12px;min-width:240px;max-width:calc(100vw - 16px);max-height:calc(100vh - 32px);overflow-y:auto;animation:modalBgIn .15s ease; }
 .od-popup-title { font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px; }
 .od-popup-row { display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;transition:background .12s;font-size:12.5px;font-weight:500; }
 .od-popup-row:hover { background:var(--surface2); }
@@ -1123,7 +1123,7 @@ tbody tr:hover { background: var(--surface2) !important; }
   <div class="card">
     <div class="card-header"><span class="card-title">Aktif KMH Kredileri</span></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>KMH Hesabı</th><th>Açıklama</th><th>Ana Para</th><th>Faiz %</th><th>Vade</th><th>Aylık Taksit</th><th>Toplam Borç</th><th>Kalan</th><th>İlk Ekstre</th><th>Durum</th><th>İşlem</th></tr></thead>
+      <thead><tr><th>KMH Hesabı</th><th>Ana Para</th><th>Faiz %</th><th>Vade</th><th>Aylık Taksit</th><th>Toplam Borç</th><th>Kalan</th><th>İlk Ekstre</th><th>Durum</th><th>İşlem</th></tr></thead>
       <tbody id="kmhkredi-tbody"></tbody>
     </table></div>
   </div>
@@ -1856,15 +1856,8 @@ tbody tr:hover { background: var(--surface2) !important; }
       <div><label>Başlangıç Tarihi <span style="color:var(--danger)">*</span></label><input id="kira-baslangic" type="date"></div>
       <div><label>Bitiş Tarihi <span style="color:var(--danger)">*</span></label><input id="kira-bitis" type="date"></div>
     </div>
-    <div class="form-row cols-4">
+    <div class="form-row cols-3">
       <div><label>Tür</label><select id="kira-tur"><option value="gelir">Gelir</option><option value="gider">Gider</option></select></div>
-      <div>
-        <label>Para Birimi</label>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span id="kira-para-birimi-badge" style="font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap">TRY ₺</span>
-          <select id="kira-para-birimi" style="display:none;width:100%"></select>
-        </div>
-      </div>
       <div><label>Aylık Tutar <span style="color:var(--danger)">*</span></label><input id="kira-tutar" type="text" class="money-input" data-decimals="2" placeholder="12.500,00"></div>
       <div><label>Ödeme Günü (1-31)</label><input id="kira-gun" type="number" min="1" max="31" placeholder="15"></div>
     </div>
@@ -1875,8 +1868,8 @@ tbody tr:hover { background: var(--surface2) !important; }
           <option value="">— Hesap Seçin —</option>
         </select>
       </div>
-      <div id="kira-pb-manual-wrap" style="display:none">
-        <label>Para Birimi (manuel)</label>
+      <div id="kira-pb-manual-wrap">
+        <label>Para Birimi</label>
         <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange()"></select>
       </div>
     </div>
@@ -4543,15 +4536,7 @@ function openEldenModal() {
 function openKiraModal(id=null) {
   editKiraId = id;
   document.getElementById('kira-modal-title').textContent = id ? 'Kontrat Düzenle' : 'Kira Kontratı Ekle';
-  // Para birimi select doldur (manuel seçim için hidden select)
-  const pbSel = document.getElementById('kira-para-birimi');
-  if(pbSel) {
-    if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
-    } else {
-      pbSel.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
-    }
-  }
+
   if(id) {
     const k = DB.kiralar.find(x=>x.id===id);
     if(k) {
@@ -4564,7 +4549,6 @@ function openKiraModal(id=null) {
       document.getElementById('kira-pasif').checked = !!k.pasif;
       // Banka hesabı seçimi ve para birimi
       _populateKiraHesapSel(k.hesapId||'', k.paraBirimi||defaultCurrency||'TRY');
-      if(pbSel) pbSel.value = k.paraBirimi || defaultCurrency || 'TRY';
       // Depozito
       const depVar = !!k.depozito;
       document.getElementById('kira-depozito-var').checked = depVar;
@@ -4586,7 +4570,6 @@ function openKiraModal(id=null) {
     document.getElementById('kira-aciklama').value='';
     document.getElementById('kira-pasif').checked=false;
     _populateKiraHesapSel('', defaultCurrency||'TRY');
-    if(pbSel) pbSel.value = defaultCurrency || 'TRY';
     document.getElementById('kira-depozito-var').checked=false;
     toggleKiraDepozito();
   }
@@ -5279,9 +5262,8 @@ function renderKmhKredi() {
     const bitti = kalan === 0;
     return `<tr>
       <td><span style="color:var(--accent)">${kmhKart?kmhKart.ad:'-'}</span></td>
-      <td>${kr.aciklama}</td>
       <td class="mono">${fmt(kr.anaPara)}</td>
-      <td class="mono">%${kr.faizOran} <span style="color:var(--text3);font-size:10px">+%${kr.bsmv||5} BSMV</span></td>
+      <td class="mono">%${kr.faizOran} <span style="color:var(--text3);font-size:10px">+%${kr.kkdf||0} KKDF +%${kr.bsmv||5} BSMV</span></td>
       <td class="mono">${kr.vade} ay</td>
       <td class="mono warn">${fmt(kr.aylikTaksit)}</td>
       <td class="mono">${fmt(kr.toplamBorc)}</td>
@@ -5295,7 +5277,7 @@ function renderKmhKredi() {
         <button class="btn btn-danger btn-sm" onclick="deleteKmhKredi('${kr.id}')">🗑</button>
       </td>
     </tr>`;
-  }).join('') : '<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px">KMH kredi kaydı yok</td></tr>';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">KMH kredi kaydı yok</td></tr>';
 
   renderKmhKrediPlan(todayStr);
 }
@@ -5319,7 +5301,7 @@ function renderKmhKrediPlan(todayStr) {
     const tumTaksitler = [];
     grup.krediler.forEach(kr=>{
       getKrediTaksitler(kr).forEach(t=>{
-        tumTaksitler.push({...t, krediAciklama: kr.aciklama, krediId: kr.id});
+        tumTaksitler.push({...t, krediAciklama: '', krediId: kr.id});
       });
     });
     tumTaksitler.sort((a,b)=>a.tarih.localeCompare(b.tarih));
@@ -5337,7 +5319,7 @@ function renderKmhKrediPlan(todayStr) {
         ${grup.ad} — KMH Taksit Planı
       </div>
       <div class="tbl-wrap"><table>
-        <thead><tr><th>Dönem</th><th>Kredi</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
+        <thead><tr><th>Dönem</th><th>Taksit No</th><th>Tutar</th><th>Durum</th></tr></thead>
         <tbody>`;
 
     aylar.forEach((ayData, ay)=>{
@@ -5350,15 +5332,13 @@ function renderKmhKrediPlan(todayStr) {
         const t = ayData.taksitler[0];
         html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':''}">
           <td class="mono" style="color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel}</td>
-          <td style="color:var(--text2)">${t.krediAciklama}</td>
           <td class="mono">${t.no}/${grup.krediler.find(x=>x.id===t.krediId)?.vade||'?'}</td>
           <td class="mono ${gecti?'':'warn'}">${fmt(t.tutar)}</td>
-          <td>${odToggleBtn('kmh', t.krediId, t.no, t.tarih, t.tutar, t.krediAciklama+' #'+t.no)}</td>
+          <td>${odToggleBtn('kmh', t.krediId, t.no, t.tarih, t.tutar, grup.ad+' #'+t.no)}</td>
         </tr>`;
       } else {
         html += `<tr style="${buAy?'background:rgba(59,130,246,0.06)':'background:rgba(42,58,82,0.3)'}">
-          <td class="mono" style="font-weight:700;color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel}</td>
-          <td style="color:var(--text3);font-size:11px">${ayData.taksitler.length} kredi</td>
+          <td class="mono" style="font-weight:700;color:${buAy?'var(--accent)':gecti?'var(--text3)':'var(--text2)'}">${ayLabel} <span style="color:var(--text3);font-size:10px">(${ayData.taksitler.length} kredi)</span></td>
           <td></td>
           <td class="mono" style="font-weight:700;color:${gecti?'var(--text3)':'var(--warn)'}">${fmt(ayData.toplam)}</td>
           <td></td>
@@ -5366,7 +5346,6 @@ function renderKmhKrediPlan(todayStr) {
         ayData.taksitler.forEach(t=>{
           html += `<tr style="background:var(--surface2)">
             <td></td>
-            <td style="color:var(--text3);font-size:11px;padding-left:20px">↳ ${t.krediAciklama}</td>
             <td class="mono" style="font-size:11px">${t.no}/${grup.krediler.find(x=>x.id===t.krediId)?.vade||'?'}</td>
             <td class="mono" style="font-size:11px">${fmt(t.tutar)}</td>
             <td></td>
@@ -5608,7 +5587,7 @@ function renderKredi() {
   const tumTaksitler = [];
   DB.bireyselKrediler.forEach(kr=>{
     getBireyselKrediTaksitler(kr).forEach(t=>{
-      tumTaksitler.push({...t, krediAciklama: kr.aciklama, krediId: kr.id, vade: kr.vade});
+      tumTaksitler.push({...t, krediAciklama: kr.aciklama||'Kredi', krediId: kr.id, vade: kr.vade});
     });
   });
   tumTaksitler.sort((a,b)=>a.tarih.localeCompare(b.tarih));
@@ -6662,12 +6641,29 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
     if(ev.target.closest('[data-od-kaydet]'))  { odKaydet(ev, tip2, id2, keyRaw, tarih2, tutar2); return; }
   });
 
-  // Konumlandır
-  const r = e.target.getBoundingClientRect();
-  popup.style.top  = Math.min(r.bottom + 6, window.innerHeight - 340) + 'px';
-  popup.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 240)) + 'px';
+  // Konumlandır — viewport-aware, mobilde ortala
   document.body.appendChild(popup);
   _odPopupEl = popup;
+  const r = e.target.getBoundingClientRect();
+  const pw = popup.offsetWidth || 260;
+  const ph = popup.offsetHeight || 340;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isMobile = vw < 600;
+  if(isMobile) {
+    // Mobilde tam ortalı, alt kısımda sabit
+    popup.style.left = Math.max(8, (vw - pw) / 2) + 'px';
+    popup.style.top  = Math.max(8, vh - ph - 16) + 'px';
+  } else {
+    let left = r.left;
+    let top  = r.bottom + 6;
+    if(left + pw > vw - 8) left = vw - pw - 8;
+    if(left < 8) left = 8;
+    if(top + ph > vh - 8) top = Math.max(8, r.top - ph - 6);
+    if(top < 8) top = 8;
+    popup.style.left = left + 'px';
+    popup.style.top  = top + 'px';
+  }
 
   // Dışına tıklayınca kapat
   setTimeout(() => {
@@ -7137,7 +7133,7 @@ function renderOzet() {
     const kmhKart = getKmhHesap(kr.kmhId);
     getKrediTaksitler(kr).forEach(t=>{
       const dt = new Date(t.tarih+'T00:00:00');
-      if(dt>=today&&dt<=end30) upcoming.push({tarih:dt, aciklama:`${kr.aciklama} (${kmhKart?kmhKart.ad:'KMH'}) — ${t.no}/${kr.vade}. Taksit`, tur:'KMH Kredi', tutar:-t.tutar, tip:'kmh', id:kr.id, key:t.no});
+      if(dt>=today&&dt<=end30) upcoming.push({tarih:dt, aciklama:`${kmhKart?kmhKart.ad:'KMH'} — ${t.no}/${kr.vade}. Taksit`, tur:'KMH Kredi', tutar:-t.tutar, tip:'kmh', id:kr.id, key:t.no});
     });
   });
 
@@ -7238,21 +7234,18 @@ function getMaasPb() {
 
 function onKiraHesapChange() {
   const hesapId = document.getElementById('kira-hesap').value;
-  const manualWrap = document.getElementById('kira-pb-manual-wrap');
   if(hesapId) {
     const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
-    _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', pb);
-    if(manualWrap) manualWrap.style.display = 'none';
-  } else {
-    _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', '');
-    if(manualWrap) manualWrap.style.display = '';
+    const manualSel = document.getElementById('kira-para-birimi-manual');
+    if(manualSel) { manualSel.value = pb; phUpdate(manualSel); }
   }
 }
 
 function onKiraPbManualChange() {
-  const val = (document.getElementById('kira-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
-  _setPbBadge('kira-para-birimi-badge', 'kira-para-birimi', val);
+  // Para birimi değişince phUpdate ile renk güncelle
+  const sel = document.getElementById('kira-para-birimi-manual');
+  if(sel) phUpdate(sel);
 }
 
 function getKiraPb() {
@@ -7261,9 +7254,7 @@ function getKiraPb() {
     const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     return (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
   }
-  return (document.getElementById('kira-para-birimi-manual')||{}).value
-    || (document.getElementById('kira-para-birimi')||{}).value
-    || defaultCurrency || 'TRY';
+  return (document.getElementById('kira-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
 }
 
 function _fillPbManualSelect(selectId, currentCode) {
@@ -7428,16 +7419,25 @@ const IBAN_BANKA_MAP = {
 
 function onIbanInput() {
   const inp = document.getElementById('hesap-iban');
-  // Boşlukları anında sil, imleci koru
+  // Boşlukları temizle, uppercase yap, sonra 4'er gruba formatla
   const pos = inp.selectionStart;
   const before = inp.value;
-  const stripped = before.replace(/\s+/g, '').toUpperCase();
-  if(stripped !== before) {
-    const removed = before.slice(0, pos).replace(/\s+/g, '').length;
-    inp.value = stripped;
-    inp.setSelectionRange(removed, removed);
+  const stripped = before.replace(/\s+/g, '').toUpperCase().slice(0, 26);
+  // 4'er karakterlik gruplara böl: TR00 0000 0000 0000 0000 0000 00
+  const formatted = stripped.match(/.{1,4}/g)?.join(' ') || stripped;
+  if(formatted !== before) {
+    // İmleç pozisyonunu koru (boşluklar eklenince offset hesapla)
+    const rawBefore = before.slice(0, pos).replace(/\s+/g, '').length;
+    inp.value = formatted;
+    // rawBefore karaktere karşılık gelen formatted pozisyonu bul
+    let newPos = 0, raw2 = 0;
+    for(let i = 0; i < formatted.length && raw2 < rawBefore; i++) {
+      if(formatted[i] !== ' ') raw2++;
+      newPos = i + 1;
+    }
+    inp.setSelectionRange(newPos, newPos);
   }
-  const raw = inp.value;
+  const raw = stripped;
   const parsed = parseIban(raw);
   const statusEl = document.getElementById('hesap-iban-status');
   const parsedRow = document.getElementById('hesap-parsed-row');
@@ -7590,7 +7590,7 @@ function openHesapModal(id=null) {
   if(id) {
     const h = (DB.hesaplar||[]).find(x=>x.id===id);
     if(h) {
-      document.getElementById('hesap-iban').value = h.iban||'';
+      document.getElementById('hesap-iban').value = h.iban ? (h.iban.replace(/\s+/g,'').match(/.{1,4}/g)||[]).join(' ') : '';
       document.getElementById('hesap-banka-kodu').value = h.bankaKodu||'';
       document.getElementById('hesap-sube-kodu').value = h.subeKodu||'';
       document.getElementById('hesap-no').value = h.hesapNo||'';
