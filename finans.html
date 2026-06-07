@@ -2365,24 +2365,6 @@ const BANKA_SUBELER = {};
 // Sistem, işlem tarihine en yakın (≤ tarih) kaydı kullanır.
 // Bu değerler DB'de saklanır ve Tanımlamalar > Vergi & Faiz Oranları sekmesinden düzenlenebilir.
 
-const DEFAULT_STOPAJ_ORANLARI = [
-  {id:'st1', tarih:'2025-06-16', oran:15},
-  {id:'st2', tarih:'2025-08-08', oran:17.5},
-  {id:'st3', tarih:'2025-08-22', oran:15}
-];
-
-const DEFAULT_KKDF_ORANLARI = [
-  {id:'kk1', tarih:'2025-01-01', oran:0}
-];
-
-const DEFAULT_BSMV_ORANLARI = [
-  {id:'bsmv1', tarih:'2025-01-01', oran:5}
-];
-
-const DEFAULT_KMH_FAIZ_ORANLARI = [
-  {id:'kmhf1', tarih:'2025-01-01', oran:4.5}
-];
-
 /**
  * Verilen tarihe göre en yakın geçerli oranı döner.
  * tablo: [{tarih, oran}, ...] — tarih artan sırada olmalı
@@ -2401,10 +2383,10 @@ function getOranByTarih(tablo, tarihStr) {
 }
 
 // Bugünkü tarih için oran döndürücü kısayollar
-function getStopajOrani(tarihStr) { return getOranByTarih(DB.stopajOranlari||DEFAULT_STOPAJ_ORANLARI, tarihStr||localDateStr(new Date())); }
-function getKkdfOrani(tarihStr)   { return getOranByTarih(DB.kkdfOranlari||DEFAULT_KKDF_ORANLARI,   tarihStr||localDateStr(new Date())); }
-function getBsmvOrani(tarihStr)   { return getOranByTarih(DB.bsmvOranlari||DEFAULT_BSMV_ORANLARI,   tarihStr||localDateStr(new Date())); }
-function getKmhFaizOrani(tarihStr){ return getOranByTarih(DB.kmhFaizOranlari||DEFAULT_KMH_FAIZ_ORANLARI, tarihStr||localDateStr(new Date())); }
+function getStopajOrani(tarihStr) { return getOranByTarih(DB.stopajOranlari||[], tarihStr||localDateStr(new Date())); }
+function getKkdfOrani(tarihStr)   { return getOranByTarih(DB.kkdfOranlari||[],   tarihStr||localDateStr(new Date())); }
+function getBsmvOrani(tarihStr)   { return getOranByTarih(DB.bsmvOranlari||[],   tarihStr||localDateStr(new Date())); }
+function getKmhFaizOrani(tarihStr){ return getOranByTarih(DB.kmhFaizOranlari||[], tarihStr||localDateStr(new Date())); }
 
 // =====================================================
 
@@ -2413,75 +2395,9 @@ function loadData() {
   return defaultData();
 }
 
-// applyMigrations: Drive'dan gelen veriyi normalize et, FORMAT_CONFIG ve currency'yi uygula
+// applyMigrations: Drive'dan gelen veriyi yükle
 function applyMigrations(d) {
   if(!d) return defaultData();
-
-  // ── Boş array garantisi ──────────────────────────────────────────────────
-  if(!d.ozelExtreler)    d.ozelExtreler    = [];
-  if(!d.krediler)        d.krediler        = [];
-  if(!d.bireyselKrediler)d.bireyselKrediler= [];
-  if(!d.eldenler)        d.eldenler        = [];
-  if(!d.paraBirimleri)   d.paraBirimleri   = [];
-  if(!d.hesaplar)        d.hesaplar        = [];
-  if(!d.islemler)        d.islemler        = [];
-  if(!d.kartlar)         d.kartlar         = [];
-  if(!d.maaslar)         d.maaslar         = [];
-  if(!d.mevduatlar)      d.mevduatlar      = [];
-  if(!d.kiralar)         d.kiralar         = [];
-  if(!d.subeler)         d.subeler         = {};
-
-  // ── Kart migration ───────────────────────────────────────────────────────
-  d.kartlar.forEach(k=>{ if(!k.extraGunGecmis) k.extraGunGecmis = []; });
-
-  // ── Default içerikli alanlar: boş/yoksa default yükle ───────────────────
-  if(!d.krediTipleri   || !d.krediTipleri.length)    d.krediTipleri    = defaultKrediTipleri();
-  if(!d.kategoriler    || !d.kategoriler.length)      d.kategoriler     = defaultKategoriler();
-  if(!d.hesapTurleri   || !d.hesapTurleri.length)    d.hesapTurleri    = defaultHesapTurleri();
-  if(!d.stopajOranlari || !d.stopajOranlari.length)   d.stopajOranlari  = DEFAULT_STOPAJ_ORANLARI.slice();
-  if(!d.kkdfOranlari   || !d.kkdfOranlari.length)     d.kkdfOranlari    = DEFAULT_KKDF_ORANLARI.slice();
-  if(!d.bsmvOranlari   || !d.bsmvOranlari.length)     d.bsmvOranlari    = DEFAULT_BSMV_ORANLARI.slice();
-  if(!d.kmhFaizOranlari|| !d.kmhFaizOranlari.length)  d.kmhFaizOranlari = DEFAULT_KMH_FAIZ_ORANLARI.slice();
-  if(!d.bankalar       || !d.bankalar.length)         d.bankalar        = defaultBankalar();
-
-  // Tatiller: yoksa default yükle; varsa eksik yılları tamamla
-  if(!d.tatiller || !d.tatiller.length) {
-    d.tatiller = defaultTatiller();
-  } else {
-    const defT = defaultTatiller();
-    defT.forEach(dt => { if(!d.tatiller.find(t => t.id === dt.id)) d.tatiller.push(dt); });
-  }
-
-  // ── Migrate: IBAN'dan subeKodu/hesapNo yeniden parse et ────────────────────
-  // TR IBAN: [4]=0 [5:9]=bankaKodu [9]=rezerv [10:14]=subeKodu [14:26]=hesapNo
-  if(d.hesaplar.length) {
-    d.hesaplar = d.hesaplar.map(h => {
-      if(h.iban) {
-        const s = h.iban.replace(/\s+/g,'').toUpperCase();
-        if(/^TR\d{24}$/.test(s)) {
-          return {
-            ...h,
-            subeKodu: s.slice(10,14),   // 4 hane şube kodu
-            hesapNo: h.hesapNo || s.slice(14,26)
-          };
-        }
-      }
-      return h;
-    });
-  }
-
-  // ── Migrate: bankalar ibanKod eksikse tamamla ────────────────────────────
-  if(d.bankalar.length) {
-    const defBankalar = defaultBankalar();
-    const defMap = {};
-    defBankalar.forEach(b => { defMap[b.id] = b; });
-    d.bankalar = d.bankalar.map(b => {
-      if(!b.ibanKod && defMap[b.id] && defMap[b.id].ibanKod) {
-        return { ...b, ibanKod: defMap[b.id].ibanKod };
-      }
-      return b;
-    });
-  }
 
   // ── FORMAT_CONFIG ve para birimi Drive verisinden uygula ─────────────────
   if(d._formatConfig) FORMAT_CONFIG = {...FORMAT_CONFIG, ...d._formatConfig};
@@ -2500,194 +2416,13 @@ function saveData() {
 
 function defaultData() {
   return {
-    bankalar: defaultBankalar(),
-    hesapTurleri: defaultHesapTurleri(),
-    urunTipler: [{id:'ut1',ad:'Kredi Kartı',kod:'KK'},{id:'ut2',ad:'Kredili Mevduat Hesabı',kod:'KMH'}],
-    krediTipleri: defaultKrediTipleri(),
-    tatiller: defaultTatiller(),
-    kartlar: [], islemler: [],
-    mevduatlar: defaultMevduatlar(),
-    kiralar: defaultKiralar(),
-    maaslar: [], eldenler: [],
-    ozelExtreler: [],
-    krediler: [],
-    bireyselKrediler: [],
-    paraBirimleri: [],
-    kategoriler: defaultKategoriler(),
-    stopajOranlari: DEFAULT_STOPAJ_ORANLARI.slice(),
-    kkdfOranlari:   DEFAULT_KKDF_ORANLARI.slice(),
-    bsmvOranlari:   DEFAULT_BSMV_ORANLARI.slice(),
-    kmhFaizOranlari:DEFAULT_KMH_FAIZ_ORANLARI.slice(),
-    hesaplar: [],
-    subeler: {}
+    bankalar: [], hesapTurleri: [], urunTipler: [], krediTipleri: [],
+    tatiller: [], kartlar: [], islemler: [], mevduatlar: [], kiralar: [],
+    maaslar: [], eldenler: [], ozelExtreler: [], krediler: [],
+    bireyselKrediler: [], paraBirimleri: [], kategoriler: [],
+    stopajOranlari: [], kkdfOranlari: [], bsmvOranlari: [], kmhFaizOranlari: [],
+    hesaplar: [], subeler: {}
   };
-}
-function defaultHesaplar() {
-  return [];
-}
-
-function defaultHesapTurleri() {
-  return [
-    {id:'ht1', ad:'Vadesiz', kod:'vadesiz'},
-    {id:'ht2', ad:'Vadeli',  kod:'vadeli'},
-    {id:'ht3', ad:'Günlük',  kod:'gunluk'},
-    {id:'ht4', ad:'Diğer',   kod:'diger'},
-  ];
-}
-
-function defaultBankalar() {
-  // TCMB Ödeme Sistemleri Katılımcıları (2025) — ibanKod: IBAN[5:9] konumundaki 4 haneli banka kodu
-  return [
-    {id:'b1',  tam:'Akbank T.A.Ş.',                                      kisa:'Akbank',               ibanKod:'0046'},
-    {id:'b2',  tam:'Aktif Yatırım Bankası A.Ş.',                          kisa:'Aktifbank',             ibanKod:'0143'},
-    {id:'b3',  tam:'Albaraka Türk Katılım Bankası A.Ş.',                  kisa:'Albaraka Türk',         ibanKod:'0203'},
-    {id:'b4',  tam:'Alternatifbank A.Ş.',                                 kisa:'Alternatifbank',        ibanKod:'0124'},
-    {id:'b5',  tam:'Anadolubank A.Ş.',                                    kisa:'Anadolubank',           ibanKod:'0135'},
-    {id:'b6',  tam:'Arap Türk Bankası A.Ş.',                              kisa:'Arap Türk Bank',        ibanKod:'0091'},
-    {id:'b7',  tam:'Aytemiz Yatırım Bankası A.Ş.',                        kisa:'Aytemiz YB',            ibanKod:'0161'},
-    {id:'b8',  tam:'Bank of America Yatırım Bank A.Ş.',                   kisa:'Bank of America YB',    ibanKod:'0129'},
-    {id:'b9',  tam:'Bank of China Turkey A.Ş.',                           kisa:'Bank of China',         ibanKod:'0149'},
-    {id:'b10', tam:'BankPozitif Kredi ve Kalkınma Bankası A.Ş.',          kisa:'BankPozitif',           ibanKod:'0142'},
-    {id:'b11', tam:'Birleşik Fon Bankası A.Ş.',                           kisa:'Birleşik Fon Bank',     ibanKod:'0029'},
-    {id:'b12', tam:'Burgan Bank A.Ş.',                                    kisa:'Burgan Bank',           ibanKod:'0125'},
-    {id:'b13', tam:'Citibank A.Ş.',                                       kisa:'Citibank',              ibanKod:'0092'},
-    {id:'b14', tam:'Colendi Bank A.Ş.',                                   kisa:'Colendi Bank',          ibanKod:'0158'},
-    {id:'b15', tam:'D Yatırım Bankası A.Ş.',                              kisa:'D Yatırım Bank',        ibanKod:'0151'},
-    {id:'b16', tam:'Denizbank A.Ş.',                                      kisa:'Denizbank',             ibanKod:'0134'},
-    {id:'b17', tam:'Destek Yatırım Bankası A.Ş.',                         kisa:'Destek YB',             ibanKod:'0152'},
-    {id:'b18', tam:'Deutsche Bank A.Ş.',                                  kisa:'Deutsche Bank',         ibanKod:'0115'},
-    {id:'b19', tam:'Diler Yatırım Bankası A.Ş.',                          kisa:'Diler YB',              ibanKod:'0138'},
-    {id:'b20', tam:'Dünya Katılım Bankası A.Ş.',                          kisa:'Dünya Katılım',         ibanKod:'0214'},
-    {id:'b21', tam:'Enpara Bank A.Ş.',                                    kisa:'Enpara',                ibanKod:'0157'},
-    {id:'b22', tam:'Fibabanka A.Ş.',                                      kisa:'Fibabanka',             ibanKod:'0103'},
-    {id:'b23', tam:'FUPS Bank A.Ş.',                                      kisa:'FUPS Bank',             ibanKod:'0159'},
-    {id:'b24', tam:'Golden Global Yatırım Bankası A.Ş.',                  kisa:'Golden Global YB',      ibanKod:'0150'},
-    {id:'b25', tam:'GSD Yatırım Bankası A.Ş.',                            kisa:'GSD YB',                ibanKod:'0139'},
-    {id:'b26', tam:'Hayat Finans Katılım Bankası A.Ş.',                   kisa:'Hayat Finans',          ibanKod:'0212'},
-    {id:'b27', tam:'Hedef Yatırım Bankası A.Ş.',                          kisa:'Hedef YB',              ibanKod:'0156'},
-    {id:'b28', tam:'HSBC Bank A.Ş.',                                      kisa:'HSBC',                  ibanKod:'0123'},
-    {id:'b29', tam:'ICBC Turkey Bank A.Ş.',                               kisa:'ICBC Turkey',           ibanKod:'0109'},
-    {id:'b30', tam:'ING Bank A.Ş.',                                       kisa:'ING Bank',              ibanKod:'0099'},
-    {id:'b31', tam:'Intesa Sanpaolo S.p.A.',                              kisa:'Intesa Sanpaolo',       ibanKod:'0148'},
-    {id:'b32', tam:'İller Bankası A.Ş.',                                  kisa:'İller Bankası',         ibanKod:'0004'},
-    {id:'b33', tam:'İstanbul Takas ve Saklama Bankası A.Ş.',              kisa:'Takasbank',             ibanKod:'0132'},
-    {id:'b34', tam:'JPMorgan Chase Bank N.A.',                            kisa:'JPMorgan Chase',        ibanKod:'0098'},
-    {id:'b35', tam:'Kuveyt Türk Katılım Bankası A.Ş.',                    kisa:'Kuveyt Türk',           ibanKod:'0205'},
-    {id:'b36', tam:'Merkezi Kayıt Kuruluşu A.Ş.',                         kisa:'MKK',                   ibanKod:'0806'},
-    {id:'b37', tam:'Misyon Yatırım Bankası A.Ş.',                         kisa:'Misyon YB',             ibanKod:'0153'},
-    {id:'b38', tam:'MUFG Bank Turkey A.Ş.',                               kisa:'MUFG Bank',             ibanKod:'0147'},
-    {id:'b39', tam:'Nurol Yatırım Bankası A.Ş.',                          kisa:'Nurol YB',              ibanKod:'0141'},
-    {id:'b40', tam:'Odea Bank A.Ş.',                                      kisa:'Odea Bank',             ibanKod:'0146'},
-    {id:'b41', tam:'Pasha Yatırım Bank A.Ş.',                             kisa:'Pasha YB',              ibanKod:'0116'},
-    {id:'b42', tam:'Posta ve Telgraf Teşkilatı A.Ş.',                     kisa:'PTT',                   ibanKod:'0807'},
-    {id:'b43', tam:'Rabobank A.Ş.',                                       kisa:'Rabobank',              ibanKod:'0137'},
-    {id:'b44', tam:'Société Générale (SA)',                                kisa:'Société Générale',      ibanKod:'0122'},
-    {id:'b45', tam:'Standard Chartered Yatırım Bankası Türk A.Ş.',        kisa:'Standard Chartered YB', ibanKod:'0121'},
-    {id:'b46', tam:'Şekerbank T.A.Ş.',                                    kisa:'Şekerbank',             ibanKod:'0059'},
-    {id:'b47', tam:'T. Ekonomi Bankası A.Ş.',                             kisa:'TEB',                   ibanKod:'0032'},
-    {id:'b48', tam:'T. Eximbank',                                         kisa:'Türk Eximbank',         ibanKod:'0016'},
-    {id:'b49', tam:'T. Garanti Bankası A.Ş.',                             kisa:'Garanti BBVA',          ibanKod:'0062'},
-    {id:'b50', tam:'T. Halk Bankası A.Ş.',                                kisa:'Halkbank',              ibanKod:'0012'},
-    {id:'b51', tam:'T. İş Bankası A.Ş.',                                  kisa:'İş Bankası',            ibanKod:'0064'},
-    {id:'b52', tam:'T. Kalkınma Bankası A.Ş.',                            kisa:'Kalkınma Bankası',      ibanKod:'0017'},
-    {id:'b53', tam:'T. Sınai Kalkınma Bankası A.Ş.',                      kisa:'TSKB',                  ibanKod:'0014'},
-    {id:'b54', tam:'T. Vakıflar Bankası T.A.O.',                          kisa:'VakıfBank',             ibanKod:'0015'},
-    {id:'b55', tam:'T.C. Merkez Bankası',                                 kisa:'TCMB',                  ibanKod:'0001'},
-    {id:'b56', tam:'T.C. Ziraat Bankası A.Ş.',                            kisa:'Ziraat Bankası',        ibanKod:'0010'},
-    {id:'b57', tam:'Tera Yatırım Bankası A.Ş.',                           kisa:'Tera YB',               ibanKod:'0154'},
-    {id:'b58', tam:'T.O.M. Katılım Bankası A.Ş.',                         kisa:'TOM Katılım',           ibanKod:'0213'},
-    {id:'b59', tam:'Turkish Bank A.Ş.',                                   kisa:'Turkish Bank',          ibanKod:'0096'},
-    {id:'b60', tam:'Turkland Bank A.Ş.',                                  kisa:'Turkland Bank',         ibanKod:'0108'},
-    {id:'b61', tam:'Türk Ticaret Bankası A.Ş.',                           kisa:'Türk Ticaret Bank',     ibanKod:'0060'},
-    {id:'b62', tam:'Türkiye Emlak Katılım Bankası A.Ş.',                  kisa:'Emlak Katılım',         ibanKod:'0211'},
-    {id:'b63', tam:'Türkiye Finans Katılım Bankası A.Ş.',                 kisa:'Türkiye Finans',        ibanKod:'0206'},
-    {id:'b64', tam:'Vakıf Katılım Bankası A.Ş.',                          kisa:'Vakıf Katılım',         ibanKod:'0210'},
-    {id:'b65', tam:'Yapı ve Kredi Bankası A.Ş.',                          kisa:'Yapı Kredi',            ibanKod:'0067'},
-    {id:'b66', tam:'Ziraat Dinamik Banka A.Ş.',                           kisa:'Ziraat Dinamik',        ibanKod:'0160'},
-    {id:'b67', tam:'Ziraat Katılım Bankası A.Ş.',                         kisa:'Ziraat Katılım',        ibanKod:'0209'},
-    {id:'b68', tam:'Q Yatırım Bankası A.Ş.',                              kisa:'Q YB',                  ibanKod:'0155'},
-    {id:'b69', tam:'QNB Finansbank A.Ş.',                                 kisa:'QNB Finansbank',        ibanKod:'0111'},
-  ];
-}
-
-function defaultTatiller() {
-  return [
-    {id:'t1',tarih:'2025-01-01',aciklama:'Yılbaşı'},
-    {id:'t2',tarih:'2025-04-23',aciklama:'Ulusal Egemenlik ve Çocuk Bayramı'},
-    {id:'t3',tarih:'2025-05-01',aciklama:'Emek ve Dayanışma Günü'},
-    {id:'t4',tarih:'2025-05-19',aciklama:'Atatürk\'ü Anma, Gençlik ve Spor Bayramı'},
-    {id:'t5',tarih:'2025-07-15',aciklama:'Demokrasi ve Millî Birlik Günü'},
-    {id:'t6',tarih:'2025-08-30',aciklama:'Zafer Bayramı'},
-    {id:'t7',tarih:'2025-10-29',aciklama:'Cumhuriyet Bayramı'},
-    {id:'t8',tarih:'2025-03-30',aciklama:'Ramazan Bayramı 1. Gün'},
-    {id:'t9',tarih:'2025-03-31',aciklama:'Ramazan Bayramı 2. Gün'},
-    {id:'t10',tarih:'2025-04-01',aciklama:'Ramazan Bayramı 3. Gün'},
-    {id:'t11',tarih:'2025-06-06',aciklama:'Kurban Bayramı 1. Gün'},
-    {id:'t12',tarih:'2025-06-07',aciklama:'Kurban Bayramı 2. Gün'},
-    {id:'t13',tarih:'2025-06-08',aciklama:'Kurban Bayramı 3. Gün'},
-    {id:'t14',tarih:'2025-06-09',aciklama:'Kurban Bayramı 4. Gün'},
-    {id:'t15',tarih:'2026-01-01',aciklama:'Yılbaşı'},
-    {id:'t16',tarih:'2026-04-23',aciklama:'Ulusal Egemenlik ve Çocuk Bayramı'},
-    {id:'t17',tarih:'2026-05-01',aciklama:'Emek ve Dayanışma Günü'},
-    {id:'t18',tarih:'2026-05-19',aciklama:'Atatürk\'ü Anma, Gençlik ve Spor Bayramı'},
-    {id:'t19',tarih:'2026-07-15',aciklama:'Demokrasi ve Millî Birlik Günü'},
-    {id:'t20',tarih:'2026-08-30',aciklama:'Zafer Bayramı'},
-    {id:'t21',tarih:'2026-10-29',aciklama:'Cumhuriyet Bayramı'},
-    {id:'t22',tarih:'2026-03-20',aciklama:'Ramazan Bayramı 1. Gün'},
-    {id:'t23',tarih:'2026-03-21',aciklama:'Ramazan Bayramı 2. Gün'},
-    {id:'t24',tarih:'2026-03-22',aciklama:'Ramazan Bayramı 3. Gün'},
-    {id:'t25',tarih:'2026-05-27',aciklama:'Kurban Bayramı 1. Gün'},
-    {id:'t26',tarih:'2026-05-28',aciklama:'Kurban Bayramı 2. Gün'},
-    {id:'t27',tarih:'2026-05-29',aciklama:'Kurban Bayramı 3. Gün'},
-    {id:'t28',tarih:'2026-05-30',aciklama:'Kurban Bayramı 4. Gün'}
-  ];
-}
-
-function defaultMevduatlar() {
-  return [];
-}
-
-function defaultKategoriler() {
-  return [
-    // Giderler
-    {id:'kg1', ad:'Market & Gıda',      ikon:'🛒', tur:'gider'},
-    {id:'kg2', ad:'Fatura & Abonelik',  ikon:'📄', tur:'gider'},
-    {id:'kg3', ad:'Ulaşım & Yakıt',     ikon:'🚗', tur:'gider'},
-    {id:'kg4', ad:'Sağlık & Eczane',    ikon:'💊', tur:'gider'},
-    {id:'kg5', ad:'Kafe & Restoran',    ikon:'☕', tur:'gider'},
-    {id:'kg6', ad:'Giyim & Aksesuar',   ikon:'👕', tur:'gider'},
-    {id:'kg7', ad:'Eğlence & Hobi',     ikon:'🎬', tur:'gider'},
-    {id:'kg8', ad:'Eğitim & Kurs',      ikon:'📚', tur:'gider'},
-    {id:'kg9', ad:'Elektronik & Teknik',ikon:'💻', tur:'gider'},
-    {id:'kg10',ad:'Ev & Dekorasyon',    ikon:'🪴', tur:'gider'},
-    {id:'kg11',ad:'Bakım & Kozmetik',   ikon:'💅', tur:'gider'},
-    {id:'kg12',ad:'Sigorta',            ikon:'🛡️', tur:'gider'},
-    {id:'kg13',ad:'Vergi & Harç',       ikon:'🏛️', tur:'gider'},
-    {id:'kg14',ad:'Hediye & Bağış',     ikon:'🎁', tur:'gider'},
-    {id:'kg15',ad:'Diğer Gider',        ikon:'📦', tur:'gider'},
-    // Gelirler
-    {id:'kg16',ad:'Maaş & Prim',        ikon:'💰', tur:'gelir'},
-    {id:'kg17',ad:'Kira Geliri',         ikon:'🏠', tur:'gelir'},
-    {id:'kg18',ad:'Faiz & Temettü',     ikon:'📈', tur:'gelir'},
-    {id:'kg19',ad:'Serbest Çalışma',    ikon:'🧑‍💻', tur:'gelir'},
-    {id:'kg20',ad:'Satış Geliri',        ikon:'🏷️', tur:'gelir'},
-    {id:'kg21',ad:'İade & Geri Ödeme',  ikon:'↩️', tur:'gelir'},
-    {id:'kg22',ad:'Diğer Gelir',         ikon:'💹', tur:'gelir'},
-  ];
-}
-
-function defaultKrediTipleri() {
-  return [
-    {id:'kt1', ad:'İhtiyaç Kredisi',  kod:'IHT'},
-    {id:'kt2', ad:'Konut Kredisi',    kod:'KNT'},
-    {id:'kt3', ad:'Taşıt Kredisi',    kod:'TST'},
-    {id:'kt4', ad:'Ticari Kredi',     kod:'TIC'},
-    {id:'kt5', ad:'Diğer',            kod:'DGR'}
-  ];
-}
-
-function defaultKiralar() {
-  return [];
 }
 
 let DB = loadData();
@@ -7147,7 +6882,7 @@ function openHesapModal(id=null) {
   // Hesap türü select — tanımlamalardan doldur
   const turSel = document.getElementById('hesap-tur');
   if(turSel) {
-    const turler = DB.hesapTurleri || defaultHesapTurleri();
+    const turler = DB.hesapTurleri || [];
     turSel.innerHTML = turler.map(t=>`<option value="${t.kod}">${t.ad}</option>`).join('');
   }
 
