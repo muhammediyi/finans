@@ -256,6 +256,7 @@ html[data-theme="light"] .msec-label.warn   { color: #c2410c; border-bottom-colo
 html[data-theme="light"] .msec-label.violet { color: #7c3aed; border-bottom-color: rgba(124,58,237,.2); }
 html[data-theme="light"] .modal-toggle-row { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.07); }
 html[data-theme="light"] .display-field { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); color: rgba(15,22,41,.6); }
+html[data-theme="light"] .kt-block { background: rgba(0,0,0,.025); border-color: rgba(0,0,0,.08); }
 
 /* Toast */
 html[data-theme="light"] .toast {
@@ -749,6 +750,37 @@ select option { background: var(--surface3); }
 /* Placeholder select — boş değer seçiliyken gri göster */
 select.ph { color: var(--text2); }
 select.ph option:not([value=""]) { color: var(--text); }
+
+/* ─── SELECT ICON WRAPPER ─────────────────────────────── */
+.select-wrap {
+  position: relative;
+  display: block;
+}
+.select-wrap select {
+  padding-left: 34px !important;
+}
+.select-wrap .sel-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  opacity: 0.55;
+  color: var(--text2);
+  z-index: 1;
+  font-size: 13px;
+  line-height: 1;
+  transition: opacity .15s, color .15s;
+}
+.select-wrap:hover .sel-icon { opacity: 0.75; color: var(--text); }
+.select-wrap select:focus ~ .sel-icon { opacity: 1; color: var(--gold); }
+/* For SVG icons inside wrapper */
+.select-wrap .sel-icon svg { width: 14px; height: 14px; flex-shrink: 0; }
 textarea { resize: vertical; min-height: 80px; }
 input::placeholder { color: var(--text2); opacity: .7; }
 
@@ -823,6 +855,107 @@ input::placeholder { color: var(--text2); opacity: .7; }
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.25);
 }
 .btn-sm { padding: 5px 13px; font-size: 11.5px; border-radius: 7px; }
+
+/* ─── İKON BUTONLAR (kare, ortalanmış) ───────────── */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 9px;
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-icon svg { width: 16px; height: 16px; display: block; }
+
+/* ─── KARŞI TARAF BLOĞU ───────────────────────────── */
+.kt-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* Karşı taraf mod başlığı */
+.kt-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.kt-mode-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.kt-mode-label svg { opacity: .7; }
+.kt-mode-switch {
+  font-size: 10px;
+  color: var(--accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--sans);
+  font-weight: 600;
+  opacity: .85;
+  transition: opacity .15s, background .15s;
+  white-space: nowrap;
+}
+.kt-mode-switch:hover { opacity: 1; background: var(--gold-glow2); }
+/* Mod panelleri */
+.kt-panel-kayitli, .kt-panel-manuel { display: flex; flex-direction: column; gap: 10px; }
+.kt-panel-manuel { display: none; }
+.kt-block[data-mode="manuel"] .kt-panel-kayitli { display: none; }
+.kt-block[data-mode="manuel"] .kt-panel-manuel   { display: flex; }
+/* Manuel badge daha kompakt */
+#elden-manuel-badge, #kira-manuel-badge, #maas-manuel-badge {
+  font-size: 9.5px !important;
+}
+.kt-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+.kt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.kt-field label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.kt-field label .kt-label-sub {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 400;
+}
+.kt-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kt-input-row input,
+.kt-input-row select {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .kt-row { grid-template-columns: 1fr; }
+}
 
 .action-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 
@@ -1181,6 +1314,7 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
   max-width: 320px;
 }
 .toast.success { border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06); }
+.toast.info { border-color: rgba(99,179,237,.3); background: rgba(99,179,237,.06); color: rgba(147,210,255,.9); }
 .toast.error { border-color: rgba(251,113,133,.3); background: rgba(251,113,133,.06); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(24px) scale(.94); } to { opacity: 1; transform: none; } }
 
@@ -2094,6 +2228,18 @@ tbody tr { transition: background .1s ease; }
   flex-shrink: 0;
 }
 .mkp-iban-del:hover { background: rgba(251,113,133,.12); color: var(--rose); }
+
+.mkp-iban-use {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px; border-radius: 5px; border: 1px solid rgba(45,212,191,.3);
+  background: rgba(45,212,191,.08); color: rgba(94,234,212,.85);
+  font-size: 10px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  white-space: nowrap;
+}
+.mkp-iban-use:hover { background: rgba(45,212,191,.18); border-color: rgba(45,212,191,.5); color: var(--teal); }
+
+.mkp-iban-selectable { cursor: pointer; transition: background .15s; }
+.mkp-iban-selectable:hover { background: rgba(45,212,191,.06); border-radius: 6px; }
 
 .mkp-iban-add-row {
   display: flex;
@@ -5136,8 +5282,19 @@ tbody tr:hover td {
   background: rgba(251,191,36,.025) !important;
   color: rgba(240,244,255,.88) !important;
 }
+tbody tr:hover td span,
+tbody tr:hover td div,
+tbody tr:hover td .mono {
+  color: inherit !important;
+}
 html[data-theme="light"] tbody tr:hover td {
   background: rgba(196,122,0,.04) !important;
+  color: rgba(15,22,41,.9) !important;
+}
+html[data-theme="light"] tbody tr:hover td span,
+html[data-theme="light"] tbody tr:hover td div,
+html[data-theme="light"] tbody tr:hover td .mono {
+  color: inherit !important;
 }
 
 /* ── 8. BADGE — Pill glow ────────────────────────────────── */
@@ -7016,37 +7173,64 @@ html[data-theme="light"] .mob-theme-toggle {
               <label>Hesap IBAN</label>
               <div style="display:flex;align-items:center;gap:8px">
                 <code id="kira-hesap-iban-display" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;word-break:break-all">—</code>
-                <button class="btn btn-ghost btn-sm" onclick="copyKiraHesapIban()" title="Kopyala" style="flex-shrink:0">📋</button>
+                <button class="btn btn-ghost btn-icon" onclick="copyKiraHesapIban()" title="Kopyala"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
               </div>
             </div>
           </div>
         </div>
         <div id="kira-karsi-wrap" style="display:none">
-          <div class="form-row cols-2" style="align-items:flex-end">
-            <div>
-              <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
-              <div style="display:flex;gap:6px">
-                <select id="kira-kisi" onchange="onKiraKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-                <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'kira-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
+          <div class="kt-block" id="kira-kt-block" data-mode="kayitli">
+            <!-- Başlık + mod geçiş -->
+            <div class="kt-mode-header">
+              <span class="kt-mode-label">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                Karşı Taraf
+              </span>
+              <button class="kt-mode-switch" id="kira-kt-toggle" onclick="toggleKtMode('kira')" type="button">✏️ Manuel gir</button>
+            </div>
+            <!-- MOD 1: Kayıtlı kişi -->
+            <div class="kt-panel-kayitli">
+              <div class="kt-field">
+                <label>Kayıtlı Kişi / Kurum</label>
+                <div class="kt-input-row">
+                  <select id="kira-kisi" onchange="onKiraKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'kira-kisi')" title="Kişi Yönetimi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="kt-field" id="kira-iban-field" style="display:none">
+                <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
+                <div class="kt-input-row">
+                  <input id="kira-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                  <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="kira-iban-picker" class="iban-picker-wrap">
+                  <div class="iban-picker-label">IBAN Seçin</div>
+                  <div id="kira-iban-chips" class="iban-chips"></div>
+                </div>
               </div>
             </div>
-            <div>
-              <label>Karşı Taraf Adı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <input id="kira-karsi-ad" placeholder="Ad Soyad / Şirket adı">
-            </div>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <div>
-              <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <div style="display:flex;gap:6px;align-items:center">
-                <input id="kira-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                  oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-                  onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
-                <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+            <!-- MOD 2: Manuel giriş -->
+            <div class="kt-panel-manuel">
+              <div class="kt-field">
+                <label>Ad / Şirket <span style="color:var(--danger)">*</span></label>
+                <input id="kira-karsi-ad" placeholder="Ad Soyad / Şirket adı">
               </div>
-              <div id="kira-iban-picker" class="iban-picker-wrap">
-                <div class="iban-picker-label">IBAN Seçin</div>
-                <div id="kira-iban-chips" class="iban-chips"></div>
+              <div class="kt-field">
+                <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
+                <div class="kt-input-row">
+                  <input id="kira-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();syncKiraManuelIban()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                  <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban-manuel')" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -7240,37 +7424,61 @@ html[data-theme="light"] .mob-theme-toggle {
               <label>Hesap IBAN</label>
               <div style="display:flex;align-items:center;gap:8px">
                 <code id="maas-hesap-iban-display" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;word-break:break-all">—</code>
-                <button class="btn btn-ghost btn-sm" onclick="copyMaasHesapIban()" title="Kopyala" style="flex-shrink:0">📋</button>
+                <button class="btn btn-ghost btn-icon" onclick="copyMaasHesapIban()" title="Kopyala"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
               </div>
             </div>
           </div>
         </div>
         <div id="maas-karsi-wrap" style="display:none">
-          <div class="form-row cols-2" style="align-items:flex-end">
-            <div>
-              <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
-              <div style="display:flex;gap:6px">
-                <select id="maas-kisi" onchange="onMaasKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-                <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'maas-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
+          <div class="kt-block" id="maas-kt-block" data-mode="kayitli">
+            <div class="kt-mode-header">
+              <span class="kt-mode-label">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                Karşı Taraf
+              </span>
+              <button class="kt-mode-switch" id="maas-kt-toggle" onclick="toggleKtMode('maas')" type="button">✏️ Manuel gir</button>
+            </div>
+            <div class="kt-panel-kayitli">
+              <div class="kt-field">
+                <label>Kayıtlı Kişi / Kurum</label>
+                <div class="kt-input-row">
+                  <select id="maas-kisi" onchange="onMaasKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'maas-kisi')" title="Kişi Yönetimi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="kt-field" id="maas-iban-field" style="display:none">
+                <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
+                <div class="kt-input-row">
+                  <input id="maas-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                  <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="maas-iban-picker" class="iban-picker-wrap">
+                  <div class="iban-picker-label">IBAN Seçin</div>
+                  <div id="maas-iban-chips" class="iban-chips"></div>
+                </div>
               </div>
             </div>
-            <div>
-              <label>Karşı Taraf Adı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <input id="maas-karsi-ad" placeholder="Ad Soyad / Şirket adı">
-            </div>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <div>
-              <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <div style="display:flex;gap:6px;align-items:center">
-                <input id="maas-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                  oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-                  onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
-                <button class="btn btn-ghost btn-sm" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+            <div class="kt-panel-manuel">
+              <div class="kt-field">
+                <label>Ad / Şirket <span style="color:var(--danger)">*</span></label>
+                <input id="maas-karsi-ad" placeholder="Ad Soyad / Şirket adı">
               </div>
-              <div id="maas-iban-picker" class="iban-picker-wrap">
-                <div class="iban-picker-label">IBAN Seçin</div>
-                <div id="maas-iban-chips" class="iban-chips"></div>
+              <div class="kt-field">
+                <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
+                <div class="kt-input-row">
+                  <input id="maas-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();syncMaasManuelIban()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                  <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban-manuel')" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -7627,40 +7835,63 @@ html[data-theme="light"] .mob-theme-toggle {
               <label>Hesap IBAN</label>
               <div style="display:flex;align-items:center;gap:8px">
                 <code id="elden-hesap-iban-display" style="flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em;word-break:break-all">—</code>
-                <button class="btn btn-ghost btn-sm" onclick="copyEldenHesapIban()" title="Kopyala" style="flex-shrink:0">📋</button>
+                <button class="btn btn-ghost btn-icon" onclick="copyEldenHesapIban()" title="Kopyala"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
               </div>
             </div>
           </div>
         </div>
         <div id="elden-karsi-iban-wrap" style="display:none">
-          <div class="form-row cols-2" style="align-items:flex-end">
-            <div>
-              <label>Karşı Taraf <span style="color:var(--text3);font-size:10px">(kayıtlı kişi)</span></label>
-              <div style="display:flex;gap:6px">
-                <select id="elden-kisi" onchange="onEldenKisiChange()" style="flex:1"><option value="">— Kişi Seçin —</option></select>
-                <button class="btn btn-ghost btn-sm" onclick="openMiniKisiPopup(this,'elden-kisi')" title="Karşı Taraf Yönetimi" style="flex-shrink:0;font-size:13px">👤</button>
+          <div class="kt-block" id="elden-kt-block" data-mode="kayitli">
+            <div class="kt-mode-header">
+              <span class="kt-mode-label">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                Karşı Taraf
+              </span>
+              <button class="kt-mode-switch" id="elden-kt-toggle" onclick="toggleKtMode('elden')" type="button">✏️ Manuel gir</button>
+            </div>
+            <div class="kt-panel-kayitli">
+              <div class="kt-field">
+                <label>Kayıtlı Kişi / Kurum</label>
+                <div class="kt-input-row">
+                  <select id="elden-kisi" onchange="onEldenKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'elden-kisi')" title="Kişi Yönetimi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="kt-field" id="elden-iban-field" style="display:none">
+                <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
+                <div class="kt-input-row">
+                  <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                  <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="elden-iban-picker" class="iban-picker-wrap">
+                  <div class="iban-picker-label">IBAN Seçin</div>
+                  <div id="elden-iban-chips" class="iban-chips"></div>
+                </div>
               </div>
             </div>
-            <div>
-              <label>Karşı Taraf Adı <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <input id="elden-karsi-ad" placeholder="Ad Soyad / Şirket adı">
-            </div>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <div>
-              <label>Karşı Taraf IBAN <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-              <div style="display:flex;gap:6px;align-items:center">
-                <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="flex:1;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                  oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput()"
-                  onblur="formatIbanView(this)"
-                  onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
-                <button class="btn btn-ghost btn-sm" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala" style="flex-shrink:0">📋</button>
+            <div class="kt-panel-manuel">
+              <div class="kt-field">
+                <label>Ad / Şirket <span style="color:var(--danger)">*</span></label>
+                <input id="elden-karsi-ad" placeholder="Ad Soyad / Şirket adı">
               </div>
-              <div id="elden-iban-picker" class="iban-picker-wrap">
-                <div class="iban-picker-label">IBAN Seçin</div>
-                <div id="elden-iban-chips" class="iban-chips"></div>
+              <div class="kt-field">
+                <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
+                <div class="kt-input-row">
+                  <input id="elden-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput();syncEldenManuelIban()"
+                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                  <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="elden-karsi-iban-uyari" style="display:none;font-size:11px;color:var(--warn);margin-top:4px">⚠ Kişi seçilmeden girilen IBAN kaydedilebilir ancak kişiyle ilişkilendirilmez.</div>
               </div>
-              <div id="elden-karsi-iban-uyari" style="display:none;font-size:11px;color:var(--warn);margin-top:4px">⚠ Kişi seçilmeden girilen IBAN kaydedilebilir ancak kişiyle ilişkilendirilmez.</div>
             </div>
           </div>
         </div>
@@ -8042,6 +8273,23 @@ function populateCurrencySelects() {
   // varsayılan para birimi select
   const pbSel = document.getElementById('para-birimi-select');
   if(pbSel) { pbSel.innerHTML = opts; pbSel.value = defaultCurrency; }
+  // mevduat para birimi
+  const mevPb = document.getElementById('mev-para-birimi');
+  if(mevPb) { const prev = mevPb.value; mevPb.innerHTML = opts; mevPb.value = prev || defaultCurrency; }
+  // kira para birimi
+  const kiraPb = document.getElementById('kira-para-birimi-manual');
+  if(kiraPb) { const prev = kiraPb.value; kiraPb.innerHTML = opts; kiraPb.value = prev || defaultCurrency; }
+  // maaş para birimi
+  const maasPb = document.getElementById('maas-para-birimi');
+  if(maasPb) { const prev = maasPb.value; maasPb.innerHTML = opts; maasPb.value = prev || defaultCurrency; }
+  const maasPbM = document.getElementById('maas-para-birimi-manual');
+  if(maasPbM) { const prev = maasPbM.value; maasPbM.innerHTML = opts; maasPbM.value = prev || defaultCurrency; }
+  // hesap para birimi
+  const hesapPb = document.getElementById('hesap-para-birimi');
+  if(hesapPb) { const prev = hesapPb.value; hesapPb.innerHTML = opts; hesapPb.value = prev || defaultCurrency; }
+  // elden para birimi
+  const eldenPb = document.getElementById('elden-para-birimi');
+  if(eldenPb) { const prev = eldenPb.value; eldenPb.innerHTML = opts; eldenPb.value = prev || defaultCurrency; }
 }
 
 // ========== HELPERS ==========
@@ -8286,7 +8534,7 @@ function bindMoneyInputs(container) {
     });
     // Sadece sayısal karakter, ondalık ayraç, eksi izin ver
     el.addEventListener('keypress', function(e) {
-      const allowed = '0123456789' + (FORMAT_CONFIG.ondalikAyrac || ',') + '-';
+      const allowed = '0123456789' + (FORMAT_CONFIG.ondalikAyrac || ',') + (FORMAT_CONFIG.binlikAyrac || '.') + '-';
       if(!allowed.includes(e.key) && !['Backspace','Delete','Tab','Enter','ArrowLeft','ArrowRight'].includes(e.key)) {
         e.preventDefault();
       }
@@ -8903,6 +9151,9 @@ function populateKartModal(kart=null) {
     extreTypeChange();
   } else {
     document.getElementById('kart-extre-gecerlilik-ay').value = '';
+    setMoneyInput('kart-limit', '');
+    document.getElementById('kart-ad').value = '';
+    document.getElementById('kart-no').value = '';
     bankaEl.value = '';
     tipEl.value = '';
     phUpdate(bankaEl);
@@ -10365,6 +10616,13 @@ function openEldenModal() {
   if(uyariEl) uyariEl.style.display = 'none';
   populateEldenHesapSelect();
   populateEldenKisiSelect();
+  // KT block sıfırla
+  const eldenKtBlock = document.getElementById('elden-kt-block');
+  if (eldenKtBlock) eldenKtBlock.dataset.mode = 'kayitli';
+  const eldenKtToggle = document.getElementById('elden-kt-toggle');
+  if (eldenKtToggle) eldenKtToggle.textContent = '✏️ Manuel gir';
+  const eldenIbanField = document.getElementById('elden-iban-field');
+  if (eldenIbanField) eldenIbanField.style.display = 'none';
   // Para birimi
   const pbSel = document.getElementById('elden-para-birimi');
   if(pbSel) {
@@ -10408,6 +10666,12 @@ function openKiraModal(id=null) {
         const kisilerE = DB.kisiler||[];
         kiraKisiSelEdit.innerHTML = kisilerE.map(ki=>`<option value="${ki.id}">${ki.ad}${ki.ibanlar&&ki.ibanlar.length?' ('+ki.ibanlar.length+' IBAN)':''}</option>`).join('');
         phSet(kiraKisiSelEdit, 'Kişi seçin…', k.kisiId||'');
+        // Kayıtlı kişi varsa IBAN field'ını göster
+        if (k.kisiId) {
+          const kiraIbanField = document.getElementById('kira-iban-field');
+          if (kiraIbanField) kiraIbanField.style.display = '';
+          renderIbanPicker(k.kisiId, 'kira-iban-picker', 'kira-iban-chips', 'kira-karsi-iban');
+        }
       }
       if(kiraEditYontem === 'havale') {
         const kiraHW = document.getElementById('kira-hesap-wrap');
@@ -10416,6 +10680,18 @@ function openKiraModal(id=null) {
         if(kiraKW) kiraKW.style.display = '';
         const kiraKAdEl = document.getElementById('kira-karsi-ad');
         const kiraKIbanEl = document.getElementById('kira-karsi-iban');
+        // KT block modu: kayıtlı kişi varsa kayıtlı mod, yoksa manuel mod
+        const kiraKtBlock = document.getElementById('kira-kt-block');
+        const kiraKtToggle = document.getElementById('kira-kt-toggle');
+        if (kiraKtBlock) {
+          if (k.kisiId) {
+            kiraKtBlock.dataset.mode = 'kayitli';
+            if (kiraKtToggle) kiraKtToggle.textContent = '✏️ Manuel gir';
+          } else if (k.karsiAd) {
+            kiraKtBlock.dataset.mode = 'manuel';
+            if (kiraKtToggle) kiraKtToggle.textContent = '← Kayıtlıdan seç';
+          }
+        }
         if(kiraKAdEl) kiraKAdEl.value = k.karsiAd||'';
         if(kiraKIbanEl) { kiraKIbanEl.value = k.karsiIban||''; if(k.karsiIban) formatIbanView(kiraKIbanEl); }
         // IBAN göster
@@ -10473,15 +10749,24 @@ function openKiraModal(id=null) {
     if(kiraNewIbanWrap) kiraNewIbanWrap.style.display = 'none';
     const kiraNewKAdEl = document.getElementById('kira-karsi-ad');
     const kiraNewKIbanEl = document.getElementById('kira-karsi-iban');
+    const kiraNewKIbanManuelEl = document.getElementById('kira-karsi-iban-manuel');
     if(kiraNewKAdEl) kiraNewKAdEl.value = '';
     if(kiraNewKIbanEl) kiraNewKIbanEl.value = '';
+    if(kiraNewKIbanManuelEl) kiraNewKIbanManuelEl.value = '';
     // Kişi seçimi doldur
     const kiraKisiSelNew = document.getElementById('kira-kisi');
     if(kiraKisiSelNew) {
       const kisilerN = DB.kisiler||[];
-      kiraKisiSelNew.innerHTML = kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
-      phSet(kiraKisiSelNew, 'Kişi seçin…', '');
+      kiraKisiSelNew.innerHTML = '<option value="">— Kişi Seçin —</option>' + kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+      phSet(kiraKisiSelNew, '— Kişi Seçin —', '');
     }
+    // KT block sıfırla
+    const kiraKtBlockNew = document.getElementById('kira-kt-block');
+    if (kiraKtBlockNew) kiraKtBlockNew.dataset.mode = 'kayitli';
+    const kiraKtToggleNew = document.getElementById('kira-kt-toggle');
+    if (kiraKtToggleNew) kiraKtToggleNew.textContent = '✏️ Manuel gir';
+    const kiraIbanFieldNew = document.getElementById('kira-iban-field');
+    if (kiraIbanFieldNew) kiraIbanFieldNew.style.display = 'none';
     document.getElementById('kira-depozito-var').checked=false;
     _fillPbManualSelect('kira-depozito-pb', defaultCurrency||'TRY');
     toggleKiraDepozito();
@@ -10491,6 +10776,18 @@ function openKiraModal(id=null) {
 }
 
 function saveKira() {
+  // Tüm validasyonlar burada — checkManuelKarsiTarafAndSave öncesinde
+  const _kira_tut0 = getMoneyInput('kira-tutar')||0;
+  if(!_kira_tut0) { showFieldError('kira-tutar', 'Tutar zorunlu'); return; }
+  if(!document.getElementById('kira-baslangic').value) { showFieldError('kira-baslangic', 'Başlangıç tarihi zorunlu'); return; }
+  if(!document.getElementById('kira-bitis').value) { showFieldError('kira-bitis', 'Bitiş tarihi zorunlu'); return; }
+  const _kira_yon0 = (document.getElementById('kira-yontem')||{}).value || 'nakit';
+  if(_kira_yon0 === 'havale') {
+    checkManuelKarsiTarafAndSave('kira', _doSaveKira); return;
+  }
+  _doSaveKira();
+}
+function _doSaveKira() {
   const tur = document.getElementById('kira-tur').value;
   const absTutar = getMoneyInput('kira-tutar')||0;
   const tutar = tur==='gider' ? -Math.abs(absTutar) : Math.abs(absTutar);
@@ -10536,9 +10833,6 @@ function saveKira() {
     pasif: document.getElementById('kira-pasif').checked,
     depozito
   };
-  if(!kira.baslangic) { showFieldError('kira-baslangic', 'Başlangıç tarihi zorunlu'); return; }
-  if(!kira.bitis) { showFieldError('kira-bitis', 'Bitiş tarihi zorunlu'); return; }
-  if(!absTutar) { showFieldError('kira-tutar', 'Tutar zorunlu'); return; }
   if(editKiraId) {
     const idx = DB.kiralar.findIndex(x=>x.id===editKiraId);
     if(idx>=0) DB.kiralar[idx]=kira;
@@ -10693,15 +10987,24 @@ function openMaasModal() {
   if(maasHesapBilgiWrap) maasHesapBilgiWrap.style.display = 'none';
   const maasKarsiAdEl = document.getElementById('maas-karsi-ad');
   const maasKarsiIbanEl = document.getElementById('maas-karsi-iban');
+  const maasKarsiIbanManuelEl = document.getElementById('maas-karsi-iban-manuel');
   if(maasKarsiAdEl) maasKarsiAdEl.value = '';
   if(maasKarsiIbanEl) maasKarsiIbanEl.value = '';
+  if(maasKarsiIbanManuelEl) maasKarsiIbanManuelEl.value = '';
   // Kişi select doldur
   const maasKisiSel = document.getElementById('maas-kisi');
   if(maasKisiSel) {
     const kisiler = DB.kisiler||[];
-    maasKisiSel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
-    phSet(maasKisiSel, 'Kişi seçin…', '');
+    maasKisiSel.innerHTML = '<option value="">— Kişi Seçin —</option>' + kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+    phSet(maasKisiSel, '— Kişi Seçin —', '');
   }
+  // KT block sıfırla
+  const maasKtBlockNew = document.getElementById('maas-kt-block');
+  if (maasKtBlockNew) maasKtBlockNew.dataset.mode = 'kayitli';
+  const maasKtToggleNew = document.getElementById('maas-kt-toggle');
+  if (maasKtToggleNew) maasKtToggleNew.textContent = '✏️ Manuel gir';
+  const maasIbanFieldNew = document.getElementById('maas-iban-field');
+  if (maasIbanFieldNew) maasIbanFieldNew.style.display = 'none';
   // Banka hesabı ve para birimi
   _populateMaasHesapSel('', defaultCurrency || 'TRY');
   bindMoneyInputs(document.getElementById('modal-maas'));
@@ -10764,7 +11067,7 @@ function showFieldError(id, msg) {
 function showToast(msg, type='success') {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
-  t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':'') + msg;
+  t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':type==='info'?'ℹ ':' ') + msg;
   // Progress bar
   const prog = document.createElement('div');
   prog.className = 'toast-progress';
@@ -10775,13 +11078,30 @@ function showToast(msg, type='success') {
 }
 
 function saveMaas() {
+  // Tüm validasyonlar burada — checkManuelKarsiTarafAndSave öncesinde
+  const _maas_acik0 = document.getElementById('maas-aciklama').value.trim();
+  const _maas_tut0 = getMoneyInput('maas-tutar')||0;
+  if(!_maas_acik0) { showFieldError('maas-aciklama', 'Açıklama zorunlu'); return; }
+  if(!_maas_tut0) { showFieldError('maas-tutar', 'Tutar zorunlu'); return; }
+  const _maas_tur0 = document.getElementById('maas-tur').value;
+  if(_maas_tur0 === 'tekseferlik') {
+    if(!document.getElementById('maas-tekseferlik-tarih').value) { showFieldError('maas-tekseferlik-tarih', 'Ödeme tarihi zorunlu'); return; }
+  } else {
+    const _maas_gun0 = parseInt(document.getElementById('maas-gun').value)||0;
+    if(!_maas_gun0 || _maas_gun0 < 1 || _maas_gun0 > 31) { showFieldError('maas-gun', 'Ödeme günü zorunlu (1-31)'); return; }
+    if(!document.getElementById('maas-baslangic').value) { showFieldError('maas-baslangic', 'Başlangıç tarihi zorunlu'); return; }
+  }
+  const _maas_yon0 = (document.getElementById('maas-yontem')||{}).value || 'nakit';
+  if(_maas_yon0 === 'havale') {
+    checkManuelKarsiTarafAndSave('maas', _doSaveMaas); return;
+  }
+  _doSaveMaas();
+}
+function _doSaveMaas() {
   const tur = document.getElementById('maas-tur').value;
   const isTekSeferlik = tur === 'tekseferlik';
   const aciklama = document.getElementById('maas-aciklama').value.trim();
   const tutar = getMoneyInput('maas-tutar')||0;
-
-  if(!aciklama) { showFieldError('maas-aciklama', 'Açıklama zorunlu'); return; }
-  if(!tutar) { showFieldError('maas-tutar', 'Tutar zorunlu'); return; }
 
   const odemeYontem = (document.getElementById('maas-yontem')||{}).value || 'nakit';
   const hesapIdVal = odemeYontem === 'havale' ? ((document.getElementById('maas-hesap')||{}).value || null) : null;
@@ -10792,7 +11112,6 @@ function saveMaas() {
   let maas;
   if(isTekSeferlik) {
     const tekseferlikTarih = document.getElementById('maas-tekseferlik-tarih').value;
-    if(!tekseferlikTarih) { showFieldError('maas-tekseferlik-tarih', 'Ödeme tarihi zorunlu'); return; }
     maas = {
       id: editMaasId || uid(),
       aciklama, tutar,
@@ -10808,8 +11127,6 @@ function saveMaas() {
   } else {
     const gun = parseInt(document.getElementById('maas-gun').value)||0;
     const baslangic = document.getElementById('maas-baslangic').value;
-    if(!gun || gun < 1 || gun > 31) { showFieldError('maas-gun', 'Ödeme günü zorunlu (1-31)'); return; }
-    if(!baslangic) { showFieldError('maas-baslangic', 'Başlangıç tarihi zorunlu'); return; }
     maas = {
       id: editMaasId || uid(),
       aciklama, tutar,
@@ -11689,6 +12006,19 @@ function renderKredi() {
 // ========== ELDEN ==========
 let editEldenId = null;
 function saveElden() {
+  // Önce validasyon
+  const _elden_tur0 = document.getElementById('elden-tur').value;
+  const _elden_tut0 = getMoneyInput('elden-tutar')||0;
+  if(!_elden_tut0) { showFieldError('elden-tutar', 'Tutar giriniz'); return; }
+  const _elden_tarih0 = document.getElementById('elden-tarih').value;
+  if(!_elden_tarih0) { showFieldError('elden-tarih', 'Tarih giriniz'); return; }
+  const _elden_yon0 = document.getElementById('elden-yontem').value;
+  if(_elden_yon0 === 'havale') {
+    checkManuelKarsiTarafAndSave('elden', _doSaveElden); return;
+  }
+  _doSaveElden();
+}
+function _doSaveElden() {
   const tur = document.getElementById('elden-tur').value;
   let tutar = getMoneyInput('elden-tutar')||0;
   if(tur==='gider') tutar = -Math.abs(tutar);
@@ -11721,8 +12051,6 @@ function saveElden() {
     karsiAd,
     karsiKisiId
   };
-  if(!elden.tarih) { showFieldError('elden-tarih', 'Tarih giriniz'); return; }
-  if(!Math.abs(tutar)) { showFieldError('elden-tutar', 'Tutar giriniz'); return; }
   if(editEldenId) {
     const idx = DB.eldenler.findIndex(e=>e.id===editEldenId);
     if(idx>=0) DB.eldenler[idx]=elden;
@@ -11773,6 +12101,29 @@ function editElden(id) {
   // Hesap bilgilerini otomatik doldur
   if(yontem==='havale' && e.hesapId) onEldenHesapChange();
   else document.getElementById('elden-hesap-bilgi-wrap').style.display = 'none';
+  // KT block modu: kisiId varsa kayıtlı, karsiAd varsa manuel
+  if (yontem === 'havale') {
+    const eldenKtBlockEdit = document.getElementById('elden-kt-block');
+    const eldenKtToggleEdit = document.getElementById('elden-kt-toggle');
+    if (eldenKtBlockEdit) {
+      if (e.kisiId) {
+        eldenKtBlockEdit.dataset.mode = 'kayitli';
+        if (eldenKtToggleEdit) eldenKtToggleEdit.textContent = '✏️ Manuel gir';
+        const eldenIbanFieldEdit = document.getElementById('elden-iban-field');
+        if (eldenIbanFieldEdit) eldenIbanFieldEdit.style.display = '';
+        // kisiSelect'e değer set et
+        const eldenKisiSel = document.getElementById('elden-kisi');
+        if (eldenKisiSel) phSet(eldenKisiSel, 'Kişi seçin…', e.kisiId);
+        renderIbanPicker(e.kisiId, 'elden-iban-picker', 'elden-iban-chips', 'elden-karsi-iban');
+      } else if (e.karsiAd) {
+        eldenKtBlockEdit.dataset.mode = 'manuel';
+        if (eldenKtToggleEdit) eldenKtToggleEdit.textContent = '← Kayıtlıdan seç';
+      } else {
+        eldenKtBlockEdit.dataset.mode = 'kayitli';
+        if (eldenKtToggleEdit) eldenKtToggleEdit.textContent = '✏️ Manuel gir';
+      }
+    }
+  }
   document.getElementById('modal-elden').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
 
@@ -12303,6 +12654,28 @@ function populateEldenKisiSelect() {
 }
 
 
+function populateKiraKisiSelects() {
+  const sel = document.getElementById('kira-kisi');
+  if(!sel) return;
+  const kisiler = DB.kisiler||[];
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Kişi Seçin —</option>' +
+    kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+  if(prev) sel.value = prev;
+  phSet(sel, '— Kişi Seçin —', sel.value||'');
+}
+
+function populateMaasKisiSelects() {
+  const sel = document.getElementById('maas-kisi');
+  if(!sel) return;
+  const kisiler = DB.kisiler||[];
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Kişi Seçin —</option>' +
+    kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+  if(prev) sel.value = prev;
+  phSet(sel, '— Kişi Seçin —', sel.value||'');
+}
+
 // ─── IBAN PICKER SHARED HELPER ─────────────────────────────────
 function renderIbanPicker(kisiId, pickerWrapId, chipsId, ibanInputId) {
   const pickerWrap = document.getElementById(pickerWrapId);
@@ -12358,8 +12731,9 @@ function onEldenKisiChange() {
   const kisiId = document.getElementById('elden-kisi').value;
   const uyariEl = document.getElementById('elden-karsi-iban-uyari');
   if (uyariEl) uyariEl.style.display = 'none';
+  const ibanField = document.getElementById('elden-iban-field');
   if (!kisiId) {
-    document.getElementById('elden-karsi-ad').value = '';
+    if (ibanField) ibanField.style.display = 'none';
     document.getElementById('elden-karsi-iban').value = '';
     const p = document.getElementById('elden-iban-picker');
     if (p) p.style.display = 'none';
@@ -12367,12 +12741,85 @@ function onEldenKisiChange() {
   }
   const k = (DB.kisiler||[]).find(x=>x.id===kisiId);
   if (!k) return;
-  document.getElementById('elden-karsi-ad').value = k.ad||'';
+  if (ibanField) ibanField.style.display = '';
   document.getElementById('elden-karsi-iban').value = '';
   renderIbanPicker(kisiId, 'elden-iban-picker', 'elden-iban-chips', 'elden-karsi-iban');
 }
 
 // showEldenKisiIbanSecim ve selectKisiIban — renderIbanPicker chip sistemiyle değiştirildi
+
+// ========== KARŞI TARAF MANUEL GİRİŞ GÖSTERGESİ ==========
+// ========== KARŞI TARAF MOD TOGGLE ==========
+function toggleKtMode(prefix) {
+  const block = document.getElementById(prefix + '-kt-block');
+  const btn   = document.getElementById(prefix + '-kt-toggle');
+  if (!block) return;
+  const isManuel = block.dataset.mode === 'manuel';
+  if (isManuel) {
+    // Kayıtlı moda dön
+    block.dataset.mode = 'kayitli';
+    if (btn) btn.textContent = '✏️ Manuel gir';
+    // Manuel alanları temizle
+    const adEl = document.getElementById(prefix + '-karsi-ad');
+    const ibanManuelEl = document.getElementById(prefix + '-karsi-iban-manuel');
+    if (adEl) adEl.value = '';
+    if (ibanManuelEl) ibanManuelEl.value = '';
+  } else {
+    // Manuel moda geç
+    block.dataset.mode = 'manuel';
+    if (btn) btn.textContent = '← Kayıtlıdan seç';
+    // Kayıtlı seçimi temizle & IBAN alanını gizle
+    const kisiSel = document.getElementById(prefix + '-kisi');
+    if (kisiSel) kisiSel.value = '';
+    const ibanField = document.getElementById(prefix + '-iban-field');
+    if (ibanField) ibanField.style.display = 'none';
+    const ibanEl = document.getElementById(prefix + '-karsi-iban');
+    if (ibanEl) ibanEl.value = '';
+    const picker = document.getElementById(prefix + '-iban-picker');
+    if (picker) picker.style.display = 'none';
+  }
+}
+
+function initManuelKarsiObservers() {
+  ['elden', 'kira', 'maas'].forEach(prefix => {
+    const adEl   = document.getElementById(prefix + '-karsi-ad');
+    const kisiEl = document.getElementById(prefix + '-kisi');
+    if (!adEl || !kisiEl) return;
+
+    function updateBadge() {
+      const hasManuel = adEl.value.trim() && !kisiEl.value;
+      let badge = document.getElementById(prefix + '-manuel-badge');
+      if (hasManuel) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.id = prefix + '-manuel-badge';
+          badge.style.cssText = `
+            display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;
+            padding:2px 7px;border-radius:5px;background:rgba(251,191,36,.12);
+            border:1px solid rgba(251,191,36,.25);color:rgba(251,191,36,.85);
+            margin-left:6px;vertical-align:middle;
+          `;
+          badge.title = 'Manuel girilen kişi — kayıt sırasında kaydetme önerisi sunulacak';
+          badge.textContent = '📝 Manuel';
+          adEl.parentNode.style.position = 'relative';
+          adEl.insertAdjacentElement('afterend', badge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    adEl.addEventListener('input', updateBadge);
+    kisiEl.addEventListener('change', updateBadge);
+  });
+}
+// DOMContentLoaded veya hemen çağır
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initManuelKarsiObservers);
+} else {
+  setTimeout(initManuelKarsiObservers, 500);
+}
+// ========== /KARŞI TARAF MANUEL GİRİŞ GÖSTERGESİ ==========
 
 // ========== PARA BİRİMİ YÖNETİMİ ==========
 let editParaBirimiKod = null;
@@ -13472,8 +13919,9 @@ function copyMaasHesapIban() {
 
 function onMaasKisiChange() {
   const kisiId = document.getElementById('maas-kisi').value;
+  const ibanField = document.getElementById('maas-iban-field');
   if (!kisiId) {
-    document.getElementById('maas-karsi-ad').value = '';
+    if (ibanField) ibanField.style.display = 'none';
     document.getElementById('maas-karsi-iban').value = '';
     const p = document.getElementById('maas-iban-picker');
     if (p) p.style.display = 'none';
@@ -13481,7 +13929,7 @@ function onMaasKisiChange() {
   }
   const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
   if (!kisi) return;
-  document.getElementById('maas-karsi-ad').value = kisi.ad || '';
+  if (ibanField) ibanField.style.display = '';
   document.getElementById('maas-karsi-iban').value = '';
   renderIbanPicker(kisiId, 'maas-iban-picker', 'maas-iban-chips', 'maas-karsi-iban');
 }
@@ -13518,8 +13966,9 @@ function onKiraHesapFullChange() {
 
 function onKiraKisiChange() {
   const kisiId = document.getElementById('kira-kisi').value;
+  const ibanField = document.getElementById('kira-iban-field');
   if (!kisiId) {
-    document.getElementById('kira-karsi-ad').value = '';
+    if (ibanField) ibanField.style.display = 'none';
     document.getElementById('kira-karsi-iban').value = '';
     const p = document.getElementById('kira-iban-picker');
     if (p) p.style.display = 'none';
@@ -13527,7 +13976,7 @@ function onKiraKisiChange() {
   }
   const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
   if (!kisi) return;
-  document.getElementById('kira-karsi-ad').value = kisi.ad || '';
+  if (ibanField) ibanField.style.display = '';
   document.getElementById('kira-karsi-iban').value = '';
   renderIbanPicker(kisiId, 'kira-iban-picker', 'kira-iban-chips', 'kira-karsi-iban');
 }
@@ -14164,6 +14613,19 @@ function onEldenYontemChange() {
     const sel = document.getElementById('elden-hesap');
     if(sel) sel.value = '';
     onEldenHesapChangePb();
+    // KT block sıfırla
+    const eldenKtBlockYon = document.getElementById('elden-kt-block');
+    if (eldenKtBlockYon) eldenKtBlockYon.dataset.mode = 'kayitli';
+    const eldenKtToggleYon = document.getElementById('elden-kt-toggle');
+    if (eldenKtToggleYon) eldenKtToggleYon.textContent = '✏️ Manuel gir';
+    const eldenIbanFieldYon = document.getElementById('elden-iban-field');
+    if (eldenIbanFieldYon) eldenIbanFieldYon.style.display = 'none';
+    const eldenKisiSelYon = document.getElementById('elden-kisi');
+    if (eldenKisiSelYon) eldenKisiSelYon.value = '';
+    const eldenKarsiAdYon = document.getElementById('elden-karsi-ad');
+    if (eldenKarsiAdYon) eldenKarsiAdYon.value = '';
+    const eldenKarsiIbanYon = document.getElementById('elden-karsi-iban');
+    if (eldenKarsiIbanYon) eldenKarsiIbanYon.value = '';
   } else {
     // Seçili hesap varsa bilgileri doldur
     onEldenHesapChange();
@@ -14672,6 +15134,122 @@ function openMiniKisiPopup(triggerEl, targetSelectId) {
   mkpRenderList();
 }
 
+// ===== MANUEL KARŞI TARAF KAYDETME =====
+function checkManuelKarsiTarafAndSave(prefix, saveFn) {
+  const kisiSel = document.getElementById(prefix + '-kisi');
+  const adEl    = document.getElementById(prefix + '-karsi-ad');
+  const ibanEl  = document.getElementById(prefix + '-karsi-iban');
+
+  // Kişi seçilmişse direkt kaydet
+  if (kisiSel && kisiSel.value) { saveFn(); return; }
+
+  const ad   = adEl   ? adEl.value.trim()                             : '';
+  const iban = ibanEl ? ibanEl.value.replace(/\s+/g,'').toUpperCase() : '';
+
+  // Manuel hiçbir şey girilmemişse direkt kaydet
+  if (!ad && !iban) { saveFn(); return; }
+
+  // Manuel veri var — kaydetmek ister mi diye sor
+  showManuelKarsiKaydetModal(ad, iban, saveFn);
+}
+
+function showManuelKarsiKaydetModal(ad, iban, saveFn) {
+  // Önceki varsa kaldır
+  const existing = document.getElementById('manuel-karsi-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'manuel-karsi-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:16px;
+      padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.4);
+    ">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <span style="font-size:22px;">💾</span>
+        <span style="font-size:15px;font-weight:600;color:var(--text);">Kişiyi Kaydet?</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin:0 0 12px;">
+        Aşağıdaki karşı taraf bilgisi manuel girildi. Kişi listesine kaydedilsin mi?
+      </p>
+      <div style="background:var(--surface3);border-radius:8px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:var(--text2);">
+        ${ad ? `<div style="margin-bottom:4px;"><strong style="color:var(--text);">İsim:</strong> ${ad}</div>` : ''}
+        ${iban ? `<div><strong style="color:var(--text);">IBAN:</strong> <span style="font-family:monospace;font-size:11px;">${iban.replace(/(.{4})/g,'$1 ').trim()}</span></div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="mkm-kaydet" style="
+          flex:1;padding:9px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;
+          background:linear-gradient(135deg,var(--accent2,#63b3ed),var(--teal,#2dd4bf));color:#0f1629;
+        ">✓ Kaydet ve Devam</button>
+        <button id="mkm-devam" style="
+          flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+          font-size:13px;background:transparent;color:var(--text2);
+        ">Kaydetme</button>
+        <button id="mkm-iptal" style="
+          padding:9px 12px;border-radius:8px;border:1px solid rgba(251,113,133,.3);cursor:pointer;
+          font-size:13px;background:transparent;color:var(--rose,#fb7185);
+        ">✕</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById('mkm-kaydet').onclick = () => {
+    modal.remove();
+    saveFn();
+    // Kişiyi saveFn'den SONRA kaydet — böylece form hatası çıksa bile kişi fazladan eklenmez
+    if (ad) {
+      // Aynı IBAN zaten kayıtlıysa tekrar ekleme
+      const zatenVar = iban && (DB.kisiler||[]).some(k => (k.ibanlar||[]).some(i => i.iban === iban));
+      if (!zatenVar) {
+        const newKisi = { id: uid(), ad, tel: '', ibanlar: iban ? [{iban, etiket:''}] : [], not:'' };
+        if (!DB.kisiler) DB.kisiler = [];
+        DB.kisiler.push(newKisi);
+        saveData();
+        try { populateEldenKisiSelect(); } catch(e){}
+        try { mkpRenderList(); } catch(e){}
+        showToast(ad + ' kişi listesine eklendi ✓');
+      }
+    }
+  };
+
+  document.getElementById('mkm-devam').onclick = () => {
+    modal.remove();
+    saveFn();
+  };
+
+  document.getElementById('mkm-iptal').onclick = () => {
+    modal.remove();
+  };
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+// Manuel IBAN alanını kayıtlı IBAN alanına senkronize eder
+// (checkManuelKarsiTarafAndSave 'karsi-iban' okur, manuel mod için burayı güncelliyoruz)
+function syncKiraManuelIban() {
+  const manuel = document.getElementById('kira-karsi-iban-manuel');
+  const hedef  = document.getElementById('kira-karsi-iban');
+  if (manuel && hedef) hedef.value = manuel.value.replace(/\s+/g,'').toUpperCase();
+}
+function syncMaasManuelIban() {
+  const manuel = document.getElementById('maas-karsi-iban-manuel');
+  const hedef  = document.getElementById('maas-karsi-iban');
+  if (manuel && hedef) hedef.value = manuel.value.replace(/\s+/g,'').toUpperCase();
+}
+function syncEldenManuelIban() {
+  const manuel = document.getElementById('elden-karsi-iban-manuel');
+  const hedef  = document.getElementById('elden-karsi-iban');
+  if (manuel && hedef) hedef.value = manuel.value.replace(/\s+/g,'').toUpperCase();
+}
+// ===== /MANUEL KARŞI TARAF =====
+
 function closeMiniKisiPopup() {
   const popup = document.getElementById('mini-kisi-popup');
   const backdrop = document.getElementById('mini-kisi-backdrop');
@@ -14702,15 +15280,16 @@ function mkpRenderList() {
     const initials = k.ad.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const ibans = k.ibanlar || [];
     const ibanCount = ibans.length;
-    const meta = [k.tel, ibanCount ? ibanCount + ' IBAN' : ''].filter(Boolean).join(' · ');
+    const meta = [k.tel, ibanCount === 1 ? '1 IBAN' : ibanCount > 1 ? ibanCount + ' IBAN 🔽' : ''].filter(Boolean).join(' · ');
     const isSelected = currentVal === k.id;
     const isExpanded = !!_mkpExpanded[k.id];
 
     const ibanListHtml = ibans.map((ib, i) => `
-      <div class="mkp-iban-row">
+      <div class="mkp-iban-row mkp-iban-selectable" onclick="mkpSelectIbanToForm('${k.id}','${ib.iban || ib}');event.stopPropagation()" title="Forma seç">
         <span class="mkp-iban-code" title="${ib.iban}">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</span>
         ${ib.etiket ? `<span class="mkp-iban-label">${ib.etiket}</span>` : ''}
-        <button class="mkp-iban-copy" onclick="mkpCopyIban('${ib.iban}')" title="Kopyala">⎘</button>
+        <button class="mkp-iban-use" onclick="mkpSelectIbanToForm('${k.id}','${ib.iban || ib}');event.stopPropagation()" title="Forma seç">↩ Seç</button>
+        <button class="mkp-iban-copy" onclick="mkpCopyIban('${ib.iban}');event.stopPropagation()" title="Kopyala">⎘</button>
         <button class="mkp-iban-del" onclick="mkpDeleteIban('${k.id}',${i});event.stopPropagation()" title="Sil">✕</button>
       </div>`).join('');
 
@@ -14802,9 +15381,45 @@ function mkpSelectKisi(id) {
   const sel = document.getElementById(_mkpTargetSelectId);
   if (!sel) return;
   sel.value = id;
-  // onchange tetikle
   sel.dispatchEvent(new Event('change'));
+  // Kişinin IBAN sayısını kontrol et — birden fazlaysa popup'ı kapatmadan seçtir
+  const kisi = (DB.kisiler||[]).find(k=>k.id===id);
+  if (kisi && kisi.ibanlar && kisi.ibanlar.length > 1) {
+    // Popup'ı açık bırak, IBAN bölümünü aç
+    _mkpExpanded[id] = true;
+    mkpRenderList();
+    // Scroll to item
+    setTimeout(() => {
+      const wrap = document.querySelector('.mkp-item-wrap.selected');
+      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+    showToast('IBAN seçin ↓', 'info');
+    return;
+  }
   closeMiniKisiPopup();
+}
+
+function mkpSelectIbanToForm(kisiId, iban) {
+  if (!_mkpTargetSelectId) return;
+  // Target select ID'den iban input ID'sini bul
+  // Convention: maas-kisi → maas-karsi-iban, kira-kisi → kira-karsi-iban, elden-kisi → elden-karsi-iban
+  const prefix = _mkpTargetSelectId.replace('-kisi', '');
+  const ibanInputId = prefix + '-karsi-iban';
+  const ibanInput = document.getElementById(ibanInputId);
+  const raw = iban.replace(/\s+/g,'').toUpperCase();
+  if (ibanInput) {
+    ibanInput.value = raw;
+    if (typeof formatIbanView === 'function') formatIbanView(ibanInput);
+  }
+  // Kisi zaten seçili, IBAN chip'lerini güncelle
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if (kisi) {
+    const pickerWrapId = prefix + '-iban-picker';
+    const chipsId = prefix + '-iban-chips';
+    renderIbanPicker(kisiId, pickerWrapId, chipsId, ibanInputId);
+  }
+  closeMiniKisiPopup();
+  showToast('IBAN seçildi ✓');
 }
 
 function mkpToggleAddForm() {
@@ -15818,7 +16433,426 @@ document.addEventListener('click', function(e) {
   });
 })();
 
-// 8. Tablo satırlarına data-label ekle (mobil kart görünümü için)
+// 9. Dropdown (select) ikonları — her select'e kontekste uygun ikon ekle
+(function() {
+  // SVG ikonlar (inline, temiz)
+  const SVG = {
+    card:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+    calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    bank:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>`,
+    money:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    category: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h8M4 18h6"/></svg>`,
+    person:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    account:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>`,
+    type:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>`,
+    color:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/></svg>`,
+    settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    strategy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    method:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+    currency: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9.354a4 4 0 1 0 0 5.292M12 6v2M12 16v2"/></svg>`,
+    location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    tag:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,
+    deposit:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
+    separator:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>`,
+    decimal:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h2.5M15.5 4H18v3M4 17v3h2.5M15.5 20H18v-3"/><path d="M4 11.5h16M4 12.5h16"/></svg>`,
+    holiday:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h8M8 18h5"/></svg>`,
+    status:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+    rent:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    salary:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20L16 3z"/><path d="M12 12v4M10 14h4"/></svg>`,
+    filter:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  };
+
+  // id → ikon eşlemesi
+  const ID_MAP = {
+    'filter-kart':              SVG.card,
+    'filter-ay':                SVG.calendar,
+    'extre-kart-filter':        SVG.card,
+    'para-birimi-select':       SVG.currency,
+    'ga-tarih-ayrac':           SVG.separator,
+    'ga-saat-ayrac':            SVG.separator,
+    'ga-ondalik-ayrac':         SVG.decimal,
+    'ga-binlik-ayrac':          SVG.decimal,
+    'ga-ondalik-basamak':       SVG.decimal,
+    'kat-tur':                  SVG.tag,
+    'pb-konum':                 SVG.location,
+    'pb-ondalik':               SVG.decimal,
+    'kmhkredi-kmh':             SVG.account,
+    'kmhkredi-odeme-gun-tip':   SVG.holiday,
+    'kredi-banka':              SVG.bank,
+    'kredi-tur':                SVG.type,
+    'kredi-odeme-gun-tip':      SVG.holiday,
+    'kart-banka':               SVG.bank,
+    'kart-tip':                 SVG.type,
+    'kart-renk':                SVG.color,
+    'kart-varsayilan-pb':       SVG.currency,
+    'kart-extre-tip':           SVG.calendar,
+    'kart-extre-hafta':         SVG.calendar,
+    'kart-extre-haftagun':      SVG.calendar,
+    'kart-odeme-gun-tip':       SVG.holiday,
+    'islem-kart':               SVG.card,
+    'islem-kategori':           SVG.category,
+    'islem-para-birimi':        SVG.currency,
+    'mev-banka':                SVG.bank,
+    'mev-hesap-id':             SVG.account,
+    'mev-para-birimi':          SVG.currency,
+    'mev-strateji':             SVG.strategy,
+    'mev-vadesiz-hesap-id':     SVG.account,
+    'kira-tur':                 SVG.rent,
+    'kira-gun-kisa-ay-davranis':SVG.holiday,
+    'kira-para-birimi-manual':  SVG.currency,
+    'kira-yontem':              SVG.method,
+    'kira-hesap':               SVG.account,
+    'kira-kisi':                SVG.person,
+    'kira-depozito-pb':         SVG.currency,
+    'kira-depozito-durum':      SVG.status,
+    'maas-para-birimi':         SVG.currency,
+    'maas-para-birimi-manual':  SVG.currency,
+    'maas-tur':                 SVG.salary,
+    'maas-gun-kisa-ay-davranis':SVG.holiday,
+    'maas-yontem':              SVG.method,
+    'maas-hesap':               SVG.account,
+    'maas-kisi':                SVG.person,
+    'hesap-banka':              SVG.bank,
+    'hesap-tur':                SVG.type,
+    'hesap-para-birimi':        SVG.currency,
+    'hesap-durum':              SVG.status,
+    'elden-tur':                SVG.tag,
+    'elden-kategori':           SVG.category,
+    'elden-para-birimi':        SVG.currency,
+    'elden-yontem':             SVG.method,
+    'elden-hesap':              SVG.account,
+    'elden-kisi':               SVG.person,
+  };
+
+  // Label metninden ikon tahmini (ID map'te yoksa)
+  function guessIconFromLabel(labelText) {
+    const t = (labelText || '').toLowerCase();
+    if (t.includes('kart'))          return SVG.card;
+    if (t.includes('ay') || t.includes('tarih') || t.includes('dönem')) return SVG.calendar;
+    if (t.includes('banka'))         return SVG.bank;
+    if (t.includes('para birimi') || t.includes('döviz') || t.includes('kur')) return SVG.currency;
+    if (t.includes('hesap'))         return SVG.account;
+    if (t.includes('kategori'))      return SVG.category;
+    if (t.includes('kişi') || t.includes('kisi') || t.includes('müşteri')) return SVG.person;
+    if (t.includes('tür') || t.includes('tip') || t.includes('çeşit'))  return SVG.type;
+    if (t.includes('renk'))          return SVG.color;
+    if (t.includes('tatil') || t.includes('iş günü') || t.includes('kaydır')) return SVG.holiday;
+    if (t.includes('durum') || t.includes('status'))  return SVG.status;
+    if (t.includes('yöntem') || t.includes('ödeme'))  return SVG.method;
+    if (t.includes('strateji'))      return SVG.strategy;
+    if (t.includes('kira') || t.includes('kontrat')) return SVG.rent;
+    if (t.includes('maaş') || t.includes('maas'))    return SVG.salary;
+    if (t.includes('filtre') || t.includes('seç'))   return SVG.filter;
+    if (t.includes('konum'))         return SVG.location;
+    if (t.includes('ayraç') || t.includes('ondalık') || t.includes('binlik')) return SVG.decimal;
+    if (t.includes('mevduat'))       return SVG.deposit;
+    return SVG.settings; // varsayılan
+  }
+
+  function wrapSelects() {
+    document.querySelectorAll('select:not([data-sel-wrapped])').forEach(sel => {
+      // Inline style'lı çok küçük select'leri ve script içindekini atla
+      if (sel.closest('script')) return;
+      // zaten wrap edilmiş mi?
+      if (sel.parentElement && sel.parentElement.classList.contains('select-wrap')) return;
+
+      sel.dataset.selWrapped = '1';
+
+      // İkon belirle
+      let icon = ID_MAP[sel.id];
+      if (!icon) {
+        // Üstündeki label'a bak
+        const parent = sel.parentElement;
+        const label = parent && parent.querySelector('label');
+        const labelText = label ? label.textContent : '';
+        icon = guessIconFromLabel(labelText);
+      }
+
+      // Wrapper oluştur
+      const wrap = document.createElement('div');
+      wrap.className = 'select-wrap';
+      // Select'in mevcut stil ve konumunu koru
+      const selStyle = sel.getAttribute('style') || '';
+      // width varsa wrapper'a taşı
+      const widthMatch = selStyle.match(/width\s*:\s*[^;]+/);
+      if (widthMatch) {
+        wrap.style.cssText = widthMatch[0] + ';';
+        sel.style.width = '100%';
+      }
+
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+
+      // İkon span
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'sel-icon';
+      iconSpan.innerHTML = icon;
+      wrap.appendChild(iconSpan);
+    });
+  }
+
+  wrapSelects();
+  new MutationObserver(wrapSelects).observe(document.body, { childList: true, subtree: true });
+})();
+
+// 10. Dropdown option ikonları — tüm select option'larına metin/değer bazlı ikon ekle
+(function() {
+  // value → ikon (kesin eşleşme)
+  const VALUE_ICONS = {
+    // Boş / placeholder
+    '':               '—',
+    // Gelir/Gider türü
+    'gelir':          '📈',
+    'gider':          '📉',
+    'diger':          '📦',
+    // Tatil kaydırma
+    'ilerle':         '➡️',
+    'geri':           '⬅️',
+    'extre-ilerle':   '⏫',
+    'extre-geri':     '⏬',
+    'extre-odeme-ilerle': '⏩',
+    'extre-odeme-geri':   '⏪',
+    // Ödeme yöntemi
+    'nakit':          '💵',
+    'havale':         '🏦',
+    // Kart renkleri
+    '#4f8ef7':        '🔵',
+    '#10d98a':        '🟢',
+    '#f0a429':        '🟡',
+    '#f05454':        '🔴',
+    '#9b7ef8':        '🟣',
+    '#f472b6':        '🩷',
+    '#64748b':        '⚫',
+    // Mevduat strateji
+    'yenile_tum':           '♻️',
+    'yenile_ana_faiz_vadesiz': '↗️',
+    'tumu_vadesiz':          '🏧',
+    // Hesap durumu
+    'aktif':          '✅',
+    'pasif':          '⏸️',
+    'kapali':         '🔒',
+    // Depozito durumu
+    'bekliyor':       '⏳',
+    'alindi':         '✔️',
+    'kesildi':        '✂️',
+    // Maaş / kira türü
+    'surekli':        '🔄',
+    'tekseferlik':    '1️⃣',
+    // Extre tipi
+    'gun':            '📅',
+    'hafta':          '🗓️',
+    // Para birimi ayraç / konum
+    'prefix':         '⬅️',
+    'suffix':         '➡️',
+    // Tatil davranışı — kısa ay
+    'son-gun':        '🔚',
+    'onceki':         '⬅️',
+    'sonraki':        '➡️',
+    // Ödeme durumu
+    'odendi':         '✅',
+    'gecikti':        '⚠️',
+    'ertelendi':      '⏭️',
+    'kismi':          '🔸',
+    'iptal':          '❌',
+    // Para birimleri (value olarak gelenler)
+    'TRY':            '₺',
+    'USD':            '$',
+    'EUR':            '€',
+    'GBP':            '£',
+    'JPY':            '¥',
+    'CHF':            '🇨🇭',
+    'AUD':            '🇦🇺',
+    'CAD':            '🍁',
+    'CNY':            '¥',
+    'RUB':            '₽',
+    'AED':            'د',
+    'SAR':            '﷼',
+    // Ondalık basamak sayısı
+    '0':              '🔢',
+    '2':              '#️⃣',
+    '3':              '🔣',
+    // Haftanın günleri (select id'ye göre context ile eşleşecek)
+    'gun-pazartesi':  '1️⃣',
+    'gun-sali':       '2️⃣',
+    'gun-carsamba':   '3️⃣',
+    'gun-persembe':   '4️⃣',
+    'gun-cuma':       '5️⃣',
+    'gun-cumartesi':  '6️⃣',
+    'gun-pazar':      '7️⃣',
+  };
+
+  // Metin içeriğine göre ikon (value map'te yoksa text eşlemesi)
+  const TEXT_PATTERNS = [
+    // Para birimi
+    [/\bTRY\b/, '₺'],
+    [/\bUSD\b/, '$'],
+    [/\bEUR\b/, '€'],
+    [/\bGBP\b/, '£'],
+    [/\bJPY\b/, '¥'],
+    [/\bCHF\b/, '🇨🇭'],
+    [/\bAUD\b/, '🇦🇺'],
+    [/\bCAD\b/, '🍁'],
+    [/\bCNY\b/, '¥'],
+    [/\bRUB\b/, '₽'],
+    [/\bAED\b/, 'د'],
+    [/\bSAR\b/, '﷼'],
+    // Banka/hesap
+    [/banka/i,  '🏦'],
+    [/hesap/i,  '🏧'],
+    [/kart/i,   '💳'],
+    // Ödeme yöntemi
+    [/nakit/i,  '💵'],
+    [/havale|eft|iban/i, '🏦'],
+    [/kredi/i,  '💳'],
+    // Gelir/gider
+    [/gelir/i,  '📈'],
+    [/gider/i,  '📉'],
+    // Durum
+    [/aktif/i,  '✅'],
+    [/pasif/i,  '⏸️'],
+    [/kapal[ıi]/i, '🔒'],
+    [/bekliyor/i, '⏳'],
+    [/ödendi|odendi/i, '✔️'],
+    [/gecikt/i, '⚠️'],
+    [/iptal/i,  '❌'],
+    [/ertelendi/i, '⏭️'],
+    [/kısmi|kismi/i, '🔸'],
+    // Tatil / iş günü
+    [/tatil.*öne\s*çek|tatil.*extre.*öne/i, '⏫'],
+    [/tatil.*ertelen|tatil.*extre.*ertelen/i, '⏬'],
+    [/tatil.*sonraki.*i[sş]|tatil.*ödeme.*sonraki/i, '⏩'],
+    [/tatil.*önceki.*i[sş]|tatil.*ödeme.*önceki/i, '⏪'],
+    [/tatil|i[sş]\s*g[uü]n/i, '📅'],
+    [/sonraki.*i[sş]|sonraki.*ay/i, '➡️'],
+    [/önceki.*i[sş]/i, '⬅️'],
+    // Tarih — cumartesi önce cuma'dan önce gelmeli
+    [/pazar(?!tesi)/i, '7️⃣'],
+    [/cumartesi/i, '6️⃣'],
+    [/cuma(?!rtesi)/i, '5️⃣'],
+    [/perşembe|persembe/i, '4️⃣'],
+    [/çarşamba|carsamba/i, '3️⃣'],
+    [/salı|sali/i, '2️⃣'],
+    [/pazartesi/i, '1️⃣'],
+    // Hafta
+    [/1\.\s*hafta/i, '1️⃣'],
+    [/2\.\s*hafta/i, '2️⃣'],
+    [/3\.\s*hafta/i, '3️⃣'],
+    [/4\.\s*hafta/i, '4️⃣'],
+    // Gün bazlı/hafta bazlı
+    [/gün\s*baz/i,   '📅'],
+    [/hafta\s*baz/i, '🗓️'],
+    // Kira/maaş
+    [/sürekli|surekli/i, '🔄'],
+    [/tek\s*sefer/i, '1️⃣'],
+    [/son\s*gün/i,   '🔚'],
+    [/mevduat/i, '💎'],
+    [/vadesiz/i, '🏧'],
+    [/vadeli/i,  '⏳'],
+    // Strateji
+    [/ana\s*para.*faiz/i, '♻️'],
+    [/faiz.*vadesiz/i, '↗️'],
+    // Renk
+    [/mavi/i,   '🔵'],
+    [/yeşil|yesil/i, '🟢'],
+    [/altin|altın|gold/i, '🟡'],
+    [/kırmızı|kizil|kirmizi/i, '🔴'],
+    [/mor/i,    '🟣'],
+    [/pembe/i,  '🩷'],
+    [/gri/i,    '⚫'],
+    // Extre öne çek / ertele
+    [/öne\s*çek|one\s*cek/i, '⏫'],
+    [/ertelendir/i, '⏬'],
+    // Konum (para birimi)
+    [/önde|onde/i, '⬅️'],
+    [/sonda/i,   '➡️'],
+    // Otomatik
+    [/otomatik/i, '⚙️'],
+    // İş günü kaydırma yok
+    [/kaydırma\s*yok|kaydir.*yok/i, '⛔'],
+    // Tür / seçin placeholder
+    [/seçin|secin|seçiniz/i, '—'],
+    [/—\s*(yok|seçin)/i, '—'],
+  ];
+
+  function getOptionIcon(value, text, selectEl) {
+    // Önce zaten ikon var mı kontrol et (emoji ya da sembol ile başlıyor)
+    const emojiRe = /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2B00}-\u{2BFF}→←↑↓↗↙↗️♻️—⊘✅✔️⏳⏸️🔒❌⚠️⏭️⬅️➡️⏫⏬⏩⏪🔚⛔⚙️₺$€£¥₽]/u;
+    if (emojiRe.test(text.trim())) return null; // zaten var
+
+    // value bazlı — boş placeholder hariç (çok fazla yerde '—' gözükmesin)
+    if (value !== undefined && value !== '' && VALUE_ICONS[value] !== undefined) return VALUE_ICONS[value];
+
+    // Boş değer — sadece "seçin/seçiniz/placeholder" içeriyorsa
+    if (value === '' || value === undefined) {
+      if (/seçin|secin|seçiniz|—\s*\w|yok —/i.test(text)) return '—';
+      return null;
+    }
+
+    // text bazlı pattern
+    for (const [re, icon] of TEXT_PATTERNS) {
+      if (re.test(text)) return icon;
+    }
+    return null;
+  }
+
+  function addOptionIcons(select) {
+    if (!select || select.dataset.optIconDone) return;
+    // Boş placeholder select'leri atla (options yok)
+    if (select.options.length === 0) return;
+
+    let changed = false;
+    for (const opt of select.options) {
+      if (opt.dataset.iconDone) continue;
+      opt.dataset.iconDone = '1';
+      const icon = getOptionIcon(opt.value, opt.text, select);
+      if (icon && !opt.text.startsWith(icon)) {
+        opt.text = icon + ' ' + opt.text;
+        changed = true;
+      }
+    }
+    if (changed || select.options.length > 0) select.dataset.optIconDone = '1';
+  }
+
+  function processAllSelects() {
+    document.querySelectorAll('select').forEach(addOptionIcons);
+  }
+
+  // İlk çalıştırma
+  processAllSelects();
+
+  // innerHTML değişimlerini yakala — select'e yeni option'lar eklenince tetikle
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      // Doğrudan eklenen option'lar
+      m.addedNodes.forEach(node => {
+        if (node.tagName === 'OPTION') {
+          const sel = node.parentElement;
+          if (sel && sel.tagName === 'SELECT') {
+            delete sel.dataset.optIconDone;
+            addOptionIcons(sel);
+          }
+        }
+        // select eklendi
+        if (node.tagName === 'SELECT') addOptionIcons(node);
+        // select içeren bir eleman eklendi
+        if (node.querySelectorAll) {
+          node.querySelectorAll('select').forEach(addOptionIcons);
+        }
+      });
+      // characterData veya attributes değişti (innerHTML = ... durumu)
+      if (m.type === 'childList' && m.target && m.target.tagName === 'SELECT') {
+        delete m.target.dataset.optIconDone;
+        addOptionIcons(m.target);
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // innerHTML ile toplu option yükleme için ek güvence: kısa gecikmeyle tekrar tara
+  setTimeout(processAllSelects, 400);
+  setTimeout(processAllSelects, 1200);
+})();
 (function() {
   function labelizeTables() {
     document.querySelectorAll('.tbl-wrap table:not([data-labeled])').forEach(function(table) {
