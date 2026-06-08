@@ -163,8 +163,8 @@ html[data-theme="light"] .stat:hover {
   box-shadow: 0 12px 36px rgba(0,0,0,.12);
 }
 html[data-theme="light"] .stat::after { background: linear-gradient(145deg, rgba(255,255,255,.6) 0%, transparent 50%); }
-html[data-theme="light"] .stat-label { color: rgba(15,22,41,.35); }
-html[data-theme="light"] .stat-sub   { color: rgba(15,22,41,.5); }
+html[data-theme="light"] .stat-label { color: rgba(15,22,41,.6); }
+html[data-theme="light"] .stat-sub   { color: rgba(15,22,41,.55); }
 html[data-theme="light"] .stat.s-blue   { border-top: 1.5px solid rgba(2,132,199,.5); }
 html[data-theme="light"] .stat.s-green  { border-top: 1.5px solid rgba(13,148,136,.5); }
 html[data-theme="light"] .stat.s-red    { border-top: 1.5px solid rgba(225,29,72,.5); }
@@ -180,7 +180,7 @@ html[data-theme="light"] .card {
 html[data-theme="light"] .card::before { background: linear-gradient(90deg, transparent 10%, rgba(0,0,0,.03) 50%, transparent 90%); }
 html[data-theme="light"] .card:hover { border-color: rgba(0,0,0,.13); }
 html[data-theme="light"] .card-header { border-bottom: 1px solid rgba(0,0,0,.06); }
-html[data-theme="light"] .card-title  { color: rgba(15,22,41,.5); }
+html[data-theme="light"] .card-title  { color: rgba(15,22,41,.65); }
 
 /* Table */
 html[data-theme="light"] .tbl-wrap { background: rgba(255,255,255,.7); border: 1px solid rgba(0,0,0,.07); }
@@ -1381,7 +1381,7 @@ body::after {
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: .16em;
-  color: var(--text3);
+  color: var(--text2);
   text-transform: uppercase;
   margin-bottom: 14px;
 }
@@ -3302,7 +3302,7 @@ body::before {
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: .22em;
-  color: rgba(255,255,255,.26);
+  color: rgba(255,255,255,.55);
   text-transform: uppercase;
   margin-bottom: 13px;
 }
@@ -5570,7 +5570,7 @@ html[data-theme="light"] .mob-theme-toggle {
     font-weight: 700;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.28);
+    color: rgba(255,255,255,.55);
     flex-shrink: 0;
     white-space: nowrap;
     min-width: 80px;
@@ -5599,9 +5599,10 @@ html[data-theme="light"] .mob-theme-toggle {
   }
   html[data-theme="light"] .tbl-wrap tbody td {
     border-bottom-color: rgba(0,0,0,.05) !important;
+    color: rgba(15,22,41,.85) !important;
   }
   html[data-theme="light"] .tbl-wrap tbody td[data-label]::before {
-    color: rgba(15,22,41,.35);
+    color: rgba(15,22,41,.6);
   }
   html[data-theme="light"] .tbl-wrap tfoot tr {
     background: rgba(0,0,0,.02) !important;
