@@ -5411,6 +5411,241 @@ html[data-theme="light"] .topbar-date.today-mark {
   color: rgba(196,122,0,.7);
 }
 
+/* ── Mobil more-menu — light mode düzeltme ─────────────── */
+html[data-theme="light"] .mob-more-menu {
+  background: rgba(255,255,255,.99) !important;
+  border: 1px solid rgba(0,0,0,.1) !important;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.15) !important;
+}
+html[data-theme="light"] .mob-more-item {
+  background: rgba(0,0,0,.04) !important;
+  color: rgba(15,22,41,.7) !important;
+  border: 1px solid rgba(0,0,0,.07) !important;
+}
+html[data-theme="light"] .mob-more-item:active,
+html[data-theme="light"] .mob-more-item.active {
+  background: rgba(196,122,0,.1) !important;
+  color: #c47a00 !important;
+}
+html[data-theme="light"] .mob-more-backdrop {
+  background: rgba(0,0,0,.35) !important;
+}
+
+/* Tema toggle butonu — more-menu içinde özel renk */
+.mob-theme-toggle {
+  background: linear-gradient(145deg, rgba(251,191,36,.1), rgba(251,191,36,.05)) !important;
+  border: 1px solid rgba(251,191,36,.2) !important;
+  color: rgba(251,191,36,.9) !important;
+}
+.mob-theme-toggle:active {
+  background: rgba(251,191,36,.18) !important;
+}
+html[data-theme="light"] .mob-theme-toggle {
+  background: linear-gradient(145deg, rgba(196,122,0,.1), rgba(196,122,0,.05)) !important;
+  border: 1px solid rgba(196,122,0,.25) !important;
+  color: #b36800 !important;
+}
+
+/* ── Action buton ikonları ─────────────────────────────── */
+.btn-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBİL TABLO KARTI v37 — Yatay scroll yok, kart görünümü
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Tablo sarmalayıcı: overflow kapalı */
+  .tbl-wrap {
+    overflow-x: visible !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* Gerçek tablo gizle, kart listesi göster */
+  .tbl-wrap table {
+    display: block;
+    min-width: 0 !important;
+  }
+  .tbl-wrap thead {
+    display: none !important;
+  }
+  .tbl-wrap tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tbl-wrap tfoot {
+    display: block;
+    margin-top: 4px;
+  }
+  .tbl-wrap tfoot tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,.04) !important;
+    border: 1px solid rgba(255,255,255,.07) !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tbl-wrap tfoot td {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 11.5px !important;
+    white-space: normal !important;
+  }
+
+  /* Her satır = kart */
+  .tbl-wrap tbody tr {
+    display: block !important;
+    background: linear-gradient(160deg, rgba(16,20,34,.9) 0%, rgba(12,15,26,.95) 100%) !important;
+    border: 1px solid rgba(255,255,255,.07) !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    position: relative;
+  }
+  .tbl-wrap tbody tr:hover {
+    border-color: rgba(251,191,36,.2) !important;
+    background: linear-gradient(160deg, rgba(20,25,42,.95) 0%, rgba(16,20,34,.98) 100%) !important;
+  }
+  /* Satır hover sol çizgi: kapalı (kart modda zaten border var) */
+  .tbl-wrap tbody tr:hover td:first-child {
+    border-left: none !important;
+    padding-left: 0 !important;
+  }
+  .tbl-wrap tbody tr.empty-row {
+    background: transparent !important;
+    border-color: rgba(255,255,255,.04) !important;
+  }
+
+  /* Her hücre = label + değer satırı */
+  .tbl-wrap tbody td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 5px 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,.04) !important;
+    font-size: 12.5px !important;
+    white-space: normal !important;
+    min-height: 32px;
+    gap: 10px;
+  }
+  .tbl-wrap tbody td:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .tbl-wrap tbody td:first-child {
+    border-bottom: 1px solid rgba(255,255,255,.06) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: rgba(240,244,255,.92) !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 2px;
+    border-left: none !important;
+    /* İlk satır: başlık gibi tam genişlik */
+    display: block !important;
+  }
+  /* Başlık satırı (başka sütun sayısına göre) yoksa ilk td label+val */
+  .tbl-wrap tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.28);
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-width: 80px;
+    max-width: 120px;
+  }
+  .tbl-wrap tbody td[data-label]:first-child::before {
+    display: none;
+  }
+
+  /* empty-row hücreleri temiz */
+  .tbl-wrap tbody tr.empty-row td {
+    display: block !important;
+    text-align: center !important;
+    border: none !important;
+    padding: 20px 10px !important;
+  }
+
+  /* Light theme kart renkleri */
+  html[data-theme="light"] .tbl-wrap tbody tr {
+    background: #ffffff !important;
+    border-color: rgba(0,0,0,.08) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  html[data-theme="light"] .tbl-wrap tbody tr:hover {
+    border-color: rgba(196,122,0,.25) !important;
+  }
+  html[data-theme="light"] .tbl-wrap tbody td {
+    border-bottom-color: rgba(0,0,0,.05) !important;
+  }
+  html[data-theme="light"] .tbl-wrap tbody td[data-label]::before {
+    color: rgba(15,22,41,.35);
+  }
+  html[data-theme="light"] .tbl-wrap tfoot tr {
+    background: rgba(0,0,0,.02) !important;
+    border-color: rgba(0,0,0,.07) !important;
+  }
+
+  /* action-row: filtre alanları tek sütun */
+  .action-row select,
+  .action-row input[type="text"],
+  .action-row input[type="month"],
+  .action-row input[type="date"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+  .action-row {
+    align-items: stretch !important;
+  }
+
+  /* Taksit planı (tp-wrap) da karta dönüşsün */
+  .tp-wrap .tp-header { display: none !important; }
+  .tp-wrap .tp-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px 12px !important;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid rgba(255,255,255,.04) !important;
+    align-items: center !important;
+  }
+  .tp-wrap .tp-no {
+    font-size: 10px;
+    color: var(--text3);
+    min-width: 28px;
+  }
+  .tp-wrap .tp-donem {
+    flex: 1;
+    min-width: 80px;
+  }
+  .tp-wrap .od-badge {
+    margin-left: auto;
+  }
+}
+
+/* Ekstra küçük ekran (iPhone SE vb.) */
+@media (max-width: 380px) {
+  .tbl-wrap tbody td {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+    min-height: auto;
+  }
+  .tbl-wrap tbody td[data-label]::before {
+    display: block;
+    margin-bottom: 1px;
+  }
+}
 </style>
 </head>
 <body>
@@ -14700,6 +14935,9 @@ function mkpDeleteKisi(id) {
     <button class="mob-more-item" onclick="mobNavGo('tanimlamalar',this,'⚙️','Ayarlar')">
       <span class="mob-more-item-icon">⚙️</span>Ayarlar
     </button>
+    <button class="mob-more-item mob-theme-toggle" id="mob-theme-btn" onclick="toggleTheme();updateMobThemeBtn();closeMobMore()">
+      <span class="mob-more-item-icon" id="mob-theme-icon">☀️</span><span id="mob-theme-label">Tema</span>
+    </button>
   </div>
 </div>
 
@@ -14853,6 +15091,15 @@ function applyTheme(theme) {
       btn.onmouseout  = () => { btn.style.background='rgba(255,255,255,.05)'; btn.style.color='rgba(255,255,255,.4)'; };
     }
   }
+  // Mobil tema butonu sync
+  updateMobThemeBtn();
+}
+function updateMobThemeBtn() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const mobIcon  = document.getElementById('mob-theme-icon');
+  const mobLabel = document.getElementById('mob-theme-label');
+  if (mobIcon)  mobIcon.textContent  = isLight ? '🌙' : '☀️';
+  if (mobLabel) mobLabel.textContent = isLight ? 'Karanlık' : 'Aydınlık';
 }
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -15478,6 +15725,115 @@ document.addEventListener('click', function(e) {
       if (hb) hb.classList.remove('open');
     }
   }, { passive: true });
+})();
+
+// 6. Action butonlarına otomatik ikon ekleme
+(function() {
+  const BTN_ICONS = {
+    // Ekleme/yeni
+    '+ Yeni Kart':        '💳',
+    '+ Yeni İşlem':       '⇄',
+    '+ Yeni Mevduat':     '💎',
+    '+ Yeni Kontrat':     '🏠',
+    '+ Maaş Ekle':        '💰',
+    '+ Yeni KMH Kredisi': '🏦',
+    '+ Yeni Kredi':       '📋',
+    '+ Hesap Ekle':       '🏧',
+    '+ Elden Ödeme Ekle': '💵',
+    '+ Banka Ekle':       '🏛️',
+    '+ Hesap Türü Ekle':  '🗂️',
+    '+ Ürün Tipi Ekle':   '📦',
+    '+ Kredi Tipi Ekle':  '🔖',
+    '+ Tatil Günü Ekle':  '📅',
+    '+ Kategori Ekle':    '🏷️',
+    '+ Kişi Ekle':        '👤',
+    '+ Para Birimi Ekle': '💱',
+    '+ Ekle':             '＋',
+    // Kaydetme / İşlem
+    'Kaydet':        '✓',
+    'Güncelle':      '✎',
+    'Oluştur':       '✦',
+    'Tamam':         '✓',
+    'Onayla':        '✓',
+    'Ekle':          '＋',
+    'Hesapla':       '⟳',
+    'Filtrele':      '⌕',
+    'Temizle':       '✕',
+    'Sil':           '🗑',
+    'İptal':         '✕',
+    'Kapat':         '✕',
+    'Geri':          '←',
+    'İndir':         '↓',
+    'Dışa Aktar':    '↗',
+    'İçe Aktar':     '↙',
+    'Yenile':        '⟳',
+    // Gider/Gelir filtre butonları
+    'Giderler':      '💸',
+    'Gelirler':      '💹',
+  };
+
+  function addBtnIcons() {
+    document.querySelectorAll('.btn:not([data-icon-done])').forEach(btn => {
+      // Zaten ikon varsa atla
+      if (btn.querySelector('.btn-icon') || btn.querySelector('svg') || btn.querySelector('.nav-icon')) return;
+      const text = btn.textContent.trim();
+      // Eşleşme ara — tam veya içerir
+      let icon = BTN_ICONS[text];
+      if (!icon) {
+        for (const [k, v] of Object.entries(BTN_ICONS)) {
+          if (text.includes(k)) { icon = v; break; }
+        }
+      }
+      if (!icon) return;
+      btn.dataset.iconDone = '1';
+      const span = document.createElement('span');
+      span.className = 'btn-icon';
+      span.textContent = icon;
+      span.style.cssText = 'font-size:13px;line-height:1;flex-shrink:0;';
+      btn.prepend(span);
+    });
+  }
+
+  addBtnIcons();
+  new MutationObserver(addBtnIcons).observe(document.body, { childList: true, subtree: true });
+})();
+
+// 7. Mobil tema butonunu başlangıçta sync et
+(function() {
+  if (typeof updateMobThemeBtn === 'function') updateMobThemeBtn();
+  else document.addEventListener('DOMContentLoaded', () => {
+    if (typeof updateMobThemeBtn === 'function') updateMobThemeBtn();
+  });
+})();
+
+// 8. Tablo satırlarına data-label ekle (mobil kart görünümü için)
+(function() {
+  function labelizeTables() {
+    document.querySelectorAll('.tbl-wrap table:not([data-labeled])').forEach(function(table) {
+      table.dataset.labeled = '1';
+      var headers = [];
+      table.querySelectorAll('thead th').forEach(function(th) {
+        var clone = th.cloneNode(true);
+        clone.querySelectorAll('button, svg, .btn').forEach(function(el) { el.remove(); });
+        headers.push(clone.textContent.trim());
+      });
+      if (!headers.length) return;
+      function applyLabels() {
+        table.querySelectorAll('tbody tr').forEach(function(tr) {
+          if (tr.classList.contains('empty-row') || tr.dataset.lblDone) return;
+          tr.dataset.lblDone = '1';
+          tr.querySelectorAll('td').forEach(function(td, i) {
+            if (headers[i] && !td.dataset.label) td.dataset.label = headers[i];
+          });
+        });
+      }
+      applyLabels();
+      var tbody = table.querySelector('tbody') || table;
+      new MutationObserver(applyLabels).observe(tbody, { childList: true });
+    });
+  }
+  labelizeTables();
+  new MutationObserver(labelizeTables).observe(document.body, { childList: true, subtree: true });
 })();
 
 </script>
