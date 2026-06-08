@@ -5001,6 +5001,416 @@ html {
   }
 }
 
+/* ══════════════════════════════════════════════════════════
+   UI/UX İYİLEŞTİRMELERİ v36 — Kapsamlı Polish
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 1. STAT KARTLARI — İkon + Trend Badge ──────────────── */
+.stat-icon {
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  opacity: .75;
+  transition: var(--transition);
+  pointer-events: none;
+  z-index: 1;
+}
+.stat:hover .stat-icon { opacity: 1; transform: scale(1.08) rotate(-4deg); }
+.stat.s-blue  .stat-icon { background: rgba(56,189,248,.07);  border-color: rgba(56,189,248,.14); }
+.stat.s-green .stat-icon { background: rgba(45,212,191,.07);  border-color: rgba(45,212,191,.14); }
+.stat.s-red   .stat-icon { background: rgba(251,113,133,.07); border-color: rgba(251,113,133,.14); }
+.stat.s-warn  .stat-icon { background: rgba(251,146,60,.07);  border-color: rgba(251,146,60,.14); }
+.stat.s-purple.stat-icon { background: rgba(167,139,250,.07); border-color: rgba(167,139,250,.14); }
+
+/* Trend mikro badge (artış/azalış) */
+.stat-trend {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 99px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .04em;
+  margin-top: 8px;
+}
+.stat-trend.up   { background: rgba(45,212,191,.1);  color: var(--teal); }
+.stat-trend.down { background: rgba(251,113,133,.1); color: var(--rose); }
+.stat-trend.neutral { background: rgba(255,255,255,.07); color: rgba(255,255,255,.4); }
+html[data-theme="light"] .stat-trend.up   { background: rgba(13,148,136,.1);  color: #0d9488; }
+html[data-theme="light"] .stat-trend.down { background: rgba(225,29,72,.1);   color: #e11d48; }
+
+/* ── 2. TOPBAR HAMBURGER — Animasyonlu ✕ dönüşüm ─────────── */
+.topbar-hamburger {
+  display: none;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 9px;
+  cursor: pointer; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+  padding: 0;
+  position: relative; overflow: hidden;
+}
+.topbar-hamburger:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.15); }
+.topbar-hamburger svg { transition: opacity .2s, transform .2s; position: absolute; }
+.topbar-hamburger .hb-icon { opacity: 1; }
+.topbar-hamburger .hb-close { opacity: 0; transform: rotate(-90deg); }
+.topbar-hamburger.open .hb-icon  { opacity: 0; transform: rotate(90deg); }
+.topbar-hamburger.open .hb-close { opacity: 1; transform: rotate(0); }
+html[data-theme="light"] .topbar-hamburger { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
+@media (max-width: 768px) { .topbar-hamburger { display: flex; } }
+
+/* ── 3. TOAST — Progress bar (otomatik kapanma göstergesi) ── */
+.toast {
+  padding-bottom: 16px;
+  min-width: 220px;
+}
+.toast-progress {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 3px; border-radius: 0 0 12px 12px;
+  background: rgba(255,255,255,.22);
+  animation: toastProgress linear forwards;
+}
+@keyframes toastProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+.toast.success .toast-progress { background: rgba(45,212,191,.55); }
+.toast.error   .toast-progress { background: rgba(251,113,133,.55); }
+.toast { position: relative; overflow: hidden; }
+
+/* ── 4. SIDEBAR — Smooth hover glow active item ─────────── */
+.nav-btn.active {
+  box-shadow: inset 0 1px 0 rgba(251,191,36,.1), 0 0 16px rgba(251,191,36,.04);
+}
+/* Nav icons — daha büyük, daha okunaklı */
+.nav-icon { font-size: 16px; }
+
+/* Sidebar nav tooltip on hover */
+.nav-btn { position: relative; }
+
+/* ── 5. CARD — Hover glow renkleri ──────────────────────── */
+.card {
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.card:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.07);
+}
+html[data-theme="light"] .card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.08);
+}
+
+/* ── 6. FORM INPUT — Daha iyi focus ring + label renk ────── */
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(251,191,36,.55) !important;
+  box-shadow: 0 0 0 3.5px rgba(251,191,36,.1), inset 0 1px 3px rgba(0,0,0,.15) !important;
+}
+/* Label — focus parent'ı aktifken gold */
+.form-field:focus-within label {
+  color: rgba(251,191,36,.75);
+}
+html[data-theme="light"] .form-field:focus-within label {
+  color: rgba(196,122,0,.8);
+}
+.form-field { position: relative; }
+
+/* ── 7. TABLO — Zebra glow + daha iyi hover ─────────────── */
+tbody tr:nth-child(odd) td {
+  background: rgba(255,255,255,.008);
+}
+tbody tr:hover td {
+  background: rgba(251,191,36,.025) !important;
+  color: rgba(240,244,255,.88) !important;
+}
+html[data-theme="light"] tbody tr:hover td {
+  background: rgba(196,122,0,.04) !important;
+}
+
+/* ── 8. BADGE — Pill glow ────────────────────────────────── */
+.badge {
+  transition: box-shadow .15s;
+}
+.badge-green:hover { box-shadow: 0 0 8px rgba(45,212,191,.25); }
+.badge-blue:hover  { box-shadow: 0 0 8px rgba(56,189,248,.25); }
+.badge-red:hover   { box-shadow: 0 0 8px rgba(251,113,133,.25); }
+
+/* ── 9. BUTON — Ripple effect ────────────────────────────── */
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: rippleAnim .45s linear;
+  background: rgba(255,255,255,.18);
+  pointer-events: none;
+}
+@keyframes rippleAnim {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ── 10. PAGE HEADER — Daha şık separator ───────────────── */
+.page-header {
+  position: relative;
+}
+.page-header::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 99px;
+  opacity: .5;
+}
+
+/* ── 11. SCROLL TO TOP — Daha belirgin, mobil dostu ─────── */
+#scroll-top-btn {
+  right: 18px; bottom: 22px;
+  width: 40px; height: 40px;
+  background: linear-gradient(145deg, rgba(18,22,38,.98), rgba(12,15,28,.99));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+}
+#scroll-top-btn:hover {
+  background: linear-gradient(145deg, rgba(251,191,36,.14), rgba(251,191,36,.07));
+  border-color: rgba(251,191,36,.3);
+  color: var(--gold);
+  box-shadow: 0 12px 36px rgba(0,0,0,.6), 0 0 16px rgba(251,191,36,.1);
+  transform: translateY(-3px);
+}
+@media (max-width: 768px) {
+  #scroll-top-btn { bottom: 72px; right: 12px; }
+}
+
+/* ── 12. MODAL HEADER — Daha ayırt edici ────────────────── */
+.modal-header {
+  background: rgba(255,255,255,.015);
+  border-radius: 18px 18px 0 0;
+  margin: -28px -30px 22px;
+  padding: 22px 28px 18px;
+}
+
+/* ── 13. KMH KREDI / KREDİ — Amortizasyon satırları ─────── */
+.amort-row-highlight td {
+  background: rgba(251,191,36,.05) !important;
+  color: rgba(251,191,36,.9) !important;
+}
+
+/* ── 14. OD BADGE — Daha büyük tıklama alanı ────────────── */
+.od-badge {
+  padding: 4px 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── 15. ACTION ROW — İyileştirilmiş boşluklar ──────────── */
+.action-row {
+  gap: 10px;
+  padding: 2px 0;
+}
+.action-row .btn {
+  flex-shrink: 0;
+}
+.action-row select, .action-row input {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* ── 16. EXTRE CARD — Daha ayrışık stil ─────────────────── */
+.extre-card {
+  transition: border-color .2s, transform .2s;
+}
+.extre-card:hover {
+  border-color: rgba(255,255,255,.1);
+  transform: translateY(-1px);
+}
+
+/* ── 17. MOBILE BOTTOM NAV — Active glow indicator ──────── */
+@media (max-width: 768px) {
+  .mob-nav-btn.active {
+    position: relative;
+  }
+  .mob-nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 20px; height: 2px;
+    background: var(--gold);
+    border-radius: 99px;
+    box-shadow: 0 0 8px rgba(251,191,36,.6);
+  }
+  .mob-nav-btn.active .mob-nav-icon {
+    transform: translateY(-1px);
+  }
+  .mob-nav-icon {
+    transition: transform .15s ease;
+  }
+}
+
+/* ── 18. TOPBAR — Sol tarafa subtitle ek bilgi ──────────── */
+.topbar-title {
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.topbar-title .topbar-sep-dot {
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  flex-shrink: 0;
+}
+
+/* ── 19. NAV SECTION — Daha belirgin gruplar ─────────────── */
+.nav-section-label {
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-section-label::before {
+  content: '';
+  display: inline-block;
+  width: 12px; height: 1px;
+  background: rgba(255,255,255,.14);
+  border-radius: 99px;
+}
+html[data-theme="light"] .nav-section-label::before {
+  background: rgba(0,0,0,.14);
+}
+
+/* ── 20. BRAND LOGO — Pulse animasyonu ──────────────────── */
+@keyframes logoIdlePulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(251,191,36,.3), 0 0 28px rgba(251,191,36,.22), 0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35); }
+  50%       { box-shadow: 0 0 0 1px rgba(251,191,36,.22), 0 0 20px rgba(251,191,36,.14), 0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35); }
+}
+.brand-logo {
+  animation: logoIdlePulse 3.5s ease-in-out infinite;
+}
+
+/* ── 21. TABLE EMPTY ROW — Daha iyi boş durum ───────────── */
+.empty-row td {
+  padding: 40px 20px !important;
+  text-align: center !important;
+  color: rgba(255,255,255,.2) !important;
+  font-size: 12.5px !important;
+  border: none !important;
+}
+html[data-theme="light"] .empty-row td {
+  color: rgba(15,22,41,.25) !important;
+}
+
+/* ── 22. LIGHT THEME — v36 ek stiller ──────────────────── */
+html[data-theme="light"] .topbar-hamburger { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
+html[data-theme="light"] .topbar-hamburger:hover { background: rgba(0,0,0,.09); }
+html[data-theme="light"] .toast-progress { background: rgba(0,0,0,.2); }
+html[data-theme="light"] .toast.success .toast-progress { background: rgba(13,148,136,.5); }
+html[data-theme="light"] .toast.error   .toast-progress { background: rgba(225,29,72,.5); }
+html[data-theme="light"] .page-header::after { background: linear-gradient(90deg, #c47a00, transparent); }
+html[data-theme="light"] .mob-nav-btn.active::before { background: #c47a00; box-shadow: 0 0 8px rgba(196,122,0,.5); }
+html[data-theme="light"] .nav-section-label::before  { background: rgba(0,0,0,.12); }
+html[data-theme="light"] tbody tr:nth-child(odd) td  { background: rgba(0,0,0,.01); }
+html[data-theme="light"] .stat-icon { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .brand-logo {
+  animation: none;
+  box-shadow: 0 2px 20px rgba(180,83,9,.32), 0 1px 3px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ── 23. CARD header — Daha belirgin başlık sol çizgi ────── */
+.card-title {
+  position: relative;
+  padding-left: 10px;
+}
+.card-title::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 2px; height: 12px;
+  background: rgba(255,255,255,.2);
+  border-radius: 99px;
+}
+html[data-theme="light"] .card-title::before {
+  background: rgba(0,0,0,.15);
+}
+
+/* ── 24. INPUT GROUP WRAPPER — İyileştirilmiş ───────────── */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  margin-bottom: 6px;
+}
+
+/* ── 25. TAKSIT PLAN — Daha belirgin tamamlanan ─────────── */
+.tp-row.tp-past {
+  opacity: .35;
+}
+.tp-row.tp-active {
+  background: rgba(251,191,36,.05) !important;
+}
+.tp-row.tp-active .tp-no {
+  color: var(--gold) !important;
+  font-weight: 700;
+}
+
+/* ── 26. PROGRESS BAR — Çizgili parlak efekt ────────────── */
+.progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+  animation: progressShine 2.5s ease-in-out infinite;
+}
+@keyframes progressShine {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── 27. GLOBAL — Daha iyi focus-visible ─────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(251,191,36,.55);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+button:focus-visible { outline-offset: 3px; }
+html[data-theme="light"] :focus-visible { outline-color: rgba(196,122,0,.6); }
+
+/* ── 28. KART CARD VISUAL — Parlak kenar ────────────────── */
+.kart-card-visual::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgba(255,255,255,.04), transparent 50%);
+  pointer-events: none;
+}
+
+/* ── 29. MEVDUAT — Vade bölümü göstergesi ───────────────── */
+.vade-progress-wrap {
+  margin-top: 6px;
+}
+.vade-bar {
+  height: 3px; border-radius: 99px;
+  background: rgba(255,255,255,.06); overflow: hidden;
+  margin-top: 4px;
+}
+.vade-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--teal), var(--sky));
+  transition: width .5s ease;
+}
+
+/* ── 30. TOPBAR DATE — Canlı renk (bugün işareti) ──────── */
+.topbar-date.today-mark {
+  color: rgba(251,191,36,.65);
+}
+html[data-theme="light"] .topbar-date.today-mark {
+  color: rgba(196,122,0,.7);
+}
+
 </style>
 </head>
 <body>
@@ -5131,10 +5541,14 @@ html {
   <!-- Top Bar -->
   <div class="topbar">
     <button class="topbar-hamburger" id="topbar-hamburger" onclick="toggleMobileSidebar()" aria-label="Menü">
-      <svg viewBox="0 0 18 18" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linecap="round">
+      <svg class="hb-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linecap="round">
         <line x1="2" y1="5" x2="16" y2="5"/>
         <line x1="2" y1="9" x2="16" y2="9"/>
         <line x1="2" y1="13" x2="16" y2="13"/>
+      </svg>
+      <svg class="hb-close" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linecap="round">
+        <line x1="3" y1="3" x2="13" y2="13"/>
+        <line x1="13" y1="3" x2="3" y2="13"/>
       </svg>
     </button>
     <span class="topbar-title" id="topbar-title" style="display:inline-flex;align-items:center;gap:7px"><span id="topbar-icon" style="font-size:13px;opacity:.7">⊹</span><span id="topbar-label">Finansal Özet</span></span>
@@ -10104,6 +10518,11 @@ function showToast(msg, type='success') {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':'') + msg;
+  // Progress bar
+  const prog = document.createElement('div');
+  prog.className = 'toast-progress';
+  prog.style.animationDuration = '2.8s';
+  t.appendChild(prog);
   document.body.appendChild(t);
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(12px)'; t.style.transition='all .3s ease'; setTimeout(()=>t.remove(),300); }, 2800);
 }
@@ -14315,6 +14734,7 @@ const MOB_MAIN_PAGES = ['ozet','kartlar','islemler','extreler'];
 function toggleMobileSidebar() {
   const sidebar = document.getElementById('main-sidebar');
   const backdrop = document.getElementById('mobile-sidebar-backdrop');
+  const hamburger = document.getElementById('topbar-hamburger');
   const isOpen = sidebar.classList.contains('mobile-open');
   if (isOpen) {
     closeMobileSidebar();
@@ -14322,15 +14742,18 @@ function toggleMobileSidebar() {
     sidebar.classList.add('mobile-open');
     backdrop.classList.add('active');
     document.body.style.overflow = 'hidden';
+    if (hamburger) hamburger.classList.add('open');
   }
 }
 
 function closeMobileSidebar() {
   const sidebar = document.getElementById('main-sidebar');
   const backdrop = document.getElementById('mobile-sidebar-backdrop');
+  const hamburger = document.getElementById('topbar-hamburger');
   sidebar.classList.remove('mobile-open');
   backdrop.classList.remove('active');
   document.body.style.overflow = '';
+  if (hamburger) hamburger.classList.remove('open');
 }
 
 function toggleMobMore() {
@@ -14967,6 +15390,94 @@ document.addEventListener('click', function(e) {
       h1.prepend(iconEl);
     }
   });
+})();
+
+// ── v36 UI/UX İyileştirmeleri ──────────────────────────────
+
+// 1. Buton Ripple efekti
+(function() {
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'btn-ripple';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+  }, { passive: true });
+})();
+
+// 2. Topbar date — bugünün işareti
+(function() {
+  const el = document.getElementById('topbar-date');
+  if (!el) return;
+  const updateDate = () => {
+    const now = new Date();
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    el.textContent = now.toLocaleDateString('tr-TR', options);
+    // Pazartesi sabahı özel renk
+    const h = now.getHours();
+    if (h >= 8 && h <= 20) el.classList.add('today-mark');
+    else el.classList.remove('today-mark');
+  };
+  updateDate();
+  setInterval(updateDate, 60000);
+})();
+
+// 3. Kart başlıklarına sol çizgi sınıfı ekle (form-field wrapper)
+(function() {
+  function wrapFormFields() {
+    document.querySelectorAll('.form-row > div:not(.form-field)').forEach(d => {
+      if (d.querySelector('label') && (d.querySelector('input') || d.querySelector('select') || d.querySelector('textarea'))) {
+        d.classList.add('form-field');
+      }
+    });
+  }
+  wrapFormFields();
+  new MutationObserver(wrapFormFields).observe(document.body, { childList: true, subtree: true });
+})();
+
+// 4. Stat kartlara ikon ekle (mevcut kartlar için)
+(function() {
+  const STAT_ICONS = {
+    's-blue':   '💳',
+    's-green':  '📈',
+    's-red':    '📉',
+    's-warn':   '⚡',
+    's-purple': '💰',
+  };
+  function addStatIcons() {
+    document.querySelectorAll('.stat:not([data-icon-added])').forEach(stat => {
+      stat.dataset.iconAdded = '1';
+      // Hangi renk sınıfı var?
+      const cls = ['s-blue','s-green','s-red','s-warn','s-purple'].find(c => stat.classList.contains(c));
+      if (!cls) return;
+      // Zaten ikon varsa ekleme
+      if (stat.querySelector('.stat-icon')) return;
+      const icon = document.createElement('div');
+      icon.className = 'stat-icon';
+      icon.textContent = STAT_ICONS[cls] || '📊';
+      stat.appendChild(icon);
+    });
+  }
+  addStatIcons();
+  new MutationObserver(addStatIcons).observe(document.body, { childList: true, subtree: true });
+})();
+
+// 5. Hamburger buton: sayfa yüklenince doğru durum
+(function() {
+  const hb = document.getElementById('topbar-hamburger');
+  if (!hb) return;
+  // Sidebar kapanınca hamburger'ı da sıfırla
+  document.addEventListener('click', function(e) {
+    if (e.target.id === 'mobile-sidebar-backdrop') {
+      if (hb) hb.classList.remove('open');
+    }
+  }, { passive: true });
 })();
 
 </script>
