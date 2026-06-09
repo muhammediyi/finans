@@ -4702,6 +4702,50 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover { opacity: .75; }
 html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator,
 html[data-theme="light"] input[type="month"]::-webkit-calendar-picker-indicator { filter: none; }
 
+/* ── DATE OVERLAY: FORMAT_CONFIG.tarihFormat'a göre görüntü ── */
+.date-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.date-wrap input[type="date"] {
+  /* Gerçek input — değer ve picker korunuyor, görünmüyor */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  box-sizing: border-box;
+}
+/* Elle yazılabilir text input overlay */
+.date-fake-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  cursor: text;
+}
+/* Takvim ikonu butonu */
+.date-fake-icon-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: .85em;
+  opacity: .45;
+  line-height: 1;
+  color: inherit;
+  transition: opacity .15s;
+  z-index: 3;
+}
+.date-wrap:hover .date-fake-icon-btn { opacity: .75; }
+.date-wrap { position: relative; }
+
 /* ── 6. MODAL — Polish ──────────────────────────────────── */
 
 /* Modal backdrop click area visual cue */
@@ -8698,6 +8742,9 @@ function saveGoruntuAyarlari() {
   updateFmtCurOverride();
   // Topbar & sidebar saatini anında güncelle
   if(typeof updateClockFn === 'function') updateClockFn();
+  // Vergi tablosu ve date overlay'leri yenile
+  renderTumOranTablolari();
+  if(typeof window._refreshDateOverlays === 'function') window._refreshDateOverlays();
 }
 
 function resetGoruntuAyarlari() {
@@ -8706,6 +8753,8 @@ function resetGoruntuAyarlari() {
   loadGoruntuAyarlariUI();
   updateFmtCurOverride();
   if(typeof updateClockFn === 'function') updateClockFn();
+  renderTumOranTablolari();
+  if(typeof window._refreshDateOverlays === 'function') window._refreshDateOverlays();
   showToast('Varsayılan ayarlara dönüldü');
 }
 
@@ -9077,6 +9126,12 @@ function renderAll() {
 
   // Özet her zaman güncel kalsın
   if(activeId !== 'ozet') renderOzet();
+
+  // Vergi & Faiz tabloları her zaman yenile (FORMAT_CONFIG tarih formatı)
+  if(activeId !== 'tanimlamalar') renderTumOranTablolari();
+
+  // Date overlay'leri FORMAT_CONFIG ile yenile
+  if(typeof window._refreshDateOverlays === 'function') window._refreshDateOverlays();
 }
 
 function renderPage(id) {
@@ -14939,7 +14994,7 @@ function renderOranTablo(tip) {
     // Son geçerli olan kaydı vurgula
     const isActive = row.tarih <= today && (i === liste.length-1 || liste[i+1].tarih > today);
     return `<tr>
-      <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">${row.tarih}${isActive?' <span style="font-size:9px;background:rgba(0,232,138,.12);color:var(--accent2);padding:1px 5px;border-radius:4px;margin-left:4px">GEÇERLİ</span>':''}</td>
+      <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">${fmtDate(row.tarih)}${isActive?' <span style="font-size:9px;background:rgba(0,232,138,.12);color:var(--accent2);padding:1px 5px;border-radius:4px;margin-left:4px">GEÇERLİ</span>':''}</td>
       <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">%${row.oran}</td>
       <td style="text-align:right">
         <button class="btn btn-ghost btn-sm" onclick="openOranModal('${tip}','${row.id}')" style="margin-right:4px">✏️</button>
@@ -18288,6 +18343,225 @@ window.entegre = {
 };
 
 console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | KMH | Kredi | Kart İşlemi');
+
+// ═══════════════════════════════════════════════════════════
+// TARİH INPUT FORMAT ZORLAYICI — FORMAT_CONFIG.tarihFormat overlay
+// ── Her type="date" inputu sarmalanır; gerçek input gizlenir,
+//    üstüne FORMAT_CONFIG.tarihFormat'a göre metin gösterilir.
+//    Native picker çalışmaya devam eder; value hep yyyy-MM-dd.
+// ───────────────────────────────────────────────────────────
+(function initDateInputOverride() {
+
+  // Gerçek inputun hesaplanmış stillerinden fake kutuya kopyalanacaklar
+  const COPY_PROPS = [
+    'width','height','minWidth','maxWidth','padding',
+    'paddingTop','paddingRight','paddingBottom','paddingLeft',
+    'fontSize','fontFamily','fontWeight','lineHeight','letterSpacing',
+    'color','background','backgroundColor','backgroundImage',
+    'border','borderTop','borderRight','borderBottom','borderLeft',
+    'borderRadius','borderColor','boxShadow',
+    'outline','outlineOffset',
+    'textAlign','verticalAlign',
+    'boxSizing','flex','flexGrow','flexShrink','flexBasis',
+  ];
+
+  function copyStyles(src, dst) {
+    const cs = getComputedStyle(src);
+    COPY_PROPS.forEach(p => {
+      try { dst.style[p] = cs[p]; } catch(e) {}
+    });
+    // opacity ve color'ı gerçek değeriyle al
+    dst.style.opacity = '1';
+    dst.style.position = 'relative';
+  }
+
+  function getDisplayText(inp) {
+    const v = inp.value; // yyyy-MM-dd
+    if(!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return '';
+    try { return fmtDate(v); } catch(e) { return v; }
+  }
+
+  function getPlaceholder(inp) {
+    return inp.placeholder || (FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy');
+  }
+
+  function updateFake(inp) {
+    const txtInp = inp._dateFake; // artık text input
+    if(!txtInp) return;
+    const display = getDisplayText(inp);
+    txtInp.value = display;
+    txtInp.style.color = '';
+    txtInp.placeholder = FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy';
+  }
+
+  // FORMAT_CONFIG.tarihFormat string'ini parse edip yyyy-MM-dd döndür
+  function parseDisplayToYMD(str) {
+    const pattern = FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy';
+    const tokens = [];
+    let regStr = pattern.replace(/(dd|MM|yyyy|yy|d|M)/g, (tok) => {
+      tokens.push(tok);
+      if(tok === 'yyyy') return '(\\d{4})';
+      if(tok === 'yy')   return '(\\d{2})';
+      return '(\\d{1,2})';
+    });
+    regStr = '^' + regStr + '$';
+    try {
+      const m = str.trim().match(new RegExp(regStr));
+      if(!m) return null;
+      let Y, M, D;
+      tokens.forEach((tok, i) => {
+        const v = parseInt(m[i+1], 10);
+        if(tok==='yyyy') Y = v;
+        else if(tok==='yy') Y = v < 50 ? 2000+v : 1900+v;
+        else if(tok==='MM'||tok==='M') M = v;
+        else if(tok==='dd'||tok==='d') D = v;
+      });
+      if(!Y||!M||!D||M<1||M>12||D<1||D>31) return null;
+      return `${Y}-${String(M).padStart(2,'0')}-${String(D).padStart(2,'0')}`;
+    } catch(e) { return null; }
+  }
+
+  function wrapInput(inp) {
+    if(inp._dateOverlayDone) return;
+    inp._dateOverlayDone = true;
+
+    const parent = inp.parentNode;
+    if(!parent) return;
+
+    const cs = getComputedStyle(inp);
+
+    // Wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'date-wrap';
+    wrap.style.width  = inp.style.width  || (cs.width !== 'auto' ? cs.width : '100%');
+    wrap.style.height = inp.style.height || cs.height;
+    wrap.style.display = 'inline-flex';
+    wrap.style.verticalAlign = cs.verticalAlign || 'middle';
+    if(inp.style.minWidth) wrap.style.minWidth = inp.style.minWidth;
+
+    // Elle yazılabilir text input (görünen kutu)
+    const txtInp = document.createElement('input');
+    txtInp.type = 'text';
+    txtInp.className = 'date-fake-input';
+    txtInp.placeholder = FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy';
+    txtInp.autocomplete = 'off';
+    txtInp.spellcheck = false;
+    copyStyles(inp, txtInp);
+    txtInp.style.flex = '1';
+    txtInp.style.minWidth = '0';
+    txtInp.style.paddingRight = '28px';
+    txtInp.style.boxSizing = 'border-box';
+    txtInp.style.cursor = 'text';
+
+    // Takvim ikonu butonu
+    const iconBtn = document.createElement('button');
+    iconBtn.type = 'button';
+    iconBtn.className = 'date-fake-icon-btn';
+    iconBtn.innerHTML = '&#x1F4C5;';
+    iconBtn.tabIndex = -1;
+    iconBtn.title = 'Takvim aç';
+
+    inp._dateFake = txtInp;
+
+    // Gizli gerçek date input — değer deposu
+    inp.style.position = 'absolute';
+    inp.style.opacity  = '0';
+    inp.style.width    = '0';
+    inp.style.height   = '0';
+    inp.style.pointerEvents = 'none';
+    inp.style.overflow = 'hidden';
+    inp.tabIndex = -1;
+
+    // DOM yerleştir
+    parent.insertBefore(wrap, inp);
+    wrap.appendChild(txtInp);
+    wrap.appendChild(iconBtn);
+    wrap.appendChild(inp);
+
+    // İlk değeri göster
+    updateFake(inp);
+
+    // Takvim ikonuna tıklayınca picker aç
+    iconBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { inp.showPicker(); } catch(ex) { inp.click(); }
+    });
+
+    // Native picker'dan değer gelince text'i güncelle
+    inp.addEventListener('change', () => updateFake(inp));
+    inp.addEventListener('input',  () => updateFake(inp));
+
+    // Kullanıcı text inputa yazınca → parse edip gerçek inputa aktar
+    txtInp.addEventListener('input', () => {
+      const ymd = parseDisplayToYMD(txtInp.value);
+      if(ymd) {
+        inp.value = ymd;
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        txtInp.style.color = '';
+      } else {
+        txtInp.style.color = inp.value ? '' : 'var(--danger, #fb7185)';
+        if(!txtInp.value.trim()) { inp.value = ''; inp.dispatchEvent(new Event('change', { bubbles: true })); }
+      }
+    });
+
+    // Blur'da: geçerli değilse restore et
+    txtInp.addEventListener('blur', () => {
+      const ymd = parseDisplayToYMD(txtInp.value);
+      if(!txtInp.value.trim()) {
+        inp.value = '';
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if(!ymd) {
+        updateFake(inp);
+      }
+      txtInp.style.color = '';
+    });
+  }
+
+  function applyToAll() {
+    document.querySelectorAll('input[type="date"]:not([data-date-no-overlay])').forEach(wrapInput);
+  }
+
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyToAll);
+  } else {
+    applyToAll();
+  }
+
+  // Modal açılışlarında yenile
+  const _origOpenModal = window.openModal;
+  if(_origOpenModal) {
+    window.openModal = function(id) {
+      _origOpenModal.apply(this, arguments);
+      setTimeout(applyToAll, 60);
+    };
+  }
+
+  // Dinamik eklenen inputları izle
+  new MutationObserver(muts => {
+    let found = false;
+    for(const m of muts)
+      for(const n of m.addedNodes)
+        if(n.nodeType === 1) {
+          if(n.matches?.('input[type="date"]') || n.querySelector?.('input[type="date"]'))
+            { found = true; break; }
+        }
+    if(found) setTimeout(applyToAll, 30);
+  }).observe(document.body, { childList:true, subtree:true });
+
+  // FORMAT_CONFIG değişince tüm fake metinleri yenile
+  window._refreshDateOverlays = function() {
+    document.querySelectorAll('input[type="date"][data-date-overlay-done]').forEach(inp => {
+      updateFake(inp);
+    });
+    // Sarmalanmış inputları da tara
+    document.querySelectorAll('.date-wrap input[type="date"]').forEach(inp => {
+      updateFake(inp);
+    });
+  };
+
+  window._parseDateInput = v => v; // value zaten yyyy-MM-dd
+
+})();
 
 })();
 </script>
