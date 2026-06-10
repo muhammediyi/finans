@@ -679,6 +679,21 @@ body::before {
 .stat-val.warn { color: var(--warn); }
 .stat-val.purple { color: var(--violet); }
 .stat-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
+.stat-icon {
+  position: absolute;
+  top: 16px; right: 16px;
+  opacity: .25;
+  pointer-events: none;
+}
+.stat-icon svg { width: 18px; height: 18px; }
+.card-title-icon {
+  opacity: .5;
+  margin-right: 7px;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+.card-title-icon svg { width: 14px; height: 14px; vertical-align: middle; }
 
 /* ─── CARD ────────────────────────────────────────────── */
 .card {
@@ -1302,16 +1317,21 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .toast {
   position: fixed;
   bottom: 24px; right: 24px;
-  background: var(--surface3);
-  border: 1px solid var(--border2);
+  background: rgba(14,18,34,.97);
+  border: 1px solid rgba(255,255,255,.1);
   border-radius: 13px;
-  padding: 13px 20px;
-  font-size: 13px;
+  padding: 12px 18px 16px;
+  font-size: 13px; font-weight: 500;
   color: var(--text);
   z-index: 9999;
-  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  box-shadow: 0 16px 48px rgba(0,0,0,.55);
+  backdrop-filter: blur(24px);
   animation: toastIn .28s cubic-bezier(.34,1.26,.64,1);
-  max-width: 320px;
+  width: 300px;
+  max-width: 300px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
 }
 .toast.success { border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06); }
 .toast.info { border-color: rgba(99,179,237,.3); background: rgba(99,179,237,.06); color: rgba(147,210,255,.9); }
@@ -1722,16 +1742,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ─── TOAST improved ─────────────────────────────────── */
-.toast {
-  background: rgba(18,23,36,.97);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 12px;
-  padding: 13px 18px;
-  font-size: 13px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 16px 48px rgba(0,0,0,.55);
-  max-width: 320px;
-}
+/* toast: see main .toast definition */
 
 /* ─── SCROLLBAR improved ─────────────────────────────── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -2620,7 +2631,7 @@ select option { background: #0d1120; color: #f0f4ff; }
 .close-btn:hover { background: rgba(251,113,133,.1) !important; border-color: rgba(251,113,133,.25) !important; color: var(--rose) !important; }
 
 /* ─── TOAST ──────────────────────────────────────────────── */
-.toast { background: rgba(16,20,36,.97); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 500; backdrop-filter: blur(24px); box-shadow: 0 20px 56px rgba(0,0,0,.6); bottom: 22px; right: 22px; max-width: 320px; }
+/* toast: see main .toast definition */
 .toast.success { border-color: rgba(45,212,191,.28); background: rgba(14,28,26,.97); }
 .toast.error   { border-color: rgba(251,113,133,.28); background: rgba(28,12,18,.97); }
 
@@ -3695,20 +3706,7 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 }
 
 /* ── TOAST — Floating pill ───────────────────────────────── */
-.toast {
-  position: fixed;
-  bottom: 24px; right: 22px;
-  background: rgba(14,18,34,.97);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 13px;
-  padding: 12px 18px;
-  font-size: 13px; font-weight: 500;
-  backdrop-filter: blur(28px);
-  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 4px 16px rgba(0,0,0,.4);
-  z-index: 9999;
-  max-width: 320px;
-  animation: toastIn .3s cubic-bezier(.34,1.26,.64,1);
-}
+/* toast: see main .toast definition */
 .toast.success { border-color: rgba(45,212,191,.3); background: rgba(8,24,22,.98); color: rgba(94,234,212,.95); }
 .toast.error   { border-color: rgba(251,113,133,.3); background: rgba(24,8,14,.98); }
 @keyframes toastIn {
@@ -4243,9 +4241,11 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   .toast {
     bottom: 76px !important;
     right: 14px !important;
-    left: auto !important;
-    max-width: calc(100vw - 28px) !important;
+    left: 14px !important;
+    max-width: min(340px, calc(100vw - 28px)) !important;
+    margin: 0 auto;
     text-align: left;
+    font-size: 12.5px;
   }
 }
 
@@ -5282,7 +5282,7 @@ html[data-theme="light"] .topbar-hamburger { background: rgba(0,0,0,.05); border
 }
 .toast.success .toast-progress { background: rgba(45,212,191,.55); }
 .toast.error   .toast-progress { background: rgba(251,113,133,.55); }
-.toast { position: relative; overflow: hidden; }
+/* toast position/overflow: merged into main .toast */
 
 /* ── 4. SIDEBAR — Smooth hover glow active item ─────────── */
 .nav-btn.active {
@@ -6028,34 +6028,35 @@ html[data-theme="light"] .mob-theme-toggle {
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
   <div class="grid-2" style="margin-bottom:16px">
     <div class="card">
-      <div class="card-header"><span class="card-title">Kart Limit Kullanımı</span></div>
+      <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span><span class="card-title">Kart Limit Kullanımı</span></div>
       <div id="ozet-kartlar"></div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">Bu Ay Günlük Nakit Akışı</span></div>
+      <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="card-title">Bu Ay Günlük Nakit Akışı</span></div>
       <div id="ozet-nakit"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-header"><span class="card-title">Yaklaşan Ödemeler (30 Gün)</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="card-title">Yaklaşan Ödemeler (30 Gün)</span></div>
     <div class="tbl-wrap"><table><thead><tr><th>Tarih</th><th>Açıklama</th><th>Tür</th><th>Tutar</th><th>Bakiye</th><th>Durum</th></tr></thead><tbody id="ozet-odemeler"></tbody></table></div>
   </div>
 </div>
 
 <!-- KARTLAR -->
 <div id="page-kartlar" class="page">
-  <div class="page-header"><h1>Kredi Kartları</h1><p>Kartlarınızı ve ek hesaplarınızı yönetin</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openModal('modal-kart')">+ Yeni Kart</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Kredi Kartları</h1><p>Kartlarınızı ve ek hesaplarınızı yönetin</p></div><button class="btn btn-primary" onclick="openModal('modal-kart')">+ Yeni Kart</button></div>
   <div id="kartlar-list" class="grid-2"></div>
 </div>
 
 <!-- İŞLEMLER -->
 <div id="page-islemler" class="page">
-  <div class="page-header"><h1>İşlemler</h1><p>Kart / hesap bazlı işlem ekle ve görüntüle</p></div>
-  <div class="action-row">
-    <button class="btn btn-primary" onclick="openModal('modal-islem')">+ Yeni İşlem</button>
-    <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="">Tüm Kartlar</option></select>
-    <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
+  <div class="page-header">
+    <div class="page-header-left"><h1>İşlemler</h1><p>Kart / hesap bazlı işlem ekle ve görüntüle</p></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="">Tüm Kartlar</option></select>
+      <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
+      <button class="btn btn-primary" onclick="openModal('modal-islem')">+ Yeni İşlem</button>
+    </div>
   </div>
   <div class="card">
     <div class="tbl-wrap"><table>
@@ -6087,8 +6088,7 @@ html[data-theme="light"] .mob-theme-toggle {
 
 <!-- MEVDUAT -->
 <div id="page-mevduat" class="page">
-  <div class="page-header"><h1>Mevduat Takibi</h1><p>Vadeli mevduat hesaplarınızı yönetin</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openModal('modal-mevduat')">+ Yeni Mevduat</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Mevduat Takibi</h1><p>Vadeli mevduat hesaplarınızı yönetin</p></div><button class="btn btn-primary" onclick="openModal('modal-mevduat')">+ Yeni Mevduat</button></div>
   <div class="grid-4" id="mevduat-stats" style="margin-bottom:16px"></div>
   <div class="card">
     <div class="tbl-wrap"><table>
@@ -6100,26 +6100,24 @@ html[data-theme="light"] .mob-theme-toggle {
 
 <!-- KİRA -->
 <div id="page-kira" class="page">
-  <div class="page-header"><h1>Kira Gelirleri &amp; Giderleri</h1><p>Kira kontratlarınızı takip edin</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openKiraModal()">+ Yeni Kontrat</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Kira Gelirleri &amp; Giderleri</h1><p>Kira kontratlarınızı takip edin</p></div><button class="btn btn-primary" onclick="openKiraModal()">+ Yeni Kontrat</button></div>
   <div class="grid-3" id="kira-stats" style="margin-bottom:16px"></div>
   <div class="card">
-    <div class="card-header"><span class="card-title">Kontratlar</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="card-title">Kontratlar</span></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>Başlangıç</th><th>Bitiş</th><th>Para Bir.</th><th>Aylık Tutar</th><th>Ödeme Günü</th><th>Tür</th><th>Açıklama</th><th>Depozito</th><th>Bu Ay Durum</th><th>İşlem</th></tr></thead>
       <tbody id="kira-tbody"></tbody>
     </table></div>
   </div>
   <div class="card" style="margin-top:0">
-    <div class="card-header"><span class="card-title">Kira Takvimi (Bu Ay)</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="card-title">Kira Takvimi (Bu Ay)</span></div>
     <div id="kira-takvim"></div>
   </div>
 </div>
 
 <!-- MAAŞ -->
 <div id="page-maas" class="page">
-  <div class="page-header"><h1>Maaş Geliri</h1><p>Düzenli maaş gelirlerinizi tanımlayın</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openMaasModal()">+ Maaş Ekle</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Maaş Geliri</h1><p>Düzenli maaş gelirlerinizi tanımlayın</p></div><button class="btn btn-primary" onclick="openMaasModal()">+ Maaş Ekle</button></div>
   <div class="card">
     <div class="tbl-wrap"><table>
       <thead><tr><th>Açıklama</th><th>Tutar</th><th>Ödeme Günü</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th><th>Bu Ay</th><th>İşlem</th></tr></thead>
@@ -6127,43 +6125,41 @@ html[data-theme="light"] .mob-theme-toggle {
     </table></div>
   </div>
   <div class="card" style="margin-top:0">
-    <div class="card-header"><span class="card-title">Maaş Takvimi (Bu Ay)</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="card-title">Maaş Takvimi (Bu Ay)</span></div>
     <div id="maas-takvim"></div>
   </div>
 </div>
 
 <!-- KMH KREDİSİ -->
 <div id="page-kmhkredi" class="page">
-  <div class="page-header"><h1>KMH Taksitli Kredi</h1><p>Kredili Mevduat Hesabı ek limitini kullanan taksitli krediler</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openKmhKrediModal()">+ Yeni KMH Kredisi</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>KMH Taksitli Kredi</h1><p>Kredili Mevduat Hesabı ek limitini kullanan taksitli krediler</p></div><button class="btn btn-primary" onclick="openKmhKrediModal()">+ Yeni KMH Kredisi</button></div>
   <div class="grid-4" id="kmhkredi-stats" style="margin-bottom:16px"></div>
   <div class="card">
-    <div class="card-header"><span class="card-title">Aktif KMH Kredileri</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span><span class="card-title">Aktif KMH Kredileri</span></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>KMH Hesabı</th><th>Ana Para</th><th>Faiz %</th><th>Vade</th><th>Aylık Taksit</th><th>Toplam Borç</th><th>Kalan</th><th>İlk Ekstre</th><th>Durum</th><th>İşlem</th></tr></thead>
       <tbody id="kmhkredi-tbody"></tbody>
     </table></div>
   </div>
   <div class="card" style="margin-top:0">
-    <div class="card-header"><span class="card-title">Taksit Planı</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="card-title">Taksit Planı</span></div>
     <div id="kmhkredi-plan"></div>
   </div>
 </div>
 
 <!-- KREDİLER -->
 <div id="page-kredi" class="page">
-  <div class="page-header"><h1>Bireysel Krediler</h1><p>İhtiyaç, konut, taşıt ve diğer banka kredilerinizi takip edin</p></div>
-  <div class="action-row"><button class="btn btn-primary" onclick="openKrediModal()">+ Yeni Kredi</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Bireysel Krediler</h1><p>İhtiyaç, konut, taşıt ve diğer banka kredilerinizi takip edin</p></div><button class="btn btn-primary" onclick="openKrediModal()">+ Yeni Kredi</button></div>
   <div class="grid-4" id="kredi-stats" style="margin-bottom:16px"></div>
   <div class="card">
-    <div class="card-header"><span class="card-title">Aktif Krediler</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span><span class="card-title">Aktif Krediler</span></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>Banka</th><th>Tür</th><th>Açıklama</th><th>Ana Para</th><th>Faiz %</th><th>Vade</th><th>Aylık Taksit</th><th>Toplam Borç</th><th>Kalan</th><th>İlk Taksit</th><th>Durum</th><th>İşlem</th></tr></thead>
       <tbody id="kredi-tbody"></tbody>
     </table></div>
   </div>
   <div class="card" style="margin-top:0">
-    <div class="card-header"><span class="card-title">Taksit Planı</span></div>
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span class="card-title">Taksit Planı</span></div>
     <div id="kredi-plan"></div>
   </div>
 </div>
@@ -6182,7 +6178,7 @@ html[data-theme="light"] .mob-theme-toggle {
   <div id="bakiye-izleme-panel" style="margin-bottom:16px;display:none"></div>
   <div class="card">
     <div class="card-header">
-      <span class="card-title">Tüm Hesaplar</span>
+      <span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span class="card-title">Tüm Hesaplar</span>
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="hesap-filtre-wrap"></div>
     </div>
     <div class="tbl-wrap">
@@ -6208,10 +6204,7 @@ html[data-theme="light"] .mob-theme-toggle {
 
 <!-- ELDEN ÖDEME -->
 <div id="page-elden" class="page">
-  <div class="page-header"><h1>Elden Ödemeler</h1><p>Nakit/elden gerçekleşen ödemeleri kaydedin</p></div>
-  <div class="action-row">
-    <button class="btn btn-primary" onclick="openEldenModal()">+ Elden Ödeme Ekle</button>
-  </div>
+  <div class="page-header"><div class="page-header-left"><h1>Elden Ödemeler</h1><p>Nakit/elden gerçekleşen ödemeleri kaydedin</p></div><button class="btn btn-primary" onclick="openEldenModal()">+ Elden Ödeme Ekle</button></div>
   <div class="grid-3" id="elden-stats" style="margin-bottom:16px"></div>
   <div class="card">
     <div class="tbl-wrap"><table>
@@ -7126,8 +7119,8 @@ html[data-theme="light"] .mob-theme-toggle {
           </label>
         </div>
 
-        <div id="mev-preview" style="padding:12px 14px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.65">
-          Değerleri girin, faiz otomatik hesaplanacak.
+        <div id="mev-preview">
+          <div class="mev-preview-empty" style="padding:11px 14px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.65;text-align:center">Değerleri girin, faiz otomatik hesaplanacak.</div>
         </div>
       </div>
 
@@ -10102,7 +10095,7 @@ function populateMevduatModal() {
   document.getElementById('mev-stopaj').value = getStopajOrani(localDateStr(new Date()));
   document.getElementById('mev-vade').value='';
   document.getElementById('mev-valor').value='0';
-  document.getElementById('mev-preview').textContent='Değerleri girin, faiz otomatik hesaplanacak.';
+  document.getElementById('mev-preview').innerHTML='<div class="mev-preview-empty" style="padding:11px 14px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--text2);text-align:center">Değerleri girin, faiz otomatik hesaplanacak.</div>';
   const bitisGoster = document.getElementById('mev-bitis-goster');
   if(bitisGoster) bitisGoster.value = '';
   // IBAN sıfırla
@@ -10288,8 +10281,39 @@ function calcMevduat() {
   }
 
   const cur = (document.getElementById('mev-para-birimi')||{}).value || 'TRY';
+  const kazanc = nihai - tutar;
+  const kazanYuzde = tutar > 0 ? (kazanc / tutar * 100) : 0;
   document.getElementById('mev-preview').innerHTML = `
-    Faizli Tutar: ${fmtCur(faizBazis,cur)} | Brüt Faiz: ${fmtCur(brutFaiz,cur)} | Stopaj: ${fmtCur(stopajTutar,cur)} | <b>Net Faiz: ${fmtCur(netFaiz,cur)}</b> | <b style="color:var(--accent2)">Nihai: ${fmtCur(nihai,cur)}</b> ${bitisTarih?'| Bitiş: '+bitisTarih:''}`;
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase">Faizli Tutar</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)">${fmtCur(faizBazis,cur)}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase">Brüt Faiz</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)">${fmtCur(brutFaiz,cur)}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid rgba(251,113,133,.2);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase">Stopaj Kesintisi</div>
+        <div style="font-size:13px;font-weight:600;color:var(--danger);font-family:var(--mono)">-${fmtCur(stopajTutar,cur)}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr${bitisTarih?' 1fr':''};gap:8px">
+      <div style="background:linear-gradient(135deg,rgba(45,212,191,.08) 0%,rgba(45,212,191,.03) 100%);border:1px solid rgba(45,212,191,.2);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--accent2);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;opacity:.8">Net Faiz</div>
+        <div style="font-size:14px;font-weight:700;color:var(--accent2);font-family:var(--mono)">${fmtCur(netFaiz,cur)}</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(251,191,36,.1) 0%,rgba(251,191,36,.04) 100%);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--gold);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;opacity:.8">Nihai Tutar</div>
+        <div style="font-size:14px;font-weight:700;color:var(--gold);font-family:var(--mono)">${fmtCur(nihai,cur)}</div>
+        <div style="font-size:10px;color:var(--accent2);margin-top:2px">+%${kazanYuzde.toFixed(2)} kazanç</div>
+      </div>
+      ${bitisTarih?`
+      <div style="background:linear-gradient(135deg,rgba(167,139,250,.08) 0%,rgba(167,139,250,.03) 100%);border:1px solid rgba(167,139,250,.22);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--violet);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;opacity:.8">Vade Sonu</div>
+        <div style="font-size:13px;font-weight:700;color:var(--violet);font-family:var(--mono);white-space:nowrap">${bitisTarih}</div>
+      </div>`:''}
+    </div>`;
 }
 
 let editMevduatId = null;
@@ -10580,10 +10604,10 @@ function renderMevduat() {
   });
 
   document.getElementById('mevduat-stats').innerHTML=`
-    <div class="stat"><div class="stat-label">Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-label">Net Faiz</div><div class="stat-val green">${fmt(toplamFaiz)}</div></div>
-    <div class="stat"><div class="stat-label">Nihai Toplam</div><div class="stat-val green">${fmt(toplamNihai)}</div></div>
-    <div class="stat"><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${aktif}</div></div>`;
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat"><div class="stat-icon-wrap"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Net Faiz</div><div class="stat-val green">${fmt(toplamFaiz)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Nihai Toplam</div><div class="stat-val green">${fmt(toplamNihai)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${aktif}</div></div>`;
 
   const sorted = [...DB.mevduatlar].sort((a,b)=>a.bitis.localeCompare(b.bitis));
   document.getElementById('mevduat-tbody').innerHTML = sorted.map(m=>{
@@ -11020,9 +11044,9 @@ function renderKira() {
   });
 
   document.getElementById('kira-stats').innerHTML=`
-    <div class="stat s-green"><div class="stat-label">Bu Ay Gelir</div><div class="stat-val green">${fmt(aylikGelir)}</div></div>
-    <div class="stat s-red"><div class="stat-label">Bu Ay Gider</div><div class="stat-val red">${fmt(aylikGider)}</div></div>
-    <div class="stat s-${aylikGelir-aylikGider>=0?'green':'red'}"><div class="stat-label">Bu Ay Net</div><div class="stat-val ${aylikGelir-aylikGider>=0?'green':'red'}">${fmt(aylikGelir-aylikGider,true)}</div></div>`;
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="stat-label">Bu Ay Gelir</div><div class="stat-val green">${fmt(aylikGelir)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div><div class="stat-label">Bu Ay Gider</div><div class="stat-val red">${fmt(aylikGider)}</div></div>
+    <div class="stat s-${aylikGelir-aylikGider>=0?'green':'red'}"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Bu Ay Net</div><div class="stat-val ${aylikGelir-aylikGider>=0?'green':'red'}">${fmt(aylikGelir-aylikGider,true)}</div></div>`;
 
   document.getElementById('kira-tbody').innerHTML = DB.kiralar.map(k=>{
     const tur = k.tutar >= 0 ? 'Gelir' : 'Gider';
@@ -11179,16 +11203,40 @@ function showFieldError(id, msg) {
 }
 
 function showToast(msg, type='success') {
+  const GAP = 10;
+  const BASE_BOTTOM = 24;
+  // Mevcut toastların toplam yüksekliğini hesapla
+  const existing = [...document.querySelectorAll('.toast')];
+  const stackHeight = existing.reduce((sum, el) => sum + el.offsetHeight + GAP, 0);
+
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = (type==='success'?'✓ ':type==='error'?'✕ ':type==='info'?'ℹ ':' ') + msg;
+  t.style.bottom = (BASE_BOTTOM + stackHeight) + 'px';
+
   // Progress bar
   const prog = document.createElement('div');
   prog.className = 'toast-progress';
   prog.style.animationDuration = '2.8s';
   t.appendChild(prog);
   document.body.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(12px)'; t.style.transition='all .3s ease'; setTimeout(()=>t.remove(),300); }, 2800);
+
+  // Kapanınca alttaki toastları aşağı kaydır
+  function restack() {
+    let offset = BASE_BOTTOM;
+    [...document.querySelectorAll('.toast')].forEach(el => {
+      el.style.transition = 'bottom .25s ease';
+      el.style.bottom = offset + 'px';
+      offset += el.offsetHeight + GAP;
+    });
+  }
+
+  setTimeout(()=>{
+    t.style.opacity='0';
+    t.style.transform='translateY(12px)';
+    t.style.transition='all .3s ease';
+    setTimeout(()=>{ t.remove(); restack(); }, 300);
+  }, 2800);
 }
 
 function saveMaas() {
@@ -11745,10 +11793,10 @@ function renderKmhKredi() {
   });
 
   document.getElementById('kmhkredi-stats').innerHTML = `
-    <div class="stat"><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
-    <div class="stat"><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
-    <div class="stat"><div class="stat-label">Aktif KMH Kredisi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif KMH Kredisi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
 
   document.getElementById('kmhkredi-tbody').innerHTML = DB.krediler.length ? DB.krediler.map(kr=>{
     const kmhKart = getKmhHesap(kr.kmhId);
@@ -12046,10 +12094,10 @@ function renderKredi() {
   });
 
   document.getElementById('kredi-stats').innerHTML = `
-    <div class="stat"><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
-    <div class="stat"><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
-    <div class="stat"><div class="stat-label">Aktif Kredi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
+    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif Kredi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
 
   document.getElementById('kredi-tbody').innerHTML = DB.bireyselKrediler.length ? DB.bireyselKrediler.map(kr=>{
     const taksitler = getBireyselKrediTaksitler(kr);
@@ -12338,9 +12386,9 @@ function renderElden() {
   });
 
   document.getElementById('elden-stats').innerHTML=`
-    <div class="stat s-green"><div class="stat-label">Bu Ay Gelir</div><div class="stat-val green">${fmt(ayGelir)}</div></div>
-    <div class="stat s-red"><div class="stat-label">Bu Ay Gider</div><div class="stat-val red">${fmt(ayGider)}</div></div>
-    <div class="stat s-${toplamNet>=0?'green':'red'}"><div class="stat-label">Toplam Net</div><div class="stat-val ${toplamNet>=0?'green':'red'}">${fmt(toplamNet,true)}</div></div>`;
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="stat-label">Bu Ay Gelir</div><div class="stat-val green">${fmt(ayGelir)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div><div class="stat-label">Bu Ay Gider</div><div class="stat-val red">${fmt(ayGider)}</div></div>
+    <div class="stat s-${toplamNet>=0?'green':'red'}"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Toplam Net</div><div class="stat-val ${toplamNet>=0?'green':'red'}">${fmt(toplamNet,true)}</div></div>`;
 
   const sorted = [...DB.eldenler].sort((a,b)=>b.tarih.localeCompare(a.tarih));
   document.getElementById('elden-tbody').innerHTML = sorted.map(e=>{
@@ -13919,12 +13967,12 @@ function renderOzet() {
     </div>`).join('');
 
   document.getElementById('ozet-stats').innerHTML=`
-    <div class="stat s-warn"><div class="stat-label">💳 Kart Kullanımı</div><div class="stat-val warn">${fmt(toplamKullanim)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">/ ${fmt(toplamLimit)} limit</div></div>
-    <div class="stat s-blue"><div class="stat-label">🏦 Aktif Mevduat</div><div class="stat-val blue">${fmt(mevduatAktif)}</div></div>
-    <div class="stat s-red"><div class="stat-label">📋 KMH Kredi Kalan</div><div class="stat-val red">${fmt(krediKalan)}</div></div>
-    <div class="stat s-red"><div class="stat-label">🏧 Bireysel Kredi Kalan</div><div class="stat-val red">${fmt(bireyselKrediKalan)}</div></div>
+    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label"></div><div class="stat-label">Kart Kullanımı</div><div class="stat-val warn">${fmt(toplamKullanim)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">/ ${fmt(toplamLimit)} limit</div></div>
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${fmt(mevduatAktif)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">KMH Kredi Kalan</div><div class="stat-val red">${fmt(krediKalan)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Bireysel Kredi Kalan</div><div class="stat-val red">${fmt(bireyselKrediKalan)}</div></div>
     <div class="stat s-${kiraNET>=0?'green':'red'}"><div class="stat-label">${kiraNET>=0?'📈':'📉'} Bu Ay Kira Net</div><div class="stat-val ${kiraNET>=0?'green':'red'}">${fmt(kiraNET,true)}</div></div>
-    <div class="stat s-green"><div class="stat-label">💼 Bu Ay Maaş</div><div class="stat-val green">${fmt(maasTop)}</div></div>
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="stat-label">Bu Ay Maaş</div><div class="stat-val green">${fmt(maasTop)}</div></div>
     ${nakitHtml}`;
 
   // Kart limit bars
@@ -14833,10 +14881,10 @@ function renderHesaplar() {
   const bankaSet = new Set(aktifler.map(h=>h.banka).filter(Boolean));
 
   document.getElementById('hesaplar-stats').innerHTML=`
-    <div class="stat s-blue"><div class="stat-label">Aktif Hesap</div><div class="stat-val blue">${hesapSayisi}</div></div>
-    <div class="stat s-green"><div class="stat-label">TRY Toplam Bakiye</div><div class="stat-val green">${fmt(toplamTry)}</div></div>
-    <div class="stat s-purple"><div class="stat-label">Banka Çeşidi</div><div class="stat-val purple">${bankaSet.size}</div></div>
-    <div class="stat s-warn"><div class="stat-label">Döviz Hesap</div><div class="stat-val warn">${DB.hesaplar.filter(h=>h.tur==='doviz'&&h.durum==='aktif').length}</div></div>
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="stat-label">Aktif Hesap</div><div class="stat-val blue">${hesapSayisi}</div></div>
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">TRY Toplam Bakiye</div><div class="stat-val green">${fmt(toplamTry)}</div></div>
+    <div class="stat s-purple"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="stat-label">Banka Çeşidi</div><div class="stat-val purple">${bankaSet.size}</div></div>
+    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="stat-label">Döviz Hesap</div><div class="stat-val warn">${DB.hesaplar.filter(h=>h.tur==='doviz'&&h.durum==='aktif').length}</div></div>
     ${(()=>{
       const {uyarilar} = otoBakiyeAnalizYap();
       const kritik = uyarilar.filter(u=>u.tip==='kritik'||u.tip==='gelecek-negatif').length;
@@ -18480,7 +18528,7 @@ window.entegre = {
     });
     // Ayraçları isteğe bağlı yap (hızlı giriş aktifse)
     if (FORMAT_CONFIG.tarihGirisKolay !== false) {
-      regStr = regStr.replace(/([^()\\d])/g, '($1)?');
+      regStr = regStr.replace(/[\/\.\-]/g, (ch) => '(?:' + ch + ')?');
     }
     regStr = '^' + regStr + '$';
     try {
