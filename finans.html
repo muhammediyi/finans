@@ -163,13 +163,19 @@ html[data-theme="light"] .stat:hover {
   box-shadow: 0 12px 36px rgba(0,0,0,.12);
 }
 html[data-theme="light"] .stat::after { background: linear-gradient(145deg, rgba(255,255,255,.6) 0%, transparent 50%); }
-html[data-theme="light"] .stat-label { color: rgba(15,22,41,.6); }
-html[data-theme="light"] .stat-sub   { color: rgba(15,22,41,.55); }
-html[data-theme="light"] .stat.s-blue   { border-top: 1.5px solid rgba(2,132,199,.5); }
-html[data-theme="light"] .stat.s-green  { border-top: 1.5px solid rgba(13,148,136,.5); }
-html[data-theme="light"] .stat.s-red    { border-top: 1.5px solid rgba(225,29,72,.5); }
-html[data-theme="light"] .stat.s-warn   { border-top: 1.5px solid rgba(194,65,12,.5); }
-html[data-theme="light"] .stat.s-purple { border-top: 1.5px solid rgba(124,58,237,.5); }
+html[data-theme="light"] .stat-label { color: rgba(15,22,41,.55); }
+html[data-theme="light"] .stat-sub   { color: rgba(15,22,41,.45); }
+html[data-theme="light"] .stat.s-blue::before   { background: rgba(2,132,199,.8); }
+html[data-theme="light"] .stat.s-green::before  { background: rgba(13,148,136,.8); }
+html[data-theme="light"] .stat.s-red::before    { background: rgba(225,29,72,.8); }
+html[data-theme="light"] .stat.s-warn::before   { background: rgba(194,65,12,.8); }
+html[data-theme="light"] .stat.s-purple::before { background: rgba(124,58,237,.8); }
+html[data-theme="light"] .stat-icon { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.09); }
+html[data-theme="light"] .stat.s-blue   .stat-icon { background: rgba(2,132,199,.08);   border-color: rgba(2,132,199,.2); }
+html[data-theme="light"] .stat.s-green  .stat-icon { background: rgba(13,148,136,.08);  border-color: rgba(13,148,136,.2); }
+html[data-theme="light"] .stat.s-red    .stat-icon { background: rgba(225,29,72,.08);   border-color: rgba(225,29,72,.2); }
+html[data-theme="light"] .stat.s-warn   .stat-icon { background: rgba(194,65,12,.08);   border-color: rgba(194,65,12,.2); }
+html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237,.08);  border-color: rgba(124,58,237,.2); }
 
 /* Cards */
 html[data-theme="light"] .card {
@@ -631,61 +637,117 @@ body::before {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px 22px;
+  padding: 18px 52px 18px 18px; /* sağda ikon için boşluk */
   position: relative;
   overflow: hidden;
-  transition: border-color .2s, transform .2s, box-shadow .2s;
+  transition: border-color .22s, transform .22s, box-shadow .22s;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 .stat:hover {
   border-color: var(--border2);
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0,0,0,.3);
 }
+/* Sol kenardaki renkli çizgi */
 .stat::before {
   content: '';
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 2px;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  background: var(--border2);
+  z-index: 2;
 }
+.stat.s-blue::before   { background: var(--sky); }
+.stat.s-green::before  { background: var(--teal); }
+.stat.s-red::before    { background: var(--rose); }
+.stat.s-warn::before   { background: var(--warn); }
+.stat.s-purple::before { background: var(--violet); }
+/* Hafif parlaklık overlay */
 .stat::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 100% 80% at 0% 0%, rgba(255,255,255,.03), transparent 60%);
+  background: linear-gradient(135deg, rgba(255,255,255,.022) 0%, transparent 55%);
   pointer-events: none;
 }
-.stat.s-blue::before { background: linear-gradient(90deg, var(--sky), transparent); }
-.stat.s-green::before { background: linear-gradient(90deg, var(--teal), transparent); }
-.stat.s-red::before { background: linear-gradient(90deg, var(--rose), transparent); }
-.stat.s-warn::before { background: linear-gradient(90deg, var(--warn), transparent); }
-.stat.s-purple::before { background: linear-gradient(90deg, var(--violet), transparent); }.stat-label {
-  font-size: 10px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  font-weight: 600;
-  margin-bottom: 12px;
+
+/* İkon kutusu — sağ üst, absolute */
+.stat-icon {
+  position: absolute;
+  top: 16px; right: 14px;
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  opacity: .65;
+  pointer-events: none;
+  transition: opacity .22s, transform .22s;
+  z-index: 1;
+  flex-shrink: 0;
 }
+.stat:hover .stat-icon { opacity: 1; transform: scale(1.1) rotate(-6deg); }
+.stat.s-blue   .stat-icon { background: rgba(56,189,248,.1);   border-color: rgba(56,189,248,.2); }
+.stat.s-green  .stat-icon { background: rgba(45,212,191,.1);   border-color: rgba(45,212,191,.2); }
+.stat.s-red    .stat-icon { background: rgba(251,113,133,.1);  border-color: rgba(251,113,133,.2); }
+.stat.s-warn   .stat-icon { background: rgba(251,146,60,.1);   border-color: rgba(251,146,60,.2); }
+.stat.s-purple .stat-icon { background: rgba(167,139,250,.1);  border-color: rgba(167,139,250,.2); }
+.stat-icon svg { width: 15px; height: 15px; color: var(--text2); }
+.stat.s-blue   .stat-icon svg { color: var(--sky); }
+.stat.s-green  .stat-icon svg { color: var(--teal); }
+.stat.s-red    .stat-icon svg { color: var(--rose); }
+.stat.s-warn   .stat-icon svg { color: var(--warn); }
+.stat.s-purple .stat-icon svg { color: var(--violet); }
+
+/* Etiket */
+.stat-label {
+  font-size: 9.5px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font-weight: 600;
+  margin-bottom: 9px;
+  padding-left: 0;
+  line-height: 1.3;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ana değer */
 .stat-val {
   font-family: var(--mono);
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -.03em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
-.stat-val.green { color: var(--teal); }
-.stat-val.red { color: var(--rose); }
-.stat-val.blue { color: var(--sky); }
-.stat-val.warn { color: var(--warn); }
+.stat-val.green  { color: var(--teal); }
+.stat-val.red    { color: var(--rose); }
+.stat-val.blue   { color: var(--sky); }
+.stat-val.warn   { color: var(--warn); }
 .stat-val.purple { color: var(--violet); }
-.stat-sub { font-size: 11px; color: var(--text3); margin-top: 8px; }
-.stat-icon {
-  position: absolute;
-  top: 16px; right: 16px;
-  opacity: .25;
-  pointer-events: none;
+
+/* Glow efekti hover'da */
+.stat:hover .stat-val.green  { text-shadow: 0 0 18px rgba(45,212,191,.35); }
+.stat:hover .stat-val.red    { text-shadow: 0 0 18px rgba(251,113,133,.35); }
+.stat:hover .stat-val.blue   { text-shadow: 0 0 18px rgba(56,189,248,.35); }
+.stat:hover .stat-val.warn   { text-shadow: 0 0 18px rgba(251,146,60,.35); }
+.stat:hover .stat-val.purple { text-shadow: 0 0 18px rgba(167,139,250,.35); }
+
+/* Alt açıklama */
+.stat-sub {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 7px;
+  line-height: 1.4;
 }
-.stat-icon svg { width: 18px; height: 18px; }
 .card-title-icon {
   opacity: .5;
   margin-right: 7px;
@@ -695,8 +757,23 @@ body::before {
 }
 .card-title-icon svg { width: 14px; height: 14px; vertical-align: middle; }
 
-/* ─── CARD ────────────────────────────────────────────── */
-.card {
+/* ─── IBAN DOĞRULAMA STATUS ───────────────────────────── */
+.iban-status-wrap { min-height: 18px; margin-top: 5px; }
+.iban-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500; font-family: var(--sans);
+  line-height: 1.3; letter-spacing: .01em;
+  padding: 3px 8px; border-radius: 6px;
+}
+.iban-ok   { color: var(--teal);  background: rgba(45,212,191,.08); border: 1px solid rgba(45,212,191,.18); }
+.iban-err  { color: var(--rose);  background: rgba(251,113,133,.08); border: 1px solid rgba(251,113,133,.18); }
+.iban-muted{ color: var(--text3); background: rgba(255,255,255,.04); border: 1px solid transparent; font-size: 10.5px; padding: 2px 6px; }
+.iban-ok svg, .iban-err svg { flex-shrink: 0; }
+html[data-theme="light"] .iban-ok    { background: rgba(13,148,136,.07);  border-color: rgba(13,148,136,.2); color: #0d9488; }
+html[data-theme="light"] .iban-err   { background: rgba(225,29,72,.07);   border-color: rgba(225,29,72,.2);  color: #e11d48; }
+html[data-theme="light"] .iban-muted { color: rgba(15,22,41,.4); }
+
+
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1516,44 +1593,8 @@ body::after {
 }
 
 /* ─── STAT CARDS improved ────────────────────────────── */
-.stat {
-  background: rgba(17,21,32,.9);
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 14px;
-  padding: 20px 22px 18px;
-  backdrop-filter: blur(12px);
-  transition: all .2s cubic-bezier(.4,0,.2,1);
-}
-
-.stat:hover {
-  border-color: rgba(255,255,255,.12);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 48px rgba(0,0,0,.4);
-}
-
-.stat-label {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .16em;
-  color: var(--text2);
-  text-transform: uppercase;
-  margin-bottom: 14px;
-}
-
-.stat-val {
-  font-family: var(--mono);
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -.04em;
-  line-height: 1;
-}
-
-.stat-sub {
-  font-size: 10.5px;
-  color: var(--text3);
-  margin-top: 9px;
-  letter-spacing: .01em;
-}
+/* (Ana tanım yukarıda — burada sadece backdrop override) */
+.stat { backdrop-filter: blur(10px); }
 
 /* ─── CARDS improved ─────────────────────────────────── */
 .card {
@@ -2489,37 +2530,7 @@ tbody tr { transition: background .1s ease; }
 .page-header p { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 5px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 
 /* ─── STAT CARDS ─────────────────────────────────────────── */
-.stat {
-  background: linear-gradient(145deg, rgba(18,22,38,.9) 0%, rgba(13,17,28,.95) 100%);
-  border: 1px solid rgba(255,255,255,.065);
-  border-radius: 14px;
-  padding: 20px 22px;
-  position: relative;
-  overflow: hidden;
-  transition: var(--transition);
-}
-.stat::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(145deg, rgba(255,255,255,.025) 0%, transparent 50%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-.stat:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,.45); }
-.stat.s-blue   { border-top: 1.5px solid rgba(56,189,248,.5); }
-.stat.s-green  { border-top: 1.5px solid rgba(45,212,191,.5); }
-.stat.s-red    { border-top: 1.5px solid rgba(251,113,133,.5); }
-.stat.s-warn   { border-top: 1.5px solid rgba(251,146,60,.5); }
-.stat.s-purple { border-top: 1.5px solid rgba(167,139,250,.5); }
-.stat::before  { display: none; }
-.stat-label { font-size: 9px; font-weight: 700; letter-spacing: .2em; color: rgba(255,255,255,.5); text-transform: uppercase; margin-bottom: 12px; }
-.stat-val { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
-.stat-sub { font-size: 10px; color: rgba(255,255,255,.25); margin-top: 10px; }
-.stat:hover .stat-val.green  { text-shadow: 0 0 20px rgba(45,212,191,.4); }
-.stat:hover .stat-val.red    { text-shadow: 0 0 20px rgba(251,113,133,.4); }
-.stat:hover .stat-val.blue   { text-shadow: 0 0 20px rgba(56,189,248,.4); }
-.stat:hover .stat-val.warn   { text-shadow: 0 0 20px rgba(251,146,60,.4); }
-.stat:hover .stat-val.purple { text-shadow: 0 0 20px rgba(167,139,250,.4); }
+/* (Ana tanım en üstte — tekrar gerekmiyor) */
 
 /* ─── CARD ───────────────────────────────────────────────── */
 .card {
@@ -3421,63 +3432,12 @@ body::before {
 }
 
 /* ── STAT CARDS — Deep glow ──────────────────────────────── */
-.stat {
-  background: linear-gradient(148deg, rgba(19,24,40,.92) 0%, rgba(12,16,28,.97) 100%);
-  border: 1px solid rgba(255,255,255,.065);
-  border-radius: 15px;
-  padding: 20px 22px;
-  position: relative;
-  overflow: hidden;
-  transition: var(--transition);
-  box-shadow: var(--shadow-card);
-}
-.stat::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(145deg, rgba(255,255,255,.028) 0%, transparent 55%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-.stat::before { display: none; }
-.stat:hover {
-  border-color: rgba(255,255,255,.12);
-  transform: translateY(-3px);
-  box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.3);
-}
-.stat.s-blue   { border-top: 1.5px solid rgba(56,189,248,.55); }
-.stat.s-green  { border-top: 1.5px solid rgba(45,212,191,.55); }
-.stat.s-red    { border-top: 1.5px solid rgba(251,113,133,.55); }
-.stat.s-warn   { border-top: 1.5px solid rgba(251,146,60,.55); }
-.stat.s-purple { border-top: 1.5px solid rgba(167,139,250,.55); }
-
-.stat.s-blue:hover   { box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 0 40px rgba(56,189,248,.05); }
-.stat.s-green:hover  { box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 0 40px rgba(45,212,191,.06); }
-.stat.s-red:hover    { box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 0 40px rgba(251,113,133,.05); }
-.stat.s-warn:hover   { box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 0 40px rgba(251,146,60,.05); }
-.stat.s-purple:hover { box-shadow: 0 24px 56px rgba(0,0,0,.5), 0 0 40px rgba(167,139,250,.05); }
-
-.stat-label {
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: .22em;
-  color: rgba(255,255,255,.55);
-  text-transform: uppercase;
-  margin-bottom: 13px;
-}
-.stat-val {
-  font-family: var(--mono);
-  font-size: 21px;
-  font-weight: 600;
-  letter-spacing: -.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.stat-sub { font-size: 10px; color: rgba(255,255,255,.23); margin-top: 10px; }
-.stat:hover .stat-val.green  { text-shadow: 0 0 24px rgba(45,212,191,.5); }
-.stat:hover .stat-val.red    { text-shadow: 0 0 24px rgba(251,113,133,.5); }
-.stat:hover .stat-val.blue   { text-shadow: 0 0 24px rgba(56,189,248,.5); }
-.stat:hover .stat-val.warn   { text-shadow: 0 0 24px rgba(251,146,60,.5); }
-.stat:hover .stat-val.purple { text-shadow: 0 0 24px rgba(167,139,250,.5); }
+/* (Ana tanım en üstte — hover glow ek efektleri) */
+.stat.s-blue:hover   { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(56,189,248,.07); }
+.stat.s-green:hover  { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(45,212,191,.07); }
+.stat.s-red:hover    { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(251,113,133,.06); }
+.stat.s-warn:hover   { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(251,146,60,.06); }
+.stat.s-purple:hover { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(167,139,250,.06); }
 
 /* ── CARD ────────────────────────────────────────────────── */
 .card {
@@ -5208,26 +5168,7 @@ html {
    ══════════════════════════════════════════════════════════ */
 
 /* ── 1. STAT KARTLARI — İkon + Trend Badge ──────────────── */
-.stat-icon {
-  position: absolute;
-  top: 18px; right: 18px;
-  width: 34px; height: 34px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.07);
-  opacity: .75;
-  transition: var(--transition);
-  pointer-events: none;
-  z-index: 1;
-}
-.stat:hover .stat-icon { opacity: 1; transform: scale(1.08) rotate(-4deg); }
-.stat.s-blue  .stat-icon { background: rgba(56,189,248,.07);  border-color: rgba(56,189,248,.14); }
-.stat.s-green .stat-icon { background: rgba(45,212,191,.07);  border-color: rgba(45,212,191,.14); }
-.stat.s-red   .stat-icon { background: rgba(251,113,133,.07); border-color: rgba(251,113,133,.14); }
-.stat.s-warn  .stat-icon { background: rgba(251,146,60,.07);  border-color: rgba(251,146,60,.14); }
-.stat.s-purple.stat-icon { background: rgba(167,139,250,.07); border-color: rgba(167,139,250,.14); }
+/* (stat-icon ana tanımı yukarıda — sadece trend badge burada) */
 
 /* Trend mikro badge (artış/azalış) */
 .stat-trend {
@@ -5521,7 +5462,7 @@ html[data-theme="light"] .page-header::after { background: linear-gradient(90deg
 html[data-theme="light"] .mob-nav-btn.active::before { background: #c47a00; box-shadow: 0 0 8px rgba(196,122,0,.5); }
 html[data-theme="light"] .nav-section-label::before  { background: rgba(0,0,0,.12); }
 html[data-theme="light"] tbody tr:nth-child(odd) td  { background: rgba(0,0,0,.01); }
-html[data-theme="light"] .stat-icon { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.08); }
+/* html[data-theme="light"] .stat-icon — tanım yukarıda */
 html[data-theme="light"] .brand-logo {
   animation: none;
   box-shadow: 0 2px 20px rgba(180,83,9,.32), 0 1px 3px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.4);
@@ -7266,8 +7207,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
                   <input id="kira-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -7288,8 +7228,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
                   <input id="kira-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();syncKiraManuelIban()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                    oninput="syncKiraManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban-manuel')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -7515,8 +7454,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
                   <input id="maas-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -7536,8 +7474,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
                   <input id="maas-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();syncMaasManuelIban()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                    oninput="syncMaasManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban-manuel')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -7831,8 +7768,7 @@ html[data-theme="light"] .mob-theme-toggle {
           <div style="flex:1">
             <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">IBAN</label>
             <input id="kisi-yeni-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="width:100%;padding:6px 9px;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;box-sizing:border-box;text-transform:uppercase"
-              oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()"
-              onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+              autocomplete="off">
           </div>
           <div style="flex:1">
             <label style="font-size:10px;color:var(--text3);display:block;margin-bottom:3px">IBAN Etiketi (isteğe bağlı)</label>
@@ -7846,6 +7782,55 @@ html[data-theme="light"] .mob-theme-toggle {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-kisi')">İptal</button>
       <button class="btn btn-primary" onclick="saveKisi()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- IBAN Hızlı Ekle Popup — yeni kişi kaydedilince açılır -->
+<div class="modal-bg" id="modal-iban-popup">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+        </div>
+        <div class="modal-header-text">
+          <div class="modal-title">IBAN Ekle</div>
+          <div class="modal-subtitle" id="iban-popup-kisi-label">Kişi için IBAN bilgisi ekleyin</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="_ibanPopupKapat(true)">✕</button>
+    </div>
+    <div class="modal-body" style="padding-bottom:8px">
+
+      <!-- Eklenen IBAN'lar -->
+      <div id="iban-popup-list" style="margin-bottom:12px"></div>
+
+      <!-- Yeni IBAN giriş alanı -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div>
+          <label>IBAN</label>
+          <input id="iban-popup-iban" placeholder="TR00 0000 0000 0000 0000 0000 00"
+            style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase"
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();_ibanPopupEkle()}">
+          <div id="iban-popup-status" class="iban-status-wrap"></div>
+        </div>
+        <div>
+          <label>Etiket <span style="color:var(--text3);font-size:9.5px;text-transform:none;letter-spacing:0">(isteğe bağlı)</span></label>
+          <input id="iban-popup-etiket" placeholder="örn. Vakıf Maaş, İş Bankası Tasarruf…"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();_ibanPopupEkle()}">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="_ibanPopupEkle()" style="align-self:flex-start">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          IBAN Ekle
+        </button>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn btn-ghost" onclick="_ibanPopupKapat(true)" style="color:var(--text3)">Atla</button>
+      <button class="btn btn-primary" onclick="_ibanPopupKapat(false)" id="iban-popup-tamam-btn">Tamam</button>
     </div>
   </div>
 </div>
@@ -7946,8 +7931,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
                   <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                    oninput="onEldenKarsiIbanInput()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -7967,8 +7951,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
                   <input id="elden-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase();onEldenKarsiIbanInput();syncEldenManuelIban()"
-                    onblur="formatIbanView(this)" onfocus="this.value=this.value.replace(/\s+/g,'').toUpperCase()">
+                    oninput="onEldenKarsiIbanInput();syncEldenManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -9214,6 +9197,11 @@ function closeModal(id) {
 document.querySelectorAll('.modal-bg').forEach(m => {
   m.addEventListener('click', e => {
     if(e.target===m) {
+      // IBAN popup dışına tıklanınca "atla" gibi kapat
+      if(m.id === 'modal-iban-popup') {
+        _ibanPopupKapat(true);
+        return;
+      }
       m.classList.remove('open');
       if(!document.querySelector('.modal-bg.open')) {
         document.body.classList.remove('modal-open');
@@ -10604,10 +10592,10 @@ function renderMevduat() {
   });
 
   document.getElementById('mevduat-stats').innerHTML=`
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-icon-wrap"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Net Faiz</div><div class="stat-val green">${fmt(toplamFaiz)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Nihai Toplam</div><div class="stat-val green">${fmt(toplamNihai)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${aktif}</div></div>`;
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="stat-label">Net Faiz</div><div class="stat-val green">${fmt(toplamFaiz)}</div></div>
+    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-label">Nihai Toplam</div><div class="stat-val green">${fmt(toplamNihai)}</div></div>
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${aktif}</div></div>`;
 
   const sorted = [...DB.mevduatlar].sort((a,b)=>a.bitis.localeCompare(b.bitis));
   document.getElementById('mevduat-tbody').innerHTML = sorted.map(m=>{
@@ -11793,10 +11781,10 @@ function renderKmhKredi() {
   });
 
   document.getElementById('kmhkredi-stats').innerHTML = `
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif KMH Kredisi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif KMH Kredisi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
 
   document.getElementById('kmhkredi-tbody').innerHTML = DB.krediler.length ? DB.krediler.map(kr=>{
     const kmhKart = getKmhHesap(kr.kmhId);
@@ -12094,10 +12082,10 @@ function renderKredi() {
   });
 
   document.getElementById('kredi-stats').innerHTML = `
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
-    <div class="stat"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif Kredi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div><div class="stat-label">Toplam Ana Para</div><div class="stat-val blue">${fmt(toplamAna)}</div></div>
+    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="stat-label">Toplam Borç</div><div class="stat-val warn">${fmt(toplamBorc)}</div></div>
+    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-label">Kalan Borç</div><div class="stat-val red">${fmt(toplamKalan)}</div></div>
+    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Aktif Kredi</div><div class="stat-val blue">${aktifSayisi}</div></div>`;
 
   document.getElementById('kredi-tbody').innerHTML = DB.bireyselKrediler.length ? DB.bireyselKrediler.map(kr=>{
     const taksitler = getBireyselKrediTaksitler(kr);
@@ -12818,6 +12806,7 @@ function saveKisi() {
   const ad = document.getElementById('kisi-ad').value.trim();
   if(!ad) { showFieldError('kisi-ad', 'Ad zorunlu'); return; }
   if(!DB.kisiler) DB.kisiler = [];
+  const isYeni = !editKisiId;
   const kisi = {
     id: editKisiId || uid(),
     ad,
@@ -12837,7 +12826,143 @@ function saveKisi() {
   closeModal('modal-kisi');
   renderKisilerGrid();
   populateEldenKisiSelect();
-  showToast('Kişi kaydedildi ✓');
+
+  if(isYeni) {
+    // Yeni kişi — IBAN popup'ı aç
+    _ibanPopupAc(kisi.id);
+  } else {
+    showToast('Kişi güncellendi ✓');
+  }
+}
+
+// ─── IBAN HIZLI EKLE POPUP ─────────────────────────────────────
+let _ibanPopupKisiId = null;
+
+function _ibanPopupAc(kisiId) {
+  _ibanPopupKisiId = kisiId;
+  const kisi = (DB.kisiler||[]).find(k=>k.id===kisiId);
+  if(!kisi) return;
+
+  // Başlığı ayarla
+  document.getElementById('iban-popup-kisi-label').textContent = kisi.ad + ' için IBAN bilgisi ekleyin';
+
+  // Inputları temizle
+  const ibanInp = document.getElementById('iban-popup-iban');
+  const etiketInp = document.getElementById('iban-popup-etiket');
+  const statusEl = document.getElementById('iban-popup-status');
+  ibanInp.value = '';
+  etiketInp.value = '';
+  statusEl.innerHTML = '';
+  ibanInp.style.borderColor = '';
+
+  // Validasyonu bağla (zaten bağlıysa tekrar bağlamaz)
+  attachIbanValidation(ibanInp, { statusEl });
+
+  // Tamam butonunu güncelle
+  _ibanPopupListeGuncelle();
+
+  openModal('modal-iban-popup');
+  setTimeout(() => ibanInp.focus(), 120);
+}
+
+function _ibanPopupListeGuncelle() {
+  const kisi = (DB.kisiler||[]).find(k=>k.id===_ibanPopupKisiId);
+  const ibanlar = kisi ? (kisi.ibanlar||[]) : [];
+  const listEl = document.getElementById('iban-popup-list');
+  const tamamBtn = document.getElementById('iban-popup-tamam-btn');
+
+  if(!ibanlar.length) {
+    listEl.innerHTML = '<div style="font-size:11.5px;color:var(--text3);margin-bottom:4px">Henüz IBAN eklenmedi.</div>';
+    tamamBtn.textContent = 'Atla';
+    tamamBtn.className = 'btn btn-ghost';
+    return;
+  }
+
+  tamamBtn.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polyline points="20 6 9 17 4 12"/></svg>Tamam (${ibanlar.length} IBAN)`;
+  tamamBtn.className = 'btn btn-primary';
+
+  listEl.innerHTML = ibanlar.map((ib, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</div>
+        ${ib.etiket?`<div style="font-size:10px;color:var(--text3);margin-top:1px">${ib.etiket}</div>`:''}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 7px;flex-shrink:0"
+        onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('Kopyalandı ✓'))" title="Kopyala">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <button class="btn btn-danger btn-sm" style="padding:3px 7px;flex-shrink:0" onclick="_ibanPopupSil(${i})" title="Sil">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function _ibanPopupEkle() {
+  const ibanInp = document.getElementById('iban-popup-iban');
+  const etiketInp = document.getElementById('iban-popup-etiket');
+  const statusEl = document.getElementById('iban-popup-status');
+  const raw = (ibanInp.dataset.rawIban || ibanInp.value.replace(/\s+/g,'')).toUpperCase();
+
+  if(!raw) { ibanInp.focus(); return; }
+
+  // Mod-97 kontrolü
+  if(!/^TR\d{24}$/.test(raw) || !ibanMod97(raw)) {
+    statusEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Geçersiz IBAN — lütfen kontrol edin</span>';
+    ibanInp.style.borderColor = 'var(--rose)';
+    ibanInp.focus();
+    return;
+  }
+
+  const kisi = (DB.kisiler||[]).find(k=>k.id===_ibanPopupKisiId);
+  if(!kisi) return;
+  if(!kisi.ibanlar) kisi.ibanlar = [];
+
+  // Duplikat kontrolü
+  if(kisi.ibanlar.find(x=>x.iban===raw)) {
+    statusEl.innerHTML = '<span class="iban-status iban-err">Bu IBAN zaten ekli</span>';
+    return;
+  }
+
+  const etiket = etiketInp.value.trim();
+  kisi.ibanlar.push({ iban: raw, etiket });
+  saveData();
+  renderKisilerGrid();
+  populateEldenKisiSelect();
+
+  // Inputları temizle
+  ibanInp.value = '';
+  etiketInp.value = '';
+  statusEl.innerHTML = '';
+  ibanInp.style.borderColor = '';
+  delete ibanInp.dataset.rawIban;
+
+  _ibanPopupListeGuncelle();
+  ibanInp.focus();
+
+  showToast('IBAN eklendi ✓');
+}
+
+function _ibanPopupSil(idx) {
+  const kisi = (DB.kisiler||[]).find(k=>k.id===_ibanPopupKisiId);
+  if(!kisi || !kisi.ibanlar) return;
+  kisi.ibanlar.splice(idx, 1);
+  saveData();
+  renderKisilerGrid();
+  _ibanPopupListeGuncelle();
+}
+
+function _ibanPopupKapat(atla) {
+  closeModal('modal-iban-popup');
+  const kisi = (DB.kisiler||[]).find(k=>k.id===_ibanPopupKisiId);
+  const adet = kisi ? (kisi.ibanlar||[]).length : 0;
+  if(atla && adet === 0) {
+    showToast('Kişi eklendi ✓');
+  } else if(adet > 0) {
+    showToast(`Kişi eklendi · ${adet} IBAN kaydedildi ✓`);
+  } else {
+    showToast('Kişi eklendi ✓');
+  }
+  _ibanPopupKisiId = null;
 }
 
 function deleteKisi(id) {
@@ -13961,17 +14086,18 @@ function renderOzet() {
     : { [defaultCurrency||'TRY']: 0 };
   const nakitHtml = Object.entries(nakitMap).map(([pb,val])=>
     `<div class="stat s-${val>0?'green':val<0?'red':'blue'}">
-      <div class="stat-label">💵 Nakit Bakiye${Object.keys(nakitMap).length>1?' ('+pb+')':''}</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
+      <div class="stat-label">Nakit Bakiye${Object.keys(nakitMap).length>1?' ('+pb+')':''}</div>
       <div class="stat-val ${val>0?'green':val<0?'red':'blue'}">${fmtCur(val,pb)}</div>
       <div class="stat-sub">Elden / nakit işlemler</div>
     </div>`).join('');
 
   document.getElementById('ozet-stats').innerHTML=`
-    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label"></div><div class="stat-label">Kart Kullanımı</div><div class="stat-val warn">${fmt(toplamKullanim)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">/ ${fmt(toplamLimit)} limit</div></div>
+    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Kart Kullanımı</div><div class="stat-val warn">${fmt(toplamKullanim)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">/ ${fmt(toplamLimit)} limit</div></div>
     <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${fmt(mevduatAktif)}</div></div>
     <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">KMH Kredi Kalan</div><div class="stat-val red">${fmt(krediKalan)}</div></div>
     <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Bireysel Kredi Kalan</div><div class="stat-val red">${fmt(bireyselKrediKalan)}</div></div>
-    <div class="stat s-${kiraNET>=0?'green':'red'}"><div class="stat-label">${kiraNET>=0?'📈':'📉'} Bu Ay Kira Net</div><div class="stat-val ${kiraNET>=0?'green':'red'}">${fmt(kiraNET,true)}</div></div>
+    <div class="stat s-${kiraNET>=0?'green':'red'}"><div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="stat-label">Bu Ay Kira Net</div><div class="stat-val ${kiraNET>=0?'green':'red'}">${fmt(kiraNET,true)}</div></div>
     <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="stat-label">Bu Ay Maaş</div><div class="stat-val green">${fmt(maasTop)}</div></div>
     ${nakitHtml}`;
 
@@ -14424,23 +14550,251 @@ function unformatIbanView(el) {
   el.value = raw;
 }
 
-// Türk IBAN parse: TR(2) + kontrol(2) + rezerv(1) + bankaKodu(4) + şube(5) + hesapNo(12) = 26 hane
+// ══════════════════════════════════════════════════════════════
+//  IBAN DOĞRULAMA — Merkezi Sistem
+//  ISO 13616 mod-97 kontrolü + TR yapı parse + evrensel input hook
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Mod-97 IBAN doğrulaması (ISO 13616).
+ * Herhangi bir ülkenin IBAN'ı için çalışır.
+ * TR için uzunluk 26, format TR + 2 kontrol + 22 rakam.
+ */
+function ibanMod97(iban) {
+  // 1. 4 karakteri sona taşı: BBAN + ülke kodu + kontrol haneler
+  const rearranged = iban.slice(4) + iban.slice(0, 4);
+  // 2. Harfleri sayıya çevir (A=10, B=11, ... Z=35)
+  const numStr = rearranged.replace(/[A-Z]/g, ch => ch.charCodeAt(0) - 55);
+  // 3. BigInt ile mod 97
+  let remainder = 0n;
+  for (const ch of numStr) remainder = (remainder * 10n + BigInt(ch)) % 97n;
+  return remainder === 1n;
+}
+
+/**
+ * TR IBAN parse + mod-97 doğrulama.
+ * Geçersizse null döner.
+ */
 function parseIban(raw) {
-  const iban = raw.replace(/\s+/g,'').toUpperCase();
-  if(!/^TR\d{24}$/.test(iban)) return null;
-  // TR IBAN yapısı: TR(2) + kontrol(2) + sıfır(1) + bankaKodu(4) + rezerv(1) + subeKodu(4) + hesapNo(12) = 26
-  // Index:          0-1     2-3           4            5-8            9            10-13          14-25
+  const iban = raw.replace(/\s+/g, '').toUpperCase();
+  if (!/^TR\d{24}$/.test(iban)) return null;
+  if (!ibanMod97(iban)) return null;
+  // TR IBAN yapısı: TR(2) + kontrol(2) + rezerv(1) + bankaKodu(4) + subeKodu(4) + hesapNo(15) = 26
   return {
     iban,
     ulke: 'TR',
-    kontrolHane: iban.slice(2,4),
-    bankaKodu: iban.slice(5,9),       // 4 hane banka kodu — ibanKod ile birebir eşleşir
-    rezerv: iban.slice(9,10),         // 1 hane rezerv (daima 0)
-    subeKodu: iban.slice(10,14),      // 4 hane şube kodu
-    hesapNo: iban.slice(14,26),       // 12 hane hesap no
-    formatli: iban.replace(/(.{4})/g,'$1 ').trim()
+    kontrolHane: iban.slice(2, 4),
+    bankaKodu:   iban.slice(5, 9),
+    rezerv:      iban.slice(9, 10),
+    subeKodu:    iban.slice(10, 14),
+    hesapNo:     iban.slice(14, 26),
+    formatli:    iban.replace(/(.{4})/g, '$1 ').trim()
   };
 }
+
+/**
+ * Gerçek zamanlı IBAN input işleyici.
+ * - 4'er gruplu formatlama (görsel)
+ * - Ham değeri data-raw-iban'da saklar
+ * - Doğrulama sonucunu statusEl'e yazar
+ * Dönüş: parsed nesne (geçerliyse) | null
+ */
+function handleIbanInput(inputEl, statusEl, opts) {
+  opts = opts || {};
+  const before = inputEl.value;
+  const cursor = inputEl.selectionStart;
+
+  // Boşluksuz ham değer, max 26 karakter
+  const raw = before.replace(/\s+/g, '').toUpperCase().slice(0, 26);
+  inputEl.dataset.rawIban = raw;
+
+  // 4'er gruplu görsel format
+  const formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+  if (formatted !== before) {
+    const rawBefore = before.slice(0, cursor).replace(/\s+/g, '').length;
+    inputEl.value = formatted;
+    let newPos = 0, count = 0;
+    for (let i = 0; i < formatted.length && count < rawBefore; i++) {
+      if (formatted[i] !== ' ') count++;
+      newPos = i + 1;
+    }
+    inputEl.setSelectionRange(newPos, newPos);
+  }
+
+  if (!statusEl) return null;
+
+  if (!raw) {
+    statusEl.innerHTML = '';
+    inputEl.style.borderColor = '';
+    return null;
+  }
+
+  // Henüz tamamlanmamış — TR ile başlamıyorsa hemen hata
+  if (raw.length < 26) {
+    if (raw.length >= 2 && !raw.startsWith('TR')) {
+      statusEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> TR ile başlamalıdır</span>';
+      inputEl.style.borderColor = 'var(--rose)';
+    } else if (raw.length >= 4 && !/^TR\d+$/.test(raw)) {
+      statusEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> TR\'den sonra yalnızca rakam giriniz</span>';
+      inputEl.style.borderColor = 'var(--rose)';
+    } else {
+      statusEl.innerHTML = `<span class="iban-status iban-muted">${raw.length} / 26 hane</span>`;
+      inputEl.style.borderColor = '';
+    }
+    return null;
+  }
+
+  // 26 hane — mod-97 kontrol
+  const parsed = parseIban(raw);
+  if (!parsed) {
+    statusEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Geçersiz IBAN — kontrol haneleri uyuşmuyor</span>';
+    inputEl.style.borderColor = 'var(--rose)';
+    return null;
+  }
+
+  // Geçerli — banka adını göster
+  inputEl.style.borderColor = 'var(--teal)';
+  const dbBank = (DB?.bankalar || []).find(b => b.ibanKod === parsed.bankaKodu || b.kod === parsed.bankaKodu);
+  const mapBank = (typeof IBAN_BANKA_MAP !== 'undefined') ? IBAN_BANKA_MAP[parsed.bankaKodu] : null;
+  const bankLabel = dbBank ? dbBank.kisa : (mapBank || ('Kod: ' + parsed.bankaKodu));
+  statusEl.innerHTML = `<span class="iban-status iban-ok"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Geçerli &nbsp;·&nbsp; <b>${bankLabel}</b></span>`;
+
+  if (opts.onValid) opts.onValid(parsed, dbBank);
+  return parsed;
+}
+
+/**
+ * Status elementi yoksa oluştur ve input'un hemen altına ekle.
+ */
+function ensureIbanStatus(inputEl) {
+  const existingId = inputEl.dataset.ibanStatusId;
+  if (existingId) {
+    const el = document.getElementById(existingId);
+    if (el) return el;
+  }
+  const statusEl = document.createElement('div');
+  const uid = 'iban-st-' + Math.random().toString(36).slice(2, 8);
+  statusEl.id = uid;
+  statusEl.className = 'iban-status-wrap';
+  inputEl.dataset.ibanStatusId = uid;
+  inputEl.parentNode.insertBefore(statusEl, inputEl.nextSibling);
+  return statusEl;
+}
+
+/**
+ * Belirtilen input'a IBAN doğrulamasını bağlar (tek seferlik).
+ * opts.statusEl: mevcut status elementi (yoksa otomatik oluşturulur)
+ * opts.onValid: geçerli IBAN'da çağrılır (parsed, dbBank)
+ */
+function attachIbanValidation(inputEl, opts) {
+  if (!inputEl || inputEl.dataset.ibanValidated) return;
+  inputEl.dataset.ibanValidated = '1';
+  opts = opts || {};
+
+  const getStatus = () => opts.statusEl || ensureIbanStatus(inputEl);
+
+  inputEl.addEventListener('input', () => {
+    // Sadece büyük harf + boşluksuz
+    const v = inputEl.value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+    if (v !== inputEl.value.replace(/\s+/g, '').toUpperCase()) {
+      inputEl.value = v; // harf dışı karakter girildiyse temizle
+    }
+    handleIbanInput(inputEl, getStatus(), opts);
+  });
+
+  inputEl.addEventListener('blur', () => {
+    const raw = (inputEl.dataset.rawIban || inputEl.value.replace(/\s+/g, '')).toUpperCase();
+    if (raw.length > 0) {
+      inputEl.value = raw.replace(/(.{4})/g, '$1 ').trim();
+      inputEl.dataset.rawIban = raw;
+    }
+  });
+
+  inputEl.addEventListener('focus', () => {
+    const raw = (inputEl.dataset.rawIban || inputEl.value.replace(/\s+/g, '')).toUpperCase();
+    inputEl.value = raw;
+    inputEl.dataset.rawIban = raw;
+  });
+}
+
+/**
+ * Sayfadaki tüm IBAN inputlarını otomatik algıla ve doğrulamayı bağla.
+ * Zaten mevcut statusEl'i olan inputlar korunur.
+ */
+function attachAllIbanValidations() {
+  // ID bazlı inputlar: mevcut statusEl veya otomatik yaratılır
+  const targets = [
+    // id                         statusElId (varsa)
+    ['kisi-yeni-iban',            null],
+    ['kira-karsi-iban',           null],
+    ['kira-karsi-iban-manuel',    null],
+    ['maas-karsi-iban',           null],
+    ['maas-karsi-iban-manuel',    null],
+    ['elden-karsi-iban',          null],
+    ['elden-karsi-iban-manuel',   null],
+    ['mev-oto-iban',              'mev-oto-iban-status'],
+    ['hesap-iban',                'hesap-iban-status'],
+  ];
+
+  targets.forEach(([id, statusId]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const statusEl = statusId ? document.getElementById(statusId) : null;
+
+    // hesap-iban ve mev-oto-iban'ın kendi onIbanInput/onMevIbanInput handler'ları var
+    // Bunlara sadece mod-97 doğrulamasını ekle, mevcut handler'ı bozmadan
+    if (id === 'hesap-iban' || id === 'mev-oto-iban') {
+      if (el.dataset.ibanMod97) return;
+      el.dataset.ibanMod97 = '1';
+      const origOninput = el.oninput;
+      el.addEventListener('input', function() {
+        const raw = this.value.replace(/\s+/g, '').toUpperCase();
+        const sEl = statusEl || ensureIbanStatus(this);
+        if (raw.length === 26 && !/^TR\d{24}$/.test(raw)) {
+          sEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Geçersiz IBAN</span>';
+        } else if (raw.length === 26 && !ibanMod97(raw)) {
+          sEl.innerHTML = '<span class="iban-status iban-err"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Geçersiz IBAN — kontrol haneleri uyuşmuyor</span>';
+          this.style.borderColor = 'var(--rose)';
+        } else if (raw.length === 26) {
+          this.style.borderColor = 'var(--teal)';
+        } else {
+          this.style.borderColor = '';
+        }
+      });
+      return;
+    }
+
+    attachIbanValidation(el, { statusEl });
+  });
+
+  // mkp-iban-input sınıflı dinamik inputlar
+  document.querySelectorAll('.mkp-iban-input').forEach(el => {
+    attachIbanValidation(el);
+  });
+}
+
+// DOM hazır olduğunda çalıştır; modal açılınca tekrar çalıştır
+document.addEventListener('DOMContentLoaded', () => setTimeout(attachAllIbanValidations, 300));
+(function patchOpenModal() {
+  const orig = window.openModal;
+  if (typeof orig === 'function') {
+    window.openModal = function() {
+      orig.apply(this, arguments);
+      setTimeout(attachAllIbanValidations, 120);
+    };
+  } else {
+    setTimeout(patchOpenModal, 200);
+  }
+})();
+// MutationObserver: dinamik eklenen IBAN inputlarını yakala
+new MutationObserver(muts => {
+  let found = false;
+  for (const m of muts)
+    for (const n of m.addedNodes)
+      if (n.nodeType === 1 && (n.matches?.('[id*="iban"],[class*="iban"]') || n.querySelector?.('[id*="iban"],[class*="iban"]')))
+        found = true;
+  if (found) setTimeout(attachAllIbanValidations, 80);
+}).observe(document.body, { childList: true, subtree: true });
 
 // Türk bankaları IBAN kodu → kısa ad eşlemesi (TCMB 2025)
 const IBAN_BANKA_MAP = {
@@ -14889,11 +15243,11 @@ function renderHesaplar() {
       const {uyarilar} = otoBakiyeAnalizYap();
       const kritik = uyarilar.filter(u=>u.tip==='kritik'||u.tip==='gelecek-negatif').length;
       const dusuk  = uyarilar.filter(u=>u.tip==='dusuk'||u.tip==='gelecek-kritik'||u.tip==='gelecek-dusuk').length;
-      if(!kritik && !dusuk) return '<div class="stat s-green"><div class="stat-label">🟢 Bakiye Durumu</div><div class="stat-val green" style="font-size:15px">Sağlıklı</div><div class="stat-sub">Tüm hesaplar normal</div></div>';
-      if(kritik) return `<div class="stat s-red"><div class="stat-label">🚨 Bakiye Uyarısı</div><div class="stat-val red">${kritik + dusuk}</div><div class="stat-sub">${kritik} kritik, ${dusuk} düşük</div></div>`;
-      return `<div class="stat s-warn"><div class="stat-label">⚠️ Bakiye Uyarısı</div><div class="stat-val warn">${dusuk}</div><div class="stat-sub">${dusuk} hesap dikkat istiyor</div></div>`;
+      if(!kritik && !dusuk) return '<div class="stat s-green"><div class="stat-label">Bakiye Durumu</div><div class="stat-val green" style="font-size:15px">Sağlıklı</div><div class="stat-sub">Tüm hesaplar normal</div></div>';
+      if(kritik) return `<div class="stat s-red"><div class="stat-label">Bakiye Uyarısı</div><div class="stat-val red">${kritik + dusuk}</div><div class="stat-sub">${kritik} kritik, ${dusuk} düşük</div></div>`;
+      return `<div class="stat s-warn"><div class="stat-label">Bakiye Uyarısı</div><div class="stat-val warn">${dusuk}</div><div class="stat-sub">${dusuk} hesap dikkat istiyor</div></div>`;
     })()}
-    ${DB._nakitBakiye && Object.keys(DB._nakitBakiye).length ? Object.entries(DB._nakitBakiye).map(([pb,val])=>`<div class="stat s-${val>=0?'green':'red'}"><div class="stat-label">💵 Nakit Bakiye (${pb})</div><div class="stat-val ${val>=0?'green':'red'}">${fmtCur(val,pb)}</div><div class="stat-sub">Elden/nakit işlemler</div></div>`).join('') : ''}`;
+    ${DB._nakitBakiye && Object.keys(DB._nakitBakiye).length ? Object.entries(DB._nakitBakiye).map(([pb,val])=>`<div class="stat s-${val>=0?'green':'red'}"><div class="stat-label">Nakit Bakiye (${pb})</div><div class="stat-val ${val>=0?'green':'red'}">${fmtCur(val,pb)}</div><div class="stat-sub">Elden/nakit işlemler</div></div>`).join('') : ''}`;
 
   if(!liste.length) {
     document.getElementById('hesaplar-tbody').innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">Kayıt yok</td></tr>';
