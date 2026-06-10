@@ -6989,20 +6989,18 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <input type="hidden" id="mev-banka-hidden">
 
-        <!-- Yeni hesap adı (toggle AÇIK) -->
-        <div id="mev-oto-hesap-wrap" style="display:none">
-          <input id="mev-oto-hesap-ad" placeholder="Hesap adı — boş bırakılırsa otomatik oluşturulur">
+        <!-- Paranın alınacağı hesap (toggle AÇIK) -->
+        <div id="mev-kaynak-hesap-wrap" style="display:none;margin-top:8px">
+          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="font-size:10px;color:var(--text3)">(isteğe bağlı)</span></label>
+          <select id="mev-kaynak-hesap-id" style="width:100%">
+            <option value="">— Önce banka seçin / IBAN girin —</option>
+          </select>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Bu bankadaki vadesiz hesaplar listelenir. Mevduatın parası buradan alınacak.</div>
         </div>
-        <!-- Yeni vadeli IBAN son kısmı girişi -->
-        <div id="mev-iban-son-wrap" style="display:none;margin-top:8px">
-          <label style="font-size:10px;color:var(--text3);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.08em">IBAN Son Kısmı (isteğe bağlı)</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="mev-iban-son-kisim" placeholder="örn. son 12 hane: 000000000001"
-              style="font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;flex:1"
-              oninput="onMevIbanSonGir()" maxlength="26">
-            <span style="font-size:11px;color:var(--text3);white-space:nowrap">Sona ekler</span>
-          </div>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Yeni vadeli hesap IBAN'ının bilinen son kısmını buraya yazın; sistem otomatik birleştirir.</div>
+
+        <!-- Yeni hesap adı (toggle AÇIK) -->
+        <div id="mev-oto-hesap-wrap" style="display:none;margin-top:8px">
+          <input id="mev-oto-hesap-ad" placeholder="Hesap adı — boş bırakılırsa otomatik oluşturulur">
         </div>
 
         <!-- Mevcut hesap seçimi (toggle KAPALI) -->
@@ -10067,10 +10065,14 @@ function populateMevduatModal() {
   const otoToggle = document.getElementById('mev-oto-hesap');
   if(otoToggle) { otoToggle.checked = false; onMevOtoHesapToggle(); }
 
+  // Kaynak hesap sıfırla
+  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
+  if(kaynakSel) kaynakSel.innerHTML = '<option value="">— Önce banka seçin / IBAN girin —</option>';
+
   // Banka hesap select (mevcut)
   _fillMevHesapSel('');
   // Vadesiz hesap select
-  _fillMevVadesizSel('');
+  _fillMevVadesizSel('', '');
   // Strateji sıfırla
   const stratejiSel = document.getElementById('mev-strateji');
   if(stratejiSel) { stratejiSel.value = ''; onMevStratejiChange(); }
@@ -10145,12 +10147,22 @@ function onMevStratejiChange() {
   // Yenileme bildirimi notu: strateji 1 veya 2'de göster
   const showBilgi = s === 'yenile_tum' || s === 'yenile_ana_faiz_vadesiz';
   if(yenilemeBilgi) yenilemeBilgi.style.display = showBilgi ? 'block' : 'none';
+
+  // Eğer strateji gösteriliyorsa ve banka biliniyorsa listeyi filtrele
+  if(showVadesiz) {
+    const bankaId = (document.getElementById('mev-banka-hidden')||{}).value || '';
+    const otoAktif = (document.getElementById('mev-oto-hesap')||{}).checked;
+    const currentVal = (document.getElementById('mev-vadesiz-hesap-id')||{}).value || '';
+    _fillMevVadesizSel(currentVal, otoAktif ? bankaId : '');
+  }
 }
 
-function _fillMevVadesizSel(selectedId) {
+function _fillMevVadesizSel(selectedId, bankaId) {
   const sel = document.getElementById('mev-vadesiz-hesap-id');
   if(!sel) return;
-  const vadesizler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
+  let vadesizler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
+  // Eğer banka biliniyorsa önce o bankadan filtrele, yoksa hepsini göster
+  if(bankaId) vadesizler = vadesizler.filter(h=>h.banka === bankaId);
   sel.innerHTML = '<option value="">— Hesap Seçin —</option>' +
     vadesizler.map(h=>{
       const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
@@ -10165,11 +10177,11 @@ function onMevOtoHesapToggle() {
   const mevcutWrap = document.getElementById('mev-mevcut-hesap-wrap');
   const ibanYeniWrap = document.getElementById('mev-iban-yeni-wrap');
   const ibanMevcutWrap = document.getElementById('mev-iban-mevcut-wrap');
+  const kaynakWrap = document.getElementById('mev-kaynak-hesap-wrap');
   if(otoWrap) otoWrap.style.display = checked ? 'block' : 'none';
   if(ibanYeniWrap) ibanYeniWrap.style.display = checked ? 'block' : 'none';
   if(mevcutWrap) mevcutWrap.style.display = checked ? 'none' : 'block';
-  const ibanSonWrap = document.getElementById('mev-iban-son-wrap');
-  if(ibanSonWrap) ibanSonWrap.style.display = checked ? 'block' : 'none';
+  if(kaynakWrap) kaynakWrap.style.display = checked ? 'block' : 'none';
   if(!checked) {
     const ibanVal = document.getElementById('mev-iban-mevcut-val');
     if(ibanVal) ibanVal.value = '';
@@ -10180,6 +10192,8 @@ function onMevOtoHesapToggle() {
     const fw = document.getElementById('mev-banka-fallback');
     if(dw) dw.style.display='none';
     if(fw) fw.style.display='none';
+    const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
+    if(kaynakSel) kaynakSel.value = '';
   } else {
     if(ibanMevcutWrap) ibanMevcutWrap.style.display = 'none';
   }
@@ -10198,6 +10212,8 @@ function onMevIbanInput() {
     if(displayWrap) displayWrap.style.display='none';
     if(fallbackWrap) fallbackWrap.style.display='none';
     if(hiddenInp) hiddenInp.value='';
+    _fillMevKaynakSel('');
+    _fillMevVadesizSel('', '');
     return;
   }
   const clean = ibanRaw.replace(/\s+/g,'').toUpperCase();
@@ -10213,6 +10229,8 @@ function onMevIbanInput() {
       if(fallbackWrap) fallbackWrap.style.display='none';
       if(hiddenInp) hiddenInp.value = eslesme.id;
       if(statusEl) statusEl.innerHTML = `<span style="color:var(--accent2)">✓ ${eslesme.kisa} algılandı · ${parsed.iban}</span>`;
+      _fillMevKaynakSel(eslesme.id);
+      _fillMevVadesizSel('', eslesme.id);
     } else {
       if(displayWrap) displayWrap.style.display='none';
       _showMevBankaFallback();
@@ -10232,15 +10250,36 @@ function _showMevBankaFallback() {
     sel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
     phSet(sel,'Banka seçin…','');
   }
-  // Fallback seçilince hidden'a yaz
+  // Fallback seçilince hidden'a yaz ve hesapları filtrele
   if(sel && !sel.dataset.listenerAdded) {
     sel.addEventListener('change', ()=>{
       const hid = document.getElementById('mev-banka-hidden');
       if(hid) hid.value = sel.value;
+      _fillMevKaynakSel(sel.value);
+      _fillMevVadesizSel('', sel.value);
     });
     sel.dataset.listenerAdded='1';
   }
 }
+
+// Paranın alınacağı kaynak hesap listesi — seçilen bankanın vadesiz hesapları
+function _fillMevKaynakSel(bankaId) {
+  const sel = document.getElementById('mev-kaynak-hesap-id');
+  if(!sel) return;
+  if(!bankaId) {
+    sel.innerHTML = '<option value="">— Önce banka seçin / IBAN girin —</option>';
+    return;
+  }
+  const hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli' && h.banka === bankaId);
+  if(!hesaplar.length) {
+    sel.innerHTML = '<option value="">— Bu bankada vadesiz hesap yok —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— Seçin (isteğe bağlı) —</option>' +
+    hesaplar.map(h => `<option value="${h.id}">${h.ad}${h.iban?' · '+h.iban.slice(-6):''}</option>`).join('');
+}
+
+
 
 function calcMevduat() {
   const tutar = getMoneyInput('mev-tutar')||0;
@@ -10364,6 +10403,7 @@ function saveMevduat() {
     hesapId = (document.getElementById('mev-hesap-id')||{}).value || null;
   }
 
+  const kaynakHesapId = otoAktif ? ((document.getElementById('mev-kaynak-hesap-id')||{}).value || null) : null;
   const vadesizHesapId = (document.getElementById('mev-vadesiz-hesap-id')||{}).value || null;
   const strateji = (document.getElementById('mev-strateji')||{}).value || '';
 
@@ -10373,6 +10413,7 @@ function saveMevduat() {
            (document.getElementById('mev-banka')||{}).value || '',
     paraBirimi: document.getElementById('mev-para-birimi').value || 'TRY',
     hesapId: hesapId || null,
+    kaynakHesapId: kaynakHesapId || null,
     vadesizHesapId: vadesizHesapId || null,
     strateji: strateji || null,
     baslangic: bas, bitis,
