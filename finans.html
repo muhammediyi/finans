@@ -6497,7 +6497,12 @@ html[data-theme="light"] .mob-theme-toggle {
 
     </div>
 
-    <div style="margin-top:14px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
+    <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="ga-tarih-giris-kolay" onchange="updateGoruntuPreview()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <label for="ga-tarih-giris-kolay" style="cursor:pointer;margin:0;font-size:13px">Hızlı tarih girişi <span style="color:var(--text3);font-size:11px">— ayraç olmadan yaz: <span style="font-family:var(--mono);color:var(--accent2)">010125</span> veya <span style="font-family:var(--mono);color:var(--accent2)">01012025</span> otomatik <span id="ga-tarih-kolay-ornek" style="color:var(--teal);font-family:var(--mono)">01/01/2025</span> olur</span></label>
+    </div>
+
+    <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
       <input type="checkbox" id="ga-show-weekday" onchange="updateGoruntuPreview()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
       <label for="ga-show-weekday" style="cursor:pointer;margin:0;font-size:13px">Tarihlerde gün adını göster <span style="color:var(--text3);font-size:11px">(ör. Pazartesi, 01/01/2025)</span></label>
     </div>
@@ -8434,7 +8439,8 @@ var FORMAT_CONFIG = {
   saatFormat: 'HH:mm',
   ondalikAyrac: ',',
   binlikAyrac: '.',
-  ondalikBasamak: '2'
+  ondalikBasamak: '2',
+  tarihGirisKolay: true   // ayraçsız tarih girişi (010125 → 01/01/2025)
 };
 
 function loadFormatConfig() {
@@ -8641,6 +8647,8 @@ function loadGoruntuAyarlariUI() {
   if(ob) ob.value = FORMAT_CONFIG.ondalikBasamak || '2';
   const gwEl = document.getElementById('ga-show-weekday');
   if(gwEl) gwEl.checked = FORMAT_CONFIG.showWeekday !== false;
+  const gkEl = document.getElementById('ga-tarih-giris-kolay');
+  if(gkEl) gkEl.checked = FORMAT_CONFIG.tarihGirisKolay !== false;
   // Saat ayraç select'ini senkronize et
   syncSaatAyracFromFormat();
   updateGoruntuPreview();
@@ -8725,6 +8733,12 @@ function updateGoruntuPreview() {
       ? paraStr + '\u202f' + cfg.symbol
       : cfg.symbol + paraStr;
   }
+  // Hızlı tarih girişi örneğini güncelle (format değişince örnek de değişsin)
+  const ornekEl = document.getElementById('ga-tarih-kolay-ornek');
+  if (ornekEl) {
+    // Bugünü seçilen formatta göster
+    ornekEl.textContent = applyFormatToken(tarihFmt, now);
+  }
 }
 
 function saveGoruntuAyarlari() {
@@ -8736,6 +8750,8 @@ function saveGoruntuAyarlari() {
   FORMAT_CONFIG.ondalikBasamak = (document.getElementById('ga-ondalik-basamak')||{}).value || '2';
   const gwEl = document.getElementById('ga-show-weekday');
   if(gwEl) FORMAT_CONFIG.showWeekday = gwEl.checked;
+  const gkEl = document.getElementById('ga-tarih-giris-kolay');
+  if(gkEl) FORMAT_CONFIG.tarihGirisKolay = gkEl.checked;
   saveFormatConfig();
   showToast('Görüntü ayarları kaydedildi ✓');
   // fmtCur override'ını güncelle
@@ -8748,7 +8764,7 @@ function saveGoruntuAyarlari() {
 }
 
 function resetGoruntuAyarlari() {
-  FORMAT_CONFIG = { tarihFormat:'dd/MM/yyyy', saatFormat:'HH:mm', ondalikAyrac:',', binlikAyrac:'.', ondalikBasamak:'2', showWeekday:true };
+  FORMAT_CONFIG = { tarihFormat:'dd/MM/yyyy', saatFormat:'HH:mm', ondalikAyrac:',', binlikAyrac:'.', ondalikBasamak:'2', showWeekday:true, tarihGirisKolay:true };
   saveFormatConfig();
   loadGoruntuAyarlariUI();
   updateFmtCurOverride();
@@ -18342,7 +18358,7 @@ window.entegre = {
   yenile:        _initEntegre
 };
 
-console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | KMH | Kredi | Kart İşlemi');
+
 
 // ═══════════════════════════════════════════════════════════
 // TARİH INPUT FORMAT ZORLAYICI — FORMAT_CONFIG.tarihFormat overlay
@@ -18396,6 +18412,64 @@ console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | 
 
   // FORMAT_CONFIG.tarihFormat string'ini parse edip yyyy-MM-dd döndür
   function parseDisplayToYMD(str) {
+    if (!str || !str.trim()) return null;
+    const s = str.trim();
+
+    // ── Hızlı giriş: ayraçsız sayı dizisi ───────────────────────────────
+    if (FORMAT_CONFIG.tarihGirisKolay !== false && /^\d+$/.test(s)) {
+      const pattern = FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy';
+      // Pattern'daki token sırasını çıkar (yyyy mi önce, dd mi?)
+      const tokenOrder = [];
+      pattern.replace(/(yyyy|yy|MM|M|dd|d)/g, (tok) => { tokenOrder.push(tok); });
+      // dd/MM/yyyy → [dd, MM, yyyy] → d:2, M:2, y:4
+      const lens = tokenOrder.map(t => t === 'yyyy' ? 4 : t === 'yy' ? 2 : 2);
+      const totalMin = lens.reduce((a, b) => a + b, 0) - (lens[2] === 4 ? 2 : 0); // 6 veya 8
+
+      let D, M, Y;
+      if (s.length === 8) {
+        // 8 rakam: tam yıl (01012025)
+        let pos = 0;
+        const parts = tokenOrder.map((tok, i) => {
+          const len = tok === 'yyyy' ? 4 : 2;
+          const val = parseInt(s.slice(pos, pos + len), 10);
+          pos += len;
+          return { tok, val };
+        });
+        parts.forEach(({ tok, val }) => {
+          if (tok === 'yyyy') Y = val;
+          else if (tok === 'MM' || tok === 'M') M = val;
+          else if (tok === 'dd' || tok === 'd') D = val;
+        });
+      } else if (s.length === 6) {
+        // 6 rakam: kısa yıl (010125) — 2-2-2 sırasına göre
+        let pos = 0;
+        const parts = tokenOrder.map((tok) => {
+          const val = parseInt(s.slice(pos, pos + 2), 10);
+          pos += 2;
+          return { tok, val };
+        });
+        parts.forEach(({ tok, val }) => {
+          if (tok === 'yyyy' || tok === 'yy') Y = val < 50 ? 2000 + val : 1900 + val;
+          else if (tok === 'MM' || tok === 'M') M = val;
+          else if (tok === 'dd' || tok === 'd') D = val;
+        });
+      } else if (s.length === 4) {
+        // 4 rakam: gün ve ay, yıl bu yıl (0101 → 01/01/bu yıl)
+        // İlk token dd/MM, ikinci MM/dd sırasına göre
+        const t0 = tokenOrder[0], t1 = tokenOrder[1];
+        const v0 = parseInt(s.slice(0, 2), 10);
+        const v1 = parseInt(s.slice(2, 4), 10);
+        Y = new Date().getFullYear();
+        if (t0 === 'dd' || t0 === 'd') { D = v0; M = v1; }
+        else { M = v0; D = v1; }
+      }
+
+      if (Y && M && D && M >= 1 && M <= 12 && D >= 1 && D <= 31) {
+        return `${Y}-${String(M).padStart(2,'0')}-${String(D).padStart(2,'0')}`;
+      }
+    }
+
+    // ── Normal parse: format pattern ile ─────────────────────────────────
     const pattern = FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy';
     const tokens = [];
     let regStr = pattern.replace(/(dd|MM|yyyy|yy|d|M)/g, (tok) => {
@@ -18404,18 +18478,46 @@ console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | 
       if(tok === 'yy')   return '(\\d{2})';
       return '(\\d{1,2})';
     });
+    // Ayraçları isteğe bağlı yap (hızlı giriş aktifse)
+    if (FORMAT_CONFIG.tarihGirisKolay !== false) {
+      regStr = regStr.replace(/([^()\\d])/g, '($1)?');
+    }
     regStr = '^' + regStr + '$';
     try {
-      const m = str.trim().match(new RegExp(regStr));
+      const m = s.match(new RegExp(regStr));
       if(!m) return null;
       let Y, M, D;
-      tokens.forEach((tok, i) => {
-        const v = parseInt(m[i+1], 10);
-        if(tok==='yyyy') Y = v;
-        else if(tok==='yy') Y = v < 50 ? 2000+v : 1900+v;
-        else if(tok==='MM'||tok==='M') M = v;
-        else if(tok==='dd'||tok==='d') D = v;
-      });
+      // Ayraç isteğe bağlıysa grup sayısı değişiyor — sadece rakam gruplarını al
+      let digitGroups;
+      if (FORMAT_CONFIG.tarihGirisKolay !== false) {
+        digitGroups = [];
+        let g = 1;
+        // token'ların konumlarını bul
+        let testPat = pattern.replace(/(dd|MM|yyyy|yy|d|M)/g, (tok) => {
+          tokens; // already populated
+          if(tok === 'yyyy') return '(\\d{4})';
+          if(tok === 'yy')   return '(\\d{2})';
+          return '(\\d{1,2})';
+        });
+        // Ayraç sayısı kadar isteğe bağlı grup var — rakam grupları tek-numara indexed
+        // Daha basit: tüm match gruplarından sadece rakam olanları al
+        digitGroups = Array.from(m).slice(1).filter(v => v && /^\d+$/.test(v));
+        tokens.forEach((tok, i) => {
+          const v = parseInt(digitGroups[i] || '0', 10);
+          if(tok==='yyyy') Y = v;
+          else if(tok==='yy') Y = v < 50 ? 2000+v : 1900+v;
+          else if(tok==='MM'||tok==='M') M = v;
+          else if(tok==='dd'||tok==='d') D = v;
+        });
+      } else {
+        tokens.forEach((tok, i) => {
+          const v = parseInt(m[i+1], 10);
+          if(tok==='yyyy') Y = v;
+          else if(tok==='yy') Y = v < 50 ? 2000+v : 1900+v;
+          else if(tok==='MM'||tok==='M') M = v;
+          else if(tok==='dd'||tok==='d') D = v;
+        });
+      }
       if(!Y||!M||!D||M<1||M>12||D<1||D>31) return null;
       return `${Y}-${String(M).padStart(2,'0')}-${String(D).padStart(2,'0')}`;
     } catch(e) { return null; }
@@ -18493,11 +18595,16 @@ console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | 
 
     // Kullanıcı text inputa yazınca → parse edip gerçek inputa aktar
     txtInp.addEventListener('input', () => {
-      const ymd = parseDisplayToYMD(txtInp.value);
+      const raw = txtInp.value;
+      const ymd = parseDisplayToYMD(raw);
       if(ymd) {
         inp.value = ymd;
         inp.dispatchEvent(new Event('change', { bubbles: true }));
         txtInp.style.color = '';
+        // Geçerli tarih → görsel formatı overlay'e yaz (ayraçsız yazıldıysa düzelt)
+        if (FORMAT_CONFIG.tarihGirisKolay !== false && /^\d+$/.test(raw.trim())) {
+          try { txtInp.value = fmtDate(ymd); } catch(e) {}
+        }
       } else {
         txtInp.style.color = inp.value ? '' : 'var(--danger, #fb7185)';
         if(!txtInp.value.trim()) { inp.value = ''; inp.dispatchEvent(new Event('change', { bubbles: true })); }
@@ -18506,12 +18613,18 @@ console.log('✅ Tam Entegrasyon v38 aktif — Kira | Maaş | Elden | Mevduat | 
 
     // Blur'da: geçerli değilse restore et
     txtInp.addEventListener('blur', () => {
-      const ymd = parseDisplayToYMD(txtInp.value);
-      if(!txtInp.value.trim()) {
+      const raw = txtInp.value;
+      const ymd = parseDisplayToYMD(raw);
+      if(!raw.trim()) {
         inp.value = '';
         inp.dispatchEvent(new Event('change', { bubbles: true }));
-      } else if(!ymd) {
-        updateFake(inp);
+      } else if(ymd) {
+        // Doğru parse edildi — görsel formatı normalize et
+        inp.value = ymd;
+        try { txtInp.value = fmtDate(ymd); } catch(e) {}
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        updateFake(inp); // geçersiz → eski değeri göster
       }
       txtInp.style.color = '';
     });
