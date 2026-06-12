@@ -4651,6 +4651,74 @@ html[data-theme="light"] .char-count { color: rgba(15,22,41,.5); }
 }
 html[data-theme="light"] .input-currency::before { color: rgba(15,22,41,.5); }
 
+/* ══ MONEY INPUT — Soldan sağa, güzel para girişi ══════════════ */
+input.money-input {
+  direction: ltr;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .3px;
+  padding-left: 36px !important;
+  padding-right: 48px !important;
+  color: var(--text);
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+input.money-input::placeholder {
+  font-family: var(--mono);
+  color: var(--text2);
+  opacity: .45;
+  font-weight: 400;
+}
+input.money-input:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px var(--gold-glow), inset 0 1px 3px rgba(0,0,0,.15);
+  background: var(--surface3) !important;
+}
+/* Para birimi sembolü — sol tarafta ₺ / $ gibi */
+.money-wrap {
+  position: relative;
+  display: block;
+}
+.money-wrap input.money-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.money-wrap::before {
+  content: attr(data-symbol);
+  position: absolute;
+  left: 12px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  color: var(--gold); opacity: .7;
+  pointer-events: none; z-index: 2;
+  line-height: 1;
+}
+/* Sağ taraf — TRY / USD gibi kısa etiket */
+.money-wrap::after {
+  content: attr(data-code);
+  position: absolute;
+  right: 10px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  color: var(--text2); opacity: .55;
+  pointer-events: none; z-index: 2;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+html[data-theme="light"] .money-wrap::before { color: var(--gold-dim); opacity: .8; }
+html[data-theme="light"] .money-wrap::after  { color: var(--text2); opacity: .6; }
+
+/* money-input data-decimals=0 → tam sayı, daha büyük font */
+input.money-input[data-decimals="0"] {
+  font-size: 15px;
+}
+/* Odaktayken hafif büyüme efekti kaldırıldı, sadece glow */
+input.money-input:focus::placeholder { opacity: .2; }
+
+/* Pozitif / negatif renk göstergesi */
+input.money-input.val-positive { color: var(--teal); }
+input.money-input.val-negative { color: var(--rose); }
+/* ══════════════════════════════════════════════════════════════ */
+
 /* Date input: calendar icon color */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator {
@@ -5994,7 +6062,7 @@ html[data-theme="light"] .mob-theme-toggle {
   <div class="page-header">
     <div class="page-header-left"><h1>İşlemler</h1><p>Kart / hesap bazlı işlem ekle ve görüntüle</p></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="">Tüm Kartlar</option></select>
+      <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="" disabled hidden>Tüm Kartlar</option></select>
       <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
       <button class="btn btn-primary" onclick="openModal('modal-islem')">+ Yeni İşlem</button>
     </div>
@@ -6011,7 +6079,7 @@ html[data-theme="light"] .mob-theme-toggle {
 <div id="page-extreler" class="page">
   <div class="page-header"><h1>Ekstre Görünümü</h1><p>Kart bazında ekstre dönemleri ve tutarlar</p></div>
   <div class="action-row">
-    <select id="extre-kart-filter" onchange="renderExtreler()" style="width:220px"><option value="">Kart Seçin</option></select>
+    <select id="extre-kart-filter" onchange="renderExtreler()" style="width:220px"><option value="" disabled hidden>Kart Seçin</option></select>
   </div>
   <div class="card" id="ozel-extre-panel" style="display:none;margin-bottom:16px">
     <div class="card-header"><span class="card-title">📅 Belirli Ay İçin Özel Ekstre Kesim Tarihi</span></div>
@@ -6190,7 +6258,11 @@ html[data-theme="light"] .mob-theme-toggle {
   </div>
   <div id="tab-tatiller" style="display:none">
     <div class="info-box">Resmi tatil günlerini girin. Bu günler ödeme günü hesaplamalarında dikkate alınır.</div>
-    <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openTatilModal()">+ Tatil Günü Ekle</button></div>
+    <div class="action-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openTatilModal()">+ Tatil Günü Ekle</button>
+      <button class="btn btn-ghost btn-sm" id="btn-tatil-guncelle" onclick="resmiTatilleriGuncelle()" title="Türkiye resmi tatillerini API'den çek">🔄 Resmi Tatilleri Güncelle</button>
+      <span id="tatil-guncelle-status" style="font-size:12px;color:var(--text3)"></span>
+    </div>
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Tarih</th><th>Açıklama</th><th></th></tr></thead><tbody id="tatil-tbody"></tbody></table></div></div>
   </div>
   <div id="tab-kategoriler" style="display:none">
@@ -6226,7 +6298,7 @@ html[data-theme="light"] .mob-theme-toggle {
       <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart bazlı para birimi kart ayarından gelir. Bu seçim genel gösterim ve para birimi tanımlı olmayan işlemler için geçerlidir.</div>
     </div>
     <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openParaBirimiModal()">+ Para Birimi Ekle</button></div>
-    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>İkon</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
   </div>
 
   <!-- VERGI & FAİZ ORANLARI SEKMESİ -->
@@ -6513,9 +6585,10 @@ html[data-theme="light"] .mob-theme-toggle {
           <div><label>Kod (örn. EUR) <span style="color:var(--danger)">*</span></label><input id="pb-kod" placeholder="EUR" maxlength="6" oninput="this.value=this.value.toUpperCase()"></div>
           <div><label>Sembol (örn. €) <span style="color:var(--danger)">*</span></label><input id="pb-sembol" placeholder="€" maxlength="6"></div>
         </div>
-        <div class="form-row cols-2" style="margin-bottom:0">
+        <div class="form-row cols-3" style="margin-bottom:0">
           <div><label>Ad (örn. Euro) <span style="color:var(--danger)">*</span></label><input id="pb-ad" placeholder="Euro"></div>
           <div><label>Bayrak Emoji</label><input id="pb-bayrak" placeholder="🇪🇺" maxlength="4"></div>
+          <div><label>İkon Emoji</label><input id="pb-ikon" placeholder="💶" maxlength="4" title="Dropdown'larda görünecek ikon"></div>
         </div>
       </div>
       <div class="msec">
@@ -6580,7 +6653,7 @@ html[data-theme="light"] .mob-theme-toggle {
           Kredi Koşulları
         </div>
         <div class="form-row cols-3">
-          <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><input id="kmhkredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="50.000,00" oninput="calcKmhKredi()"></div>
+          <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kmhkredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="50.000,00" oninput="calcKmhKredi()"></div></div>
           <div><label>Faiz Oranı (% Aylık) <span style="color:var(--danger)">*</span></label><input id="kmhkredi-faiz" type="number" step="0.001" placeholder="4.50" oninput="calcKmhKredi()"></div>
           <div><label>Vade (Ay) <span style="color:var(--danger)">*</span></label><input id="kmhkredi-vade" type="number" min="1" max="360" placeholder="12" oninput="calcKmhKredi()"></div>
         </div>
@@ -6647,7 +6720,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2">
           <div><label>Banka <span style="color:var(--danger)">*</span></label><select id="kredi-banka"></select></div>
           <div><label>Kredi Türü <span style="color:var(--danger)">*</span></label>
-            <select id="kredi-tur"><option value="">— Tür Seçin —</option></select>
+            <select id="kredi-tur"><option value="" disabled hidden>— Tür Seçin —</option></select>
           </div>
         </div>
         <div class="form-row" style="margin-bottom:0">
@@ -6661,7 +6734,7 @@ html[data-theme="light"] .mob-theme-toggle {
           Kredi Koşulları
         </div>
         <div class="form-row cols-3">
-          <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><input id="kredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="200.000,00" oninput="calcKredi()"></div>
+          <div><label>Ana Para (₺) <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kredi-anapara" type="text" class="money-input" data-decimals="2" placeholder="200.000,00" oninput="calcKredi()"></div></div>
           <div><label>Faiz Oranı (% Aylık) <span style="color:var(--danger)">*</span></label><input id="kredi-faiz" type="number" step="0.001" placeholder="3.89" oninput="calcKredi()"></div>
           <div><label>Vade (Ay) <span style="color:var(--danger)">*</span></label><input id="kredi-vade" type="number" min="1" max="360" placeholder="36" oninput="calcKredi()"></div>
         </div>
@@ -6729,7 +6802,7 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row cols-2">
           <div><label>Kart/Hesap Adı <span style="color:var(--danger)">*</span></label><input id="kart-ad" placeholder="örn. Garanti BBVA Bonus"></div>
-          <div><label>Toplam Limit</label><input id="kart-limit" type="text" class="money-input" data-decimals="0" placeholder="50.000"></div>
+          <div><label>Toplam Limit</label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kart-limit" type="text" class="money-input" data-decimals="0" placeholder="50.000"></div></div>
         </div>
         <div class="form-row cols-2" style="margin-bottom:0">
           <div><label>Son 4 Hane <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><input id="kart-no" placeholder="1234" maxlength="4"></div>
@@ -6859,7 +6932,7 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <select id="islem-kategori"><option value="">— Seçiniz —</option></select>
+            <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option><select>
           </div>
         </div>
       </div>
@@ -6871,9 +6944,9 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row cols-3" style="margin-bottom:0">
           <div><label>Para Birimi</label>
-            <select id="islem-para-birimi"></select>
+            <select id="islem-para-birimi" onchange="updateModalMoneyWraps('modal-islem', this.value)"></select>
           </div>
-          <div><label>Toplam Tutar</label><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div>
+          <div><label>Toplam Tutar</label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div>
           <div><label>Taksit Sayısı</label><input id="islem-taksit" type="number" min="1" max="60" value="1" oninput="calcTaksit(false)"></div>
         </div>
         <div id="islem-taksit-alanlari" style="margin-top:4px"></div>
@@ -6947,7 +7020,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="modal-toggle-row">
           <div>
             <div class="modal-toggle-row-title">Yeni Vadeli Hesap Kaydı Oluştur</div>
-            <div class="modal-toggle-row-sub">Açık → Banka seç, hesap otomatik oluştur · Kapalı → mevcut hesap seç</div>
+            <div class="modal-toggle-row-sub">Açık → Kaynak hesap seç, banka otomatik algılanır · Kapalı → mevcut hesap seç</div>
           </div>
           <label class="toggle-switch" style="flex-shrink:0;margin-left:14px">
             <input type="checkbox" id="mev-oto-hesap" onchange="onMevOtoHesapToggle()">
@@ -6955,53 +7028,26 @@ html[data-theme="light"] .mob-theme-toggle {
           </label>
         </div>
 
-        <!-- Banka seçimi (toggle AÇIK) -->
-        <div id="mev-iban-yeni-wrap" style="display:none;margin-bottom:8px">
-          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Banka <span style="color:var(--danger)">*</span></label>
-          <select id="mev-yeni-banka-sel" style="width:100%;margin-bottom:8px" onchange="onMevYeniBankaChange()">
-            <option value="">— Banka seçin —</option>
+        <!-- Paranın alınacağı hesap (toggle AÇIK) -->
+        <div id="mev-kaynak-hesap-wrap" style="display:none;margin-bottom:8px">
+          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="font-size:10px;color:var(--text3)">(isteğe bağlı)</span></label>
+          <select id="mev-kaynak-hesap-id" style="width:100%" onchange="onMevKaynakHesapChange()">
+            <option value="" disabled hidden>— Hesap seçin —</option>
           </select>
-          <!-- IBAN isteğe bağlı -->
-          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">IBAN <span style="font-size:10px;color:var(--text3)">(isteğe bağlı)</span></label>
-          <div style="position:relative">
-            <input id="mev-oto-iban" placeholder="TR00 0000 0000 0000 0000 0000 00"
-              style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;width:100%;padding-right:40px"
-              oninput="onMevIbanInput()">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Seçilen vadesiz hesaptan vadeli hesaba otomatik para aktarımı yapılır.</div>
+          <!-- Banka algılandı pill -->
+          <div id="mev-banka-display" style="display:none;margin-top:6px;padding:7px 11px;background:rgba(45,212,191,.07);border-radius:8px;border:1px solid rgba(45,212,191,.2);display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+            <span id="mev-banka-ad-text" style="font-size:12px;color:var(--teal);font-weight:600"></span>
+            <span style="font-size:10.5px;color:var(--text3);margin-left:auto">Hesaptan algılandı</span>
           </div>
-          <div id="mev-oto-iban-status" style="font-size:11px;margin-top:5px;min-height:14px"></div>
         </div>
+        <input type="hidden" id="mev-banka-hidden">
 
         <!-- IBAN readonly (mevcut hesap seçilince) -->
         <div id="mev-iban-mevcut-wrap" style="display:none;margin-bottom:8px">
           <input id="mev-iban-mevcut-val" readonly placeholder="—"
             style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;width:100%;background:var(--surface2);color:var(--teal);cursor:default;border-color:rgba(45,212,191,.2)">
-        </div>
-
-        <!-- Banka algılandı pill -->
-        <div id="mev-banka-display" style="display:none;margin-bottom:8px;padding:8px 11px;background:rgba(45,212,191,.07);border-radius:8px;border:1px solid rgba(45,212,191,.2);display:flex;align-items:center;gap:8px">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
-          <span id="mev-banka-ad-text" style="font-size:12px;color:var(--teal);font-weight:600"></span>
-          <span style="font-size:10.5px;color:var(--text3);margin-left:auto;letter-spacing:.02em"></span>
-        </div>
-
-        <!-- Banka fallback -->
-        <div id="mev-banka-fallback" style="display:none;margin-bottom:8px">
-          <div style="font-size:11px;color:var(--warn);margin-bottom:5px;display:flex;align-items:center;gap:5px">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Banka IBAN'dan algılanamadı — manuel seçin
-          </div>
-          <select id="mev-banka"></select>
-        </div>
-        <input type="hidden" id="mev-banka-hidden">
-
-        <!-- Paranın alınacağı hesap (toggle AÇIK) -->
-        <div id="mev-kaynak-hesap-wrap" style="display:none;margin-top:8px">
-          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="font-size:10px;color:var(--text3)">(isteğe bağlı)</span></label>
-          <select id="mev-kaynak-hesap-id" style="width:100%">
-            <option value="">— Önce banka seçin —</option>
-          </select>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Seçilen vadesiz hesaptan vadeli hesaba otomatik para aktarımı yapılır.</div>
         </div>
 
         <!-- Yeni hesap adı (toggle AÇIK) -->
@@ -7011,7 +7057,7 @@ html[data-theme="light"] .mob-theme-toggle {
 
         <!-- Mevcut hesap seçimi (toggle KAPALI) -->
         <div id="mev-mevcut-hesap-wrap">
-          <select id="mev-hesap-id" onchange="onMevHesapChange()"><option value="">— Mevcut hesap seçin (isteğe bağlı) —</option></select>
+          <select id="mev-hesap-id" onchange="onMevHesapChange()"><option value="" disabled hidden>— Mevcut hesap seçin (isteğe bağlı) —</option></select>
         </div>
       </div>
 
@@ -7042,9 +7088,9 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-3">
           <div>
             <label>Para Birimi <span style="color:var(--danger)">*</span></label>
-            <select id="mev-para-birimi" onchange="calcMevduat()"></select>
+            <select id="mev-para-birimi" onchange="calcMevduat();updateModalMoneyWraps('modal-mevduat', this.value)"></select>
           </div>
-          <div><label>Tutar <span style="color:var(--danger)">*</span></label><input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat()"></div>
+          <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat()"></div></div>
           <div><label>Vade (Gün) <span style="color:var(--danger)">*</span></label><input id="mev-vade" type="number" oninput="calcMevduat()"></div>
         </div>
         <div class="form-row cols-3" style="margin-bottom:12px">
@@ -7076,7 +7122,7 @@ html[data-theme="light"] .mob-theme-toggle {
           Vade Sonu Stratejisi
         </div>
         <select id="mev-strateji" onchange="onMevStratejiChange()" style="width:100%;margin-bottom:10px">
-          <option value="">— Strateji seçin —</option>
+          <option value="" disabled hidden>— Strateji seçin —</option>
           <option value="yenile_tum">Ana Para + Faiz → Yeni Mevduat</option>
           <option value="yenile_ana_faiz_vadesiz">Ana Para → Yeni Mevduat, Faiz → Vadesiz</option>
           <option value="tumu_vadesiz">Ana Para + Faiz → Vadesiz Hesap</option>
@@ -7085,7 +7131,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div id="mev-vadesiz-wrap" style="display:none">
           <label id="mev-vadesiz-label" style="margin-bottom:5px;display:block">Faizin Aktarılacağı Vadesiz Hesap</label>
           <select id="mev-vadesiz-hesap-id" style="width:100%">
-            <option value="">— Hesap Seçin —</option>
+            <option value="" disabled hidden>— Hesap Seçin —</option>
           </select>
           <div style="font-size:11px;color:var(--text3);margin-top:5px" id="mev-vadesiz-hint"></div>
         </div>
@@ -7131,7 +7177,7 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row cols-3">
           <div><label>Tür</label><select id="kira-tur"><option value="gelir">Gelir</option><option value="gider">Gider</option></select></div>
-          <div><label>Aylık Tutar <span style="color:var(--danger)">*</span></label><input id="kira-tutar" type="text" class="money-input" data-decimals="2" placeholder="12.500,00"></div>
+          <div><label>Aylık Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kira-tutar" type="text" class="money-input" data-decimals="2" placeholder="12.500,00"></div></div>
           <div><label>Ödeme Günü (1-31)</label><input id="kira-gun" type="number" min="1" max="31" placeholder="15" oninput="onKiraGunChange()"></div>
         </div>
         <div id="kira-gun-kisa-ay-wrap" style="display:none;margin-top:-8px;margin-bottom:14px">
@@ -7148,7 +7194,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Para Birimi</label>
-            <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange()"></select>
+            <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange();updateModalMoneyWraps('modal-kira', this.value)"></select>
           </div>
           <div id="kira-pb-manual-wrap" style="display:none"></div>
         </div>
@@ -7171,7 +7217,7 @@ html[data-theme="light"] .mob-theme-toggle {
           <div id="kira-hesap-wrap" style="display:none">
             <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
             <select id="kira-hesap" onchange="onKiraHesapFullChange()">
-              <option value="">— Hesap Seçin —</option>
+              <option value="" disabled hidden>— Hesap Seçin —</option>
             </select>
           </div>
         </div>
@@ -7201,7 +7247,7 @@ html[data-theme="light"] .mob-theme-toggle {
               <div class="kt-field">
                 <label>Kayıtlı Kişi / Kurum</label>
                 <div class="kt-input-row">
-                  <select id="kira-kisi" onchange="onKiraKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <select id="kira-kisi" onchange="onKiraKisiChange()"><option value="" disabled hidden>— Kişi Seçin —</option></select>
                   <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'kira-kisi')" title="Kişi Yönetimi">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                   </button>
@@ -7266,7 +7312,7 @@ html[data-theme="light"] .mob-theme-toggle {
           <div class="form-row cols-2">
             <div>
               <label>Depozito Tutarı <span style="color:var(--danger)">*</span></label>
-              <input id="kira-depozito-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+              <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kira-depozito-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
             </div>
             <div>
               <label>Para Birimi</label>
@@ -7353,14 +7399,10 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row cols-2">
           <div><label>Tutar <span style="color:var(--danger)">*</span></label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input id="maas-tutar" type="text" class="money-input" data-decimals="2" style="flex:1">
-              <span id="maas-para-birimi-badge" style="font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap;flex-shrink:0">TRY ₺</span>
-              <select id="maas-para-birimi" style="width:120px;flex-shrink:0;display:none"></select>
-            </div>
+            <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="maas-tutar" type="text" class="money-input" data-decimals="2"></div>
             <div id="maas-pb-manual-row" style="margin-top:6px;display:none">
               <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Para Birimi (manuel)</label>
-              <select id="maas-para-birimi-manual" style="margin-top:3px" onchange="onMaasPbManualChange()"></select>
+              <select id="maas-para-birimi-manual" style="margin-top:3px" onchange="onMaasPbManualChange();updateModalMoneyWraps('modal-maas', this.value)"></select>
             </div>
           </div>
           <div>
@@ -7420,7 +7462,7 @@ html[data-theme="light"] .mob-theme-toggle {
           <div id="maas-hesap-wrap" style="display:none">
             <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
             <select id="maas-hesap" onchange="onMaasHesapChange()">
-              <option value="">— Hesap Seçin —</option>
+              <option value="" disabled hidden>— Hesap Seçin —</option>
             </select>
           </div>
         </div>
@@ -7448,7 +7490,7 @@ html[data-theme="light"] .mob-theme-toggle {
               <div class="kt-field">
                 <label>Kayıtlı Kişi / Kurum</label>
                 <div class="kt-input-row">
-                  <select id="maas-kisi" onchange="onMaasKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <select id="maas-kisi" onchange="onMaasKisiChange()"><option value="" disabled hidden>— Kişi Seçin —</option></select>
                   <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'maas-kisi')" title="Kişi Yönetimi">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                   </button>
@@ -7630,11 +7672,11 @@ html[data-theme="light"] .mob-theme-toggle {
           </div>
           <div>
             <label>Para Birimi <span style="color:var(--danger)">*</span></label>
-            <select id="hesap-para-birimi"></select>
+            <select id="hesap-para-birimi" onchange="updateModalMoneyWraps('modal-hesap', this.value)"></select>
           </div>
           <div>
             <label>Mevcut Bakiye</label>
-            <input id="hesap-bakiye" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+            <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-bakiye" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
           </div>
         </div>
       </div>
@@ -7659,7 +7701,7 @@ html[data-theme="light"] .mob-theme-toggle {
           <div class="form-row cols-2" style="margin-bottom:12px">
             <div>
               <label>Güncel KMH Limiti (₺)</label>
-              <input id="hesap-kmh-limit" type="text" class="money-input" data-decimals="0" placeholder="0">
+              <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-kmh-limit" type="text" class="money-input" data-decimals="0" placeholder="0"></div>
             </div>
             <div>
               <label>Limit Geçerlilik Tarihi</label>
@@ -7712,12 +7754,12 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Minimum Bakiye Eşiği <span style="color:var(--text3);font-size:10px">(uyarı için)</span></label>
-            <input id="hesap-min-bakiye" type="text" class="money-input" data-decimals="2" placeholder="örn. 1.000,00">
+            <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-min-bakiye" type="text" class="money-input" data-decimals="2" placeholder="örn. 1.000,00"></div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px">Bu seviyenin altına düşünce ⚠️ uyarı gösterilir</div>
           </div>
           <div>
             <label>Hedef Bakiye <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <input id="hesap-hedef-bakiye" type="text" class="money-input" data-decimals="2" placeholder="örn. 10.000,00">
+            <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-hedef-bakiye" type="text" class="money-input" data-decimals="2" placeholder="örn. 10.000,00"></div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px">Hedef bakiyenin üzerindeyse 🟢 sağlıklı gösterilir</div>
           </div>
         </div>
@@ -7867,15 +7909,15 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2">
           <div><label>Açıklama</label><input id="elden-aciklama" placeholder="örn. Market alışverişi"></div>
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <select id="elden-kategori"><option value="">— Seçiniz —</option></select>
+            <select id="elden-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
         </div>
         <div class="form-row cols-2" style="margin-bottom:0">
-          <div><label>Tutar <span style="color:var(--danger)">*</span></label><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
+          <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div></div>
           <div id="elden-pb-wrap">
             <label>Para Birimi</label>
             <div style="display:flex;align-items:center;gap:6px">
-              <select id="elden-para-birimi" style="flex:1"></select>
+              <select id="elden-para-birimi" style="flex:1" onchange="updateModalMoneyWraps('modal-elden', this.value)"></select>
               <span id="elden-para-birimi-badge" style="display:none;font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap"></span>
             </div>
           </div>
@@ -7898,7 +7940,7 @@ html[data-theme="light"] .mob-theme-toggle {
           </div>
           <div id="elden-hesap-wrap" style="display:none">
             <label>Kendi Hesabım <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
-            <select id="elden-hesap" onchange="onEldenHesapChange()"><option value="">— Hesap Seçin —</option></select>
+            <select id="elden-hesap" onchange="onEldenHesapChange()"><option value="" disabled hidden>— Hesap Seçin —</option></select>
           </div>
         </div>
         <div id="elden-hesap-bilgi-wrap" style="display:none">
@@ -7925,7 +7967,7 @@ html[data-theme="light"] .mob-theme-toggle {
               <div class="kt-field">
                 <label>Kayıtlı Kişi / Kurum</label>
                 <div class="kt-input-row">
-                  <select id="elden-kisi" onchange="onEldenKisiChange()"><option value="">— Kişi Seçin —</option></select>
+                  <select id="elden-kisi" onchange="onEldenKisiChange()"><option value="" disabled hidden>— Kişi Seçin —</option></select>
                   <button class="btn btn-ghost btn-icon" onclick="openMiniKisiPopup(this,'elden-kisi')" title="Kişi Yönetimi">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                   </button>
@@ -8281,12 +8323,12 @@ let DB = loadData();
 // ========== PARA BİRİMİ ==========
 // Varsayılan para birimleri - DB'ye yüklenir
 var DEFAULT_CURRENCY_CONFIG = {
-  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷' },
-  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸' },
-  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺' },
-  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵' },
-  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧' },
-  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇' },
+  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷', icon: '💵' },
+  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸', icon: '💵' },
+  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺', icon: '💶' },
+  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴' },
+  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷' },
+  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇' },
 };
 
 // CURRENCY_CONFIG - DB'den yüklenen + varsayılan
@@ -8305,6 +8347,7 @@ function loadCurrencyConfig() {
         decimals: pb.ondalik !== undefined ? parseInt(pb.ondalik) : 2,
         ad: pb.ad,
         flag: pb.bayrak || '💱',
+        icon: pb.ikon || pb.bayrak || '💱',
         custom: true
       };
     });
@@ -8328,15 +8371,60 @@ function setParaBirimi(code) {
   }
   const preview = document.getElementById('para-birimi-preview');
   if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, code);
+  // money-wrap sembol ve kod güncelle
+  updateMoneyWrapSymbols(code);
   const activePage = document.querySelector('.page.active');
   if(activePage) renderPage(activePage.id.replace('page-',''));
 }
 
-function populateCurrencySelects() {
-  const opts = ALL_CURRENCIES.map(c => {
-    const cfg = CURRENCY_CONFIG[c.code];
-    return `<option value="${c.code}">${c.flag} ${cfg.ad || c.code} (${cfg.symbol})</option>`;
+// money-wrap'lerdeki sembol/kod etiketini aktif para birimine göre güncelle
+function updateMoneyWrapSymbols(code) {
+  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
+  const sym = cfg.symbol || (code === 'TRY' ? '\u20ba' : code);
+  document.querySelectorAll('.money-wrap').forEach(w => {
+    // Kendi para birimi olan wrap'leri (hesap/mevduat modal gibi) atla
+    if(w.dataset.ownCurrency) return;
+    w.dataset.symbol = sym;
+    w.dataset.code   = code;
+    // Input placeholder'ını da güncelle (eğer default placeholder ise)
+    const inp = w.querySelector('input.money-input');
+    if(inp) {
+      const decimals = parseInt(inp.dataset.decimals ?? '2');
+      if(decimals === 0) {
+        inp.placeholder = '0';
+      } else {
+        inp.placeholder = '0' + (FORMAT_CONFIG.ondalikAyrac || ',') + '0'.repeat(decimals);
+      }
+    }
+  });
+}
+
+// Modal içindeki tüm money-wrap'leri belirtilen para birimiyle güncelle
+function updateModalMoneyWraps(modalId, code) {
+  const modal = document.getElementById(modalId);
+  if(!modal) return;
+  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
+  const sym = cfg.symbol || (code === 'TRY' ? '\u20ba' : code);
+  modal.querySelectorAll('.money-wrap').forEach(w => {
+    w.dataset.symbol = sym;
+    w.dataset.code   = code;
+  });
+}
+
+// Tüm dropdownlar için standart option HTML üretici
+function buildCurrencyOptions(selectedCode) {
+  return ALL_CURRENCIES.map(c => {
+    const cfg = CURRENCY_CONFIG[c.code] || {};
+    const ico = cfg.icon || cfg.flag || '';
+    const ad  = cfg.ad || c.code;
+    const sym = cfg.symbol || c.code;
+    const sel = selectedCode && c.code === selectedCode ? ' selected' : '';
+    return `<option value="${c.code}"${sel}>${ico} ${ad} (${sym})</option>`;
   }).join('');
+}
+
+function populateCurrencySelects() {
+  const opts = buildCurrencyOptions();
   // islem para birimi
   const islemPb = document.getElementById('islem-para-birimi');
   if(islemPb) { islemPb.innerHTML = opts; islemPb.value = defaultCurrency; }
@@ -8350,8 +8438,6 @@ function populateCurrencySelects() {
   const kiraPb = document.getElementById('kira-para-birimi-manual');
   if(kiraPb) { const prev = kiraPb.value; kiraPb.innerHTML = opts; kiraPb.value = prev || defaultCurrency; }
   // maaş para birimi
-  const maasPb = document.getElementById('maas-para-birimi');
-  if(maasPb) { const prev = maasPb.value; maasPb.innerHTML = opts; maasPb.value = prev || defaultCurrency; }
   const maasPbM = document.getElementById('maas-para-birimi-manual');
   if(maasPbM) { const prev = maasPbM.value; maasPbM.innerHTML = opts; maasPbM.value = prev || defaultCurrency; }
   // hesap para birimi
@@ -8523,8 +8609,16 @@ function setMoneyInput(id, val) {
   }
   el._rawVal = n;
   if(document.activeElement === el) {
-    // Input odakta — raw göster (ondalık olarak virgül)
-    el.value = n === 0 ? '' : n.toFixed(decimals).replace('.', FORMAT_CONFIG.ondalikAyrac || ',');
+    // Input odakta — ATM stili (sağdan sola, binlik ayraçlı)
+    const ondalik = FORMAT_CONFIG.ondalikAyrac || ',';
+    const binlik  = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
+    const raw = String(Math.round(n * Math.pow(10, decimals))).replace('-','');
+    const str = raw.padStart(decimals + 1, '0');
+    const intPart = str.slice(0, -decimals) || '0';
+    const decPart = decimals > 0 ? str.slice(-decimals) : '';
+    let intFmt = parseInt(intPart, 10).toLocaleString('tr-TR').replace(/\./g, binlik !== '' ? binlik : '');
+    if(binlik === '') intFmt = String(parseInt(intPart, 10));
+    el.value = decimals > 0 ? `${intFmt}${ondalik}${decPart}` : intFmt;
   } else {
     el.value = fmtMoneyCustom(n, decimals, FORMAT_CONFIG.ondalikAyrac || ',', FORMAT_CONFIG.binlikAyrac ?? '.');
   }
@@ -8548,10 +8642,23 @@ function bindMoneyInputs(container) {
     if(el._moneyBound) return;
     el._moneyBound = true;
     el.addEventListener('focus', function() {
-      const n = getMoneyInput(this.id);
       const decimals = parseInt(this.dataset.decimals ?? FORMAT_CONFIG.ondalikBasamak ?? '2');
-      this.value = n === 0 ? '' : n.toFixed(decimals).replace('.', FORMAT_CONFIG.ondalikAyrac || ',');
-      this.select();
+      const ondalik  = FORMAT_CONFIG.ondalikAyrac || ',';
+      const binlik   = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
+      // Mevcut değerden ham rakamları al
+      const raw = (this.value || '').replace(/[^\d]/g, '');
+      if(!raw || parseInt(raw, 10) === 0) {
+        this.value = '';
+      } else {
+        // ATM stili: rakamları sağdan sola doldur
+        const str     = raw.padStart(decimals + 1, '0');
+        const intPart = str.slice(0, -decimals) || '0';
+        const decPart = decimals > 0 ? str.slice(-decimals) : '';
+        let intFmt = parseInt(intPart, 10).toLocaleString('tr-TR').replace(/\./g, binlik !== '' ? binlik : '');
+        if(binlik === '') intFmt = String(parseInt(intPart, 10));
+        this.value = decimals > 0 ? `${intFmt}${ondalik}${decPart}` : intFmt;
+        this.select();
+      }
     });
     el.addEventListener('blur', function() {
       const n = getMoneyInput(this.id);
@@ -8564,7 +8671,9 @@ function bindMoneyInputs(container) {
       const ondalikAyrac = FORMAT_CONFIG.ondalikAyrac || ',';
       const binlikAyrac  = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
       const decimals     = parseInt(this.dataset.decimals ?? FORMAT_CONFIG.ondalikBasamak ?? '2');
-      const raw = this.value;
+      let raw = this.value;
+      // Ondalık ayraçla başlıyorsa başına 0 ekle (soldan sağa yazım zorla)
+      if(raw.startsWith(ondalikAyrac)) raw = '0' + raw;
       // İmleç pozisyonunu koru
       const cursorPos = this.selectionStart;
       const beforeCursor = raw.slice(0, cursorPos);
@@ -8847,8 +8956,8 @@ function initAllSelectPlaceholders() {
     ['kira-hesap',           'Hesap seçin…'],
     ['kira-tur',             null],
     ['mev-hesap-id',         'Hesap seçin…'],
-    ['mev-banka',            'Banka seçin…'],
-    ['mev-para-birimi',      null],
+    ['mev-strateji',         'Strateji seçin…'],
+    ['hesap-banka',          'Banka seçin…'],    ['mev-para-birimi',      null],
     ['kira-para-birimi-manual', null],
     ['maas-para-birimi-manual', null],
     ['hesap-banka',          'Banka seçin…'],
@@ -9218,11 +9327,11 @@ document.querySelectorAll('.modal-bg').forEach(m => {
 // ========== KARTLAR ==========
 function populateKartModal(kart=null) {
   const bankaEl = document.getElementById('kart-banka');
-  bankaEl.innerHTML = '<option value="">Banka seçin…</option>' + DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
+  bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
   const tipEl = document.getElementById('kart-tip');
-  tipEl.innerHTML = '<option value="">Ürün tipi seçin…</option>' + DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
-  phInit(bankaEl, 'Banka seçin…');
-  phInit(tipEl, 'Ürün tipi seçin…');
+  tipEl.innerHTML = DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
+  phSet(bankaEl, 'Banka seçin…', kart ? kart.banka||'' : '');
+  phSet(tipEl, 'Ürün tipi seçin…', kart ? kart.tip||'' : '');
   // Para birimi chip grid oluştur
   const selectedCurs = kart
     ? (kart.paraBirimleri && kart.paraBirimleri.length ? kart.paraBirimleri : (kart.paraBirimi ? [kart.paraBirimi] : [defaultCurrency]))
@@ -9242,6 +9351,8 @@ function populateKartModal(kart=null) {
     document.getElementById('kart-odeme-gun-tip').value = kart.odemeGunTip||'ilerle';
     bankaEl.value = kart.banka||'';
     tipEl.value = kart.tip||'';
+    phUpdate(bankaEl);
+    phUpdate(tipEl);
     const gecmis = kart.extraGunGecmis||[];
     const sonKayit = gecmis.length ? [...gecmis].sort((a,b)=>b.baslangic.localeCompare(a.baslangic))[0] : null;
     document.getElementById('kart-extre-gecerlilik-ay').value = sonKayit ? sonKayit.baslangic : '';
@@ -10034,13 +10145,11 @@ function onMevHesapChange() {
   const hesapId = document.getElementById('mev-hesap-id').value;
   const displayWrap = document.getElementById('mev-banka-display');
   const displayText = document.getElementById('mev-banka-ad-text');
-  const fallbackWrap = document.getElementById('mev-banka-fallback');
   const hiddenInp = document.getElementById('mev-banka-hidden');
   const ibanWrap = document.getElementById('mev-iban-mevcut-wrap');
   const ibanVal = document.getElementById('mev-iban-mevcut-val');
   if(!hesapId) {
     if(displayWrap) displayWrap.style.display='none';
-    if(fallbackWrap) fallbackWrap.style.display='none';
     if(hiddenInp) hiddenInp.value='';
     if(ibanWrap) ibanWrap.style.display='none';
     if(ibanVal) ibanVal.value='';
@@ -10055,7 +10164,6 @@ function onMevHesapChange() {
     if(bankaObj) {
       if(displayText) displayText.textContent = bankaObj.kisa;
       if(displayWrap) { displayWrap.style.display='flex'; const lbl = displayWrap.querySelector('span:last-child'); if(lbl) lbl.textContent='Hesaptan algılandı'; }
-      if(fallbackWrap) fallbackWrap.style.display='none';
       if(hiddenInp) hiddenInp.value = hesap.banka;
     }
   }
@@ -10073,7 +10181,7 @@ function populateMevduatModal() {
 
   // Kaynak hesap sıfırla
   const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  if(kaynakSel) kaynakSel.innerHTML = '<option value="">— Önce banka seçin / IBAN girin —</option>';
+  if(kaynakSel) { kaynakSel.innerHTML = ''; phSet(kaynakSel, 'Seçin (isteğe bağlı)…', ''); }
 
   // Banka hesap select (mevcut)
   _fillMevHesapSel('');
@@ -10083,8 +10191,6 @@ function populateMevduatModal() {
   const stratejiSel = document.getElementById('mev-strateji');
   if(stratejiSel) { stratejiSel.value = ''; onMevStratejiChange(); }
 
-  const elBanka = document.getElementById('mev-banka');
-  if(elBanka) { elBanka.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join(''); }
   document.getElementById('mev-baslangic').value = localDateStr(new Date());
   setMoneyInput('mev-tutar', '');
   document.getElementById('mev-faiz').value='';
@@ -10094,17 +10200,9 @@ function populateMevduatModal() {
   document.getElementById('mev-preview').innerHTML='<div class="mev-preview-empty" style="padding:11px 14px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--text2);text-align:center">Değerleri girin, faiz otomatik hesaplanacak.</div>';
   const bitisGoster = document.getElementById('mev-bitis-goster');
   if(bitisGoster) bitisGoster.value = '';
-  // IBAN & banka sıfırla
-  const ibanInp = document.getElementById('mev-oto-iban');
-  if(ibanInp) ibanInp.value = '';
-  const yeniBankaSel = document.getElementById('mev-yeni-banka-sel');
-  if(yeniBankaSel) yeniBankaSel.value = '';
-  const statusEl = document.getElementById('mev-oto-iban-status');
-  if(statusEl) statusEl.textContent = '';
+  // Banka pill sıfırla
   const displayWrap = document.getElementById('mev-banka-display');
   if(displayWrap) displayWrap.style.display='none';
-  const fallbackWrap = document.getElementById('mev-banka-fallback');
-  if(fallbackWrap) fallbackWrap.style.display='none';
   const hiddenInp = document.getElementById('mev-banka-hidden');
   if(hiddenInp) hiddenInp.value='';
   const adInp = document.getElementById('mev-oto-hesap-ad');
@@ -10113,7 +10211,7 @@ function populateMevduatModal() {
   const curSel = document.getElementById('mev-para-birimi');
   if(curSel) {
     if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-      curSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
+      curSel.innerHTML = buildCurrencyOptions();
     } else {
       curSel.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
     }
@@ -10171,43 +10269,39 @@ function _fillMevVadesizSel(selectedId, bankaId) {
   let vadesizler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   // Eğer banka biliniyorsa önce o bankadan filtrele, yoksa hepsini göster
   if(bankaId) vadesizler = vadesizler.filter(h=>h.banka === bankaId);
-  sel.innerHTML = '<option value="">— Hesap Seçin —</option>' +
-    vadesizler.map(h=>{
+  sel.innerHTML = vadesizler.map(h=>{
       const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
       return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}</option>`;
     }).join('');
-  if(selectedId) sel.value = selectedId;
+  phSet(sel, 'Hesap seçin…', selectedId||'');
 }
 
 function onMevOtoHesapToggle() {
   const checked = document.getElementById('mev-oto-hesap').checked;
   const otoWrap = document.getElementById('mev-oto-hesap-wrap');
   const mevcutWrap = document.getElementById('mev-mevcut-hesap-wrap');
-  const ibanYeniWrap = document.getElementById('mev-iban-yeni-wrap');
   const ibanMevcutWrap = document.getElementById('mev-iban-mevcut-wrap');
   const kaynakWrap = document.getElementById('mev-kaynak-hesap-wrap');
   if(otoWrap) otoWrap.style.display = checked ? 'block' : 'none';
-  if(ibanYeniWrap) ibanYeniWrap.style.display = checked ? 'block' : 'none';
   if(mevcutWrap) mevcutWrap.style.display = checked ? 'none' : 'block';
   if(kaynakWrap) kaynakWrap.style.display = checked ? 'block' : 'none';
 
-  // Yeni banka dropdown'unu doldur
   if(checked) {
-    const bankaSel = document.getElementById('mev-yeni-banka-sel');
-    if(bankaSel) {
-      bankaSel.innerHTML = '<option value="">— Banka seçin —</option>' +
-        (DB.bankalar||[]).map(b=>`<option value="${b.id}">${b.ad||b.kisa}</option>`).join('');
-    }
+    // Kaynak hesap listesini doldur (tüm aktif vadesiz hesaplar)
+    _fillMevKaynakSel('');
+    // Banka pill gizle
+    const dw = document.getElementById('mev-banka-display');
+    if(dw) dw.style.display='none';
+    const hid = document.getElementById('mev-banka-hidden');
+    if(hid) hid.value = '';
   } else {
+    if(ibanMevcutWrap) ibanMevcutWrap.style.display = 'none';
     const ibanVal = document.getElementById('mev-iban-mevcut-val');
     if(ibanVal) ibanVal.value = '';
-    if(ibanMevcutWrap) ibanMevcutWrap.style.display = 'none';
     const hesapSel = document.getElementById('mev-hesap-id');
     if(hesapSel) hesapSel.value = '';
     const dw = document.getElementById('mev-banka-display');
-    const fw = document.getElementById('mev-banka-fallback');
     if(dw) dw.style.display='none';
-    if(fw) fw.style.display='none';
     const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
     if(kaynakSel) kaynakSel.value = '';
     const hiddenInp = document.getElementById('mev-banka-hidden');
@@ -10215,107 +10309,58 @@ function onMevOtoHesapToggle() {
   }
 }
 
-function onMevIbanInput() {
-  const ibanRaw = (document.getElementById('mev-oto-iban')||{}).value||'';
-  const statusEl = document.getElementById('mev-oto-iban-status');
+// Kaynak hesap seçilince banka otomatik algıla
+function onMevKaynakHesapChange() {
+  const sel = document.getElementById('mev-kaynak-hesap-id');
+  const hesapId = sel ? sel.value : '';
   const displayWrap = document.getElementById('mev-banka-display');
   const displayText = document.getElementById('mev-banka-ad-text');
-  const fallbackWrap = document.getElementById('mev-banka-fallback');
   const hiddenInp = document.getElementById('mev-banka-hidden');
-  const bankaSel = document.getElementById('mev-yeni-banka-sel');
-
-  if(!ibanRaw.trim()) {
-    if(statusEl) statusEl.textContent='';
-    // Banka dropdown seçimini koru, IBAN temizlenince bankaId sıfırlama
+  if(!hesapId) {
+    if(displayWrap) displayWrap.style.display='none';
+    if(hiddenInp) hiddenInp.value='';
     return;
   }
-  const clean = ibanRaw.replace(/\s+/g,'').toUpperCase();
-  const parsed = typeof parseIban === 'function' ? parseIban(clean) : null;
-  if(parsed && parsed.bankaKodu) {
-    const eslesme = (DB.bankalar||[]).find(b=>
-      b.kod === parsed.bankaKodu ||
-      (b.ibanKodu && b.ibanKodu === parsed.bankaKodu)
-    );
-    if(eslesme) {
-      if(displayText) displayText.textContent = eslesme.kisa;
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(!hesap) return;
+  // Para birimi otomatik doldur
+  const curSel = document.getElementById('mev-para-birimi');
+  if(curSel && hesap.paraBirimi) curSel.value = hesap.paraBirimi;
+  // Banka tespiti
+  if(hesap.banka) {
+    const bankaObj = (DB.bankalar||[]).find(b=>b.id===hesap.banka);
+    if(bankaObj) {
+      if(displayText) displayText.textContent = bankaObj.kisa;
       if(displayWrap) displayWrap.style.display='flex';
-      if(fallbackWrap) fallbackWrap.style.display='none';
-      if(hiddenInp) hiddenInp.value = eslesme.id;
-      if(bankaSel) bankaSel.value = eslesme.id;
-      if(statusEl) statusEl.innerHTML = `<span style="color:var(--accent2)">✓ ${eslesme.kisa} IBAN'dan algılandı · ${parsed.iban}</span>`;
-      _fillMevKaynakSel(eslesme.id);
-      _fillMevVadesizSel('', eslesme.id);
-    } else {
-      if(statusEl) statusEl.innerHTML = `<span style="color:var(--text3)">Banka kodu: ${parsed.bankaKodu} — listede bulunamadı</span>`;
+      if(hiddenInp) hiddenInp.value = hesap.banka;
+      // Vadesiz hesap listesini aynı bankadan filtrele
+      _fillMevVadesizSel('', hesap.banka);
+      return;
     }
-  } else if(clean.length >= 4) {
-    if(statusEl) statusEl.innerHTML = `<span style="color:var(--text3)">IBAN formatı kontrol ediliyor…</span>`;
   }
+  // Banka bilgisi yoksa pill gizle
+  if(displayWrap) displayWrap.style.display='none';
+  if(hiddenInp) hiddenInp.value='';
 }
 
-// Yeni vadeli hesap modunda banka dropdown değişince
-function onMevYeniBankaChange() {
-  const bankaSel = document.getElementById('mev-yeni-banka-sel');
-  const bankaId = bankaSel ? bankaSel.value : '';
-  const hiddenInp = document.getElementById('mev-banka-hidden');
-  if(hiddenInp) hiddenInp.value = bankaId;
-  // Banka pill göster
-  const displayWrap = document.getElementById('mev-banka-display');
-  const displayText = document.getElementById('mev-banka-ad-text');
-  if(bankaId) {
-    const bankaObj = (DB.bankalar||[]).find(b=>b.id===bankaId);
-    if(displayText && bankaObj) displayText.textContent = bankaObj.kisa;
-    if(displayWrap) displayWrap.style.display='flex';
-  } else {
-    if(displayWrap) displayWrap.style.display='none';
-  }
-  // IBAN status temizle (banka dropdown'dan seçildi)
-  const statusEl = document.getElementById('mev-oto-iban-status');
-  if(statusEl) statusEl.textContent = '';
-  _fillMevKaynakSel(bankaId);
-  _fillMevVadesizSel('', bankaId);
-}
-
-function _showMevBankaFallback() {
-  const fallbackWrap = document.getElementById('mev-banka-fallback');
-  if(!fallbackWrap) return;
-  fallbackWrap.style.display='block';
-  const sel = document.getElementById('mev-banka');
-  if(sel && !sel.children.length) {
-    sel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
-    phSet(sel,'Banka seçin…','');
-  }
-  // Fallback seçilince hidden'a yaz ve hesapları filtrele
-  if(sel && !sel.dataset.listenerAdded) {
-    sel.addEventListener('change', ()=>{
-      const hid = document.getElementById('mev-banka-hidden');
-      if(hid) hid.value = sel.value;
-      _fillMevKaynakSel(sel.value);
-      _fillMevVadesizSel('', sel.value);
-    });
-    sel.dataset.listenerAdded='1';
-  }
-}
-
-// Paranın alınacağı kaynak hesap listesi — seçilen bankanın vadesiz hesapları
+// Paranın alınacağı kaynak hesap listesi — tüm aktif vadesiz hesaplar
 function _fillMevKaynakSel(bankaId) {
   const sel = document.getElementById('mev-kaynak-hesap-id');
   if(!sel) return;
-  // Tüm aktif vadesiz hesapları al
+  // Tüm aktif vadesiz hesapları göster
   let hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli');
-  // Banka seçilmişse filtrele, yoksa hepsini göster
-  if(bankaId) hesaplar = hesaplar.filter(h => h.banka === bankaId);
   if(!hesaplar.length) {
-    sel.innerHTML = `<option value="">${bankaId ? '— Bu bankada vadesiz hesap yok —' : '— Vadesiz hesap bulunamadı —'}</option>`;
+    sel.innerHTML = '';
+    phSet(sel, '— Vadesiz hesap bulunamadı —', '');
     return;
   }
-  sel.innerHTML = '<option value="">— Seçin (isteğe bağlı) —</option>' +
-    hesaplar.map(h => {
+  sel.innerHTML = hesaplar.map(h => {
       const bankaAd = (DB.bankalar||[]).find(b=>b.id===h.banka);
       const bankaKisa = bankaAd ? ' · ' + bankaAd.kisa : '';
       const bakiye = typeof fmtCur === 'function' ? ' · ' + fmtCur(h.bakiye||0, h.paraBirimi||'TRY') : '';
       return `<option value="${h.id}">${h.ad}${bankaKisa}${bakiye}</option>`;
     }).join('');
+  phSet(sel, 'Seçin (isteğe bağlı)…', '');
 }
 
 
@@ -10397,10 +10442,6 @@ function saveMevduat() {
   const otoAktif = otoToggle && otoToggle.checked;
 
   // Validasyon
-  if(otoAktif && !editMevduatId) {
-    const bankaIdCheck = (document.getElementById('mev-banka-hidden')||{}).value || '';
-    if(!bankaIdCheck) { showToast('Lütfen bir banka seçin', 'error'); return; }
-  }
   if(!tutar) { showToast('Lütfen tutar girin', 'error'); return; }
   if(!vade)  { showToast('Lütfen vade (gün) girin', 'error'); return; }
   if(!bas)   { showToast('Lütfen başlangıç tarihi girin', 'error'); return; }
@@ -10420,10 +10461,11 @@ function saveMevduat() {
   let hesapId = null;
 
   if(otoAktif && !editMevduatId) {
-    const ibanRaw = (document.getElementById('mev-oto-iban')||{}).value.replace(/\s+/g,'').toUpperCase();
-    const parsed  = (ibanRaw && typeof parseIban==='function') ? parseIban(ibanRaw) : null;
-    const bankaId = (document.getElementById('mev-banka-hidden')||{}).value ||
-                    (document.getElementById('mev-banka')||{}).value || '';
+    const kaynakId = (document.getElementById('mev-kaynak-hesap-id')||{}).value || '';
+    const kaynakHesap = kaynakId ? (DB.hesaplar||[]).find(h=>h.id===kaynakId) : null;
+    // Banka: kaynak hesaptan al, yoksa hidden input'tan
+    const bankaId = (kaynakHesap && kaynakHesap.banka) ||
+                    (document.getElementById('mev-banka-hidden')||{}).value || '';
     const paraBirimi = document.getElementById('mev-para-birimi').value || 'TRY';
     const bankaObj = (DB.bankalar||[]).find(b=>b.id===bankaId);
     const bankaKisa = bankaObj ? bankaObj.kisa : '';
@@ -10437,10 +10479,10 @@ function saveMevduat() {
       tur: 'vadeli',
       paraBirimi,
       bakiye: tutar,
-      iban: parsed ? parsed.iban : (ibanRaw||''),
-      bankaKodu: parsed ? parsed.bankaKodu : '',
-      subeKodu:  parsed ? parsed.subeKodu  : '',
-      hesapNo:   parsed ? parsed.hesapNo   : '',
+      iban: '',
+      bankaKodu: '',
+      subeKodu:  '',
+      hesapNo:   '',
       subeAd: '',
       durum: 'aktif',
       not: `Mevduat ile otomatik oluşturuldu — ${fmtDate(bas)}`,
@@ -10458,8 +10500,7 @@ function saveMevduat() {
 
   const mev = {
     id: editMevduatId || uid(),
-    banka: (document.getElementById('mev-banka-hidden')||{}).value ||
-           (document.getElementById('mev-banka')||{}).value || '',
+    banka: (document.getElementById('mev-banka-hidden')||{}).value || '',
     paraBirimi: document.getElementById('mev-para-birimi').value || 'TRY',
     hesapId: hesapId || null,
     kaynakHesapId: kaynakHesapId || null,
@@ -10528,16 +10569,15 @@ function mevduatYenile(mevId) {
     if(hid) hid.value = m.banka||'';
     const dw = document.getElementById('mev-banka-display');
     const dt = document.getElementById('mev-banka-ad-text');
-    const fw = document.getElementById('mev-banka-fallback');
-    if(bankaObj && dw && dt) { dt.textContent=bankaObj.kisa; dw.style.display='flex'; const lbl=dw.querySelector('span:last-child'); if(lbl)lbl.textContent='Önceki mevduattan'; if(fw)fw.style.display='none'; }
-    else if(fw) { fw.style.display='block'; const s=document.getElementById('mev-banka'); if(s){s.innerHTML=DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join(''); if(m.banka)s.value=m.banka;} }
+    if(bankaObj && dw && dt) { dt.textContent=bankaObj.kisa; dw.style.display='flex'; const lbl=dw.querySelector('span:last-child'); if(lbl)lbl.textContent='Önceki mevduattan'; }
+    else if(dw) dw.style.display='none';
     setMoneyInput('mev-tutar', m.nihai);
     document.getElementById('mev-faiz').value = m.faizOran||'';
     document.getElementById('mev-stopaj').value = m.stopaj||15;
     document.getElementById('mev-vade').value = m.vade||'';
     document.getElementById('mev-valor').value = m.valor||0;
     const curSel = document.getElementById('mev-para-birimi');
-    if(curSel) { if(typeof ALL_CURRENCIES!=='undefined'&&ALL_CURRENCIES.length){curSel.innerHTML=ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');}else{curSel.innerHTML='<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';} curSel.value=m.paraBirimi||'TRY'; }
+    if(curSel) { if(typeof ALL_CURRENCIES!=='undefined'&&ALL_CURRENCIES.length){curSel.innerHTML=buildCurrencyOptions();}else{curSel.innerHTML='<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';} curSel.value=m.paraBirimi||'TRY'; }
     const stratejiSel = document.getElementById('mev-strateji');
     if(stratejiSel) { stratejiSel.value = 'yenile_tum'; onMevStratejiChange(); }
     document.getElementById('mev-baslangic').value = m.bitis || localDateStr(new Date());
@@ -10561,16 +10601,15 @@ function mevduatYenileAnaPara(mevId) {
     if(hid) hid.value = m.banka||'';
     const dw = document.getElementById('mev-banka-display');
     const dt = document.getElementById('mev-banka-ad-text');
-    const fw = document.getElementById('mev-banka-fallback');
-    if(bankaObj && dw && dt) { dt.textContent=bankaObj.kisa; dw.style.display='flex'; const lbl=dw.querySelector('span:last-child'); if(lbl)lbl.textContent='Önceki mevduattan'; if(fw)fw.style.display='none'; }
-    else if(fw) { fw.style.display='block'; const s=document.getElementById('mev-banka'); if(s){s.innerHTML=DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join(''); if(m.banka)s.value=m.banka;} }
+    if(bankaObj && dw && dt) { dt.textContent=bankaObj.kisa; dw.style.display='flex'; const lbl=dw.querySelector('span:last-child'); if(lbl)lbl.textContent='Önceki mevduattan'; }
+    else if(dw) dw.style.display='none';
     setMoneyInput('mev-tutar', m.tutar);
     document.getElementById('mev-faiz').value = m.faizOran||'';
     document.getElementById('mev-stopaj').value = m.stopaj||15;
     document.getElementById('mev-vade').value = m.vade||'';
     document.getElementById('mev-valor').value = m.valor||0;
     const curSel = document.getElementById('mev-para-birimi');
-    if(curSel) { if(typeof ALL_CURRENCIES!=='undefined'&&ALL_CURRENCIES.length){curSel.innerHTML=ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');}else{curSel.innerHTML='<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';} curSel.value=m.paraBirimi||'TRY'; }
+    if(curSel) { if(typeof ALL_CURRENCIES!=='undefined'&&ALL_CURRENCIES.length){curSel.innerHTML=buildCurrencyOptions();}else{curSel.innerHTML='<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';} curSel.value=m.paraBirimi||'TRY'; }
     const stratejiSel = document.getElementById('mev-strateji');
     if(stratejiSel) { stratejiSel.value = 'yenile_ana_faiz_vadesiz'; onMevStratejiChange(); }
     _fillMevVadesizSel(vadesizId);
@@ -10651,22 +10690,16 @@ function editMevduat(id) {
   if(hiddenInp) hiddenInp.value = m.banka||'';
   const displayWrap = document.getElementById('mev-banka-display');
   const displayText = document.getElementById('mev-banka-ad-text');
-  const fallbackWrap = document.getElementById('mev-banka-fallback');
   if(m.banka) {
     const bankaObj = (DB.bankalar||[]).find(b=>b.id===m.banka);
     if(bankaObj && displayText && displayWrap) {
       displayText.textContent = bankaObj.kisa;
       displayWrap.style.display='flex';
       const lbl = displayWrap.querySelector('span:last-child'); if(lbl) lbl.textContent='Kaydedilmiş';
-      if(fallbackWrap) fallbackWrap.style.display='none';
     }
   } else {
     if(displayWrap) displayWrap.style.display='none';
-    if(fallbackWrap) fallbackWrap.style.display='none';
   }
-  // Eski mev-banka select'ini de doldur (saveMevduat fallback için)
-  const el = document.getElementById('mev-banka');
-  if(el) { el.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join(''); if(m.banka) el.value=m.banka; }
   document.getElementById('mev-baslangic').value = m.baslangic;
   setMoneyInput('mev-tutar', m.tutar);
   document.getElementById('mev-faiz').value = m.faizOran;
@@ -10678,7 +10711,7 @@ function editMevduat(id) {
   const curSel = document.getElementById('mev-para-birimi');
   if(curSel) {
     if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-      curSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
+      curSel.innerHTML = buildCurrencyOptions();
     } else {
       curSel.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
     }
@@ -10871,7 +10904,7 @@ function openEldenModal() {
   const pbSel = document.getElementById('elden-para-birimi');
   if(pbSel) {
     if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
+      pbSel.innerHTML = buildCurrencyOptions();
     } else {
       pbSel.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
     }
@@ -12405,7 +12438,7 @@ function editElden(id) {
   const pbSel = document.getElementById('elden-para-birimi');
   if(pbSel) {
     if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} ${c.symbol}</option>`).join('');
+      pbSel.innerHTML = buildCurrencyOptions();
     } else {
       pbSel.innerHTML = '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
     }
@@ -12792,6 +12825,63 @@ function deleteTatil(id) {
   renderTanimlamalar();
 }
 
+async function resmiTatilleriGuncelle() {
+  const btn = document.getElementById('btn-tatil-guncelle');
+  const status = document.getElementById('tatil-guncelle-status');
+  const buYil = new Date().getFullYear();
+  const yillar = [buYil, buYil + 1];
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Yükleniyor...';
+  status.textContent = '';
+
+  // Türkçe tatil adı eşleştirme
+  const adMap = {
+    "New Year's Day":              "Yılbaşı",
+    "National Sovereignty and Children's Day": "Ulusal Egemenlik ve Çocuk Bayramı",
+    "Labour Day":                  "İşçi Bayramı",
+    "Commemoration of Atatürk, Youth and Sports Day": "Atatürk'ü Anma, Gençlik ve Spor Bayramı",
+    "Democracy and National Unity Day": "Demokrasi ve Millî Birlik Günü",
+    "Victory Day":                 "Zafer Bayramı",
+    "Republic Day":                "Cumhuriyet Bayramı",
+    "Ramadan Feast":               "Ramazan Bayramı 1. Günü",
+    "Ramadan Feast Holiday":       "Ramazan Bayramı",
+    "Sacrifice Feast":             "Kurban Bayramı 1. Günü",
+    "Sacrifice Feast Holiday":     "Kurban Bayramı",
+  };
+
+  try {
+    let eklenen = 0, atlanan = 0;
+    const mevcutTarihler = new Set(DB.tatiller.map(t => t.tarih));
+
+    for (const yil of yillar) {
+      const resp = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`);
+      if (!resp.ok) throw new Error(`API hatası: ${resp.status}`);
+      const data = await resp.json();
+
+      for (const h of data) {
+        if (mevcutTarihler.has(h.date)) { atlanan++; continue; }
+        const ad = adMap[h.name] || adMap[h.localName] || h.localName || h.name;
+        DB.tatiller.push({ id: uid(), tarih: h.date, aciklama: ad });
+        mevcutTarihler.add(h.date);
+        eklenen++;
+      }
+    }
+
+    saveData();
+    renderTanimlamalar();
+    status.style.color = 'var(--teal)';
+    status.textContent = `✓ ${eklenen} yeni tatil eklendi${atlanan ? `, ${atlanan} zaten vardı` : ''} (${yillar.join(' & ')})`;
+  } catch (e) {
+    status.style.color = 'var(--danger)';
+    status.textContent = '✗ API bağlantı hatası: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Resmi Tatilleri Güncelle';
+    setTimeout(() => { status.textContent = ''; }, 6000);
+  }
+}
+
 function renderTanimlamalar() {
   renderKategoriGrid();
   renderHesapTurTablo();
@@ -12849,6 +12939,7 @@ function renderTanimlamalar() {
         <td class="mono" style="font-size:16px">${cfg.symbol}</td>
         <td>${cfg.ad || code}</td>
         <td style="font-size:16px">${cfg.flag || '—'}</td>
+        <td style="font-size:16px">${cfg.icon || '—'}</td>
         <td><span class="badge ${cfg.position==='prefix'?'badge-green':'badge-purple'}">${cfg.position==='prefix'?'Önde':'Sonda'}</span></td>
         <td class="mono">${cfg.decimals !== undefined ? cfg.decimals : 2}</td>
         <td style="font-size:11px;color:var(--text3)">${cfg.locale}</td>
@@ -12860,7 +12951,7 @@ function renderTanimlamalar() {
           </div>
         </td>
       </tr>`;
-    }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 }
 
@@ -13314,6 +13405,7 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-sembol').value = cfg.symbol || '';
     document.getElementById('pb-ad').value = cfg.ad || '';
     document.getElementById('pb-bayrak').value = cfg.flag || '';
+    document.getElementById('pb-ikon').value = cfg.icon || '';
     document.getElementById('pb-konum').value = cfg.position || 'prefix';
     document.getElementById('pb-ondalik').value = cfg.decimals !== undefined ? cfg.decimals : 2;
     document.getElementById('pb-locale').value = cfg.locale || 'tr-TR';
@@ -13324,6 +13416,7 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-sembol').value = '';
     document.getElementById('pb-ad').value = '';
     document.getElementById('pb-bayrak').value = '';
+    document.getElementById('pb-ikon').value = '';
     document.getElementById('pb-konum').value = 'prefix';
     document.getElementById('pb-ondalik').value = '2';
     document.getElementById('pb-locale').value = 'tr-TR';
@@ -13352,6 +13445,7 @@ function saveParaBirimi() {
     sembol,
     ad,
     bayrak: document.getElementById('pb-bayrak').value.trim(),
+    ikon: document.getElementById('pb-ikon').value.trim(),
     konum: document.getElementById('pb-konum').value,
     ondalik: parseInt(document.getElementById('pb-ondalik').value),
     locale: document.getElementById('pb-locale').value.trim() || 'tr-TR'
@@ -14110,7 +14204,7 @@ function renderOzet() {
         } else if(strateji === 'yenile_ana_faiz_vadesiz') {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
-                <option value="">— Faiz Aktarılacak Vadesiz Hesap —</option>
+                <option value="" disabled hidden>— Faiz Aktarılacak Vadesiz Hesap —</option>
                 ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';return`<option value="${h.id}">${h.ad}${b?' · '+b:''}</option>`}).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
@@ -14136,7 +14230,7 @@ function renderOzet() {
         } else if(strateji === 'tumu_vadesiz') {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
-                <option value="">— Ana Para + Faiz Aktarılacak Vadesiz Hesap —</option>
+                <option value="" disabled hidden>— Ana Para + Faiz Aktarılacak Vadesiz Hesap —</option>
                 ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';return`<option value="${h.id}">${h.ad}${b?' · '+b:''}</option>`}).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
@@ -14388,24 +14482,19 @@ function _setPbBadge(badgeId, selectId, code) {
 function onMaasHesapChange() {
   const hesapId = document.getElementById('maas-hesap').value;
   const manualRow = document.getElementById('maas-pb-manual-row');
-  const badge = document.getElementById('maas-para-birimi-badge');
-  const sel   = document.getElementById('maas-para-birimi');
   if(hesapId) {
     const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     const pb = (hesap && hesap.paraBirimi) || defaultCurrency || 'TRY';
-    _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', pb);
+    updateModalMoneyWraps('modal-maas', pb);
     if(manualRow) manualRow.style.display = 'none';
   } else {
-    // Hesap yok — badge ve inline select'i gizle, sadece manual row göster
-    if(badge) badge.style.display = 'none';
-    if(sel)   sel.style.display   = 'none';
     if(manualRow) manualRow.style.display = '';
   }
 }
 
 function onMaasPbManualChange() {
   const val = (document.getElementById('maas-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
-  _setPbBadge('maas-para-birimi-badge', 'maas-para-birimi', val);
+  updateModalMoneyWraps('modal-maas', val);
 }
 
 function getMaasPb() {
@@ -14585,13 +14674,7 @@ function getKiraPb() {
 function _fillPbManualSelect(selectId, currentCode) {
   const sel = document.getElementById(selectId);
   if(!sel) return;
-  const opts = (typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length)
-    ? ALL_CURRENCIES.map(c => {
-        const cfg = CURRENCY_CONFIG[c.code] || {};
-        return `<option value="${c.code}">${c.code} ${cfg.symbol||''}</option>`;
-      }).join('')
-    : '<option value="TRY">TRY ₺</option><option value="USD">USD $</option><option value="EUR">EUR €</option>';
-  sel.innerHTML = opts;
+  sel.innerHTML = buildCurrencyOptions();
   if(currentCode) sel.value = currentCode;
 }
 
@@ -14850,7 +14933,6 @@ function attachAllIbanValidations() {
     ['maas-karsi-iban-manuel',    null],
     ['elden-karsi-iban',          null],
     ['elden-karsi-iban-manuel',   null],
-    ['mev-oto-iban',              'mev-oto-iban-status'],
     ['hesap-iban',                'hesap-iban-status'],
   ];
 
@@ -14859,9 +14941,9 @@ function attachAllIbanValidations() {
     if (!el) return;
     const statusEl = statusId ? document.getElementById(statusId) : null;
 
-    // hesap-iban ve mev-oto-iban'ın kendi onIbanInput/onMevIbanInput handler'ları var
-    // Bunlara sadece mod-97 doğrulamasını ekle, mevcut handler'ı bozmadan
-    if (id === 'hesap-iban' || id === 'mev-oto-iban') {
+    // hesap-iban'ın kendi onIbanInput handler'ı var
+    // Sadece mod-97 doğrulamasını ekle, mevcut handler'ı bozmadan
+    if (id === 'hesap-iban') {
       if (el.dataset.ibanMod97) return;
       el.dataset.ibanMod97 = '1';
       const origOninput = el.oninput;
@@ -15149,13 +15231,7 @@ function openHesapModal(id=null) {
 
   // Para birimi select — her zaman yeniden doldur
   const curSel = document.getElementById('hesap-para-birimi');
-  let curOptions = '';
-  if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
-    curOptions = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code} — ${c.symbol} ${c.ad||''}</option>`).join('');
-  } else {
-    curOptions = '<option value="TRY">TRY — ₺ Türk Lirası</option><option value="USD">USD — $ Amerikan Doları</option><option value="EUR">EUR — € Euro</option><option value="GBP">GBP — £ Sterlin</option>';
-  }
-  curSel.innerHTML = curOptions;
+  curSel.innerHTML = buildCurrencyOptions();
 
   if(id) {
     const h = (DB.hesaplar||[]).find(x=>x.id===id);
@@ -16696,8 +16772,8 @@ document.addEventListener('dblclick', function(e) {
   if (editBtn) { editBtn.click(); return; }
 }, { passive: true });
 
-// ── Input: para alanlarında otomatik nokta/virgül (localized) ──
-(function initMoneyInputs() {
+// ── Input: para alanlarında otomatik nokta/virgül (localized) ── (bindMoneyInputs tarafından yönetiliyor)
+(function initMoneyInputs() { return; // devre dışı
   function formatMoney(val, decimals) {
     const raw = val.replace(/[^\d]/g, '');
     if (!raw) return '';
@@ -17297,7 +17373,7 @@ document.addEventListener('click', function(e) {
     'islem-kart':               SVG.card,
     'islem-kategori':           SVG.category,
     'islem-para-birimi':        SVG.currency,
-    'mev-banka':                SVG.bank,
+    'mev-kaynak-hesap-id':      SVG.account,
     'mev-hesap-id':             SVG.account,
     'mev-para-birimi':          SVG.currency,
     'mev-strateji':             SVG.strategy,
@@ -17310,7 +17386,6 @@ document.addEventListener('click', function(e) {
     'kira-kisi':                SVG.person,
     'kira-depozito-pb':         SVG.currency,
     'kira-depozito-durum':      SVG.status,
-    'maas-para-birimi':         SVG.currency,
     'maas-para-birimi-manual':  SVG.currency,
     'maas-tur':                 SVG.salary,
     'maas-gun-kisa-ay-davranis':SVG.holiday,
@@ -18261,24 +18336,8 @@ function mevduatOtoStratejiUygula(mevId) {
   return false;
 }
 
-// Yeni vadeli hesap oluştururken IBAN'ın son X hanesini kullanıcı girebilsin
-// Bu, mev-oto-iban alanına zaten giriliyor. Bunun yanına "sadece son kısmı gir" seçeneği ekleriz.
-// Mevduat yenileme sırasında yeni IBAN'ı kısmen girmek için yardımcı fonksiyon:
-function onMevIbanSonGir() {
-  const el = document.getElementById('mev-iban-son-kisim');
-  if(!el) return;
-  const onayi = document.getElementById('mev-oto-iban');
-  if(!onayi) return;
-  const son = el.value.replace(/\s+/g,'').toUpperCase();
-  const mevcut = (onayi.value||'').replace(/\s+/g,'').toUpperCase();
-  if(mevcut.length >= son.length) {
-    // Son kısım zaten dolu, değiştirme
-    onayi.value = mevcut.slice(0, mevcut.length-son.length) + son;
-  } else {
-    onayi.value = son;
-  }
-  if(typeof onMevIbanInput === 'function') onMevIbanInput();
-}
+
+
 
 // Bakiye işlem geçmişi paneli (hesaplar sayfasına eklenebilir)
 function renderBakiyeIslemGecmisi(hesapId) {
