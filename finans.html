@@ -948,6 +948,22 @@ input::placeholder { color: var(--text2); opacity: .7; }
 }
 .btn-sm { padding: 5px 13px; font-size: 11.5px; border-radius: 7px; }
 
+/* ─── TABLO AKSİYON BUTONLARI (emoji/ikon only, sabit kare) ──── */
+.btn-act {
+  padding: 0 !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: unset !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+.btn-act + .btn-act { margin-left: 4px; }
+
 /* ─── İKON BUTONLAR (kare, ortalanmış) ───────────── */
 .btn-icon {
   display: inline-flex;
@@ -6443,10 +6459,10 @@ html[data-theme="light"] .mob-theme-toggle {
         <div style="margin-top:8px">
           <label>Hızlı Seçim</label>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-            <button class="btn btn-ghost btn-sm" onclick="setSaatFormat('HH:mm')">HH:mm</button>
-            <button class="btn btn-ghost btn-sm" onclick="setSaatFormat('HH:mm:ss')">HH:mm:ss</button>
-            <button class="btn btn-ghost btn-sm" onclick="setSaatFormat('hh:mm A')">hh:mm A</button>
-            <button class="btn btn-ghost btn-sm" onclick="setSaatFormat('HH.mm')">HH.mm</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setSaatFormat('HH:mm')">HH:mm</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setSaatFormat('HH:mm:ss')">HH:mm:ss</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setSaatFormat('hh:mm A')">hh:mm A</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setSaatFormat('HH.mm')">HH.mm</button>
           </div>
         </div>
         <div style="margin-top:12px;background:var(--surface3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
@@ -6489,10 +6505,10 @@ html[data-theme="light"] .mob-theme-toggle {
         <div style="margin-top:10px">
           <label>Hızlı Seçim</label>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',','.','2')">TR Stili — 1.234,56</button>
-            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat('.',',','2')">US Stili — 1,234.56</button>
-            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',',' ','2')">EU Stili — 1 234,56</button>
-            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',','.','0')">Tam — 1.235</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',','.','2')">TR Stili — 1.234,56</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat('.',',','2')">US Stili — 1,234.56</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',',' ','2')">EU Stili — 1 234,56</button>
+            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',','.','0')">Tam — 1.235</button>
           </div>
         </div>
         <div style="margin-top:12px;background:var(--surface3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
@@ -9616,8 +9632,8 @@ function renderKartlar() {
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${banka} · ${tip?tip.ad:''} ${k.no?'·· '+k.no:''}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="editKart('${k.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteKart('${k.id}')">🗑</button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="editKart('${k.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKart('${k.id}')">🗑</button>
         </div>
       </div>
       ${(()=>{ const curs = (k.paraBirimleri&&k.paraBirimleri.length)?k.paraBirimleri:(k.paraBirimi?[k.paraBirimi]:[defaultCurrency]); const nonDef = curs.filter(c=>c!==defaultCurrency); return nonDef.length ? `<div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap">${curs.map(c=>`<span style="background:${c===(k.varsayilanParaBirimi||curs[0])?'rgba(16,185,129,.15)':'rgba(59,130,246,.12)'};color:${c===(k.varsayilanParaBirimi||curs[0])?'var(--accent2)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${CURRENCY_CONFIG[c]?.symbol||''} ${c}${c===(k.varsayilanParaBirimi||curs[0])?' ⭐':''}</span>`).join('')}</div>` : ''; })()}
@@ -9970,7 +9986,7 @@ function renderIslemler() {
       <td style="font-size:11px;color:var(--text2)">${taksitStr}</td>
       <td>${extreOdemeHtml}</td>
       <td>${odToggleBtn('islem', i.id, undefined, i.tarih, i.tutar, i.aciklama)}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editIslem('${i.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteIslem('${i.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')">🗑</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">İşlem bulunamadı</td></tr>';
 }
@@ -10775,7 +10791,7 @@ function renderMevduat() {
       <td><span class="badge ${aktif?'badge-green':'badge-red'}">${aktif?'Aktif':'Bitti'}</span></td>
       <td>${vadesizLabel}</td>
       <td>${odToggleBtn('mevduat', m.id, undefined, m.bitis, m.nihai, m.banka ? getBanka(m.banka)+' mevduat' : 'Mevduat')}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editMevduat('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteMevduat('${m.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editMevduat('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMevduat('${m.id}')">🗑</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="16" style="text-align:center;color:var(--text3);padding:20px">Mevduat bulunamadı</td></tr>';
 }
@@ -10852,8 +10868,8 @@ function renderHesapTurTablo() {
     <td>${t.ad}</td>
     <td><code style="font-family:var(--mono);font-size:11px;background:var(--surface3);padding:2px 6px;border-radius:4px">${t.kod}</code></td>
     <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm" onclick="openHesapTurModal('${t.id}')" style="margin-right:4px">✏️</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteHesapTur('${t.id}')">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapTurModal('${t.id}')" style="margin-right:4px">✏️</button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesapTur('${t.id}')">🗑</button>
     </td>
   </tr>`).join('');
 }
@@ -11209,8 +11225,8 @@ function renderKira() {
       <td>${depBadge}</td>
       <td>${(()=>{ const today=new Date(); const pd=kiraPayInMonth(k,today.getFullYear(),today.getMonth()); const ay=pd?localDateStr(pd).slice(0,7):''; return ay ? odToggleBtn('kira',k.id,ay,pd?localDateStr(pd):'',Math.abs(k.tutar),k.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openKontratPlan('kira','${k.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm" onclick="openKiraModal('${k.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteKira('${k.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('kira','${k.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm btn-act" onclick="openKiraModal('${k.id}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKira('${k.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:20px">Kontrat yok</td></tr>';
@@ -11585,7 +11601,7 @@ function renderMaas() {
       <td class="mono">${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : (m.bitis?fmtDate(m.bitis):'Süresiz')}</td>
       <td>${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : durumBadge}</td>
       <td>${(()=>{ const today=new Date(); const payDt=new Date(today.getFullYear(),today.getMonth(),m.gun); const payStr=localDateStr(payDt); const aktifAy=!m.pasif&&payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis); const ay=payStr.slice(0,7); return aktifAy ? odToggleBtn('maas',m.id,ay,payStr,m.tutar,m.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="openKontratPlan('maas','${m.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm" onclick="editMaas('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteMaas('${m.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('maas','${m.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm btn-act" onclick="editMaas('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMaas('${m.id}')">🗑</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Maaş tanımı yok</td></tr>';
 
@@ -11957,8 +11973,8 @@ function renderKmhKredi() {
         <span class="badge ${bitti?'badge-green':'badge-warn'}">${bitti?'Tamamlandı':`${odenmisSayisi}/${kr.vade} ödendi`}</span>
       </td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openKmhKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteKmhKredi('${kr.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKmhKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKmhKredi('${kr.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">KMH kredi kaydı yok</td></tr>';
@@ -12257,8 +12273,8 @@ function renderKredi() {
       <td class="mono">${fmtDate(ilkTarih)}</td>
       <td><span class="badge ${bitti?'badge-green':'badge-warn'}">${bitti?'Tamamlandı':`${odenmisSayisi}/${kr.vade} ödendi`}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteKredi('${kr.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKredi('${kr.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">Kredi kaydı yok</td></tr>';
@@ -12549,7 +12565,7 @@ function renderElden() {
       <td>${katLabel}</td>
       <td style="font-size:12px">${yontemLabel}</td>
       <td>${odToggleBtn('elden', e.id, undefined, e.tarih, e.tutar, e.aciklama)}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editElden('${e.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteElden('${e.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editElden('${e.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteElden('${e.id}')">🗑</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Kayıt yok</td></tr>';
 }
@@ -12615,8 +12631,8 @@ function renderSubeList(list) {
     <td class="mono" style="padding:5px 8px;font-size:12px;color:var(--accent);white-space:nowrap">${s.k}</td>
     <td style="padding:5px 8px;font-size:12px;color:var(--text)">${s.a}</td>
     <td style="padding:5px 4px;white-space:nowrap;text-align:right">
-      <button class="btn btn-ghost btn-sm" onclick="editSube('${s.k}')" style="margin-right:2px;font-size:11px">✏️</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteSube('${s.k}')" style="font-size:11px">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="editSube('${s.k}')" style="margin-right:2px;font-size:11px">✏️</button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteSube('${s.k}')" style="font-size:11px">🗑</button>
     </td>
   </tr>`).join('');
 }
@@ -12855,9 +12871,27 @@ async function resmiTatilleriGuncelle() {
     const mevcutTarihler = new Set(DB.tatiller.map(t => t.tarih));
 
     for (const yil of yillar) {
-      const resp = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`);
-      if (!resp.ok) throw new Error(`API hatası: ${resp.status}`);
-      const data = await resp.json();
+        // CORS proxy üzerinden dene, başarısız olursa diğerine geç
+      const TARGET = `https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`;
+      const endpoints = [
+        `https://corsproxy.io/?${encodeURIComponent(TARGET)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`,
+        `https://thingproxy.freeboard.io/fetch/${TARGET}`,
+        `https://proxy.cors.sh/${TARGET}`,
+        `https://cors-anywhere.herokuapp.com/${TARGET}`,
+      ];
+      let data = null;
+      for (const url of endpoints) {
+        try {
+          const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+          if (resp.ok) {
+            const text = await resp.text();
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed) && parsed.length) { data = parsed; break; }
+          }
+        } catch(_) {}
+      }
+      if (!data) throw new Error('Tüm proxy\u2019ler başarısız — internet bağlantısını kontrol edin');
 
       for (const h of data) {
         if (mevcutTarihler.has(h.date)) { atlanan++; continue; }
@@ -12895,16 +12929,16 @@ function renderTanimlamalar() {
     <td class="mono" style="letter-spacing:.05em;color:var(--accent)">${b.ibanKod||'<span style="color:var(--text3)">—</span>'}</td>
     <td style="font-size:11px;color:var(--text3)">${b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length ? DB.subeler[b.ibanKod].length + ' şube' : '—'}</td>
     <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları">🏢</button>
-      <button class="btn btn-ghost btn-sm" onclick="editBanka('${b.id}')" style="margin-right:4px">✏️</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteBanka('${b.id}')">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları">🏢</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="editBanka('${b.id}')" style="margin-right:4px">✏️</button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteBanka('${b.id}')">🗑</button>
     </td>
   </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   document.getElementById('urun-tip-tbody').innerHTML = (DB.urunTipler||[]).map(t=>`<tr>
     <td>${t.ad}</td>
     <td><span class="badge badge-blue">${t.kod}</span></td>
-    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editUrunTip('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteUrunTip('${t.id}')">🗑</button></td>
+    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editUrunTip('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteUrunTip('${t.id}')">🗑</button></td>
   </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   const krediTipTbody = document.getElementById('kredi-tip-tbody');
@@ -12912,7 +12946,7 @@ function renderTanimlamalar() {
     krediTipTbody.innerHTML = (DB.krediTipleri||[]).map(t=>`<tr>
       <td>${t.ad}</td>
       <td><span class="badge badge-blue">${t.kod}</span></td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="openKrediTipModal('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteKrediTip('${t.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKrediTipModal('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteKrediTip('${t.id}')">🗑</button></td>
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 
@@ -12920,7 +12954,7 @@ function renderTanimlamalar() {
   document.getElementById('tatil-tbody').innerHTML = sorted.map(t=>`<tr>
     <td class="mono">${fmtDate(t.tarih)}</td>
     <td>${t.aciklama}</td>
-    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editTatil('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteTatil('${t.id}')">🗑</button></td>
+    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editTatil('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteTatil('${t.id}')">🗑</button></td>
   </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   // Para birimi yönetim tablosu
@@ -12933,7 +12967,7 @@ function renderTanimlamalar() {
       const isDefault = code === defaultCurrency;
       const gosteimBtn = isDefault
         ? '<span style="font-size:10px;font-weight:700;color:var(--accent2);background:rgba(16,185,129,.15);padding:2px 8px;border-radius:4px;white-space:nowrap">&#11088; Gösterim</span>'
-        : `<button class="btn btn-ghost btn-sm" onclick="setGosterimParaBirimi('${code}')" title="Gösterim birimi yap">&#11088;</button>`;
+        : `<button class="btn btn-ghost btn-sm btn-act" onclick="setGosterimParaBirimi('${code}')" title="Gösterim birimi yap">&#11088;</button>`;
       return `<tr${isDefault ? ' style="background:rgba(16,185,129,.06)"' : ''}>
         <td><span class="badge badge-blue mono">${code}</span></td>
         <td class="mono" style="font-size:16px">${cfg.symbol}</td>
@@ -12946,8 +12980,8 @@ function renderTanimlamalar() {
         <td style="white-space:nowrap">
           <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
             ${gosteimBtn}
-            <button class="btn btn-ghost btn-sm" onclick="editParaBirimi('${code}')" title="Düzenle">&#9998;</button>
-            ${isCustom ? `<button class="btn btn-danger btn-sm" onclick="deleteParaBirimi('${code}')" title="Sil">&#128465;</button>` : ''}
+            <button class="btn btn-ghost btn-sm btn-act" onclick="editParaBirimi('${code}')" title="Düzenle">&#9998;</button>
+            ${isCustom ? `<button class="btn btn-danger btn-sm btn-act" onclick="deleteParaBirimi('${code}')" title="Sil">&#128465;</button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -13206,8 +13240,8 @@ function renderKisilerGrid() {
           ${k.not?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${k.not}</div>`:''}
         </div>
         <div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-sm" onclick="openKisiModal('${k.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteKisi('${k.id}')">🗑</button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="openKisiModal('${k.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKisi('${k.id}')">🗑</button>
         </div>
       </div>
       ${ibanHtml || '<div style="font-size:11px;color:var(--text3);margin-top:4px">IBAN yok</div>'}
@@ -15475,8 +15509,8 @@ function renderHesaplar() {
       <td>${kmhLimitHtml}</td>
       <td><span class="badge ${durumBadge}">${h.durum||'aktif'}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openHesapModal('${h.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteHesap('${h.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('');
@@ -15609,8 +15643,8 @@ function renderOranTablo(tip) {
       <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">${fmtDate(row.tarih)}${isActive?' <span style="font-size:9px;background:rgba(0,232,138,.12);color:var(--accent2);padding:1px 5px;border-radius:4px;margin-left:4px">GEÇERLİ</span>':''}</td>
       <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">%${row.oran}</td>
       <td style="text-align:right">
-        <button class="btn btn-ghost btn-sm" onclick="openOranModal('${tip}','${row.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteOran('${tip}','${row.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openOranModal('${tip}','${row.id}')" style="margin-right:4px">✏️</button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteOran('${tip}','${row.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('');
@@ -18184,7 +18218,7 @@ function renderBakiyeIzlemePanel() {
         const tipRenk = u.tip === 'kritik' ? 'var(--danger)' : u.tip === 'dusuk' ? 'var(--warn)' : 'var(--sky)';
         return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.03);margin-bottom:6px;border:1px solid rgba(255,255,255,.05)">
           <div style="flex:1;font-size:12px;color:${tipRenk}">${u.mesaj}</div>
-          <button class="btn btn-ghost btn-sm" onclick="openHesapModal('${u.hesap.id}')" style="font-size:10px;padding:3px 8px;flex-shrink:0">Düzenle</button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${u.hesap.id}')" style="font-size:10px;padding:3px 8px;flex-shrink:0">Düzenle</button>
         </div>`;
       }).join('')}
     </div>`;
