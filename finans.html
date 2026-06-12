@@ -217,24 +217,50 @@ html[data-theme="light"] select option { background: #ffffff; color: #0f1629; }
 
 /* Buttons */
 html[data-theme="light"] .btn-primary {
-  background: linear-gradient(160deg, #fde68a 0%, #f59e0b 42%, #b45309 100%);
+  background: linear-gradient(155deg, #fde68a 0%, #f59e0b 45%, #b45309 100%);
   color: #3a1a00;
-  box-shadow: 0 2px 20px rgba(180,83,9,.32), 0 1px 3px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.4);
+  box-shadow: 0 2px 18px rgba(180,83,9,.32), 0 1px 3px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.42);
 }
 html[data-theme="light"] .btn-primary:hover {
-  box-shadow: 0 5px 28px rgba(180,83,9,.44), inset 0 1px 0 rgba(255,255,255,.45);
+  background: linear-gradient(155deg, #fef3c7 0%, #fde68a 45%, #f59e0b 100%);
+  box-shadow: 0 4px 26px rgba(180,83,9,.44), inset 0 1px 0 rgba(255,255,255,.5);
+  transform: translateY(-2px);
 }
 html[data-theme="light"] .btn-ghost {
   background: rgba(0,0,0,.04);
-  border: 1px solid rgba(0,0,0,.12);
-  color: rgba(15,22,41,.55);
+  border: 1px solid rgba(0,0,0,.13);
+  color: rgba(15,22,41,.58);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 1px 3px rgba(0,0,0,.08);
 }
 html[data-theme="light"] .btn-ghost:hover {
-  background: rgba(0,0,0,.08);
-  color: rgba(15,22,41,.9);
-  border-color: rgba(0,0,0,.18);
+  background: rgba(0,0,0,.07);
+  color: rgba(15,22,41,.92);
+  border-color: rgba(0,0,0,.2);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 2px 6px rgba(0,0,0,.1);
+  transform: translateY(-1px);
+}
+html[data-theme="light"] .btn-act {
+  background: rgba(0,0,0,.04);
+  border: 1px solid rgba(0,0,0,.1);
+  color: rgba(15,22,41,.5);
+}
+html[data-theme="light"] .btn-act:hover {
+  background: rgba(0,0,0,.08);
+  border-color: rgba(0,0,0,.16);
+  color: rgba(15,22,41,.88);
+}
+html[data-theme="light"] .btn-act[onclick*="edit"]:hover,
+html[data-theme="light"] .btn-act[onclick*="Edit"]:hover,
+html[data-theme="light"] .btn-act[title*="Düzenle"]:hover {
+  background: rgba(13,148,136,.1);
+  border-color: rgba(13,148,136,.28);
+}
+html[data-theme="light"] .btn-act[onclick*="sil"]:hover,
+html[data-theme="light"] .btn-act[onclick*="Sil"]:hover,
+html[data-theme="light"] .btn-act[onclick*="delete"]:hover,
+html[data-theme="light"] .btn-act[title*="Sil"]:hover {
+  background: rgba(225,29,72,.1);
+  border-color: rgba(225,29,72,.25);
 }
 
 /* Modal */
@@ -877,108 +903,206 @@ textarea { resize: vertical; min-height: 80px; }
 input::placeholder { color: var(--text2); opacity: .7; }
 
 /* ─── BUTTONS ─────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   MASTER BUTTON SYSTEM — v4
+   ══════════════════════════════════════════════════ */
 .btn {
-  padding: 9px 22px;
-  border-radius: 10px;
+  padding: 8px 20px;
+  border-radius: 9px;
   border: none;
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .18s cubic-bezier(.4,0,.2,1);
+  transition: all .17s cubic-bezier(.4,0,.2,1);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   white-space: nowrap;
   letter-spacing: -.01em;
   position: relative;
   overflow: hidden;
+  user-select: none;
+  min-height: 34px;
 }
+/* top shimmer line */
 .btn::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.2);
+  pointer-events: none;
+  border-radius: 9px 9px 0 0;
+}
+/* ripple layer */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--rx,50%) var(--ry,50%), rgba(255,255,255,.18) 0%, transparent 65%);
+  opacity: 0;
+  transition: opacity .3s;
   pointer-events: none;
 }
-.btn:active { transform: scale(.96) translateY(1px) !important; transition-duration: .08s; }
+.btn:hover::after { opacity: 1; }
+.btn:active {
+  transform: scale(.96) translateY(1px) !important;
+  transition-duration: .07s !important;
+}
+.btn:focus-visible {
+  outline: 2px solid rgba(251,191,36,.6);
+  outline-offset: 2px;
+}
+
+/* PRIMARY — amber gold */
 .btn-primary {
-  background: linear-gradient(160deg, #fde68a 0%, #fbbf24 42%, #c47a0b 100%);
+  background: linear-gradient(155deg, #fde68a 0%, #fbbf24 45%, #b45309 100%);
   color: #0b0700;
   font-weight: 700;
-  box-shadow: 0 2px 20px rgba(251,191,36,.35), 0 1px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow: 0 2px 18px rgba(251,191,36,.38), 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.32);
 }
 .btn-primary:hover {
-  background: linear-gradient(160deg, #fef3c7 0%, #fde68a 42%, #fbbf24 100%);
-  box-shadow: 0 5px 32px rgba(251,191,36,.5), inset 0 1px 0 rgba(255,255,255,.35);
-  transform: translateY(-1.5px);
+  background: linear-gradient(155deg, #fef3c7 0%, #fde68a 45%, #fbbf24 100%);
+  box-shadow: 0 4px 28px rgba(251,191,36,.55), 0 1px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.38);
+  transform: translateY(-2px);
 }
+
+/* SUCCESS — teal */
 .btn-success {
-  background: linear-gradient(160deg, #6ee7d4 0%, #2dd4bf 42%, #0a9485 100%);
+  background: linear-gradient(155deg, #6ee7d4 0%, #2dd4bf 45%, #0a8a7a 100%);
   color: #011a15;
   font-weight: 700;
-  box-shadow: 0 2px 16px rgba(45,212,191,.28), inset 0 1px 0 rgba(255,255,255,.22);
+  box-shadow: 0 2px 16px rgba(45,212,191,.32), 0 1px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.24);
 }
 .btn-success:hover {
-  background: linear-gradient(160deg, #a7f3e0 0%, #6ee7d4 42%, #2dd4bf 100%);
-  box-shadow: 0 5px 28px rgba(45,212,191,.4);
-  transform: translateY(-1.5px);
+  background: linear-gradient(155deg, #a7f3e0 0%, #6ee7d4 45%, #2dd4bf 100%);
+  box-shadow: 0 4px 26px rgba(45,212,191,.46), inset 0 1px 0 rgba(255,255,255,.28);
+  transform: translateY(-2px);
 }
+
+/* DANGER — rose */
 .btn-danger {
-  background: linear-gradient(160deg, #fda4af 0%, #fb7185 42%, #dc1a40 100%);
+  background: linear-gradient(155deg, #fda4af 0%, #fb7185 45%, #be123c 100%);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 14px rgba(251,113,133,.28), inset 0 1px 0 rgba(255,255,255,.18);
+  box-shadow: 0 2px 16px rgba(251,113,133,.32), 0 1px 3px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2);
 }
 .btn-danger:hover {
-  background: linear-gradient(160deg, #fecdd3 0%, #fda4af 42%, #fb7185 100%);
-  box-shadow: 0 5px 24px rgba(251,113,133,.42);
-  transform: translateY(-1.5px);
+  background: linear-gradient(155deg, #fecdd3 0%, #fda4af 45%, #fb7185 100%);
+  box-shadow: 0 4px 24px rgba(251,113,133,.48), inset 0 1px 0 rgba(255,255,255,.22);
+  transform: translateY(-2px);
 }
+
+/* GHOST — subtle glass */
 .btn-ghost {
-  background: rgba(255,255,255,.055);
-  color: rgba(240,244,255,.6);
-  border: 1px solid rgba(255,255,255,.1);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 3px rgba(0,0,0,.2);
+  background: rgba(255,255,255,.058);
+  color: rgba(240,244,255,.65);
+  border: 1px solid rgba(255,255,255,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 4px rgba(0,0,0,.22);
 }
 .btn-ghost:hover {
   background: rgba(255,255,255,.1);
-  color: rgba(240,244,255,.92);
-  border-color: rgba(255,255,255,.18);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.25);
+  color: rgba(240,244,255,.95);
+  border-color: rgba(255,255,255,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 10px rgba(0,0,0,.28);
+  transform: translateY(-1px);
 }
-.btn-sm { padding: 5px 13px; font-size: 11.5px; border-radius: 7px; }
 
-/* ─── TABLO AKSİYON BUTONLARI (emoji/ikon only, sabit kare) ──── */
+/* SIZES */
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 11.5px;
+  min-height: 28px;
+  border-radius: 7px;
+  gap: 4px;
+}
+.btn-lg {
+  padding: 11px 28px;
+  font-size: 14px;
+  min-height: 42px;
+  border-radius: 11px;
+}
+
+/* ─── TABLO AKSİYON BUTONLARI ─────────────────────────────── */
 .btn-act {
   padding: 0 !important;
   width: 30px !important;
   height: 30px !important;
+  min-height: unset !important;
   min-width: unset !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 8px;
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,.06);
+  color: rgba(240,244,255,.6);
+  transition: all .15s ease;
 }
-.btn-act + .btn-act { margin-left: 4px; }
+.btn-act svg { width: 14px; height: 14px; display: block; pointer-events: none; }
+.btn-act:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.14);
+  color: rgba(240,244,255,.95);
+  transform: scale(1.08);
+}
+/* edit → teal tint */
+/* edit/open modal → teal */
+.btn-act.edit,
+.btn-act[title*="Düzenle"], .btn-act[title*="edit"],
+.btn-act[onclick*="edit"], .btn-act[onclick*="Edit"],
+.btn-act[onclick*="Modal"], .btn-act[onclick*="modal"],
+.btn-act[onclick^="openKontrat"], .btn-act[title*="Planı"] {
+  color: #2dd4bf;
+}
+.btn-act.edit:hover,
+.btn-act[title*="Düzenle"]:hover, .btn-act[title*="edit"]:hover,
+.btn-act[onclick*="edit"]:hover, .btn-act[onclick*="Edit"]:hover,
+.btn-act[onclick*="Modal"]:hover, .btn-act[onclick*="modal"]:hover,
+.btn-act[onclick^="openKontrat"]:hover, .btn-act[title*="Planı"]:hover {
+  background: rgba(45,212,191,.14);
+  border-color: rgba(45,212,191,.3);
+  box-shadow: 0 0 10px rgba(45,212,191,.2);
+}
+/* delete → rose tint */
+.btn-act.delete, .btn-act[title*="Sil"], .btn-act[title*="delete"], .btn-act[onclick*="delete"], .btn-act[onclick*="Delete"], .btn-act[onclick*="sil"], .btn-act[onclick*="Sil"] {
+  color: #fb7185;
+}
+.btn-act.delete:hover, .btn-act[title*="Sil"]:hover, .btn-act[title*="delete"]:hover, .btn-act[onclick*="delete"]:hover, .btn-act[onclick*="Delete"]:hover, .btn-act[onclick*="sil"]:hover, .btn-act[onclick*="Sil"]:hover {
+  background: rgba(251,113,133,.14);
+  border-color: rgba(251,113,133,.3);
+  box-shadow: 0 0 10px rgba(251,113,133,.2);
+}
+.btn-act + .btn-act { margin-left: 3px; }
 
-/* ─── İKON BUTONLAR (kare, ortalanmış) ───────────── */
+/* ─── İKON BUTONLAR ───────────────────────────────────────── */
 .btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(240,244,255,.65);
+  transition: all .15s ease;
 }
-.btn-icon svg { width: 16px; height: 16px; display: block; }
+.btn-icon:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.2);
+  color: rgba(240,244,255,.95);
+  transform: scale(1.06);
+}
+.btn-icon svg { width: 15px; height: 15px; display: block; }
 
 /* ─── KARŞI TARAF BLOĞU ───────────────────────────── */
 .kt-block {
@@ -1692,53 +1816,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ─── BUTTONS improved ───────────────────────────────── */
-.btn {
-  padding: 9px 20px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: .01em;
-  transition: all .15s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(145deg, #fbbf24, #f59e0b);
-  color: #0d0900;
-  font-weight: 600;
-  box-shadow: 0 2px 16px rgba(251,191,36,.28), inset 0 1px 0 rgba(255,255,255,.2);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(145deg, #fcd34d, #fbbf24);
-  box-shadow: 0 4px 24px rgba(251,191,36,.38), inset 0 1px 0 rgba(255,255,255,.25);
-  transform: translateY(-1px);
-}
-
-.btn-ghost {
-  background: rgba(255,255,255,.055);
-  border: 1px solid rgba(255,255,255,.09);
-  color: rgba(255,255,255,.55);
-}
-
-.btn-ghost:hover {
-  background: rgba(255,255,255,.09);
-  color: var(--text);
-  border-color: rgba(255,255,255,.15);
-}
-
-.btn-success {
-  background: linear-gradient(145deg, #2dd4bf, #0d9488);
-  color: #03100e;
-  font-weight: 600;
-  box-shadow: 0 2px 14px rgba(45,212,191,.2);
-}
-
-.btn-danger {
-  background: linear-gradient(145deg, #fb7185, #e11d48);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 14px rgba(251,113,133,.2);
-}
+/* btn styles defined in master block above */
 
 /* ─── ACTION ROW ─────────────────────────────────────── */
 .action-row {
@@ -2609,26 +2687,7 @@ select option { background: #0d1120; color: #f0f4ff; }
 .form-row { gap: 14px; margin-bottom: 14px; }
 
 /* ─── BUTTONS ────────────────────────────────────────────── */
-.btn {
-  padding: 9px 22px; border-radius: 10px; font-size: 13px; font-weight: 600;
-  letter-spacing: -.01em; transition: all .18s cubic-bezier(.4,0,.2,1); position: relative;
-  overflow: hidden; display: inline-flex; align-items: center; gap: 6px;
-}
-.btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: rgba(255,255,255,.18); pointer-events: none; }
-.btn:active { transform: scale(.96) translateY(1px); transition-duration: .08s; }
-.btn-primary {
-  background: linear-gradient(160deg, #fde68a 0%, #fbbf24 42%, #c47a0b 100%);
-  color: #0c0800; font-weight: 700;
-  box-shadow: 0 2px 20px rgba(251,191,36,.35), 0 1px 3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.3);
-}
-.btn-primary:hover { background: linear-gradient(160deg, #fef3c7 0%, #fde68a 42%, #fbbf24 100%); box-shadow: 0 5px 32px rgba(251,191,36,.5), inset 0 1px 0 rgba(255,255,255,.35); transform: translateY(-1.5px); }
-.btn-ghost { background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: rgba(240,244,255,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 3px rgba(0,0,0,.2); }
-.btn-ghost:hover { background: rgba(255,255,255,.1); color: rgba(240,244,255,.92); border-color: rgba(255,255,255,.18); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.25); }
-.btn-success { background: linear-gradient(160deg, #6ee7d4 0%, #2dd4bf 42%, #0a9485 100%); color: #011a15; font-weight: 700; box-shadow: 0 2px 18px rgba(45,212,191,.28), inset 0 1px 0 rgba(255,255,255,.22); }
-.btn-success:hover { background: linear-gradient(160deg, #a7f3e0 0%, #6ee7d4 42%, #2dd4bf 100%); box-shadow: 0 5px 28px rgba(45,212,191,.4); transform: translateY(-1.5px); }
-.btn-danger { background: linear-gradient(160deg, #fda4af 0%, #fb7185 42%, #dc1a40 100%); color: #fff; font-weight: 700; box-shadow: 0 2px 16px rgba(251,113,133,.26), inset 0 1px 0 rgba(255,255,255,.16); }
-.btn-danger:hover { background: linear-gradient(160deg, #fecdd3 0%, #fda4af 42%, #fb7185 100%); box-shadow: 0 5px 24px rgba(251,113,133,.42); transform: translateY(-1.5px); }
-.btn-sm { padding: 5px 13px; font-size: 11.5px; border-radius: 7px; }
+/* btn styles: see master block above */
 
 /* ─── ACTION ROW ─────────────────────────────────────────── */
 .action-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -3553,76 +3612,7 @@ select { cursor: pointer; color: rgba(240,244,255,.85); }
 select option { background: #0b0e1e; color: #f0f4ff; }
 .form-row { gap: 14px; margin-bottom: 14px; }
 
-/* ── BUTTONS — Polished ──────────────────────────────────── */
-.btn {
-  padding: 9px 22px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-  transition: all .18s cubic-bezier(.4,0,.2,1);
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: rgba(255,255,255,.18);
-  pointer-events: none;
-}
-.btn:active { transform: scale(.96) translateY(1px) !important; transition-duration: .08s; }
-
-.btn-primary {
-  background: linear-gradient(160deg, #fde68a 0%, #fbbf24 42%, #c47a0b 100%);
-  color: #0b0700;
-  font-weight: 700;
-  box-shadow: 0 2px 22px rgba(251,191,36,.38), 0 1px 3px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.3);
-}
-.btn-primary:hover {
-  background: linear-gradient(160deg, #fef3c7 0%, #fde68a 42%, #fbbf24 100%);
-  box-shadow: 0 5px 32px rgba(251,191,36,.52), inset 0 1px 0 rgba(255,255,255,.35);
-  transform: translateY(-1.5px);
-}
-.btn-ghost {
-  background: rgba(255,255,255,.055);
-  border: 1px solid rgba(255,255,255,.1);
-  color: rgba(240,244,255,.62);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 3px rgba(0,0,0,.2);
-}
-.btn-ghost:hover {
-  background: rgba(255,255,255,.1);
-  color: rgba(240,244,255,.92);
-  border-color: rgba(255,255,255,.18);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.25);
-}
-.btn-success {
-  background: linear-gradient(160deg, #6ee7d4 0%, #2dd4bf 42%, #0a9485 100%);
-  color: #011a15;
-  font-weight: 700;
-  box-shadow: 0 2px 20px rgba(45,212,191,.28), inset 0 1px 0 rgba(255,255,255,.22);
-}
-.btn-success:hover {
-  background: linear-gradient(160deg, #a7f3e0 0%, #6ee7d4 42%, #2dd4bf 100%);
-  box-shadow: 0 5px 30px rgba(45,212,191,.4);
-  transform: translateY(-1.5px);
-}
-.btn-danger {
-  background: linear-gradient(160deg, #fda4af 0%, #fb7185 42%, #dc1a40 100%);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 2px 18px rgba(251,113,133,.28), inset 0 1px 0 rgba(255,255,255,.18);
-}
-.btn-danger:hover {
-  background: linear-gradient(160deg, #fecdd3 0%, #fda4af 42%, #fb7185 100%);
-  box-shadow: 0 5px 26px rgba(251,113,133,.44);
-  transform: translateY(-1.5px);
-}
-.btn-sm { padding: 5px 13px; font-size: 11.5px; border-radius: 7px; }
+/* btn styles: see master block above */
 
 /* ── ACTION ROW ──────────────────────────────────────────── */
 .action-row {
@@ -7256,7 +7246,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                 Karşı Taraf
               </span>
-              <button class="kt-mode-switch" id="kira-kt-toggle" onclick="toggleKtMode('kira')" type="button">✏️ Manuel gir</button>
+              <button class="kt-mode-switch" id="kira-kt-toggle" onclick="toggleKtMode('kira')" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg><span style="margin-left:5px">Manuel gir</span></button>
             </div>
             <!-- MOD 1: Kayıtlı kişi -->
             <div class="kt-panel-kayitli">
@@ -7500,7 +7490,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                 Karşı Taraf
               </span>
-              <button class="kt-mode-switch" id="maas-kt-toggle" onclick="toggleKtMode('maas')" type="button">✏️ Manuel gir</button>
+              <button class="kt-mode-switch" id="maas-kt-toggle" onclick="toggleKtMode('maas')" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg><span style="margin-left:5px">Manuel gir</span></button>
             </div>
             <div class="kt-panel-kayitli">
               <div class="kt-field">
@@ -7977,7 +7967,7 @@ html[data-theme="light"] .mob-theme-toggle {
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                 Karşı Taraf
               </span>
-              <button class="kt-mode-switch" id="elden-kt-toggle" onclick="toggleKtMode('elden')" type="button">✏️ Manuel gir</button>
+              <button class="kt-mode-switch" id="elden-kt-toggle" onclick="toggleKtMode('elden')" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg><span style="margin-left:5px">Manuel gir</span></button>
             </div>
             <div class="kt-panel-kayitli">
               <div class="kt-field">
@@ -9632,8 +9622,8 @@ function renderKartlar() {
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${banka} · ${tip?tip.ad:''} ${k.no?'·· '+k.no:''}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm btn-act" onclick="editKart('${k.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKart('${k.id}')">🗑</button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="editKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
         </div>
       </div>
       ${(()=>{ const curs = (k.paraBirimleri&&k.paraBirimleri.length)?k.paraBirimleri:(k.paraBirimi?[k.paraBirimi]:[defaultCurrency]); const nonDef = curs.filter(c=>c!==defaultCurrency); return nonDef.length ? `<div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap">${curs.map(c=>`<span style="background:${c===(k.varsayilanParaBirimi||curs[0])?'rgba(16,185,129,.15)':'rgba(59,130,246,.12)'};color:${c===(k.varsayilanParaBirimi||curs[0])?'var(--accent2)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${CURRENCY_CONFIG[c]?.symbol||''} ${c}${c===(k.varsayilanParaBirimi||curs[0])?' ⭐':''}</span>`).join('')}</div>` : ''; })()}
@@ -9986,7 +9976,7 @@ function renderIslemler() {
       <td style="font-size:11px;color:var(--text2)">${taksitStr}</td>
       <td>${extreOdemeHtml}</td>
       <td>${odToggleBtn('islem', i.id, undefined, i.tarih, i.tutar, i.aciklama)}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">İşlem bulunamadı</td></tr>';
 }
@@ -10791,7 +10781,7 @@ function renderMevduat() {
       <td><span class="badge ${aktif?'badge-green':'badge-red'}">${aktif?'Aktif':'Bitti'}</span></td>
       <td>${vadesizLabel}</td>
       <td>${odToggleBtn('mevduat', m.id, undefined, m.bitis, m.nihai, m.banka ? getBanka(m.banka)+' mevduat' : 'Mevduat')}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editMevduat('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMevduat('${m.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editMevduat('${m.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMevduat('${m.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="16" style="text-align:center;color:var(--text3);padding:20px">Mevduat bulunamadı</td></tr>';
 }
@@ -10868,8 +10858,8 @@ function renderHesapTurTablo() {
     <td>${t.ad}</td>
     <td><code style="font-family:var(--mono);font-size:11px;background:var(--surface3);padding:2px 6px;border-radius:4px">${t.kod}</code></td>
     <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapTurModal('${t.id}')" style="margin-right:4px">✏️</button>
-      <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesapTur('${t.id}')">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapTurModal('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesapTur('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
     </td>
   </tr>`).join('');
 }
@@ -11225,8 +11215,8 @@ function renderKira() {
       <td>${depBadge}</td>
       <td>${(()=>{ const today=new Date(); const pd=kiraPayInMonth(k,today.getFullYear(),today.getMonth()); const ay=pd?localDateStr(pd).slice(0,7):''; return ay ? odToggleBtn('kira',k.id,ay,pd?localDateStr(pd):'',Math.abs(k.tutar),k.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('kira','${k.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm btn-act" onclick="openKiraModal('${k.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKira('${k.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('kira','${k.id}')" style="margin-right:4px" title="Ödeme Planı"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12"/><path d="M5 10h1M8 10h1M11 10h1M5 12.5h1M8 12.5h1"/></svg></button><button class="btn btn-ghost btn-sm btn-act" onclick="openKiraModal('${k.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKira('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
   }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:20px">Kontrat yok</td></tr>';
@@ -11601,7 +11591,7 @@ function renderMaas() {
       <td class="mono">${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : (m.bitis?fmtDate(m.bitis):'Süresiz')}</td>
       <td>${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : durumBadge}</td>
       <td>${(()=>{ const today=new Date(); const payDt=new Date(today.getFullYear(),today.getMonth(),m.gun); const payStr=localDateStr(payDt); const aktifAy=!m.pasif&&payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis); const ay=payStr.slice(0,7); return aktifAy ? odToggleBtn('maas',m.id,ay,payStr,m.tutar,m.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('maas','${m.id}')" style="margin-right:4px" title="Ödeme Planı">📋</button><button class="btn btn-ghost btn-sm btn-act" onclick="editMaas('${m.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMaas('${m.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('maas','${m.id}')" style="margin-right:4px" title="Ödeme Planı"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12"/><path d="M5 10h1M8 10h1M11 10h1M5 12.5h1M8 12.5h1"/></svg></button><button class="btn btn-ghost btn-sm btn-act" onclick="editMaas('${m.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMaas('${m.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Maaş tanımı yok</td></tr>';
 
@@ -11973,8 +11963,8 @@ function renderKmhKredi() {
         <span class="badge ${bitti?'badge-green':'badge-warn'}">${bitti?'Tamamlandı':`${odenmisSayisi}/${kr.vade} ödendi`}</span>
       </td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="openKmhKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKmhKredi('${kr.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKmhKrediModal('${kr.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKmhKredi('${kr.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">KMH kredi kaydı yok</td></tr>';
@@ -12273,8 +12263,8 @@ function renderKredi() {
       <td class="mono">${fmtDate(ilkTarih)}</td>
       <td><span class="badge ${bitti?'badge-green':'badge-warn'}">${bitti?'Tamamlandı':`${odenmisSayisi}/${kr.vade} ödendi`}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="openKrediModal('${kr.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKredi('${kr.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openKrediModal('${kr.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteKredi('${kr.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
   }).join('') : '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">Kredi kaydı yok</td></tr>';
@@ -12565,7 +12555,7 @@ function renderElden() {
       <td>${katLabel}</td>
       <td style="font-size:12px">${yontemLabel}</td>
       <td>${odToggleBtn('elden', e.id, undefined, e.tarih, e.tutar, e.aciklama)}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editElden('${e.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteElden('${e.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editElden('${e.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteElden('${e.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Kayıt yok</td></tr>';
 }
@@ -12631,8 +12621,8 @@ function renderSubeList(list) {
     <td class="mono" style="padding:5px 8px;font-size:12px;color:var(--accent);white-space:nowrap">${s.k}</td>
     <td style="padding:5px 8px;font-size:12px;color:var(--text)">${s.a}</td>
     <td style="padding:5px 4px;white-space:nowrap;text-align:right">
-      <button class="btn btn-ghost btn-sm btn-act" onclick="editSube('${s.k}')" style="margin-right:2px;font-size:11px">✏️</button>
-      <button class="btn btn-danger btn-sm btn-act" onclick="deleteSube('${s.k}')" style="font-size:11px">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="editSube('${s.k}')" style="margin-right:2px;font-size:11px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteSube('${s.k}')" style="font-size:11px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
     </td>
   </tr>`).join('');
 }
@@ -12929,16 +12919,16 @@ function renderTanimlamalar() {
     <td class="mono" style="letter-spacing:.05em;color:var(--accent)">${b.ibanKod||'<span style="color:var(--text3)">—</span>'}</td>
     <td style="font-size:11px;color:var(--text3)">${b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length ? DB.subeler[b.ibanKod].length + ' şube' : '—'}</td>
     <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm btn-act" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları">🏢</button>
-      <button class="btn btn-ghost btn-sm btn-act" onclick="editBanka('${b.id}')" style="margin-right:4px">✏️</button>
-      <button class="btn btn-danger btn-sm btn-act" onclick="deleteBanka('${b.id}')">🗑</button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="10" y="8" width="5" height="5" rx="1"/><rect x="5" y="2" width="6" height="4" rx="1"/><path d="M8 6v2M3.5 8V7a4.5 4.5 0 0 1 9 0v1"/></svg></button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="editBanka('${b.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteBanka('${b.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
     </td>
   </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   document.getElementById('urun-tip-tbody').innerHTML = (DB.urunTipler||[]).map(t=>`<tr>
     <td>${t.ad}</td>
     <td><span class="badge badge-blue">${t.kod}</span></td>
-    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editUrunTip('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteUrunTip('${t.id}')">🗑</button></td>
+    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editUrunTip('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteUrunTip('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
   </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   const krediTipTbody = document.getElementById('kredi-tip-tbody');
@@ -12946,7 +12936,7 @@ function renderTanimlamalar() {
     krediTipTbody.innerHTML = (DB.krediTipleri||[]).map(t=>`<tr>
       <td>${t.ad}</td>
       <td><span class="badge badge-blue">${t.kod}</span></td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKrediTipModal('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteKrediTip('${t.id}')">🗑</button></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKrediTipModal('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteKrediTip('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 
@@ -12954,7 +12944,7 @@ function renderTanimlamalar() {
   document.getElementById('tatil-tbody').innerHTML = sorted.map(t=>`<tr>
     <td class="mono">${fmtDate(t.tarih)}</td>
     <td>${t.aciklama}</td>
-    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editTatil('${t.id}')" style="margin-right:4px">✏️</button><button class="btn btn-danger btn-sm btn-act" onclick="deleteTatil('${t.id}')">🗑</button></td>
+    <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editTatil('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteTatil('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
   </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   // Para birimi yönetim tablosu
@@ -12980,8 +12970,8 @@ function renderTanimlamalar() {
         <td style="white-space:nowrap">
           <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
             ${gosteimBtn}
-            <button class="btn btn-ghost btn-sm btn-act" onclick="editParaBirimi('${code}')" title="Düzenle">&#9998;</button>
-            ${isCustom ? `<button class="btn btn-danger btn-sm btn-act" onclick="deleteParaBirimi('${code}')" title="Sil">&#128465;</button>` : ''}
+            <button class="btn btn-ghost btn-sm btn-act" onclick="editParaBirimi('${code}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+            ${isCustom ? `<button class="btn btn-danger btn-sm btn-act" onclick="deleteParaBirimi('${code}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -13029,7 +13019,7 @@ function renderKisiIbanList() {
         <div style="font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.05em">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</div>
         ${ib.etiket?`<div style="font-size:10px;color:var(--text3);margin-top:1px">${ib.etiket}</div>`:''}
       </div>
-      <button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('IBAN kopyalandı ✓'))" title="Kopyala">📋</button>
+      <button class="btn btn-ghost btn-sm" style="padding:3px 8px" onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('IBAN kopyalandı ✓'))" title="Kopyala"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="5" y="5" width="8" height="9" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7"/></svg></button>
       <button class="btn btn-danger btn-sm" style="padding:3px 8px" onclick="_kisiIbanlar.splice(${i},1);renderKisiIbanList()">✕</button>
     </div>`).join('');
 }
@@ -13230,7 +13220,7 @@ function renderKisilerGrid() {
       <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
         <code style="font-family:var(--mono);font-size:11px;color:var(--accent2);background:var(--surface3);padding:2px 6px;border-radius:4px;flex:1;word-break:break-all">${ib.iban.replace(/(.{4})/g,'$1 ').trim()}</code>
         ${ib.etiket?`<span style="font-size:10px;color:var(--text3)">${ib.etiket}</span>`:''}
-        <button onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('IBAN kopyalandı ✓'))" class="btn btn-ghost btn-sm" style="padding:2px 6px;flex-shrink:0" title="Kopyala">📋</button>
+        <button onclick="navigator.clipboard.writeText('${ib.iban}').then(()=>showToast('IBAN kopyalandı ✓'))" class="btn btn-ghost btn-sm" style="padding:2px 6px;flex-shrink:0" title="Kopyala"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="5" y="5" width="8" height="9" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7"/></svg></button>
       </div>`).join('');
     return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -13240,8 +13230,8 @@ function renderKisilerGrid() {
           ${k.not?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${k.not}</div>`:''}
         </div>
         <div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-sm btn-act" onclick="openKisiModal('${k.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKisi('${k.id}')">🗑</button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="openKisiModal('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKisi('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
         </div>
       </div>
       ${ibanHtml || '<div style="font-size:11px;color:var(--text3);margin-top:4px">IBAN yok</div>'}
@@ -13551,8 +13541,8 @@ function renderKategoriGrid() {
         <div style="font-size:10px;color:${turRenk};margin-top:2px">${k.tur==='gelir'?'💹 Gelir':k.tur==='gider'?'💸 Gider':'📦 Diğer'}</div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn btn-ghost btn-sm" style="padding:3px 6px" onclick="editKategori('${k.id}')">✏️</button>
-        ${!isDefault ? `<button class="btn btn-danger btn-sm" style="padding:3px 6px" onclick="deleteKategori('${k.id}')">🗑</button>` : ''}
+        <button class="btn btn-ghost btn-sm" style="padding:3px 6px" onclick="editKategori('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        ${!isDefault ? `<button class="btn btn-danger btn-sm" style="padding:3px 6px" onclick="deleteKategori('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>` : ''}
       </div>
     </div>`;
   }).join('') || '<div style="color:var(--text3);padding:20px;grid-column:1/-1;text-align:center">Kategori bulunamadı</div>';
@@ -15509,8 +15499,8 @@ function renderHesaplar() {
       <td>${kmhLimitHtml}</td>
       <td><span class="badge ${durumBadge}">${h.durum||'aktif'}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
   }).join('');
@@ -15643,8 +15633,8 @@ function renderOranTablo(tip) {
       <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">${fmtDate(row.tarih)}${isActive?' <span style="font-size:9px;background:rgba(0,232,138,.12);color:var(--accent2);padding:1px 5px;border-radius:4px;margin-left:4px">GEÇERLİ</span>':''}</td>
       <td class="mono" style="${isActive?'color:var(--accent2);font-weight:600':''}">%${row.oran}</td>
       <td style="text-align:right">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="openOranModal('${tip}','${row.id}')" style="margin-right:4px">✏️</button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteOran('${tip}','${row.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openOranModal('${tip}','${row.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteOran('${tip}','${row.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
   }).join('');
