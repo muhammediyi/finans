@@ -16159,8 +16159,8 @@ function saveHesap() {
     subeAd: (getSubeAdFromKodlar(parsed ? parsed.bankaKodu : document.getElementById('hesap-banka-kodu').value, parsed ? parsed.subeKodu : document.getElementById('hesap-sube-kodu').value)) || document.getElementById('hesap-sube-ad').value.trim(),
     durum: document.getElementById('hesap-durum').value,
     not: document.getElementById('hesap-not').value.trim(),
-    minBakiye: getMoneyInput('hesap-min-bakiye') !== null && getMoneyInput('hesap-min-bakiye') !== '' ? (getMoneyInput('hesap-min-bakiye')||0) : undefined,
-    hedefBakiye: getMoneyInput('hesap-hedef-bakiye') !== null && getMoneyInput('hesap-hedef-bakiye') !== '' ? (getMoneyInput('hesap-hedef-bakiye')||0) : undefined,
+    minBakiye: document.getElementById('hesap-min-bakiye').value.trim() !== '' ? (getMoneyInput('hesap-min-bakiye')||0) : undefined,
+    hedefBakiye: document.getElementById('hesap-hedef-bakiye').value.trim() !== '' ? (getMoneyInput('hesap-hedef-bakiye')||0) : undefined,
   };
 
   // KMH verileri
