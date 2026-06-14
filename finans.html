@@ -1610,6 +1610,16 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .cur-chip.default-mark { border-color: var(--teal); background: var(--teal-glow); color: var(--teal); }
 .cur-chip .cur-star { font-size: 9px; }
 .cur-default-row { margin-top: 12px; }
+/* Mini inline para birimi seçici (örn. eşik tutarı yanı) */
+.mini-select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  border: none !important; background: transparent !important;
+  box-shadow: none !important; cursor: pointer;
+  font-family: var(--mono); font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; text-align: right;
+}
+.mini-select:hover { color: var(--text) !important; }
+.mini-select:focus { box-shadow: none !important; background: transparent !important; }
 
 /* ─── OD BADGE / STATUS ───────────────────────────────── */
 .od-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;border:none;outline:none;transition:opacity .15s; }
@@ -1682,14 +1692,19 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .extre-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 12px; }
 .extre-item:last-child { border-bottom: none; }
 /* Ekstre bilgi kutuları */
-.exk-boxes { display: flex; gap: 1px; background: var(--border); margin: 12px 0 0; }
-.exk-box { flex: 1; background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.exk-box-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exk-box-val { font-size: 14px; font-weight: 700; color: var(--text); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exk-box-meta { font-size: 10px; color: var(--text3); font-family: var(--mono); }
-.exk-box-urgent { background: rgba(251,191,36,.06); }
-.exk-box-past { background: rgba(251,113,133,.05); }
-.exk-box-asgari { background: rgba(245,158,11,.06); }
+.exk-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 14px 0 0; }
+.exk-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; overflow: hidden; transition: border-color .15s; }
+.exk-box-icon { font-size: 15px; line-height: 1; margin-bottom: 2px; }
+.exk-box-label { font-size: 10px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exk-box-val { font-size: 16px; font-weight: 700; color: var(--text); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exk-box-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
+.exk-box-urgent { background: rgba(251,191,36,.07); border-color: rgba(251,191,36,.25); }
+.exk-box-urgent .exk-box-val { color: #fbbf24; }
+.exk-box-past { background: rgba(251,113,133,.06); border-color: rgba(251,113,133,.2); }
+.exk-box-asgari { background: rgba(245,158,11,.07); border-color: rgba(245,158,11,.22); }
+.exk-box-ok { border-left: 3px solid #2dd4bf; }
+.exk-box-bar { height: 4px; border-radius: 3px; background: var(--surface3); overflow: hidden; margin-top: 4px; }
+.exk-box-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
 
 /* ─── TOAST ───────────────────────────────────────────── */
 .toast {
@@ -6619,25 +6634,34 @@ html[data-theme="light"] .mob-theme-toggle {
     <!-- Kural ekleme formu -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><span class="card-title">➕ Yeni Kural Ekle</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div id="asgari-uyari-wrap"></div>
+      <div style="display:grid;grid-template-columns:1.4fr .8fr 1.4fr;gap:12px;margin-bottom:12px;align-items:end">
         <div>
-          <label>Koşul Türü</label>
-          <select id="asgari-kosul-tur" onchange="asgariKosulTurChange()" style="width:100%">
-            <option value="limit_max">Kart limiti ≤ X ise</option>
-            <option value="limit_min">Kart limiti > X ise</option>
-            <option value="borc_max">Dönem borcu ≤ X ise</option>
-            <option value="borc_min">Dönem borcu > X ise</option>
+          <label>Koşul Alanı</label>
+          <select id="asgari-kosul-alan" onchange="asgariKosulTurChange()" style="width:100%">
+            <option value="limit">Kart Limiti</option>
+            <option value="borc">Dönem Borcu</option>
             <option value="her_zaman">Her zaman (varsayılan)</option>
           </select>
         </div>
+        <div id="asgari-kosul-op-wrap">
+          <label>Koşul</label>
+          <select id="asgari-kosul-op" onchange="asgariFormDegisti()" style="width:100%">
+            <option value="max">≤</option>
+            <option value="min">&gt;</option>
+          </select>
+        </div>
         <div id="asgari-esik-wrap">
-          <label>Eşik Tutarı (₺)</label>
-          <input id="asgari-esik" type="number" min="0" step="1000" placeholder="örn. 50000" style="width:100%;box-sizing:border-box">
+          <label style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
+            <span>Eşik Tutarı <span style="color:var(--danger)">*</span></span>
+            <select id="asgari-esik-pb" onchange="asgariEsikPbChange()" class="mini-select" style="width:auto;padding:2px 22px 2px 6px;font-size:10px;height:auto;border:none;background:transparent;color:var(--text3);text-transform:uppercase"></select>
+          </label>
+          <div class="money-wrap" data-symbol="₺" data-code="TRY" data-own-currency="1"><input id="asgari-esik" type="text" class="money-input" data-decimals="0" placeholder="50.000" style="width:100%;box-sizing:border-box" oninput="asgariFormDegisti()"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div>
-          <label>Uygulanan Oran</label>
+          <label>Uygulanan Oran <span style="color:var(--danger)">*</span></label>
           <div style="display:flex;align-items:center;gap:6px">
             <input id="asgari-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 20" style="flex:1">
             <span style="font-size:14px;font-weight:700;color:var(--text2)">%</span>
@@ -6645,9 +6669,13 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div>
           <label>Minimum Tutar <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
-          <input id="asgari-min-tutar" type="number" min="0" step="10" placeholder="örn. 100" style="width:100%;box-sizing:border-box">
+          <div class="money-wrap" data-symbol="₺" data-code="TRY" data-own-currency="1"><input id="asgari-min-tutar" type="text" class="money-input" data-decimals="0" placeholder="100" style="width:100%;box-sizing:border-box"></div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Hesaplanan oran bunun altındaysa bu tutar uygulanır</div>
         </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label>Geçerli Para Birimleri <span style="color:var(--text3);font-size:10px">(birden fazla seçilebilir, hiçbiri seçilmezse tüm para birimleri için geçerlidir)</span></label>
+        <div class="cur-grid" id="asgari-cur-grid"></div>
       </div>
       <div style="margin-bottom:12px">
         <label>Kural Açıklaması <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
@@ -6680,6 +6708,10 @@ html[data-theme="light"] .mob-theme-toggle {
         <div>
           <label>Dönem Borcu (₺)</label>
           <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="asgari-prev-borc" type="text" class="money-input" data-decimals="0" placeholder="15.000" oninput="asgariOnizle()"></div>
+        </div>
+        <div>
+          <label>Para Birimi</label>
+          <select id="asgari-prev-pb" onchange="asgariOnizle()" style="min-width:120px"></select>
         </div>
       </div>
       <div id="asgari-prev-sonuc" style="padding:14px;background:var(--surface2);border-radius:var(--radius-sm);font-size:13px;color:var(--text3)">
@@ -9602,8 +9634,17 @@ function showTab(id, btn) {
   }
   if(id==='tab-asgari-odeme') {
     renderAsgariKurallar();
+    renderAsgariCurGrid();
+    renderAsgariEsikPbSelect();
     asgariKosulTurChange();
     bindMoneyInputs(document.getElementById('tab-asgari-odeme'));
+    if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+    const pbSel = document.getElementById('asgari-prev-pb');
+    if(pbSel) {
+      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.flag} ${c.code}</option>`).join('');
+      pbSel.value = defaultCurrency;
+    }
+    asgariOnizle();
   }
 }
 
@@ -10463,9 +10504,11 @@ function renderExtreler() {
       const key = `${pd.year}-${String(pd.month+1).padStart(2,'0')}`;
       if(!periodMap.has(key)) {
         const d = new Date(pd.year, pd.month, 1);
-        const extre = calcExtreTarihiOdemeModuyla(kart, pd.year, pd.month, tatilSet);
-        if(!extre) return;
-        const odeme = calcOdemeTarihi(extre, kart.odemeSure, kart.odemeGunTip, tatilSet);
+        const extreDt = calcExtreTarihiOdemeModuyla(kart, pd.year, pd.month, tatilSet);
+        if(!extreDt) return;
+        const odemeDt = calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet);
+        const extre = localDateStr(extreDt);
+        const odeme = localDateStr(odemeDt);
         periodMap.set(key, {key, label:d.toLocaleDateString('tr-TR',{year:'numeric',month:'long'}), extre, odeme, year:pd.year, month:pd.month, rows:[], totalTutar:0});
       }
       const p = periodMap.get(key);
@@ -10504,11 +10547,12 @@ function renderExtreler() {
     else              statusBadge = `<span style="background:rgba(45,212,191,.1);color:#2dd4bf;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">GELECEK</span>`;
 
     // Asgari ödeme hesapla
-    const asgari = calcAsgariOdeme(kart.limit||0, p.totalTutar);
+    const asgari = calcAsgariOdeme(kart.limit||0, p.totalTutar, getKartDefaultCurrency(kart.id));
     const asgariBox = asgari
       ? `<div class="exk-box exk-box-asgari">
+          <div class="exk-box-icon">⚠️</div>
           <div class="exk-box-label">Asgari Ödeme</div>
-          <div class="exk-box-val" style="color:#f59e0b">${fmt(asgari.tutar)}</div>
+          <div class="exk-box-val" style="color:#f59e0b">${fmtCur(asgari.tutar, getKartDefaultCurrency(kart.id))}</div>
           <div class="exk-box-meta">%${asgari.oran} oran</div>
         </div>`
       : '';
@@ -10532,20 +10576,24 @@ function renderExtreler() {
       <!-- Bilgi kutuları -->
       <div class="exk-boxes">
         <div class="exk-box">
-          <div class="exk-box-label">✂️ Ekstre Kesim</div>
+          <div class="exk-box-icon">✂️</div>
+          <div class="exk-box-label">Ekstre Kesim</div>
           <div class="exk-box-val">${fmtDate(p.extre)}</div>
-          <div class="exk-box-meta">${new Date(p.extre+'T00:00:00').toLocaleDateString('tr-TR',{weekday:'short'})}</div>
+          <div class="exk-box-meta">${new Date(p.extre+'T00:00:00').toLocaleDateString('tr-TR',{weekday:'long'})}</div>
         </div>
-        <div class="exk-box${isPast?' exk-box-past':kalanGun<=3&&!isPast?' exk-box-urgent':''}">
-          <div class="exk-box-label">💳 Son Ödeme</div>
+        <div class="exk-box${isPast?' exk-box-past':kalanGun<=3&&!isPast?' exk-box-urgent':' exk-box-ok'}">
+          <div class="exk-box-icon">💳</div>
+          <div class="exk-box-label">Son Ödeme</div>
           <div class="exk-box-val">${fmtDate(p.odeme)}</div>
-          <div class="exk-box-meta" style="color:${kalanColor}">${kalanStr}</div>
+          <div class="exk-box-meta" style="color:${kalanColor}">${new Date(p.odeme+'T00:00:00').toLocaleDateString('tr-TR',{weekday:'long'})} · ${kalanStr}</div>
         </div>
         ${asgariBox}
         ${kart.limit > 0 ? `<div class="exk-box">
-          <div class="exk-box-label">📊 Limit Kullanımı</div>
+          <div class="exk-box-icon">📊</div>
+          <div class="exk-box-label">Limit Kullanımı</div>
           <div class="exk-box-val">${Math.round(p.totalTutar/kart.limit*100)}%</div>
           <div class="exk-box-meta">${fmt(kart.limit - p.totalTutar)} boş</div>
+          <div class="exk-box-bar"><div class="exk-box-bar-fill" style="width:${Math.min(100,Math.round(p.totalTutar/kart.limit*100))}%;background:${p.totalTutar/kart.limit>0.9?'var(--danger)':p.totalTutar/kart.limit>0.7?'#f59e0b':'#2dd4bf'}"></div></div>
         </div>` : ''}
       </div>
 
@@ -16224,32 +16272,173 @@ const ASGARI_KOSUL_LABELS = {
   her_zaman:  'Her zaman'
 };
 
+// Para birimi seçim chip grid (kural formu için)
+function renderAsgariCurGrid(selected=[]) {
+  if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+  const grid = document.getElementById('asgari-cur-grid');
+  if(!grid) return;
+  grid.innerHTML = ALL_CURRENCIES.map(c => {
+    const isSel = selected.includes(c.code);
+    return `<div class="cur-chip${isSel?' selected':''}" data-code="${c.code}" onclick="toggleAsgariCur('${c.code}')">${c.flag} ${c.label}</div>`;
+  }).join('');
+}
+
+function toggleAsgariCur(code) {
+  const chip = document.querySelector(`#asgari-cur-grid [data-code="${code}"]`);
+  if(chip) chip.classList.toggle('selected');
+  asgariFormDegisti();
+}
+
+function getAsgariCurGridValue() {
+  const chips = document.querySelectorAll('#asgari-cur-grid .cur-chip.selected');
+  return Array.from(chips).map(c=>c.dataset.code);
+}
+
+// Eşik tutarı / minimum tutar para birimi seçici
+function renderAsgariEsikPbSelect(selected=null) {
+  if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+  const sel = document.getElementById('asgari-esik-pb');
+  if(!sel) return;
+  sel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.symbol} ${c.code}</option>`).join('');
+  sel.value = selected || defaultCurrency;
+  asgariSyncEsikMoneyWraps();
+}
+
+function asgariSyncEsikMoneyWraps() {
+  const sel = document.getElementById('asgari-esik-pb');
+  if(!sel) return;
+  const code = sel.value;
+  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
+  const sym = cfg.symbol || code;
+  ['asgari-esik', 'asgari-min-tutar'].forEach(id => {
+    const inp = document.getElementById(id);
+    const wrap = inp && inp.closest('.money-wrap');
+    if(!wrap) return;
+    wrap.dataset.symbol = sym;
+    wrap.dataset.code = code;
+  });
+}
+
+function asgariEsikPbChange() {
+  asgariSyncEsikMoneyWraps();
+  asgariFormDegisti();
+}
+
+function asgariFormDegisti() {
+  const tur = asgariFormTur();
+  const esik = tur !== 'her_zaman' ? (getMoneyInput('asgari-esik')||0) : null;
+  const esikParaBirimi = tur !== 'her_zaman' ? (document.getElementById('asgari-esik-pb')?.value || defaultCurrency) : null;
+  const paraBirimleri = getAsgariCurGridValue();
+  asgariUyariGuncelle({tur, esik, esikParaBirimi, paraBirimleri});
+}
+
 function asgariKosulTurChange() {
-  const tur = document.getElementById('asgari-kosul-tur').value;
-  const wrap = document.getElementById('asgari-esik-wrap');
-  wrap.style.display = tur === 'her_zaman' ? 'none' : '';
+  const alan = document.getElementById('asgari-kosul-alan').value;
+  const opWrap = document.getElementById('asgari-kosul-op-wrap');
+  const esikWrap = document.getElementById('asgari-esik-wrap');
+  const hide = alan === 'her_zaman';
+  opWrap.style.display = hide ? 'none' : '';
+  esikWrap.style.display = hide ? 'none' : '';
+  asgariFormDegisti();
+}
+
+// Form alanlarındaki güncel değerlerden 'tur' kodunu üretir (limit_max, limit_min, borc_max, borc_min, her_zaman)
+function asgariFormTur() {
+  const alan = document.getElementById('asgari-kosul-alan').value;
+  if(alan === 'her_zaman') return 'her_zaman';
+  const op = document.getElementById('asgari-kosul-op').value; // 'max' (≤) | 'min' (>)
+  return `${alan}_${op}`;
+}
+
+// İki kuralın para birimi kapsamları kesişiyor mu? (boş/tanımsız liste = tüm para birimleri)
+function asgariParaBirimleriKesisiyorMu(a, b) {
+  const pbA = (a.paraBirimleri && a.paraBirimleri.length) ? a.paraBirimleri : null;
+  const pbB = (b.paraBirimleri && b.paraBirimleri.length) ? b.paraBirimleri : null;
+  if(!pbA || !pbB) return true; // biri "tüm para birimleri" ise her zaman kesişir
+  return pbA.some(c=>pbB.includes(c));
+}
+
+// İki kural çakışıyor mu? (aynı alan + aynı eşik + zıt/aynı yönde örtüşen koşullar + ortak para birimi)
+function asgariKurallarCakisiyorMu(a, b) {
+  if(a.tur === 'her_zaman' || b.tur === 'her_zaman') return false;
+  const [alanA, opA] = a.tur.split('_');
+  const [alanB, opB] = b.tur.split('_');
+  if(alanA !== alanB) return false;
+  if(!asgariParaBirimleriKesisiyorMu(a, b)) return false;
+  // Aynı eşik değeri ve aynı yön ise → birebir aynı koşul, ikincisi asla tetiklenmez
+  if(a.esik === b.esik && opA === opB) return true;
+  return false;
+}
+
+function asgariUyariGuncelle(yeniKural) {
+  const el = document.getElementById('asgari-uyari-wrap');
+  if(!el) return;
+  const list = DB.asgariOdemeKurallari||[];
+  let msgs = [];
+
+  if(yeniKural) {
+    list.forEach((k, i) => {
+      if(asgariKurallarCakisiyorMu(yeniKural, k)) {
+        msgs.push(`Bu kural, <b>${i+1}. sıradaki</b> "${ASGARI_KOSUL_LABELS[k.tur]||k.tur}${k.esik!=null?' '+fmt(k.esik):''}" kuralıyla aynı koşulu kapsıyor. ${i===0?'O kural önce çalışacağı için bu kural hiç tetiklenmeyebilir.':''}`);
+      }
+    });
+    // her_zaman kuralından sonra eklenen kurallar (ortak para biriminde) hiç çalışmaz
+    const herZamanIdx = list.findIndex(k=>k.tur==='her_zaman' && asgariParaBirimleriKesisiyorMu(k, yeniKural));
+    if(herZamanIdx > -1) {
+      msgs.push(`Listede <b>"Her zaman"</b> kuralı (${herZamanIdx+1}. sırada) bulunuyor — bu kural ondan sonra geleceği için hiçbir zaman çalışmayacak. "Her zaman" kuralını en alta taşıyın.`);
+    }
+
+    // Eşik tutarı para birimi, kuralın geçerli olduğu para birimlerinden biri değilse uyar
+    if(yeniKural.esikParaBirimi && yeniKural.paraBirimleri && yeniKural.paraBirimleri.length
+       && !yeniKural.paraBirimleri.includes(yeniKural.esikParaBirimi)) {
+      msgs.push(`Eşik tutarı <b>${yeniKural.esikParaBirimi}</b> olarak girildi, ancak kural sadece <b>${yeniKural.paraBirimleri.join(', ')}</b> için geçerli. Karşılaştırma, kartın ilgili dönemdeki tutarıyla <b>doğrudan</b> (birim çevrimi yapılmadan) yapılacaktır — eşik tutarını ${yeniKural.paraBirimleri.join('/')} cinsinden girmeniz önerilir.`);
+    }
+  }
+
+  if(!msgs.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="margin-bottom:12px;padding:10px 12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:var(--radius-sm);font-size:12px;color:#fbbf24;display:flex;gap:8px;align-items:flex-start">
+    <span style="flex-shrink:0">⚠️</span><div>${msgs.join('<br>')}</div>
+  </div>`;
+}
+
+function asgariShake(id) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.add('field-error', 'shake');
+  setTimeout(()=>el.classList.remove('shake'), 400);
+  el.addEventListener('input', () => el.classList.remove('field-error'), { once: true });
 }
 
 function asgariKuralEkle() {
-  const tur    = document.getElementById('asgari-kosul-tur').value;
-  const esik   = tur !== 'her_zaman' ? (parseFloat(document.getElementById('asgari-esik').value)||0) : null;
-  const oran   = parseFloat(document.getElementById('asgari-oran').value);
-  const minTut = parseFloat(document.getElementById('asgari-min-tutar').value)||0;
-  const acik   = document.getElementById('asgari-aciklama').value.trim();
+  const tur       = asgariFormTur();
+  const esikEl    = document.getElementById('asgari-esik');
+  const oranEl    = document.getElementById('asgari-oran');
+  const esikBos   = (esikEl.value || '').trim() === '';
+  const oran      = parseFloat(oranEl.value);
+  const esik      = tur !== 'her_zaman' ? (getMoneyInput('asgari-esik')||0) : null;
+  const minTut    = getMoneyInput('asgari-min-tutar')||0;
+  const acik      = document.getElementById('asgari-aciklama').value.trim();
+  const esikPb    = document.getElementById('asgari-esik-pb')?.value || defaultCurrency;
+  const paraBirimleri = getAsgariCurGridValue();
 
-  if(isNaN(oran) || oran <= 0) { showToast('Geçerli bir oran giriniz', 'warn'); return; }
-  if(tur !== 'her_zaman' && (!esik && esik !== 0)) { showToast('Eşik tutarı giriniz', 'warn'); return; }
+  let hataVar = false;
+  if(isNaN(oran) || oran <= 0) { asgariShake('asgari-oran'); hataVar = true; }
+  if(tur !== 'her_zaman' && esikBos) { asgariShake('asgari-esik'); hataVar = true; }
+  if(hataVar) { showToast('Lütfen zorunlu alanları (*) doldurun', 'warn'); return; }
 
-  const kural = { id: uid(), tur, esik, oran, minTut, acik };
+  const kural = { id: uid(), tur, esik, esikParaBirimi: tur!=='her_zaman' ? esikPb : null, oran, minTut, acik, paraBirimleri };
   if(!DB.asgariOdemeKurallari) DB.asgariOdemeKurallari = [];
   DB.asgariOdemeKurallari.push(kural);
   saveData();
 
   // Formu temizle
-  document.getElementById('asgari-esik').value = '';
+  setMoneyInput('asgari-esik', '');
   document.getElementById('asgari-oran').value = '';
-  document.getElementById('asgari-min-tutar').value = '';
+  setMoneyInput('asgari-min-tutar', '');
   document.getElementById('asgari-aciklama').value = '';
+  document.getElementById('asgari-uyari-wrap').innerHTML = '';
+  renderAsgariCurGrid();
+  renderAsgariEsikPbSelect();
 
   renderAsgariKurallar();
   asgariOnizle();
@@ -16297,7 +16486,10 @@ function renderAsgariKurallar() {
     const isFirst = i === 0;
     const isLast  = i === list.length - 1;
     const kosulLabel = ASGARI_KOSUL_LABELS[k.tur] || k.tur;
-    const esikStr = k.esik != null ? ` ${fmt(k.esik)}` : '';
+    const esikStr = k.esik != null ? ` ${fmtCur(k.esik, k.esikParaBirimi || defaultCurrency)}` : '';
+    const pbBadge = (k.paraBirimleri && k.paraBirimleri.length)
+      ? k.paraBirimleri.map(c=>`<span style="background:rgba(45,212,191,.1);color:#2dd4bf;border:1px solid rgba(45,212,191,.2);border-radius:5px;padding:2px 7px;font-size:10px;font-weight:600;white-space:nowrap;margin-right:3px">${c}</span>`).join('')
+      : `<span style="color:var(--text3);font-size:11px">Tümü</span>`;
 
     // Öncelik rozeti — 1. kural en yüksek
     let priBadge;
@@ -16340,10 +16532,11 @@ function renderAsgariKurallar() {
       <td style="padding:10px 12px;vertical-align:middle">
         <span style="background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;font-size:11px;font-family:var(--mono);white-space:nowrap">${kosulLabel}${esikStr}</span>
       </td>
+      <td style="padding:10px 12px;vertical-align:middle;white-space:nowrap">${pbBadge}</td>
       <td style="padding:10px 12px;text-align:center;vertical-align:middle">
         <span style="background:rgba(79,110,247,.15);color:#818cf8;border-radius:5px;padding:3px 10px;font-weight:700;font-family:var(--mono);font-size:13px">%${k.oran}</span>
       </td>
-      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);vertical-align:middle">${k.minTut > 0 ? fmt(k.minTut) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);vertical-align:middle">${k.minTut > 0 ? fmtCur(k.minTut, k.esikParaBirimi || defaultCurrency) : '<span style="color:var(--text3)">—</span>'}</td>
       <td style="padding:10px 12px;font-size:12px;color:var(--text3);vertical-align:middle">${k.acik || '<span style="opacity:.4">—</span>'}</td>
       <td style="padding:10px 8px;vertical-align:middle">
         <div style="display:flex;align-items:center;gap:3px;justify-content:flex-end">
@@ -16362,6 +16555,7 @@ function renderAsgariKurallar() {
       <thead><tr style="background:var(--surface3);border-bottom:1px solid var(--border)">
         <th style="padding:8px 12px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Öncelik</th>
         <th style="padding:8px 12px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Koşul</th>
+        <th style="padding:8px 12px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Para Birimi</th>
         <th style="padding:8px 12px;text-align:center;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Oran</th>
         <th style="padding:8px 12px;text-align:right;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Min. Tutar</th>
         <th style="padding:8px 12px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Açıklama</th>
@@ -16371,10 +16565,12 @@ function renderAsgariKurallar() {
     </table></div>`;
 }
 
-// Verilen limit ve borç için hangi kuralın uygulandığını hesapla
-function calcAsgariOdeme(limit, borc) {
+// Verilen limit, borç ve para birimi için hangi kuralın uygulandığını hesapla
+function calcAsgariOdeme(limit, borc, paraBirimi=null) {
   const list = DB.asgariOdemeKurallari||[];
   for(const k of list) {
+    // Para birimi filtresi: kuralda seçili para birimi yoksa tüm para birimleri için geçerlidir
+    if(paraBirimi && k.paraBirimleri && k.paraBirimleri.length && !k.paraBirimleri.includes(paraBirimi)) continue;
     let eslesir = false;
     if(k.tur === 'her_zaman')  eslesir = true;
     else if(k.tur === 'limit_max') eslesir = limit <= k.esik;
@@ -16399,17 +16595,19 @@ function asgariOnizle() {
     el.innerHTML = '<span style="color:var(--text3)">Limit ve borç girerek kural sonucunu görün.</span>';
     return;
   }
-  const sonuc = calcAsgariOdeme(limit, borc);
+  const sonuc = calcAsgariOdeme(limit, borc, document.getElementById('asgari-prev-pb')?.value || defaultCurrency);
   if(!sonuc) {
     el.innerHTML = '<span style="color:var(--text3)">⚠️ Hiçbir kural eşleşmedi — asgari ödeme gösterilmeyecek.</span>';
     return;
   }
   const kosulLabel = ASGARI_KOSUL_LABELS[sonuc.kural.tur]||sonuc.kural.tur;
-  const esikStr = sonuc.kural.esik != null ? ` ${fmt(sonuc.kural.esik)}` : '';
+  const esikStr = sonuc.kural.esik != null ? ` ${fmtCur(sonuc.kural.esik, sonuc.kural.esikParaBirimi || defaultCurrency)}` : '';
+  const pbStr = (sonuc.kural.paraBirimleri && sonuc.kural.paraBirimleri.length) ? sonuc.kural.paraBirimleri.join(', ') : 'Tüm para birimleri';
   el.innerHTML = `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div>
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Eşleşen Kural</div>
       <span style="background:var(--surface3);border:1px solid var(--border2);border-radius:5px;padding:3px 10px;font-size:12px;font-family:var(--mono)">${kosulLabel}${esikStr}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:8px">💱 ${pbStr}</span>
       ${sonuc.kural.acik ? `<span style="font-size:11px;color:var(--text3);margin-left:8px">${sonuc.kural.acik}</span>` : ''}
     </div>
     <div>
@@ -16418,7 +16616,7 @@ function asgariOnizle() {
     </div>
     <div>
       <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Asgari Ödeme Tutarı</div>
-      <span style="font-family:var(--mono);font-weight:700;font-size:20px;color:var(--warn)">${fmt(sonuc.tutar)}</span>
+      <span style="font-family:var(--mono);font-weight:700;font-size:20px;color:var(--warn)">${fmtCur(sonuc.tutar, document.getElementById('asgari-prev-pb')?.value || defaultCurrency)}</span>
       ${sonuc.kural.minTut > 0 && (borc*(sonuc.oran/100)) < sonuc.kural.minTut ? `<span style="font-size:10px;color:var(--text3);margin-left:6px">(min. tutar uygulandı)</span>` : ''}
     </div>
   </div>`;
@@ -18236,6 +18434,7 @@ document.addEventListener('click', function(e) {
     rent:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
     salary:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20L16 3z"/><path d="M12 12v4M10 14h4"/></svg>`,
     filter:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+    compare:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>`,
   };
 
   // id → ikon eşlemesi
@@ -18297,6 +18496,9 @@ document.addEventListener('click', function(e) {
     'elden-yontem':             SVG.method,
     'elden-hesap':              SVG.account,
     'elden-kisi':               SVG.person,
+    'asgari-kosul-alan':        SVG.filter,
+    'asgari-kosul-op':          SVG.compare,
+    'asgari-prev-pb':           SVG.currency,
   };
 
   // Label metninden ikon tahmini (ID map'te yoksa)
@@ -18328,6 +18530,8 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('select:not([data-sel-wrapped])').forEach(sel => {
       // Inline style'lı çok küçük select'leri ve script içindekini atla
       if (sel.closest('script')) return;
+      // İkonsuz mini-select'leri atla (örn. inline para birimi seçiciler)
+      if (sel.classList.contains('mini-select')) { sel.dataset.selWrapped = '1'; return; }
       // zaten wrap edilmiş mi?
       if (sel.parentElement && sel.parentElement.classList.contains('select-wrap')) return;
 
