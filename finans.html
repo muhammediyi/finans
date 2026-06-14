@@ -6330,6 +6330,7 @@ html[data-theme="light"] .mob-theme-toggle {
       <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="" disabled hidden>Tüm Kartlar</option></select>
       <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
       <button class="btn btn-primary" onclick="openModal('modal-islem')">+ Yeni İşlem</button>
+      <button class="btn" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--gold)" onclick="openNakitAvansModal()">💵 Nakit Avans</button>
     </div>
   </div>
   <div class="card">
@@ -6503,6 +6504,7 @@ html[data-theme="light"] .mob-theme-toggle {
     <button class="tab-btn" onclick="showTab('tab-vergi-faiz',this)">📊 Vergi & Faiz Oranları</button>
     <button class="tab-btn" onclick="showTab('tab-asgari-odeme',this)">💳 Asgari Ödeme Kuralları</button>
     <button class="tab-btn" onclick="showTab('tab-goruntu-ayarlari',this)">🎨 Görüntü Ayarları</button>
+    <button class="tab-btn" onclick="showTab('tab-nakit-avans',this)">💵 Nakit Avans</button>
   </div>
   <div id="tab-bankalar">
     <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openBankaModal()">+ Banka Ekle</button></div>
@@ -6615,6 +6617,9 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="card-header">
           <span class="card-title">📌 KMH Faiz Oranları (% Aylık)</span>
           <button class="btn btn-primary btn-sm" onclick="openOranModal('kmhFaiz')">+ Ekle</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--teal);background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:7px 12px;margin-bottom:8px">
+          💵 Bu faiz oranları <b>Nakit Avans</b> çekimlerinde de geçerlidir. Nakit avans tavan oranları için <b>Nakit Avans</b> sekmesine bakın.
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr><th>Geçerlilik Tarihi</th><th>Oran (% Aylık)</th><th></th></tr></thead>
@@ -6735,6 +6740,78 @@ html[data-theme="light"] .mob-theme-toggle {
       </div>
       <div id="asgari-prev-sonuc" style="padding:14px;background:var(--surface2);border-radius:var(--radius-sm);font-size:13px;color:var(--text3)">
         Limit ve borç girerek kural sonucunu görün.
+      </div>
+    </div>
+  </div>
+
+  <!-- NAKİT AVANS TANIM TAB -->
+  <div id="tab-nakit-avans" style="display:none">
+    <div class="info-box">
+      Nakit avans çekim kurallarını buradan tanımlayın. <b>Faiz oranı Vergi &amp; Faiz Oranları → KMH Faiz Oranları</b> tablosundan otomatik alınır.
+    </div>
+
+    <!-- Para Birimleri -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">💱 Nakit Avans Çekilebilir Para Birimleri</span>
+        <span style="font-size:11px;color:var(--text3)">(Tüm kartlar için geçerli)</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Nakit avans işleminde seçilebilecek para birimlerini işaretleyin.</div>
+      <div class="cur-grid" id="nakit-avans-cur-grid"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="saveNakitAvansCur()">💾 Kaydet</button>
+        <span id="nakit-avans-cur-status" style="font-size:12px;color:var(--teal);align-self:center"></span>
+      </div>
+    </div>
+
+    <!-- Limit Kuralı + Tavan Miktar -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">🔢 Çekilebilir Maksimum Nakit Avans Oranı &amp; Tavan Miktar</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">
+        Hangi limite göre hesaplanacağını ve maksimum oranı belirleyin. <b>Tavan miktar, oranla hesaplanan limiti hiçbir koşulda geçemez.</b>
+      </div>
+
+      <!-- Satır 1: Limit tipi + Oran -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2)">Limit Tipi</label>
+          <select id="nakit-avans-limit-tip" style="margin-top:4px" onchange="updateNakitAvansLimitPreview()">
+            <option value="kullanilabilir">Kullanılabilir Limit</option>
+            <option value="toplam">Toplam Limit</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2)">Maksimum Oran (%)</label>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <input id="nakit-avans-max-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 50" style="flex:1" oninput="updateNakitAvansLimitPreview()">
+            <span style="font-size:18px;font-weight:700;color:var(--accent)">%</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">Oranla hesaplanan tutar = tavan miktar üst sınırıdır</div>
+        </div>
+      </div>
+
+      <!-- Satır 2: Para birimine göre tavan miktar tablosu -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:11px;font-weight:600;color:var(--text2)">📌 Para Birimine Göre Tavan Miktar</label>
+          <button class="btn btn-primary btn-sm" onclick="openNakitAvansTavanModal()">+ Ekle / Düzenle</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Her para birimi için maksimum çekilebilir miktar belirleyin. Bu miktar, oranla hesaplanan limitin <b>altında</b> kalır — ikisinden küçük olan geçerlidir.</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Para Birimi</th><th>KMH Faiz Oranı (otomatik)</th><th>Tavan Miktar</th><th></th></tr></thead>
+          <tbody id="nakit-avans-tavan-tbody"></tbody>
+        </table></div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="saveNakitAvansLimitKural()">💾 Kaydet</button>
+        <span id="nakit-avans-limit-status" style="font-size:12px;color:var(--teal)"></span>
+      </div>
+      <div id="nakit-avans-limit-preview" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+      <div style="margin-top:10px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;font-size:11.5px;color:var(--gold)">
+        ⚠️ Tavan miktar, oranla hesaplanan limitin üzerine çıkamaz. İkisinden küçük olan uygulanır.
       </div>
     </div>
   </div>
@@ -7335,6 +7412,101 @@ html[data-theme="light"] .mob-theme-toggle {
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-islem')">İptal</button>
       <button class="btn btn-primary" onclick="saveIslem()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- NAKİT AVANS MODAL -->
+<div class="modal-bg" id="modal-nakit-avans">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💵</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Nakit Avans</div>
+          <div class="modal-subtitle">Kredi kartından nakit para çekimi</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-nakit-avans')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Kart & Tarih -->
+      <div class="msec">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          İşlem Bilgileri
+        </div>
+        <div class="form-row cols-2">
+          <div><label>Kart</label><select id="na-kart" onchange="onNaKartChange()"></select></div>
+          <div><label>İşlem Tarihi</label><input id="na-tarih" type="date" onchange="onNaTarihChange()"></div>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label>Para Birimi</label>
+            <select id="na-para-birimi" onchange="onNaPbChange()"></select>
+          </div>
+          <div>
+            <label>Çekilecek Tutar</label>
+            <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="na-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcNakitAvans()"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Açıklama <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label><input id="na-aciklama" placeholder="Nakit avans..."></div>
+        </div>
+      </div>
+
+      <!-- Faiz & Taksit -->
+      <div class="msec">
+        <div class="msec-label gold">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Faiz, Vergi &amp; Taksit
+        </div>
+        <div class="form-row cols-3">
+          <div>
+            <label>Aylık Faiz Oranı (%)</label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <input id="na-faiz" type="number" min="0" max="999" step="0.01" placeholder="0.00" oninput="calcNakitAvans()" style="flex:1">
+              <span style="font-size:14px;color:var(--text3)">%</span>
+            </div>
+            <div id="na-faiz-kaynak" style="font-size:10px;color:var(--text3);margin-top:3px"></div>
+          </div>
+          <div>
+            <label>KKDF (%)</label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <input id="na-kkdf" type="number" min="0" max="100" step="0.01" placeholder="0" oninput="calcNakitAvans()" style="flex:1">
+              <span style="font-size:14px;color:var(--text3)">%</span>
+            </div>
+          </div>
+          <div>
+            <label>BSMV (%)</label>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <input id="na-bsmv" type="number" min="0" max="100" step="0.01" placeholder="5" oninput="calcNakitAvans()" style="flex:1">
+              <span style="font-size:14px;color:var(--text3)">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label>Taksit Sayısı <span style="color:var(--text3);font-size:10px">(max 12)</span></label>
+            <input id="na-taksit" type="number" min="1" max="12" value="1" oninput="calcNakitAvans()">
+          </div>
+          <div id="na-limit-info" style="font-size:11px;color:var(--text3);align-self:end;padding-bottom:8px"></div>
+        </div>
+      </div>
+
+      <!-- Sonuç & Taksit Planı -->
+      <div id="na-sonuc-wrap" style="display:none">
+        <div class="msec" style="margin-bottom:0">
+          <div class="msec-label violet">📋 Taksit Planı</div>
+          <div id="na-ozet" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
+          <div id="na-taksit-alanlari"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nakit-avans')">İptal</button>
+      <button class="btn btn-primary" style="background:var(--gold);color:#000" onclick="saveNakitAvans()">💾 Kaydet</button>
     </div>
   </div>
 </div>
@@ -8734,7 +8906,11 @@ function defaultData() {
     stopajOranlari: [], kkdfOranlari: [], bsmvOranlari: [], kmhFaizOranlari: [],
     hesaplar: [], subeler: {}, kisiler: [],
     asgariOdemeKurallari: [],
-    kartOdemeleri: []
+    kartOdemeleri: [],
+    nakitAvansCurlar: [],
+    nakitAvansTavanlar: [],
+    nakitAvansLimitTip: 'kullanilabilir',
+    nakitAvansMaxOran: 50
   };
 }
 
@@ -9706,6 +9882,11 @@ function showTab(id, btn) {
     }
     asgariOnizle();
   }
+  if(id==='tab-nakit-avans') {
+    renderNakitAvansCurGrid();
+    renderNakitAvansTavanlar();
+    renderNakitAvansLimitKural();
+  }
 }
 
 // ========== MODAL ==========
@@ -10413,6 +10594,228 @@ function editIslem(id) {
   }
 
   document.getElementById('modal-islem').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// NAKİT AVANS MODAL FONKSİYONLARI
+// ═══════════════════════════════════════════════════════════
+
+function openNakitAvansModal() {
+  const todayStr = localDateStr(new Date());
+  // Kart listesi
+  const kartSel = document.getElementById('na-kart');
+  kartSel.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
+
+  // Tarih
+  document.getElementById('na-tarih').value = todayStr;
+
+  // Para birimi: nakitAvansCurlar veya tüm
+  onNaKartChange();
+
+  // Faiz (KMH veya tavan)
+  const pb = document.getElementById('na-para-birimi').value || 'TRY';
+  const faiz = getNakitAvansFaizOrani(pb, todayStr);
+  document.getElementById('na-faiz').value = faiz;
+  const kaynakEl = document.getElementById('na-faiz-kaynak');
+  if(kaynakEl) kaynakEl.textContent = `Tanımlamalardan: %${faiz} aylık (düzenlenebilir)`;
+
+  // KKDF / BSMV
+  document.getElementById('na-kkdf').value = getKkdfOrani(todayStr);
+  document.getElementById('na-bsmv').value = getBsmvOrani(todayStr);
+
+  // Taksit
+  document.getElementById('na-taksit').value = 1;
+  document.getElementById('na-tutar').value = '';
+  document.getElementById('na-aciklama').value = '';
+  document.getElementById('na-sonuc-wrap').style.display = 'none';
+  document.getElementById('na-taksit-alanlari').innerHTML = '';
+
+  openModal('modal-nakit-avans');
+}
+
+function onNaKartChange() {
+  const kartId = document.getElementById('na-kart').value;
+  const pbSel = document.getElementById('na-para-birimi');
+  const naParaBirimleri = DB.nakitAvansCurlar && DB.nakitAvansCurlar.length
+    ? DB.nakitAvansCurlar
+    : (ALL_CURRENCIES.length ? ALL_CURRENCIES.map(c=>c.code) : ['TRY']);
+  pbSel.innerHTML = naParaBirimleri.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const kartDef = getKartDefaultCurrency(kartId);
+  if(naParaBirimleri.includes(kartDef)) pbSel.value = kartDef;
+  onNaPbChange();
+  updateNaLimitInfo();
+}
+
+function onNaPbChange() {
+  const pb = document.getElementById('na-para-birimi').value;
+  const tarih = document.getElementById('na-tarih').value || localDateStr(new Date());
+  const faiz = getNakitAvansFaizOrani(pb, tarih);
+  document.getElementById('na-faiz').value = faiz;
+  const kaynakEl = document.getElementById('na-faiz-kaynak');
+  if(kaynakEl) {
+    const kmh = getKmhFaizOrani(tarih);
+    kaynakEl.textContent = `KMH Faiz: %${kmh} aylık (tanımlamalardan otomatik)`;
+  }
+  updateNaLimitInfo();
+  calcNakitAvans();
+}
+
+function onNaTarihChange() {
+  onNaPbChange();
+}
+
+function updateNaLimitInfo() {
+  const el = document.getElementById('na-limit-info');
+  if(!el) return;
+  const kartId = document.getElementById('na-kart').value;
+  const kart = DB.kartlar.find(k=>k.id===kartId);
+  if(!kart) { el.innerHTML = ''; return; }
+  const pb = (document.getElementById('na-para-birimi')||{}).value || kart.paraBirimi || defaultCurrency;
+  const tip = DB.nakitAvansLimitTip || 'kullanilabilir';
+  const oran = DB.nakitAvansMaxOran != null ? DB.nakitAvansMaxOran : 50;
+  const tipLabel = tip==='kullanilabilir' ? 'Kull. Limit' : 'Toplam Limit';
+  const limit = tip==='kullanilabilir'
+    ? ((kart.limit||0) - (kart.borc||0))
+    : (kart.limit||0);
+  const oranliLimit = limit * oran / 100;
+  const tavanRow = (DB.nakitAvansTavanlar||[]).find(r=>r.paraBirimi===pb);
+  const maxCek = tavanRow ? Math.min(oranliLimit, tavanRow.tavanMiktar) : oranliLimit;
+  const tavanNot = tavanRow && tavanRow.tavanMiktar < oranliLimit
+    ? `<span style="color:var(--warn)"> ↓ Tavan miktar uygulandı</span>`
+    : '';
+  el.innerHTML = `Max çekilebilir: <b style="color:var(--teal)">${fmtCur(maxCek, pb)}</b>${tavanNot}<br><span style="font-size:10px">${tipLabel} × %${oran}${tavanRow?' → MIN(oran, tavan)':''}</span>`;
+}
+
+function calcNakitAvans() {
+  const tutar = getMoneyInput('na-tutar') || 0;
+  const taksit = Math.max(1, Math.min(12, parseInt(document.getElementById('na-taksit').value)||1));
+  const faiz = parseFloat(document.getElementById('na-faiz').value) || 0;
+  const kkdf = parseFloat(document.getElementById('na-kkdf').value) || 0;
+  const bsmv = parseFloat(document.getElementById('na-bsmv').value) || 0;
+  const tarih = document.getElementById('na-tarih').value;
+  const sonucWrap = document.getElementById('na-sonuc-wrap');
+  const taksitDiv = document.getElementById('na-taksit-alanlari');
+  const ozetDiv = document.getElementById('na-ozet');
+
+  if(!tutar || tutar <= 0) { sonucWrap.style.display='none'; return; }
+  sonucWrap.style.display = 'block';
+
+  // Efektif aylık faiz = faiz + (faiz*kkdf/100) + (faiz*bsmv/100)
+  const efektifFaiz = faiz * (1 + (kkdf+bsmv)/100) / 100;
+  const aylikTaksit = taksit === 1
+    ? tutar * (1 + efektifFaiz)
+    : tutar * efektifFaiz / (1 - Math.pow(1+efektifFaiz, -taksit));
+
+  const toplamOdeme = aylikTaksit * taksit;
+  const toplamFaiz = toplamOdeme - tutar;
+
+  ozetDiv.innerHTML = `Ana para: <b>${fmt(tutar)}</b> &nbsp;|&nbsp; Aylık taksit: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b> &nbsp;|&nbsp; Toplam faiz: <b class="red">${fmt(toplamFaiz)}</b> &nbsp;|&nbsp; Toplam ödeme: <b>${fmt(toplamOdeme)}</b>`;
+
+  if(taksit === 1) {
+    taksitDiv.innerHTML = `<div style="font-size:12px;color:var(--text2)">Tek çekim — toplam geri ödeme: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b></div>`;
+    return;
+  }
+
+  const rows = [];
+  for(let i=0; i<taksit; i++) {
+    let takTarih = '';
+    if(tarih) {
+      const dt = new Date(tarih+'T00:00:00');
+      dt.setMonth(dt.getMonth()+i);
+      takTarih = localDateStr(dt);
+    }
+    const t = parseFloat(aylikTaksit.toFixed(2));
+    rows.push({ tarih: takTarih, tutar: t });
+  }
+  // Son taksit fark düzeltmesi
+  const ara = rows.slice(0,-1).reduce((s,r)=>s+r.tutar,0);
+  rows[rows.length-1].tutar = parseFloat((toplamOdeme - ara).toFixed(2));
+
+  const todayStr = localDateStr(new Date());
+  taksitDiv.innerHTML = `<div class="tp-wrap">
+    <div class="tp-header"><div></div><div>Tarih</div><div>Tutar</div><div></div></div>
+    ${rows.map((r,i)=>`<div class="tp-row${r.tarih<todayStr?' tp-past':''}">
+      <div class="tp-no">${i+1}</div>
+      <input type="date" class="tp-input" value="${r.tarih}" data-na-taksit-field="tarih" data-na-idx="${i}">
+      <input type="number" step="0.01" class="tp-input tp-input-tutar" value="${r.tutar}" data-na-taksit-field="tutar" data-na-idx="${i}" oninput="onNaTaksitChange(this)">
+      <button class="tp-del" title="Sıfırla" onclick="resetNaTaksit(this,${i},'${rows[i].tarih}',${rows[i].tutar})">↺</button>
+    </div>`).join('')}
+    <div class="tp-footer">
+      <div class="tp-footer-info">
+        <span class="tp-footer-total">Toplam: <span id="na-tp-toplam">${fmt(toplamOdeme)}</span></span>
+        <span class="tp-footer-meta">${taksit} taksit × ort. ${fmt(aylikTaksit)}</span>
+      </div>
+      <button class="tp-reset-all" onclick="calcNakitAvans()">↺ Sıfırla</button>
+    </div>
+  </div>`;
+}
+
+function onNaTaksitChange(el) {
+  const container = document.getElementById('na-taksit-alanlari');
+  const inputs = container.querySelectorAll('[data-na-taksit-field="tutar"]');
+  let top = 0; inputs.forEach(i=>top+=parseFloat(i.value)||0);
+  const span = document.getElementById('na-tp-toplam');
+  if(span) span.textContent = fmt(top);
+}
+
+function resetNaTaksit(btn, idx, origTarih, origTutar) {
+  const row = btn.closest('.tp-row');
+  const ti = row.querySelector('[data-na-taksit-field="tarih"]');
+  const tu = row.querySelector('[data-na-taksit-field="tutar"]');
+  if(ti) ti.value = origTarih;
+  if(tu) { tu.value = origTutar; onNaTaksitChange(tu); }
+}
+
+function saveNakitAvans() {
+  const kartId = document.getElementById('na-kart').value;
+  const tarih = document.getElementById('na-tarih').value;
+  const tutar = getMoneyInput('na-tutar') || 0;
+  const taksit = Math.max(1, Math.min(12, parseInt(document.getElementById('na-taksit').value)||1));
+  const pb = document.getElementById('na-para-birimi').value;
+  const aciklama = document.getElementById('na-aciklama').value.trim() || 'Nakit Avans';
+  const faiz = parseFloat(document.getElementById('na-faiz').value)||0;
+  const kkdf = parseFloat(document.getElementById('na-kkdf').value)||0;
+  const bsmv = parseFloat(document.getElementById('na-bsmv').value)||0;
+
+  if(!kartId || !tarih || !tutar) { showToast('Kart, tarih ve tutar zorunludur','warn'); return; }
+
+  const container = document.getElementById('na-taksit-alanlari');
+  let tutarlar = [], tarihler = [];
+  if(taksit === 1) {
+    // Tek çekim — faizli toplam
+    const efektifFaiz = faiz * (1 + (kkdf+bsmv)/100) / 100;
+    const toplamOdeme = tutar * (1 + efektifFaiz);
+    tutarlar = [parseFloat(toplamOdeme.toFixed(2))];
+    tarihler = [tarih];
+  } else {
+    container.querySelectorAll('[data-na-taksit-field="tutar"]').forEach(i=>tutarlar.push(parseFloat(i.value)||0));
+    container.querySelectorAll('[data-na-taksit-field="tarih"]').forEach(i=>tarihler.push(i.value));
+  }
+
+  const toplamTutar = tutarlar.reduce((s,t)=>s+t,0);
+  const islem = {
+    id: uid(),
+    kart: kartId,
+    tarih,
+    aciklama: `💵 ${aciklama}`,
+    kategori: null,
+    tutar: toplamTutar,
+    taksit,
+    aylik: tutarlar[0]||0,
+    taksitTutarlari: tutarlar,
+    manuelTaksitler: tutarlar.map((t,i)=>({ tarih: tarihler[i]||'', tutar: t })),
+    paraBirimi: pb,
+    tip: 'nakitAvans',
+    nakitAvansBilgi: { anaPara: tutar, faiz, kkdf, bsmv }
+  };
+
+  if(!DB.islemler) DB.islemler = [];
+  DB.islemler.push(islem);
+  saveData();
+  closeModal('modal-nakit-avans');
+  renderIslemler();
+  showToast('Nakit avans kaydedildi','ok');
 }
 
 function deleteIslem(id) {
@@ -13718,6 +14121,211 @@ async function resmiTatilleriGuncelle() {
     btn.textContent = '🔄 Resmi Tatilleri Güncelle';
     setTimeout(() => { status.textContent = ''; }, 6000);
   }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// NAKİT AVANS TANIMLAMA FONKSİYONLARI
+// ═══════════════════════════════════════════════════════════
+
+function renderNakitAvansCurGrid() {
+  if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+  const selected = DB.nakitAvansCurlar || [];
+  const grid = document.getElementById('nakit-avans-cur-grid');
+  if(!grid) return;
+  grid.innerHTML = ALL_CURRENCIES.map(c => {
+    const active = selected.includes(c.code);
+    return `<label class="cur-chip${active?' active':''}" style="cursor:pointer;user-select:none">
+      <input type="checkbox" value="${c.code}" ${active?'checked':''} style="display:none" onchange="onNakitAvansCurChange(this)">
+      <span>${c.flag||''} ${c.code}</span>
+    </label>`;
+  }).join('');
+}
+
+function onNakitAvansCurChange(cb) {
+  const label = cb.closest('label');
+  if(cb.checked) label.classList.add('active');
+  else label.classList.remove('active');
+}
+
+function saveNakitAvansCur() {
+  const checked = [...document.querySelectorAll('#nakit-avans-cur-grid input:checked')].map(i=>i.value);
+  DB.nakitAvansCurlar = checked;
+  saveData();
+  const st = document.getElementById('nakit-avans-cur-status');
+  if(st) { st.textContent = '✓ Kaydedildi'; setTimeout(()=>st.textContent='',2000); }
+}
+
+function renderNakitAvansTavanlar() {
+  const tbody = document.getElementById('nakit-avans-tavan-tbody');
+  if(!tbody) return;
+  const list = DB.nakitAvansTavanlar || [];
+  const todayStr = localDateStr(new Date());
+  if(!list.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">Henüz tavan miktar tanımlanmamış</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map((row,i) => {
+    const kmhFaiz = getKmhFaizOrani(todayStr);
+    return `<tr>
+      <td><b>${row.paraBirimi}</b></td>
+      <td class="mono" style="color:var(--teal)">%${kmhFaiz} <span style="font-size:10px;color:var(--text3)">(KMH'den)</span></td>
+      <td class="mono">${fmtCur(row.tavanMiktar, row.paraBirimi)}</td>
+      <td><button class="btn btn-danger btn-sm btn-act" onclick="deleteNakitAvansTavan(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openNakitAvansTavanModal() {
+  if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+  const naParaBirimleri = DB.nakitAvansCurlar && DB.nakitAvansCurlar.length
+    ? DB.nakitAvansCurlar
+    : ALL_CURRENCIES.map(c=>c.code);
+  const pbOpts = naParaBirimleri.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const todayStr = localDateStr(new Date());
+  const kmhFaiz = getKmhFaizOrani(todayStr);
+  const body = `<div style="display:grid;gap:14px">
+    <div style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--teal)">
+      📌 KMH Faiz Oranı (bugün): <b>%${kmhFaiz} aylık</b> — tüm nakit avans işlemlerine uygulanır
+    </div>
+    <div><label>Para Birimi</label><select id="na-tavan-pb" style="margin-top:4px">${pbOpts}</select></div>
+    <div>
+      <label>Tavan Miktar</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input id="na-tavan-miktar" type="number" min="0" step="0.01" placeholder="örn. 50000" style="flex:1">
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">Bu miktar, oranla hesaplanan limitin altında kalmalıdır — ikisinden küçük olan geçerli olur</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-generic')">İptal</button>
+      <button class="btn btn-primary" onclick="saveNakitAvansTavan()">Kaydet</button>
+    </div>
+  </div>`;
+  openGenericModal('💵 Nakit Avans Tavan Miktar', body);
+}
+
+function saveNakitAvansTavan() {
+  const pb = document.getElementById('na-tavan-pb').value;
+  const miktar = parseFloat(document.getElementById('na-tavan-miktar').value);
+  if(!pb || isNaN(miktar) || miktar<=0) { showToast('Para birimi ve geçerli tavan miktar giriniz','warn'); return; }
+  if(!DB.nakitAvansTavanlar) DB.nakitAvansTavanlar = [];
+  const idx = DB.nakitAvansTavanlar.findIndex(r=>r.paraBirimi===pb);
+  if(idx>=0) DB.nakitAvansTavanlar[idx].tavanMiktar = miktar;
+  else DB.nakitAvansTavanlar.push({ paraBirimi: pb, tavanMiktar: miktar });
+  saveData();
+  closeModal('modal-generic');
+  renderNakitAvansTavanlar();
+}
+
+function deleteNakitAvansTavan(idx) {
+  showConfirm('Bu tavan miktar kaydını silmek istiyor musunuz?', () => {
+    DB.nakitAvansTavanlar.splice(idx, 1);
+    saveData();
+    renderNakitAvansTavanlar();
+  });
+}
+
+function renderNakitAvansLimitKural() {
+  const tipSel = document.getElementById('nakit-avans-limit-tip');
+  const oranInp = document.getElementById('nakit-avans-max-oran');
+  if(tipSel) tipSel.value = DB.nakitAvansLimitTip || 'kullanilabilir';
+  if(oranInp) oranInp.value = DB.nakitAvansMaxOran != null ? DB.nakitAvansMaxOran : 50;
+  renderNakitAvansTavanlar();
+  updateNakitAvansLimitPreview();
+}
+
+function saveNakitAvansLimitKural() {
+  const tip = document.getElementById('nakit-avans-limit-tip').value;
+  const oran = parseFloat(document.getElementById('nakit-avans-max-oran').value);
+  if(isNaN(oran)||oran<0||oran>100) { showToast('Geçerli bir oran giriniz (0-100)','warn'); return; }
+  DB.nakitAvansLimitTip = tip;
+  DB.nakitAvansMaxOran = oran;
+  saveData();
+  updateNakitAvansLimitPreview();
+  const st = document.getElementById('nakit-avans-limit-status');
+  if(st) { st.textContent = '✓ Kaydedildi'; setTimeout(()=>st.textContent='',2000); }
+}
+
+function updateNakitAvansLimitPreview() {
+  const el = document.getElementById('nakit-avans-limit-preview');
+  if(!el) return;
+  const tip = (document.getElementById('nakit-avans-limit-tip')||{}).value || DB.nakitAvansLimitTip || 'kullanilabilir';
+  const oran = parseFloat((document.getElementById('nakit-avans-max-oran')||{}).value);
+  if(!oran) { el.innerHTML = ''; return; }
+  const tipLabel = tip==='kullanilabilir' ? 'kullanılabilir limit' : 'toplam limit';
+  el.innerHTML = `<span style="color:var(--teal)">📐 Kural:</span> Çekilebilir maks = MIN( <b>${tipLabel} × %${oran}</b> , para birimine tanımlı tavan miktar )`;
+}
+
+// Nakit avans için faiz oranı → doğrudan KMH'den alınır
+function getNakitAvansFaizOrani(paraBirimi, tarihStr) {
+  return getKmhFaizOrani(tarihStr);
+}
+
+// Kart + para birimi için max çekilebilir nakit avans tutarını hesapla
+function getNakitAvansMaxTutar(kartId, paraBirimi) {
+  const kart = DB.kartlar.find(k=>k.id===kartId);
+  if(!kart) return Infinity;
+  const tip = DB.nakitAvansLimitTip || 'kullanilabilir';
+  const oran = DB.nakitAvansMaxOran != null ? DB.nakitAvansMaxOran : 50;
+  const limit = tip==='kullanilabilir'
+    ? ((kart.limit||0) - (kart.borc||0))
+    : (kart.limit||0);
+  const oranliLimit = limit * oran / 100;
+  const tavanRow = (DB.nakitAvansTavanlar||[]).find(r=>r.paraBirimi===paraBirimi);
+  if(!tavanRow) return oranliLimit;
+  return Math.min(oranliLimit, tavanRow.tavanMiktar);
+}
+
+// Generic modal helper
+function openGenericModal(title, bodyHtml) {
+  let modal = document.getElementById('modal-generic');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-generic';
+    modal.className = 'modal-bg';
+    modal.innerHTML = `<div class="modal" style="max-width:440px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💵</div>
+          <div class="modal-header-text"><div class="modal-title" id="modal-generic-title"></div></div>
+        </div>
+        <button class="close-btn" onclick="closeModal('modal-generic')">✕</button>
+      </div>
+      <div class="modal-body" id="modal-generic-body"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('modal-generic-title').textContent = title;
+  document.getElementById('modal-generic-body').innerHTML = bodyHtml;
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+  _sidebarDim(true);
+}
+
+
+function openGenericModal(title, bodyHtml) {
+  let modal = document.getElementById('modal-generic');
+  if(!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-generic';
+    modal.className = 'modal-bg';
+    modal.innerHTML = `<div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💵</div>
+          <div class="modal-header-text"><div class="modal-title" id="modal-generic-title"></div></div>
+        </div>
+        <button class="close-btn" onclick="closeModal('modal-generic')">✕</button>
+      </div>
+      <div class="modal-body" id="modal-generic-body"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('modal-generic-title').textContent = title;
+  document.getElementById('modal-generic-body').innerHTML = bodyHtml;
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+  _sidebarDim(true);
 }
 
 function renderTanimlamalar() {
