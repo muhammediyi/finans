@@ -10603,6 +10603,19 @@ function renderExtreler() {
     .filter(p=>Object.keys(p.rowsByPb).length>0)
     .sort((a,b)=>a.key.localeCompare(b.key));
 
+  // Anlık kart borcu: ödeme tarihi geçmemiş (ödenmemiş) dönemlerin pb bazlı toplamı
+  const kartToplamBorcByPb = {};
+  Array.from(periodMap.values()).forEach(p => {
+    // Ödenmemiş dönemler: odeme tarihi bugün veya gelecekte, ya da geçmişte ama ödeme kaydı yok/eksik
+    Object.keys(p.totalByPb).forEach(pb => {
+      const odenenTop = (DB.kartOdemeleri||[])
+        .filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key)
+        .reduce((s,o)=>s+o.tutar,0);
+      const kalan = Math.max(0, (p.totalByPb[pb]||0) - odenenTop);
+      kartToplamBorcByPb[pb] = (kartToplamBorcByPb[pb]||0) + kalan;
+    });
+  });
+
   if(periods.length === 0) {
     content.innerHTML = '<div class="info-box">Bu kart için henüz işlem yok.</div>';
     return;
@@ -10663,13 +10676,13 @@ function renderExtreler() {
           <div class="exk-box-meta" style="color:${kalanColor}">${new Date(p.odeme+'T00:00:00').toLocaleDateString('tr-TR',{weekday:'long'})} · ${kalanStr}</div>
         </div>
         ${asgariBox}
-        ${kart.limit > 0 ? `<div class="exk-box">
+        ${kart.limit > 0 ? (()=>{ const kb = kartToplamBorcByPb[pb]||0; const kbPct = Math.min(100,Math.round(kb/kart.limit*100)); return `<div class="exk-box">
           <div class="exk-box-icon">📊</div>
           <div class="exk-box-label">Limit Kullanımı</div>
-          <div class="exk-box-val">${Math.round(toplamBorc/kart.limit*100)}%</div>
-          <div class="exk-box-meta">${fmtCur(kart.limit - toplamBorc, pb)} boş</div>
-          <div class="exk-box-bar"><div class="exk-box-bar-fill" style="width:${Math.min(100,Math.round(toplamBorc/kart.limit*100))}%;background:${toplamBorc/kart.limit>0.9?'var(--danger)':toplamBorc/kart.limit>0.7?'#f59e0b':'#2dd4bf'}"></div></div>
-        </div>` : ''}
+          <div class="exk-box-val">${kbPct}%</div>
+          <div class="exk-box-meta">${fmtCur(kart.limit - kb, pb)} boş</div>
+          <div class="exk-box-bar"><div class="exk-box-bar-fill" style="width:${kbPct}%;background:${kb/kart.limit>0.9?'var(--danger)':kb/kart.limit>0.7?'#f59e0b':'#2dd4bf'}"></div></div>
+        </div>`; })() : ''}
       </div>
       <div class="tbl-wrap" style="margin:0;border-top:1px solid var(--border)"><table>
         <thead><tr><th>İşlem Tarihi</th><th>Açıklama</th><th>Taksit</th><th>Tutar</th></tr></thead>
@@ -19773,6 +19786,7 @@ function _bakiyeDelta(hesapId, delta) {
   h.bakiye = Math.round(((h.bakiye || 0) + delta) * 1e6) / 1e6;
   return true;
 }
+window._bakiyeDelta = _bakiyeDelta;
 
 // ─── LOG: çift yansımayı önle ─────────────────────────────────────────────
 // DB.entLog = { [logKey]: yansitilan_tutar }
@@ -19782,6 +19796,10 @@ function _lKey(tip, id, key) {
 function _lGet(k)      { if (!DB.entLog) DB.entLog = {}; return DB.entLog[k] != null ? DB.entLog[k] : null; }
 function _lSet(k, v)   { if (!DB.entLog) DB.entLog = {}; DB.entLog[k] = v; }
 function _lDel(k)      { if (!DB.entLog) DB.entLog = {}; delete DB.entLog[k]; }
+window._lKey = _lKey;
+window._lGet = _lGet;
+window._lSet = _lSet;
+window._lDel = _lDel;
 
 // ─── KİRA: ödeme durumu değişince hesaba yansıt ────────────────────────────
 function entKiraYansit(kiraId, ayKey, durum, tutar) {
