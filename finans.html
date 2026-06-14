@@ -17590,7 +17590,7 @@ function gDriveInit() {
     },
     error_callback: (err) => {
       if(err && (err.type === 'popup_failed_to_open' || err.type === 'popup_closed')) {
-        gDriveSetStatus('⚠️ Tarayıcı popup'ı engelledi. Lütfen adres çubuğundaki popup izin ikonuna tıklayın ve sayfayı yenileyin.', 'var(--warn)');
+		gDriveSetStatus("⚠️ Tarayıcı popup'ı engelledi. Lütfen adres çubuğundaki popup izin ikonuna tıklayın ve sayfayı yenileyin.", 'var(--warn)');
       } else {
         gDriveSetStatus('Giriş hatası: ' + (err && err.type || 'bilinmiyor'), 'var(--danger)');
       }
