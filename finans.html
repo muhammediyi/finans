@@ -1653,20 +1653,26 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 
 /* ─── TAKSIT PLAN ─────────────────────────────────────── */
 .tp-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-.tp-header { display: grid; grid-template-columns: 36px 1fr 80px 1fr 32px; padding: 8px 12px; background: var(--surface3); border-bottom: 1px solid var(--border); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
-.tp-row { display: grid; grid-template-columns: 36px 1fr 80px 1fr 32px; padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; transition: background .1s; }
+.tp-header { display: grid; grid-template-columns: 28px 1fr 110px 28px; padding: 7px 10px; background: var(--surface3); border-bottom: 1px solid var(--border); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; gap: 6px; align-items: center; }
+.tp-header > div:nth-child(3) { text-align: right; }
+.tp-row { display: grid; grid-template-columns: 28px 1fr 110px 28px; padding: 4px 10px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; transition: background .1s; gap: 6px; }
 .tp-row:last-child { border-bottom: none; }
 .tp-row:hover { background: var(--surface2); }
 .tp-donem { font-size: 11px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
 .tp-row.tp-past { opacity: .4; }
-.tp-no { font-family: var(--mono); font-size: 11px; color: var(--text3); }
-.tp-input { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--text); font-size: 12px; padding: 3px 7px; width: 100%; transition: all .15s; font-family: var(--sans); }
+.tp-no { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: center; }
+.tp-input { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--text); font-size: 12px; padding: 4px 7px; width: 100%; transition: all .15s; font-family: var(--sans); box-sizing: border-box; }
 .tp-input:hover { border-color: var(--border2); background: var(--surface2); }
 .tp-input:focus { border-color: var(--gold); background: var(--surface3); outline: none; }
 .tp-input-tutar { font-family: var(--mono); text-align: right; }
 .tp-modified { color: var(--warn) !important; }
-.tp-footer { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; background: var(--surface2); border-top: 1px solid var(--border); font-size: 11px; }
-.tp-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 3px 5px; border-radius: 4px; line-height: 1; transition: all .15s; }
+.tp-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface2); border-top: 1px solid var(--border); font-size: 11px; gap: 8px; }
+.tp-footer-info { display: flex; flex-direction: column; gap: 1px; }
+.tp-footer-total { color: var(--text); font-family: var(--mono); font-weight: 600; font-size: 13px; }
+.tp-footer-meta { color: var(--text3); font-size: 10px; }
+.tp-reset-all { display: flex; align-items: center; gap: 5px; background: var(--surface3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); font-size: 11px; font-weight: 500; padding: 5px 10px; cursor: pointer; white-space: nowrap; transition: all .15s; flex-shrink: 0; }
+.tp-reset-all:hover { color: var(--text); border-color: var(--border); background: var(--surface2); }
+.tp-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 12px; padding: 3px 4px; border-radius: 4px; line-height: 1; transition: all .15s; display: flex; align-items: center; justify-content: center; }
 .tp-del:hover { color: var(--rose); background: var(--rose-glow); }
 
 /* ─── EXTRE CARD ──────────────────────────────────────── */
@@ -8849,7 +8855,7 @@ function setMoneyInput(id, val) {
     const binlik  = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
     const raw = String(Math.round(n * Math.pow(10, decimals))).replace('-','');
     const str = raw.padStart(decimals + 1, '0');
-    const intPart = str.slice(0, -decimals) || '0';
+    const intPart = decimals > 0 ? (str.slice(0, -decimals) || '0') : str;
     const decPart = decimals > 0 ? str.slice(-decimals) : '';
     let intFmt = parseInt(intPart, 10).toLocaleString('tr-TR').replace(/\./g, binlik !== '' ? binlik : '');
     if(binlik === '') intFmt = String(parseInt(intPart, 10));
@@ -8887,7 +8893,7 @@ function bindMoneyInputs(container) {
       } else {
         // ATM stili: rakamları sağdan sola doldur
         const str     = raw.padStart(decimals + 1, '0');
-        const intPart = str.slice(0, -decimals) || '0';
+        const intPart = decimals > 0 ? (str.slice(0, -decimals) || '0') : str;
         const decPart = decimals > 0 ? str.slice(-decimals) : '';
         let intFmt = parseInt(intPart, 10).toLocaleString('tr-TR').replace(/\./g, binlik !== '' ? binlik : '');
         if(binlik === '') intFmt = String(parseInt(intPart, 10));
@@ -10060,11 +10066,14 @@ function calcTaksit(preserveManuel=false) {
   }).join('');
 
   container.innerHTML = `<div class="tp-wrap">
-    <div class="tp-header"><div>#</div><div>Tarih</div><div style="text-align:right">Tutar</div><div></div></div>
+    <div class="tp-header"><div></div><div>Tarih</div><div>Tutar</div><div></div></div>
     ${rows}
     <div class="tp-footer">
-      <span style="color:var(--text3)">Toplam: <span id="islem-tp-toplam" style="color:var(--text);font-family:var(--mono);font-weight:600">${fmt(toplam)}</span>  <span style="color:var(--text3);font-size:10px">(${taksit} taksit × ort. ${fmt(toplam/taksit)})</span></span>
-      <button class="btn btn-ghost btn-sm" onclick="calcTaksit(false)">↺ Tümünü Sıfırla</button>
+      <div class="tp-footer-info">
+        <span class="tp-footer-total">Toplam: <span id="islem-tp-toplam">${fmt(toplam)}</span></span>
+        <span class="tp-footer-meta">${taksit} taksit × ort. ${fmt(toplam/taksit)}</span>
+      </div>
+      <button class="tp-reset-all" onclick="calcTaksit(false)">↺ Sıfırla</button>
     </div>
   </div>`;
 }
@@ -16122,6 +16131,7 @@ function gDriveInit() {
   }
   // Restore saved token from localStorage (short-lived, just for page refresh)
   const saved = localStorage.getItem('gdrive_token');
+  let savedInfo = null;
   if (saved) {
     try {
       const t = JSON.parse(saved);
@@ -16129,8 +16139,14 @@ function gDriveInit() {
         gAccessToken = t.token;
         gDriveShowUserInfo(t.name, t.avatar);
         gDriveLoadFromDrive();
+        // Token geçerli — 10 dk kala otomatik yenile
+        const msLeft = t.expires - Date.now();
+        const refreshIn = Math.max(msLeft - 10 * 60 * 1000, 0);
+        setTimeout(() => gDriveSilentRefresh(), refreshIn);
         return;
       }
+      // Token süresi dolmuş ama kullanıcı bilgisi var — sessiz yenileme dene
+      savedInfo = { name: t.name, avatar: t.avatar };
     } catch(e) {}
   }
   if(typeof google === 'undefined' || !google.accounts) {
@@ -16147,8 +16163,34 @@ function gDriveInit() {
       const expMs = (resp.expires_in || 3600) * 1000;
       gFetchUserInfo(expMs);
       gDriveLoadFromDrive();
+      // Bir sonraki otomatik yenilemeyi planla (10 dk kala)
+      setTimeout(() => gDriveSilentRefresh(), expMs - 10 * 60 * 1000);
     }
   });
+  // Daha önce giriş yapılmışsa popup göstermeden sessizce yenile
+  if (savedInfo) {
+    gDriveShowUserInfo(savedInfo.name, savedInfo.avatar);
+    gDriveSetStatus('Yenileniyor…', 'var(--text2)');
+    gTokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+function gDriveSilentRefresh() {
+  if (!GDRIVE_CLIENT_ID || typeof google === 'undefined' || !google.accounts) return;
+  if (!gTokenClient) {
+    gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope: GDRIVE_SCOPES,
+      callback: (resp) => {
+        if (resp.error) return; // sessizce geç, kullanıcıyı rahatsız etme
+        gAccessToken = resp.access_token;
+        const expMs = (resp.expires_in || 3600) * 1000;
+        gFetchUserInfo(expMs);
+        setTimeout(() => gDriveSilentRefresh(), expMs - 10 * 60 * 1000);
+      }
+    });
+  }
+  gTokenClient.requestAccessToken({ prompt: '' });
 }
 
 function gFetchUserInfo(expMs) {
@@ -16200,7 +16242,7 @@ function gDriveSignIn() {
       }
     });
   }
-  gTokenClient.requestAccessToken({ prompt: 'consent' });
+  gTokenClient.requestAccessToken({ prompt: 'select_account' });
 }
 
 function gDriveSignOut() {
