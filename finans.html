@@ -8647,9 +8647,9 @@ html[data-theme="light"] .mob-theme-toggle {
         <input id="kart-odeme-tarih" type="date">
       </div>
       <div>
-        <label>Ödeme Yapılan Hesap <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
+        <label class="has-required">Ödeme Yapılan Hesap</label>
         <select id="kart-odeme-hesap">
-          <option value="">— Hesap seçilmedi —</option>
+          <option value="">— Hesap seçiniz —</option>
         </select>
       </div>
     </div>
@@ -10058,6 +10058,11 @@ function getKartKullanim(kartId) {
   (DB.krediler||[]).filter(kr=>kr.kmhId===kartId).forEach(kr=>{
     total += getKrediKalanBorc(kr);
   });
+  // Yapılan ödemeler limiti geri serbest bırakır — ödenen tutarları düş
+  const odenenToplam = (DB.kartOdemeleri||[])
+    .filter(o => o.kartId === kartId)
+    .reduce((s, o) => s + (o.tutar || 0), 0);
+  total = Math.max(0, total - odenenToplam);
   return total;
 }
 
@@ -10732,7 +10737,7 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
 
   // Hesap listesi — varsayılan para birimiyle eşleşenleri öne al
   const hesapSel = document.getElementById('kart-odeme-hesap');
-  hesapSel.innerHTML = '<option value="">— Hesap seçilmedi —</option>';
+  hesapSel.innerHTML = '<option value="">— Hesap seçiniz —</option>';
   (DB.hesaplar||[]).forEach(h => {
     const opt = document.createElement('option');
     opt.value = h.id;
@@ -10765,19 +10770,41 @@ function saveKartOdeme() {
   if(!tutar || tutar <= 0) { showToast('Geçerli bir tutar giriniz', 'error'); return; }
   if(!tarih) { showToast('Tarih giriniz', 'error'); return; }
 
+  // Hesap seçimi zorunlu
+  if(!hesapId) {
+    const sel = document.getElementById('kart-odeme-hesap');
+    sel.classList.add('shake');
+    sel.style.borderColor = 'var(--danger)';
+    sel.style.boxShadow = '0 0 0 3px rgba(251,113,133,.2)';
+    setTimeout(() => { sel.classList.remove('shake'); sel.style.borderColor = ''; sel.style.boxShadow = ''; }, 800);
+    showToast('Ödeme yapılacak hesabı seçiniz', 'error');
+    return;
+  }
+
+  // Hesap bakiyesi / KMH limiti kontrolü
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(hesap) {
+    const bakiye = hesap.bakiye || 0;
+    const kmhLimit = hesap.kmhLimit || 0;
+    const kullanilab = bakiye + kmhLimit; // bakiye negatif olabilir, KMH bunu telafi eder
+    if(kullanilab < tutar) {
+      const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(bakiye, hesap.paraBirimi||'TRY') : bakiye.toFixed(2);
+      const kmhStr    = kmhLimit > 0 ? ` + KMH ${typeof fmtCur === 'function' ? fmtCur(kmhLimit, hesap.paraBirimi||'TRY') : kmhLimit.toFixed(2)}` : '';
+      showToast(`Yetersiz bakiye! ${hesap.ad}: ${bakiyeStr}${kmhStr} mevcut, ${typeof fmtCur === 'function' ? fmtCur(tutar, pb) : tutar.toFixed(2)} gerekiyor`, 'error');
+      return;
+    }
+  }
+
   if(!DB.kartOdemeleri) DB.kartOdemeleri = [];
 
   const odeme = { id: genId(), kartId, paraBirimi: pb, donemKey, tutar, tarih, hesapId: hesapId||null, not };
   DB.kartOdemeleri.push(odeme);
 
   // Hesap bakiyesi düşür
-  if(hesapId) {
-    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
-    if(hesap) {
-      if(!DB.entLog) DB.entLog = {};
-      _bakiyeDelta(hesapId, -tutar);
-      DB.entLog[_lKey('kartodeme', odeme.id, null)] = tutar;
-    }
+  if(hesapId && hesap) {
+    if(!DB.entLog) DB.entLog = {};
+    _bakiyeDelta(hesapId, -tutar);
+    DB.entLog[_lKey('kartodeme', odeme.id, null)] = tutar;
   }
 
   saveData();
