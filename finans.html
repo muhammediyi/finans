@@ -10454,8 +10454,8 @@ function renderIslemler() {
     const tutarlar = i.taksitTutarlari || Array(i.taksit||1).fill(i.aylik||0);
     const iCur = i.paraBirimi || getKartCurrency(i.kart);
     const taksitStr = i.taksit > 1
-      ? tutarlar.map((t,idx)=>`<span style="font-size:10px;color:var(--text3)">${idx+1}:</span> ${fmtCur(t, iCur)}`).join(' · ')
-      : fmtCur(tutarlar[0]||i.tutar, iCur);
+      ? `<div style="display:flex;flex-direction:column;gap:2px">${tutarlar.map((t,idx)=>`<div style="display:flex;align-items:center;gap:5px"><span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--bg3);font-size:9px;font-weight:700;color:var(--text3);flex-shrink:0">${idx+1}</span><span class="mono" style="font-size:12px;color:var(--text2)">${fmtCur(t, iCur)}</span></div>`).join('')}</div>`
+      : `<span class="mono" style="font-size:13px;font-weight:600;color:var(--text1)">${fmtCur(tutarlar[0]||i.tutar, iCur)}</span>`;
 
     // Ekstre/ödeme bilgisi
     let extreOdemeHtml = '<span style="color:var(--text3);font-size:11px">—</span>';
@@ -10466,9 +10466,9 @@ function renderIslemler() {
         if(pd) {
           const extreDt = calcExtreTarihiOdemeModuyla(k, pd.year, pd.month, tatilSet);
           const odemeDt = extreDt ? calcOdemeTarihi(extreDt, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-          extreOdemeHtml = `<div style="font-size:11px;line-height:1.6">
-            <div>📄 <span style="color:var(--text3)">Ekstre:</span> <span class="mono" style="color:var(--text2)">${extreDt?fmtDate(extreDt):'?'}</span></div>
-            <div>💳 <span style="color:var(--text3)">Ödeme:</span> <span class="mono" style="color:var(--accent2)">${odemeDt?fmtDate(odemeDt):'?'}</span></div>
+          extreOdemeHtml = `<div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;background:var(--bg3);color:var(--text3);border-radius:4px;padding:1px 5px;font-weight:600;letter-spacing:.02em">EKS</span><span class="mono" style="font-size:12px;color:var(--text2)">${extreDt?fmtDate(extreDt):'?'}</span></div>
+            <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;background:rgba(var(--accent2-rgb,99,102,241),.12);color:var(--accent2);border-radius:4px;padding:1px 5px;font-weight:600;letter-spacing:.02em">ÖDE</span><span class="mono" style="font-size:12px;font-weight:600;color:var(--accent2)">${odemeDt?fmtDate(odemeDt):'?'}</span></div>
           </div>`;
         }
       } else {
@@ -10481,10 +10481,10 @@ function renderIslemler() {
         const extre2 = pd2 ? calcExtreTarihiOdemeModuyla(k, pd2.year, pd2.month, tatilSet) : null;
         const odeme1 = extre1 ? calcOdemeTarihi(extre1, k.odemeSure, k.odemeGunTip, tatilSet) : null;
         const odeme2 = extre2 ? calcOdemeTarihi(extre2, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-        extreOdemeHtml = `<div style="font-size:11px;line-height:1.6">
-          <div>📄 <span style="color:var(--text3)">1. Ekstre:</span> <span class="mono" style="color:var(--text2)">${extre1?fmtDate(extre1):'?'}</span></div>
-          <div>💳 <span style="color:var(--text3)">1. Ödeme:</span> <span class="mono" style="color:var(--accent2)">${odeme1?fmtDate(odeme1):'?'}</span></div>
-          ${taksitler.length > 1 && extre2 ? `<div style="color:var(--text3);font-size:10px">→ Son: 💳 ${odeme2?fmtDate(odeme2):'?'}</div>` : ''}
+        extreOdemeHtml = `<div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;background:var(--bg3);color:var(--text3);border-radius:4px;padding:1px 5px;font-weight:600">EKS¹</span><span class="mono" style="font-size:12px;color:var(--text2)">${extre1?fmtDate(extre1):'?'}</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;background:rgba(var(--accent2-rgb,99,102,241),.12);color:var(--accent2);border-radius:4px;padding:1px 5px;font-weight:600">ÖDE¹</span><span class="mono" style="font-size:12px;font-weight:600;color:var(--accent2)">${odeme1?fmtDate(odeme1):'?'}</span></div>
+          ${taksitler.length > 1 && odeme2 ? `<div style="display:flex;align-items:center;gap:5px;margin-top:1px"><span style="font-size:10px;background:rgba(var(--accent2-rgb,99,102,241),.07);color:var(--text3);border-radius:4px;padding:1px 5px;font-weight:600">SON</span><span class="mono" style="font-size:11px;color:var(--text3)">${fmtDate(odeme2)}</span></div>` : ''}
         </div>`;
       }
     }
@@ -10733,7 +10733,7 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
   document.getElementById('kart-odeme-donem-key').value = donemKey;
   document.getElementById('kart-odeme-tutar').value = kalan > 0 ? kalan.toFixed(2) : toplamBorc.toFixed(2);
   document.getElementById('kart-odeme-tarih').value = localDateStr(new Date());
-  document.getElementById('kart-odeme-not').value = '';
+
 
   // Hesap listesi — varsayılan para birimiyle eşleşenleri öne al
   const hesapSel = document.getElementById('kart-odeme-hesap');
@@ -10765,7 +10765,7 @@ function saveKartOdeme() {
   const tutar    = parseFloat(document.getElementById('kart-odeme-tutar').value);
   const tarih    = document.getElementById('kart-odeme-tarih').value;
   const hesapId  = document.getElementById('kart-odeme-hesap').value;
-  const not      = document.getElementById('kart-odeme-not').value.trim();
+
 
   if(!tutar || tutar <= 0) { showToast('Geçerli bir tutar giriniz', 'error'); return; }
   if(!tarih) { showToast('Tarih giriniz', 'error'); return; }
@@ -10797,7 +10797,7 @@ function saveKartOdeme() {
 
   if(!DB.kartOdemeleri) DB.kartOdemeleri = [];
 
-  const odeme = { id: genId(), kartId, paraBirimi: pb, donemKey, tutar, tarih, hesapId: hesapId||null, not };
+  const odeme = { id: genId(), kartId, paraBirimi: pb, donemKey, tutar, tarih, hesapId: hesapId||null };
   DB.kartOdemeleri.push(odeme);
 
   // Hesap bakiyesi düşür
