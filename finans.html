@@ -8637,11 +8637,13 @@ html[data-theme="light"] .mob-theme-toggle {
       <input type="hidden" id="kart-odeme-pb">
       <input type="hidden" id="kart-odeme-donem-key">
       <div>
-        <label>Ödeme Tutarı</label>
-        <input id="kart-odeme-tutar" type="number" step="0.01" placeholder="0,00">
+        <label class="has-required">Ödeme Tutarı</label>
+        <div class="money-wrap" id="kart-odeme-tutar-wrap" data-symbol="₺" data-code="TRY">
+          <input id="kart-odeme-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+        </div>
       </div>
       <div>
-        <label>Ödeme Tarihi</label>
+        <label class="has-required">Ödeme Tarihi</label>
         <input id="kart-odeme-tarih" type="date">
       </div>
       <div>
@@ -8649,10 +8651,6 @@ html[data-theme="light"] .mob-theme-toggle {
         <select id="kart-odeme-hesap">
           <option value="">— Hesap seçilmedi —</option>
         </select>
-      </div>
-      <div>
-        <label>Not <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
-        <input id="kart-odeme-not" type="text" placeholder="Açıklama...">
       </div>
     </div>
     <div class="modal-footer">
