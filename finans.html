@@ -6633,55 +6633,74 @@ html[data-theme="light"] .mob-theme-toggle {
 
     <!-- Kural ekleme formu -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><span class="card-title">➕ Yeni Kural Ekle</span></div>
-      <div id="asgari-uyari-wrap"></div>
-      <div style="display:grid;grid-template-columns:1.4fr .8fr 1.4fr;gap:12px;margin-bottom:12px;align-items:end">
-        <div>
-          <label>Koşul Alanı</label>
-          <select id="asgari-kosul-alan" onchange="asgariKosulTurChange()" style="width:100%">
-            <option value="limit">Kart Limiti</option>
-            <option value="borc">Dönem Borcu</option>
-            <option value="her_zaman">Her zaman (varsayılan)</option>
-          </select>
-        </div>
-        <div id="asgari-kosul-op-wrap">
-          <label>Koşul</label>
-          <select id="asgari-kosul-op" onchange="asgariFormDegisti()" style="width:100%">
-            <option value="max">≤</option>
-            <option value="min">&gt;</option>
-          </select>
-        </div>
-        <div id="asgari-esik-wrap">
-          <label style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
-            <span>Eşik Tutarı <span style="color:var(--danger)">*</span></span>
-            <select id="asgari-esik-pb" onchange="asgariEsikPbChange()" class="mini-select" style="width:auto;padding:2px 22px 2px 6px;font-size:10px;height:auto;border:none;background:transparent;color:var(--text3);text-transform:uppercase"></select>
-          </label>
-          <div class="money-wrap" data-symbol="₺" data-code="TRY" data-own-currency="1"><input id="asgari-esik" type="text" class="money-input" data-decimals="0" placeholder="50.000" style="width:100%;box-sizing:border-box" oninput="asgariFormDegisti()"></div>
-        </div>
+      <div class="card-header" style="flex-wrap:wrap;gap:6px">
+        <span class="card-title">➕ Yeni Kural Ekle</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:400">Kurallar sırayla değerlendirilir — ilk eşleşen uygulanır</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-        <div>
-          <label>Uygulanan Oran <span style="color:var(--danger)">*</span></label>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input id="asgari-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 20" style="flex:1">
-            <span style="font-size:14px;font-weight:700;color:var(--text2)">%</span>
+      <div id="asgari-uyari-wrap"></div>
+
+      <!-- Koşul Satırı -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📐 Tetiklenme Koşulu</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end">
+          <div>
+            <label style="font-size:11px;color:var(--text2);margin-bottom:4px;display:block">Alan</label>
+            <select id="asgari-kosul-alan" onchange="asgariKosulTurChange()" style="width:100%">
+              <option value="limit">💳 Kart Limiti</option>
+              <option value="borc">📊 Dönem Borcu</option>
+              <option value="her_zaman">⚡ Her zaman (varsayılan)</option>
+            </select>
+          </div>
+          <div id="asgari-kosul-op-wrap">
+            <label style="font-size:11px;color:var(--text2);margin-bottom:4px;display:block">Operatör</label>
+            <select id="asgari-kosul-op" onchange="asgariFormDegisti()" style="width:100%;min-width:140px;font-weight:600">
+              <option value="max">≤ küçük veya eşit</option>
+              <option value="min">&gt; büyük</option>
+              <option value="gte">≥ büyük veya eşit</option>
+              <option value="lt">&lt; küçük</option>
+              <option value="eq">= tam eşit</option>
+            </select>
+          </div>
+          <div id="asgari-esik-wrap">
+            <label style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11px;color:var(--text2);margin-bottom:4px">
+              <span>Eşik Tutarı <span style="color:var(--danger)">*</span></span>
+              <select id="asgari-esik-pb" onchange="asgariEsikPbChange()" class="mini-select" style="width:auto;padding:2px 22px 2px 6px;font-size:10px;height:auto;border:none;background:transparent;color:var(--text3);text-transform:uppercase"></select>
+            </label>
+            <div class="money-wrap" data-symbol="₺" data-code="TRY" data-own-currency="1"><input id="asgari-esik" type="text" class="money-input" data-decimals="0" placeholder="50.000" style="width:100%;box-sizing:border-box" oninput="asgariFormDegisti()"></div>
           </div>
         </div>
-        <div>
-          <label>Minimum Tutar <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+      </div>
+
+      <!-- Oran + Min Tutar -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📈 Uygulanan Oran <span style="color:var(--danger)">*</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="asgari-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 20" style="flex:1;font-size:18px;font-weight:700;text-align:center">
+            <span style="font-size:22px;font-weight:800;color:var(--accent)">%</span>
+          </div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔽 Minimum Tutar <span style="color:var(--text3);font-size:10px;font-weight:400;text-transform:none">(opsiyonel)</span></div>
           <div class="money-wrap" data-symbol="₺" data-code="TRY" data-own-currency="1"><input id="asgari-min-tutar" type="text" class="money-input" data-decimals="0" placeholder="100" style="width:100%;box-sizing:border-box"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:3px">Hesaplanan oran bunun altındaysa bu tutar uygulanır</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:5px">Oran bu tutarın altında kalırsa minimum uygulanır</div>
         </div>
       </div>
-      <div style="margin-bottom:12px">
-        <label>Geçerli Para Birimleri <span style="color:var(--text3);font-size:10px">(birden fazla seçilebilir, hiçbiri seçilmezse tüm para birimleri için geçerlidir)</span></label>
+
+      <!-- Para Birimleri -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">🌐 Geçerli Para Birimleri <span style="color:var(--text3);font-size:10px;font-weight:400">(hiçbiri seçilmezse tüm para birimleri için geçerlidir)</span></label>
         <div class="cur-grid" id="asgari-cur-grid"></div>
       </div>
-      <div style="margin-bottom:12px">
-        <label>Kural Açıklaması <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
-        <input id="asgari-aciklama" type="text" placeholder="örn. Düşük limitli kart kuralı" style="width:100%;box-sizing:border-box">
+
+      <!-- Açıklama + Ekle Butonu -->
+      <div style="display:flex;gap:10px;align-items:flex-end">
+        <div style="flex:1">
+          <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">📝 Kural Açıklaması <span style="color:var(--text3);font-size:10px;font-weight:400">(opsiyonel)</span></label>
+          <input id="asgari-aciklama" type="text" placeholder="örn. Düşük limitli kart kuralı" style="width:100%;box-sizing:border-box">
+        </div>
+        <button class="btn btn-primary" onclick="asgariKuralEkle()" style="white-space:nowrap;padding:10px 22px;height:42px;font-size:14px">✅ Kural Ekle</button>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="asgariKuralEkle()">+ Kural Ekle</button>
     </div>
 
     <!-- Kural listesi -->
@@ -16267,8 +16286,14 @@ function deleteOran(tip, id) {
 const ASGARI_KOSUL_LABELS = {
   limit_max:  'Kart limiti ≤',
   limit_min:  'Kart limiti >',
+  limit_gte:  'Kart limiti ≥',
+  limit_lt:   'Kart limiti <',
+  limit_eq:   'Kart limiti =',
   borc_max:   'Dönem borcu ≤',
   borc_min:   'Dönem borcu >',
+  borc_gte:   'Dönem borcu ≥',
+  borc_lt:    'Dönem borcu <',
+  borc_eq:    'Dönem borcu =',
   her_zaman:  'Her zaman'
 };
 
@@ -16342,11 +16367,11 @@ function asgariKosulTurChange() {
   asgariFormDegisti();
 }
 
-// Form alanlarındaki güncel değerlerden 'tur' kodunu üretir (limit_max, limit_min, borc_max, borc_min, her_zaman)
+// Form alanlarındaki güncel değerlerden 'tur' kodunu üretir
 function asgariFormTur() {
   const alan = document.getElementById('asgari-kosul-alan').value;
   if(alan === 'her_zaman') return 'her_zaman';
-  const op = document.getElementById('asgari-kosul-op').value; // 'max' (≤) | 'min' (>)
+  const op = document.getElementById('asgari-kosul-op').value; // max(≤) | min(>) | gte(≥) | lt(<) | eq(=)
   return `${alan}_${op}`;
 }
 
@@ -16572,11 +16597,17 @@ function calcAsgariOdeme(limit, borc, paraBirimi=null) {
     // Para birimi filtresi: kuralda seçili para birimi yoksa tüm para birimleri için geçerlidir
     if(paraBirimi && k.paraBirimleri && k.paraBirimleri.length && !k.paraBirimleri.includes(paraBirimi)) continue;
     let eslesir = false;
-    if(k.tur === 'her_zaman')  eslesir = true;
+    if(k.tur === 'her_zaman')   eslesir = true;
     else if(k.tur === 'limit_max') eslesir = limit <= k.esik;
     else if(k.tur === 'limit_min') eslesir = limit >  k.esik;
+    else if(k.tur === 'limit_gte') eslesir = limit >= k.esik;
+    else if(k.tur === 'limit_lt')  eslesir = limit <  k.esik;
+    else if(k.tur === 'limit_eq')  eslesir = limit === k.esik;
     else if(k.tur === 'borc_max')  eslesir = borc  <= k.esik;
     else if(k.tur === 'borc_min')  eslesir = borc  >  k.esik;
+    else if(k.tur === 'borc_gte')  eslesir = borc  >= k.esik;
+    else if(k.tur === 'borc_lt')   eslesir = borc  <  k.esik;
+    else if(k.tur === 'borc_eq')   eslesir = borc  === k.esik;
     if(eslesir) {
       const hesap = borc * (k.oran / 100);
       const tutar = k.minTut > 0 ? Math.max(hesap, k.minTut) : hesap;
