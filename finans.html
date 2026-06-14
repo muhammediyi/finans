@@ -725,6 +725,7 @@ body::before {
 /* ─── MAIN CONTENT ────────────────────────────────────── */
 .main-wrap {
   flex: 1;
+  min-width: 0;
   margin-left: var(--sidebar-w);
   min-height: 100vh;
   position: relative;
@@ -7438,8 +7439,8 @@ html[data-theme="light"] .mob-theme-toggle {
           İşlem Bilgileri
         </div>
         <div class="form-row cols-2">
-          <div><label>Kart</label><select id="na-kart" onchange="onNaKartChange()"></select></div>
-          <div><label>İşlem Tarihi</label><input id="na-tarih" type="date" onchange="onNaTarihChange()"></div>
+          <div><label class="has-required">Kart</label><select id="na-kart" onchange="onNaKartChange()"></select></div>
+          <div><label class="has-required">İşlem Tarihi</label><input id="na-tarih" type="date" onchange="onNaTarihChange()"></div>
         </div>
         <div class="form-row cols-2">
           <div>
@@ -7447,8 +7448,9 @@ html[data-theme="light"] .mob-theme-toggle {
             <select id="na-para-birimi" onchange="onNaPbChange()"></select>
           </div>
           <div>
-            <label>Çekilecek Tutar</label>
+            <label class="has-required">Çekilecek Tutar</label>
             <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="na-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcNakitAvans()"></div>
+            <div id="na-tutar-warn" style="display:none;font-size:11px;color:var(--danger);margin-top:4px"></div>
           </div>
         </div>
         <div class="form-row">
@@ -10637,9 +10639,13 @@ function openNakitAvansModal() {
 function onNaKartChange() {
   const kartId = document.getElementById('na-kart').value;
   const pbSel = document.getElementById('na-para-birimi');
-  const naParaBirimleri = DB.nakitAvansCurlar && DB.nakitAvansCurlar.length
+  const naCurlar = DB.nakitAvansCurlar && DB.nakitAvansCurlar.length
     ? DB.nakitAvansCurlar
     : (ALL_CURRENCIES.length ? ALL_CURRENCIES.map(c=>c.code) : ['TRY']);
+  const kartCurlar = getKartCurrencies(kartId);
+  // Sadece nakit avansın desteklediği VE kartın desteklediği para birimlerinin kesişimi
+  let naParaBirimleri = naCurlar.filter(c=>kartCurlar.includes(c));
+  if(!naParaBirimleri.length) naParaBirimleri = kartCurlar; // kesişim boşsa kartın para birimlerine düş
   pbSel.innerHTML = naParaBirimleri.map(c=>`<option value="${c}">${c}</option>`).join('');
   const kartDef = getKartDefaultCurrency(kartId);
   if(naParaBirimleri.includes(kartDef)) pbSel.value = kartDef;
@@ -10685,6 +10691,28 @@ function updateNaLimitInfo() {
     ? `<span style="color:var(--warn)"> ↓ Tavan miktar uygulandı</span>`
     : '';
   el.innerHTML = `Max çekilebilir: <b style="color:var(--teal)">${fmtCur(maxCek, pb)}</b>${tavanNot}<br><span style="font-size:10px">${tipLabel} × %${oran}${tavanRow?' → MIN(oran, tavan)':''}</span>`;
+  checkNaTutarLimit();
+}
+
+// Girilen tutar maksimum çekilebilir tutarı aşıyorsa anlık uyarı göster
+function checkNaTutarLimit() {
+  const warnEl = document.getElementById('na-tutar-warn');
+  const inputEl = document.getElementById('na-tutar');
+  if(!warnEl || !inputEl) return;
+  const kartId = document.getElementById('na-kart').value;
+  const pb = document.getElementById('na-para-birimi').value;
+  const tutar = getMoneyInput('na-tutar') || 0;
+  const maxCek = getNakitAvansMaxTutar(kartId, pb);
+  if(tutar > 0 && maxCek != null && isFinite(maxCek) && tutar > maxCek) {
+    warnEl.textContent = `⚠ Girilen tutar maksimum çekilebilir tutarı (${fmtCur(maxCek, pb)}) aşıyor`;
+    warnEl.style.display = 'block';
+    inputEl.style.borderColor = 'var(--danger)';
+    inputEl.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.3)';
+  } else {
+    warnEl.style.display = 'none';
+    inputEl.style.borderColor = '';
+    inputEl.style.boxShadow = '';
+  }
 }
 
 function calcNakitAvans() {
@@ -10697,6 +10725,8 @@ function calcNakitAvans() {
   const sonucWrap = document.getElementById('na-sonuc-wrap');
   const taksitDiv = document.getElementById('na-taksit-alanlari');
   const ozetDiv = document.getElementById('na-ozet');
+
+  checkNaTutarLimit();
 
   if(!tutar || tutar <= 0) { sonucWrap.style.display='none'; return; }
   sonucWrap.style.display = 'block';
@@ -10778,7 +10808,13 @@ function saveNakitAvans() {
   const kkdf = parseFloat(document.getElementById('na-kkdf').value)||0;
   const bsmv = parseFloat(document.getElementById('na-bsmv').value)||0;
 
-  if(!kartId || !tarih || !tutar) { showToast('Kart, tarih ve tutar zorunludur','warn'); return; }
+  if(!validateRequiredFields([{id:'na-kart',msg:'Kart seçiniz'},{id:'na-tarih',msg:'İşlem tarihi zorunlu'},{id:'na-tutar',msg:'Çekilecek tutar zorunlu'}])) return;
+
+  const maxCek = getNakitAvansMaxTutar(kartId, pb);
+  if(maxCek != null && isFinite(maxCek) && tutar > maxCek) {
+    showToast(`Maksimum çekilebilir tutarı (${fmtCur(maxCek, pb)}) aşıyorsunuz`, 'warn');
+    return;
+  }
 
   const container = document.getElementById('na-taksit-alanlari');
   let tutarlar = [], tarihler = [];
