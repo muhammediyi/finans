@@ -6758,9 +6758,9 @@ html[data-theme="light"] .mob-theme-toggle {
       </div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Nakit avans işleminde seçilebilecek para birimlerini işaretleyin.</div>
       <div class="cur-grid" id="nakit-avans-cur-grid"></div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="saveNakitAvansCur()">💾 Kaydet</button>
-        <span id="nakit-avans-cur-status" style="font-size:12px;color:var(--teal);align-self:center"></span>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text3)">Tıklayarak seç/kaldır — otomatik kaydedilir</span>
+        <span id="nakit-avans-cur-status" style="font-size:12px;color:var(--teal)"></span>
       </div>
     </div>
 
@@ -6800,7 +6800,7 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Her para birimi için maksimum çekilebilir miktar belirleyin. Bu miktar, oranla hesaplanan limitin <b>altında</b> kalır — ikisinden küçük olan geçerlidir.</div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th>Para Birimi</th><th>KMH Faiz Oranı (otomatik)</th><th>Tavan Miktar</th><th></th></tr></thead>
+          <thead><tr><th>Para Birimi</th><th>Tavan Miktar</th><th></th></tr></thead>
           <tbody id="nakit-avans-tavan-tbody"></tbody>
         </table></div>
       </div>
@@ -14130,27 +14130,29 @@ async function resmiTatilleriGuncelle() {
 
 function renderNakitAvansCurGrid() {
   if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
-  const selected = DB.nakitAvansCurlar || [];
+  const selected = new Set(DB.nakitAvansCurlar || []);
   const grid = document.getElementById('nakit-avans-cur-grid');
   if(!grid) return;
   grid.innerHTML = ALL_CURRENCIES.map(c => {
-    const active = selected.includes(c.code);
-    return `<label class="cur-chip${active?' active':''}" style="cursor:pointer;user-select:none">
-      <input type="checkbox" value="${c.code}" ${active?'checked':''} style="display:none" onchange="onNakitAvansCurChange(this)">
-      <span>${c.flag||''} ${c.code}</span>
-    </label>`;
+    const isSelected = selected.has(c.code);
+    return `<span class="cur-chip${isSelected?' selected':''}" style="cursor:pointer;user-select:none" data-cur="${c.code}" onclick="toggleNakitAvansCur(this)">${c.flag||''} ${c.code}</span>`;
   }).join('');
 }
 
-function onNakitAvansCurChange(cb) {
-  const label = cb.closest('label');
-  if(cb.checked) label.classList.add('active');
-  else label.classList.remove('active');
+function toggleNakitAvansCur(el) {
+  el.classList.toggle('selected');
+  // Otomatik kaydet
+  const selected = [...document.querySelectorAll('#nakit-avans-cur-grid .cur-chip.selected')].map(el=>el.dataset.cur);
+  DB.nakitAvansCurlar = selected;
+  saveData();
+  const st = document.getElementById('nakit-avans-cur-status');
+  if(st) { st.textContent = '✓'; setTimeout(()=>st.textContent='',1500); }
 }
 
 function saveNakitAvansCur() {
-  const checked = [...document.querySelectorAll('#nakit-avans-cur-grid input:checked')].map(i=>i.value);
-  DB.nakitAvansCurlar = checked;
+  // Artık gerekli değil (otomatik kaydediliyor) ama uyumluluk için bırakıldı
+  const selected = [...document.querySelectorAll('#nakit-avans-cur-grid .cur-chip.selected')].map(el=>el.dataset.cur);
+  DB.nakitAvansCurlar = selected;
   saveData();
   const st = document.getElementById('nakit-avans-cur-status');
   if(st) { st.textContent = '✓ Kaydedildi'; setTimeout(()=>st.textContent='',2000); }
@@ -14160,20 +14162,15 @@ function renderNakitAvansTavanlar() {
   const tbody = document.getElementById('nakit-avans-tavan-tbody');
   if(!tbody) return;
   const list = DB.nakitAvansTavanlar || [];
-  const todayStr = localDateStr(new Date());
   if(!list.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">Henüz tavan miktar tanımlanmamış</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Henüz tavan miktar tanımlanmamış</td></tr>';
     return;
   }
-  tbody.innerHTML = list.map((row,i) => {
-    const kmhFaiz = getKmhFaizOrani(todayStr);
-    return `<tr>
-      <td><b>${row.paraBirimi}</b></td>
-      <td class="mono" style="color:var(--teal)">%${kmhFaiz} <span style="font-size:10px;color:var(--text3)">(KMH'den)</span></td>
-      <td class="mono">${fmtCur(row.tavanMiktar, row.paraBirimi)}</td>
-      <td><button class="btn btn-danger btn-sm btn-act" onclick="deleteNakitAvansTavan(${i})">✕</button></td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = list.map((row,i) => `<tr>
+    <td><b>${row.paraBirimi}</b></td>
+    <td class="mono">${fmtCur(row.tavanMiktar, row.paraBirimi)}</td>
+    <td><button class="btn btn-danger btn-sm btn-act" onclick="deleteNakitAvansTavan(${i})">✕</button></td>
+  </tr>`).join('');
 }
 
 function openNakitAvansTavanModal() {
@@ -17077,14 +17074,17 @@ function openOranModal(tip, id=null) {
   const cfg = ORAN_CONFIG[tip];
   document.getElementById('oran-modal-title').textContent = (id ? 'Düzenle: ' : 'Ekle: ') + cfg.modalTitle;
   document.getElementById('oran-oran-label').innerHTML = cfg.label + ' <span style="color:var(--danger)">*</span>';
+  const tarihEl = document.getElementById('oran-tarih');
   if(id) {
     const row = (DB[cfg.dbKey]||[]).find(r=>r.id===id);
     if(row) {
-      document.getElementById('oran-tarih').value = row.tarih;
+      tarihEl.value = row.tarih;
+      tarihEl.dispatchEvent(new Event('change', { bubbles: true }));
       document.getElementById('oran-oran').value  = row.oran;
     }
   } else {
-    document.getElementById('oran-tarih').value = localDateStr(new Date());
+    tarihEl.value = localDateStr(new Date());
+    tarihEl.dispatchEvent(new Event('change', { bubbles: true }));
     document.getElementById('oran-oran').value  = '';
   }
   openModal('modal-oran');
@@ -17587,6 +17587,13 @@ function gDriveInit() {
       gDriveLoadFromDrive();
       // Bir sonraki otomatik yenilemeyi planla (10 dk kala)
       setTimeout(() => gDriveSilentRefresh(), expMs - 10 * 60 * 1000);
+    },
+    error_callback: (err) => {
+      if(err && (err.type === 'popup_failed_to_open' || err.type === 'popup_closed')) {
+        gDriveSetStatus('⚠️ Tarayıcı popup'ı engelledi. Lütfen adres çubuğundaki popup izin ikonuna tıklayın ve sayfayı yenileyin.', 'var(--warn)');
+      } else {
+        gDriveSetStatus('Giriş hatası: ' + (err && err.type || 'bilinmiyor'), 'var(--danger)');
+      }
     }
   });
   // Daha önce giriş yapılmışsa popup göstermeden sessizce yenile
@@ -21193,7 +21200,17 @@ window.entegre = {
   if(_origOpenModal) {
     window.openModal = function(id) {
       _origOpenModal.apply(this, arguments);
-      setTimeout(applyToAll, 60);
+      // Önce overlay DOM'u kur, sonra mevcut değerleri fake inputlara yansıt
+      setTimeout(() => {
+        applyToAll();
+        // Modal içindeki tüm date inputlarının değerini fake inputa zorla
+        const modalEl = document.getElementById(id);
+        if(modalEl) {
+          modalEl.querySelectorAll('input[type="date"]').forEach(inp => {
+            if(inp.value) inp.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        }
+      }, 80);
     };
   }
 
