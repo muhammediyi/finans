@@ -7425,8 +7425,8 @@ html[data-theme="light"] .mob-theme-toggle {
       <div style="display:flex;align-items:center;gap:10px">
         <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💵</div>
         <div class="modal-header-text">
-          <div class="modal-title">Nakit Avans</div>
-          <div class="modal-subtitle">Kredi kartından nakit para çekimi</div>
+          <div class="modal-title" id="na-modal-title">Nakit Avans</div>
+          <div class="modal-subtitle" id="na-modal-subtitle">Kredi kartından nakit para çekimi</div>
         </div>
       </div>
       <button class="close-btn" onclick="closeModal('modal-nakit-avans')">✕</button>
@@ -10510,6 +10510,7 @@ function resetIslemTekTaksit(btn, idx, origTarih, origTutar) {
 }
 
 let editIslemId = null;
+let editNaId = null;
 function saveIslem() {
   const taksit = Math.max(1, parseInt(document.getElementById('islem-taksit').value)||1);
   const container = document.getElementById('islem-taksit-alanlari');
@@ -10548,7 +10549,12 @@ function saveIslem() {
   if(!validateRequiredFields([{id:'islem-kart',msg:'Kart seçiniz'},{id:'islem-tutar',msg:'Tutar giriniz'}])) return;
   if(editIslemId) {
     const idx = DB.islemler.findIndex(i=>i.id===editIslemId);
-    if(idx>=0) DB.islemler[idx]=islem;
+    if(idx>=0) {
+      const eski = DB.islemler[idx];
+      if(eski.tip) islem.tip = eski.tip;
+      if(eski.nakitAvansBilgi) islem.nakitAvansBilgi = eski.nakitAvansBilgi;
+      DB.islemler[idx]=islem;
+    }
   } else {
     DB.islemler.push(islem);
   }
@@ -10559,6 +10565,8 @@ function saveIslem() {
 }
 
 function editIslem(id) {
+  const i0 = DB.islemler.find(x=>x.id===id);
+  if(i0 && i0.tip === 'nakitAvans') { editNakitAvans(id); return; }
   editIslemId = id;
   const i = DB.islemler.find(x=>x.id===id);
   if(!i) return;
@@ -10616,6 +10624,12 @@ function editIslem(id) {
 // ═══════════════════════════════════════════════════════════
 
 function openNakitAvansModal() {
+  editNaId = null;
+  const titleEl = document.getElementById('na-modal-title');
+  if(titleEl) titleEl.textContent = 'Nakit Avans';
+  const subEl = document.getElementById('na-modal-subtitle');
+  if(subEl) subEl.textContent = 'Kredi kartından nakit para çekimi';
+
   const todayStr = localDateStr(new Date());
   // Kart listesi
   const kartSel = document.getElementById('na-kart');
@@ -10644,6 +10658,64 @@ function openNakitAvansModal() {
   document.getElementById('na-aciklama').value = '';
   document.getElementById('na-sonuc-wrap').style.display = 'none';
   document.getElementById('na-taksit-alanlari').innerHTML = '';
+
+  openModal('modal-nakit-avans');
+}
+
+function editNakitAvans(id) {
+  const i = DB.islemler.find(x=>x.id===id);
+  if(!i) return;
+  editNaId = id;
+
+  const titleEl = document.getElementById('na-modal-title');
+  if(titleEl) titleEl.textContent = 'Nakit Avans Düzenle';
+  const subEl = document.getElementById('na-modal-subtitle');
+  if(subEl) subEl.textContent = 'Kredi kartından nakit avans işlemini düzenle';
+
+  // Kart listesi
+  const kartSel = document.getElementById('na-kart');
+  kartSel.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
+  kartSel.value = i.kart;
+
+  // Tarih
+  document.getElementById('na-tarih').value = i.tarih;
+
+  // Para birimi
+  onNaKartChange();
+  const pbSel = document.getElementById('na-para-birimi');
+  const supported = getKartCurrencies(i.kart);
+  if(i.paraBirimi && supported.includes(i.paraBirimi)) pbSel.value = i.paraBirimi;
+
+  // Açıklama (💵 ön ekini kaldır)
+  document.getElementById('na-aciklama').value = (i.aciklama||'').replace(/^💵\s*/, '');
+
+  // Faiz / KKDF / BSMV
+  const bilgi = i.nakitAvansBilgi || {};
+  document.getElementById('na-faiz').value = bilgi.faiz != null ? bilgi.faiz : 0;
+  document.getElementById('na-kkdf').value = bilgi.kkdf != null ? bilgi.kkdf : 0;
+  document.getElementById('na-bsmv').value = bilgi.bsmv != null ? bilgi.bsmv : 0;
+  const kaynakEl = document.getElementById('na-faiz-kaynak');
+  if(kaynakEl) kaynakEl.textContent = 'Bu işlem için kayıtlı oranlar (düzenlenebilir)';
+
+  // Çekilen ana para
+  document.getElementById('na-tutar').value = bilgi.anaPara != null ? bilgi.anaPara : i.tutar;
+
+  // Taksit sayısı
+  const taksit = i.taksit || 1;
+  document.getElementById('na-taksit').value = taksit;
+
+  // Taksit planını hesapla, sonra mevcut tutar/tarihleri üzerine yaz
+  calcNakitAvans();
+  if(taksit > 1) {
+    const container = document.getElementById('na-taksit-alanlari');
+    const tutarlar = i.taksitTutarlari || Array(taksit).fill(i.aylik || 0);
+    const tarihler = i.manuelTaksitler ? i.manuelTaksitler.map(t=>t.tarih) : [];
+    const tutarInputs = container.querySelectorAll('[data-na-taksit-field="tutar"]');
+    const tarihInputs = container.querySelectorAll('[data-na-taksit-field="tarih"]');
+    tutarInputs.forEach((inp, idx) => { if(tutarlar[idx] !== undefined) inp.value = tutarlar[idx]; });
+    tarihInputs.forEach((inp, idx) => { if(tarihler[idx]) inp.value = tarihler[idx]; });
+    onNaTaksitChange();
+  }
 
   openModal('modal-nakit-avans');
 }
@@ -10843,7 +10915,7 @@ function saveNakitAvans() {
 
   const toplamTutar = tutarlar.reduce((s,t)=>s+t,0);
   const islem = {
-    id: uid(),
+    id: editNaId || uid(),
     kart: kartId,
     tarih,
     aciklama: `💵 ${aciklama}`,
@@ -10859,7 +10931,13 @@ function saveNakitAvans() {
   };
 
   if(!DB.islemler) DB.islemler = [];
-  DB.islemler.push(islem);
+  if(editNaId) {
+    const idx = DB.islemler.findIndex(i=>i.id===editNaId);
+    if(idx>=0) DB.islemler[idx] = islem; else DB.islemler.push(islem);
+  } else {
+    DB.islemler.push(islem);
+  }
+  editNaId = null;
   saveData();
   closeModal('modal-nakit-avans');
   renderIslemler();
