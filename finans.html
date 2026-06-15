@@ -1720,6 +1720,16 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .exk-acc-card.open .exk-acc-body { display:block; }
 .exk-acc-meta { font-size:11px; color:var(--text3); font-family:var(--mono); }
 
+/* Kart listesi alt bilgi (Ekstre/Ödeme) kutuları */
+.kart-extre-footer { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+.kart-extre-box { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 10px; }
+.kart-extre-box.urgent { background:rgba(251,191,36,.06); border-color:rgba(251,191,36,.22); }
+.kart-extre-icon { font-size:17px; line-height:1; flex-shrink:0; }
+.kart-extre-meta { display:flex; flex-direction:column; gap:1px; min-width:0; }
+.kart-extre-label { font-size:10px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.kart-extre-val { font-size:14px; font-weight:700; color:var(--text); font-family:var(--mono); }
+.kart-extre-sub { font-size:10px; font-family:var(--mono); }
+
 /* ─── TOAST ───────────────────────────────────────────── */
 .toast {
   position: fixed;
@@ -6360,19 +6370,37 @@ html[data-theme="light"] .mob-theme-toggle {
   <div class="page-header"><h1>Ekstre Görünümü</h1><p>Kart bazında ekstre dönemleri ve tutarlar</p></div>
   <div class="action-row">
     <select id="extre-kart-filter" onchange="renderExtreler()" style="width:220px"><option value="" disabled hidden>Kart Seçin</option></select>
-  </div>
-  <div class="card" id="ozel-extre-panel" style="display:none;margin-bottom:16px">
-    <div class="card-header"><span class="card-title">📅 Belirli Ay İçin Özel Ekstre Kesim Tarihi</span></div>
-    <div class="info-box" style="margin-bottom:12px">Normalde her ayın 10'unda kesilen ekstre sadece Haziran ayında 11'inde kesilecekse buraya girin. Seçilen ay için kartın normal ekstre gününü geçersiz kılar.</div>
-    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-      <div><label>Ay / Yıl</label><input id="ozel-extre-ay" type="month" style="width:160px"></div>
-      <div><label>O Ay İçin Ekstre Kesim Tarihi</label><input id="ozel-extre-tarih" type="date" style="width:180px"></div>
-      <button class="btn btn-primary btn-sm" onclick="saveOzelExtre()">Kaydet</button>
-      <button class="btn btn-ghost btn-sm" onclick="clearOzelExtre()">Temizle</button>
-    </div>
-    <div id="ozel-extre-list" style="margin-top:12px"></div>
+    <button class="btn btn-ghost btn-sm" onclick="openOzelExtreModal()">📅 Özel Ekstre Kesim Tarihi</button>
   </div>
   <div id="extre-content"></div>
+</div>
+
+<!-- ÖZEL EKSTRE KESİM TARİHİ MODAL -->
+<div class="modal-bg" id="modal-ozel-extre">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">📅</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Özel Ekstre Kesim Tarihi</div>
+          <div class="modal-sub" id="ozel-extre-sub"></div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-ozel-extre')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="info-box" style="margin-bottom:0">Normalde her ayın 10'unda kesilen ekstre sadece Haziran ayında 11'inde kesilecekse buraya girin. Seçilen ay için kartın normal ekstre gününü geçersiz kılar.</div>
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div><label>Ay / Yıl</label><input id="ozel-extre-ay" type="month" style="width:160px"></div>
+        <div><label>O Ay İçin Ekstre Kesim Tarihi</label><input id="ozel-extre-tarih" type="date" style="width:180px"></div>
+      </div>
+      <div id="ozel-extre-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="clearOzelExtre()">Temizle</button>
+      <button class="btn btn-primary" onclick="saveOzelExtre()">Kaydet</button>
+    </div>
+  </div>
 </div>
 
 <!-- MEVDUAT -->
@@ -6511,6 +6539,7 @@ html[data-theme="light"] .mob-theme-toggle {
     <button class="tab-btn" onclick="showTab('tab-hesap-turleri',this)">🏦 Hesap Türleri</button>
     <button class="tab-btn" onclick="showTab('tab-urun-tipler',this)">🏷️ Ürün Tipleri</button>
     <button class="tab-btn" onclick="showTab('tab-kredi-tipleri',this)">💳 Kredi Tipleri</button>
+    <button class="tab-btn" onclick="showTab('tab-kart-altyapilari',this)">🔖 Kart Altyapıları</button>
     <button class="tab-btn" onclick="showTab('tab-tatiller',this)">📅 Resmi Tatiller</button>
     <button class="tab-btn" onclick="showTab('tab-kategoriler',this)">🗂️ Kategoriler</button>
     <button class="tab-btn" onclick="showTab('tab-kisiler',this)">👤 Kişiler / Karşı Taraflar</button>
@@ -6537,6 +6566,11 @@ html[data-theme="light"] .mob-theme-toggle {
     <div class="info-box">Bireysel kredi modalında görünecek kredi tiplerini buradan yönetin.</div>
     <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openKrediTipModal()">+ Kredi Tipi Ekle</button></div>
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Ad</th><th>Kısa Kod</th><th></th></tr></thead><tbody id="kredi-tip-tbody"></tbody></table></div></div>
+  </div>
+  <div id="tab-kart-altyapilari" style="display:none">
+    <div class="info-box">Kredi kartı altyapılarını (Visa, Mastercard, Troy, vb.) buradan yönetin. Kart ekleme/düzenleme modalında ve kart listesinde gösterilir.</div>
+    <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openKartAltyapiModal()">+ Altyapı Ekle</button></div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Ad</th><th>Kısa Kod</th><th></th></tr></thead><tbody id="kart-altyapi-tbody"></tbody></table></div></div>
   </div>
   <div id="tab-tatiller" style="display:none">
     <div class="info-box">Resmi tatil günlerini girin. Bu günler ödeme günü hesaplamalarında dikkate alınır.</div>
@@ -7275,6 +7309,9 @@ html[data-theme="light"] .mob-theme-toggle {
         </div>
         <div class="form-row cols-2" style="margin-bottom:0">
           <div><label>Son 4 Hane <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><input id="kart-no" placeholder="1234" maxlength="4"></div>
+          <div><label>Kart Altyapısı <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><select id="kart-altyapi"></select></div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
           <div><label>Renk</label>
             <select id="kart-renk">
               <option value="">— Otomatik —</option>
@@ -8758,6 +8795,36 @@ html[data-theme="light"] .mob-theme-toggle {
   </div>
 </div>
 
+<!-- Kart Altyapısı Modal -->
+<div class="modal-bg" id="modal-kart-altyapi">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2)">🔖</div>
+        <div class="modal-header-text">
+          <div class="modal-title" id="kart-altyapi-modal-title">Kart Altyapısı Ekle</div>
+          <div class="modal-subtitle">Visa, Mastercard, Troy vb. tanımla</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-kart-altyapi')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label sky">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Altyapı Bilgileri
+        </div>
+        <div class="form-row"><div><label>Ad <span style="color:var(--danger)">*</span></label><input id="kart-altyapi-ad" placeholder="örn. Visa"></div></div>
+        <div class="form-row" style="margin-bottom:0"><div><label>Kısa Kod <span style="color:var(--danger)">*</span></label><input id="kart-altyapi-kod" placeholder="örn. VISA"></div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-kart-altyapi')">İptal</button>
+      <button class="btn btn-primary" onclick="saveKartAltyapi()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <!-- Tatil Modal -->
 <div class="modal-bg" id="modal-tatil">
   <div class="modal" style="max-width:420px">
@@ -8821,6 +8888,7 @@ html[data-theme="light"] .mob-theme-toggle {
       <input type="hidden" id="kart-odeme-kart-id">
       <input type="hidden" id="kart-odeme-pb">
       <input type="hidden" id="kart-odeme-donem-key">
+      <div id="kart-odeme-info" class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface2)"></div>
       <div>
         <label class="has-required">Ödeme Tutarı</label>
         <div class="money-wrap" id="kart-odeme-tutar-wrap" data-symbol="₺" data-code="TRY">
@@ -8833,9 +8901,10 @@ html[data-theme="light"] .mob-theme-toggle {
       </div>
       <div>
         <label class="has-required">Ödeme Yapılan Hesap</label>
-        <select id="kart-odeme-hesap">
+        <select id="kart-odeme-hesap" onchange="onKartOdemeHesapChange()">
           <option value="" disabled hidden>— Hesap seçiniz —</option>
         </select>
+        <div id="kart-odeme-hesap-bakiye" class="exk-acc-meta" style="margin-top:4px"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -8899,7 +8968,21 @@ function applyMigrations(d) {
   if(d._formatConfig) FORMAT_CONFIG = {...FORMAT_CONFIG, ...d._formatConfig};
   if(d._currency)     defaultCurrency = d._currency;
 
+  // ── Kredi kartı altyapısı tanımları yoksa varsayılanları ekle ────────────
+  if(!d.kartAltyapilari || !d.kartAltyapilari.length) {
+    d.kartAltyapilari = defaultKartAltyapilari();
+  }
+
   return d;
+}
+
+function defaultKartAltyapilari() {
+  return [
+    {id: uid(), ad: 'Visa', kod: 'VISA'},
+    {id: uid(), ad: 'Mastercard', kod: 'MASTERCARD'},
+    {id: uid(), ad: 'Troy', kod: 'TROY'},
+    {id: uid(), ad: 'American Express', kod: 'AMEX'}
+  ];
 }
 
 function saveData() {
@@ -8912,7 +8995,7 @@ function saveData() {
 
 function defaultData() {
   return {
-    bankalar: [], hesapTurleri: [], urunTipler: [], krediTipleri: [],
+    bankalar: [], hesapTurleri: [], urunTipler: [], krediTipleri: [], kartAltyapilari: defaultKartAltyapilari(),
     tatiller: [], kartlar: [], islemler: [], mevduatlar: [], kiralar: [],
     maaslar: [], eldenler: [], ozelExtreler: [], krediler: [],
     bireyselKrediler: [], paraBirimleri: [], kategoriler: [],
@@ -10056,6 +10139,7 @@ function populateKartModal(kart=null) {
   bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
   const tipEl = document.getElementById('kart-tip');
   tipEl.innerHTML = DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
+  fillKartAltyapiSelect(kart ? kart.altyapiId||'' : '');
   phSet(bankaEl, 'Banka seçin…', kart ? kart.banka||'' : '');
   phSet(tipEl, 'Ürün tipi seçin…', kart ? kart.tip||'' : '');
   // Para birimi chip grid oluştur
@@ -10187,6 +10271,7 @@ function saveKart() {
     ad: document.getElementById('kart-ad').value.trim(),
     limit: getMoneyInput('kart-limit')||0,
     no: document.getElementById('kart-no').value.trim(),
+    altyapiId: document.getElementById('kart-altyapi').value || '',
     renk: document.getElementById('kart-renk').value,
     extraTip: document.getElementById('kart-extre-tip').value,
     extraGun: parseInt(document.getElementById('kart-extre-gun').value)||25,
@@ -10350,6 +10435,16 @@ function renderKartlar() {
     const krediKalan = isKmh ? (DB.krediler||[]).filter(kr=>kr.kmhId===k.id).reduce((s,kr)=>s+getKrediKalanBorc(kr),0) : 0;
     const krediSayisi = isKmh ? (DB.krediler||[]).filter(kr=>kr.kmhId===k.id && getKrediKalanBorc(kr)>0).length : 0;
 
+    // Kart altyapısı (Visa/Mastercard/Troy vb.)
+    const altyapi = (DB.kartAltyapilari||[]).find(a=>a.id===k.altyapiId);
+
+    // Son ödeme yaklaşma durumu
+    const todayStr0 = localDateStr(today);
+    const odemeStr = odemeDt ? localDateStr(odemeDt) : null;
+    const kalanGun = odemeStr ? Math.ceil((new Date(odemeStr+'T00:00:00') - today) / 86400000) : null;
+    const odemeUrgent = kalanGun !== null && kalanGun <= 3;
+    const odemePast = odemeStr !== null && odemeStr < todayStr0;
+
     return `<div class="card" style="border-top:3px solid ${k.renk||'var(--accent)'}">
       <div class="card-header">
         <div>
@@ -10361,7 +10456,10 @@ function renderKartlar() {
           <button class="btn btn-danger btn-sm btn-act" onclick="deleteKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
         </div>
       </div>
-      ${(()=>{ const curs = (k.paraBirimleri&&k.paraBirimleri.length)?k.paraBirimleri:(k.paraBirimi?[k.paraBirimi]:[defaultCurrency]); const nonDef = curs.filter(c=>c!==defaultCurrency); return nonDef.length ? `<div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap">${curs.map(c=>`<span style="background:${c===(k.varsayilanParaBirimi||curs[0])?'rgba(16,185,129,.15)':'rgba(59,130,246,.12)'};color:${c===(k.varsayilanParaBirimi||curs[0])?'var(--accent2)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${CURRENCY_CONFIG[c]?.symbol||''} ${c}${c===(k.varsayilanParaBirimi||curs[0])?' ⭐':''}</span>`).join('')}</div>` : ''; })()}
+      <div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap;min-height:22px">
+        ${(()=>{ const curs = (k.paraBirimleri&&k.paraBirimleri.length)?k.paraBirimleri:(k.paraBirimi?[k.paraBirimi]:[defaultCurrency]); return curs.map(c=>`<span style="background:${c===(k.varsayilanParaBirimi||curs[0])?'rgba(16,185,129,.15)':'rgba(59,130,246,.12)'};color:${c===(k.varsayilanParaBirimi||curs[0])?'var(--accent2)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${CURRENCY_CONFIG[c]?.symbol||''} ${c}${curs.length>1&&c===(k.varsayilanParaBirimi||curs[0])?' ⭐':''}</span>`).join(''); })()}
+        ${altyapi ? `<span style="background:rgba(167,139,250,.12);color:var(--purple);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${altyapi.ad}</span>` : ''}
+      </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <div><div style="font-size:10px;color:var(--text3)">KULLANIMDA</div><div class="mono" style="font-size:16px;color:var(--warn)">${fmtCur(kullanim, k.paraBirimi)}</div></div>
         <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">KULLANILABİLİR LİMİT</div><div class="mono" style="font-size:16px;color:var(--accent2)">${fmtCur(musait, k.paraBirimi)}</div></div>
@@ -10372,10 +10470,22 @@ function renderKartlar() {
         <span style="color:var(--text3)">🏦 ${krediSayisi} aktif kredi borcu</span>
         <span class="mono" style="color:var(--danger)">${fmtCur(krediKalan, k.paraBirimi)}</span>
       </div>` : ''}
-      <hr class="divider" style="margin:12px 0">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-        <div>📄 Ekstre: <span style="color:var(--text2)">${extreDt?fmtDate(extreDt):'-'}</span></div>
-        <div>💳 Ödeme: <span style="color:var(--text2)">${odemeDt?fmtDate(odemeDt):'-'}</span></div>
+      <div class="kart-extre-footer">
+        <div class="kart-extre-box">
+          <div class="kart-extre-icon">✂️</div>
+          <div class="kart-extre-meta">
+            <div class="kart-extre-label">Ekstre Kesim</div>
+            <div class="kart-extre-val">${extreDt?fmtDate(extreDt):'-'}</div>
+          </div>
+        </div>
+        <div class="kart-extre-box${odemePast?' urgent':odemeUrgent?' urgent':''}">
+          <div class="kart-extre-icon">💳</div>
+          <div class="kart-extre-meta">
+            <div class="kart-extre-label">Son Ödeme</div>
+            <div class="kart-extre-val">${odemeDt?fmtDate(odemeDt):'-'}</div>
+            ${kalanGun!==null?`<div class="kart-extre-sub" style="color:${odemePast?'var(--danger)':odemeUrgent?'#f59e0b':'var(--text3)'}">${odemePast?'Geçti':kalanGun===0?'Bugün!':kalanGun+' gün kaldı'}</div>`:''}
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -11067,15 +11177,11 @@ function renderExtreler() {
 
   const kart = DB.kartlar.find(k=>k.id===kf.value);
   const content = document.getElementById('extre-content');
-  const ozelPanel = document.getElementById('ozel-extre-panel');
 
   if(!kart) {
     content.innerHTML='<div class="info-box">Kart seçiniz</div>';
-    ozelPanel.style.display='none';
     return;
   }
-  ozelPanel.style.display='';
-  renderOzelExtreList(kart.id);
 
   const tatilSet = getTatilSet();
   const today = new Date();
@@ -11224,6 +11330,7 @@ function renderExtreler() {
         </div>
         <div class="exk-acc-right">
           <div class="exk-acc-sum" style="color:${kalanAll<=0&&toplamBorc>0?'var(--teal)':(isPast?'var(--danger)':'var(--warn)')}">${fmtCur(toplamBorc, pb)}</div>
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();openOzelExtreModal('${p.key}')" title="Bu dönem için özel ekstre kesim tarihi belirle">📅 Özel Tarih</button>
         </div>
       </div>
       <div class="exk-acc-body">
@@ -11341,21 +11448,46 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
     const opt = document.createElement('option');
     opt.value = h.id;
     const banka = (DB.bankalar||[]).find(b=>b.id===h.banka);
-    opt.textContent = (banka?banka.kisa+' · ':'')+h.ad+(h.paraBirimi?' ('+h.paraBirimi+')':'');
+    const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
+    opt.textContent = (banka?banka.kisa+' · ':'')+h.ad+(h.paraBirimi?' ('+h.paraBirimi+')':'')+' — '+bakiyeStr;
+    opt.dataset.bakiye = h.bakiye||0;
+    opt.dataset.pb = h.paraBirimi||'TRY';
+    opt.dataset.kmh = h.kmhLimit||0;
     hesapSel.appendChild(opt);
   });
   hesapSel.value = '';
+  document.getElementById('kart-odeme-hesap-bakiye').textContent = '';
 
-  // Alt başlık
+  // Bilgi kutusu
   const tatilSet = getTatilSet();
   const [dy, dm] = donemKey.split('-').map(Number);
   const extreDt = calcExtreTarihiOdemeModuyla(kart, dy, dm-1, tatilSet);
   const odemeDt = extreDt ? calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet) : null;
   const donemLabel = new Date(dy, dm-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
-  document.getElementById('kart-odeme-sub').textContent =
-    `${kart.ad} · ${donemLabel} · ${pb}${odemeDt?' · Son ödeme: '+fmtDate(localDateStr(odemeDt)):''}`;
+  document.getElementById('kart-odeme-sub').textContent = `${kart.ad} · ${donemLabel}`;
+  document.getElementById('kart-odeme-info').innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Dönem Borcu</span><span class="mono" style="font-weight:700">${fmtCur(toplamBorc, pb)}</span></div>
+    ${odenenTop>0?`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Ödenen</span><span class="mono" style="color:var(--teal)">${fmtCur(odenenTop, pb)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Kalan</span><span class="mono" style="font-weight:700;color:${kalan<=0?'var(--teal)':'var(--warn)'}">${fmtCur(kalan, pb)}</span></div>
+    ${odemeDt?`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Son Ödeme Tarihi</span><span class="mono">${fmtDate(localDateStr(odemeDt))}</span></div>`:''}
+  `;
 
   openModal('modal-kart-odeme');
+}
+
+// Seçili hesabın bakiyesini göster
+function onKartOdemeHesapChange() {
+  const sel = document.getElementById('kart-odeme-hesap');
+  const out = document.getElementById('kart-odeme-hesap-bakiye');
+  const opt = sel.selectedOptions[0];
+  if(!opt || !opt.value) { out.textContent=''; return; }
+  const bakiye = parseFloat(opt.dataset.bakiye||'0');
+  const pb     = opt.dataset.pb||'TRY';
+  const kmh    = parseFloat(opt.dataset.kmh||'0');
+  let txt = `Bakiye: ${fmtCur(bakiye, pb)}`;
+  if(kmh>0) txt += ` · KMH: ${fmtCur(kmh, pb)}`;
+  out.textContent = txt;
+  out.style.color = bakiye<0 ? 'var(--danger)' : 'var(--text3)';
 }
 
 function saveKartOdeme() {
@@ -11434,6 +11566,30 @@ function deleteKartOdeme(odemeId) {
 }
 
 // ========== ÖZEL EXTRE TARİHİ ==========
+// Modalı belirli bir kart + ay (ve isteğe bağlı mevcut tarih) için aç
+function openOzelExtreModal(periodKey) {
+  const kartId = document.getElementById('extre-kart-filter').value;
+  const kart = DB.kartlar.find(k=>k.id===kartId);
+  if(!kart) { showToast('Önce bir kart seçiniz', 'error'); return; }
+
+  document.getElementById('ozel-extre-sub').textContent = kart.ad;
+
+  const ayInput = document.getElementById('ozel-extre-ay');
+  const tarihInput = document.getElementById('ozel-extre-tarih');
+
+  if(periodKey) {
+    ayInput.value = periodKey; // 'YYYY-MM'
+    const mevcut = (DB.ozelExtreler||[]).find(x=>x.kartId===kartId && x.ay===periodKey);
+    tarihInput.value = mevcut ? mevcut.tarih : '';
+  } else {
+    ayInput.value = '';
+    tarihInput.value = '';
+  }
+
+  renderOzelExtreList(kartId);
+  openModal('modal-ozel-extre');
+}
+
 function saveOzelExtre() {
   const kartId = document.getElementById('extre-kart-filter').value;
   const ay = document.getElementById('ozel-extre-ay').value; // '2025-06'
@@ -11445,6 +11601,8 @@ function saveOzelExtre() {
   saveData();
   renderOzelExtreList(kartId);
   renderExtreler();
+  showToast('Özel ekstre tarihi kaydedildi');
+  closeModal('modal-ozel-extre');
 }
 
 function clearOzelExtre() {
@@ -11459,6 +11617,7 @@ function clearOzelExtre() {
   saveData();
   renderOzelExtreList(kartId);
   renderExtreler();
+  document.getElementById('ozel-extre-tarih').value = '';
 }
 
 function renderOzelExtreList(kartId) {
@@ -11480,6 +11639,8 @@ function deleteOzelExtre(kartId, ay) {
   saveData();
   renderOzelExtreList(kartId);
   renderExtreler();
+  const ayInput = document.getElementById('ozel-extre-ay');
+  if(ayInput.value === ay) document.getElementById('ozel-extre-tarih').value = '';
 }
 
 // ========== MEVDUAT ==========
@@ -11613,7 +11774,8 @@ function _fillMevVadesizSel(selectedId, bankaId) {
   if(bankaId) vadesizler = vadesizler.filter(h=>h.banka === bankaId);
   sel.innerHTML = vadesizler.map(h=>{
       const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
-      return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}</option>`;
+      const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
+      return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''} — ${bakiyeStr}</option>`;
     }).join('');
   phSet(sel, 'Hesap seçin…', selectedId||'');
 }
@@ -14180,6 +14342,63 @@ function deleteKrediTip(id) {
   });
 }
 
+// ========== KART ALTYAPILARI CRUD ==========
+let editKartAltyapiId = null;
+
+function openKartAltyapiModal(id=null) {
+  editKartAltyapiId = id;
+  if(id) {
+    const t = (DB.kartAltyapilari||[]).find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById('kart-altyapi-modal-title').textContent = 'Kart Altyapısı Düzenle';
+    document.getElementById('kart-altyapi-ad').value = t.ad;
+    document.getElementById('kart-altyapi-kod').value = t.kod;
+  } else {
+    document.getElementById('kart-altyapi-modal-title').textContent = 'Kart Altyapısı Ekle';
+    document.getElementById('kart-altyapi-ad').value = '';
+    document.getElementById('kart-altyapi-kod').value = '';
+  }
+  document.getElementById('modal-kart-altyapi').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
+}
+
+function saveKartAltyapi() {
+  const ad  = document.getElementById('kart-altyapi-ad').value.trim();
+  const kod = document.getElementById('kart-altyapi-kod').value.trim().toUpperCase();
+  if(!validateRequiredFields([{id:'kart-altyapi-ad',msg:'Ad zorunlu'},{id:'kart-altyapi-kod',msg:'Kod zorunlu'}])) return;
+  if(!DB.kartAltyapilari) DB.kartAltyapilari = [];
+  if(editKartAltyapiId) {
+    const idx = DB.kartAltyapilari.findIndex(t=>t.id===editKartAltyapiId);
+    if(idx>=0) DB.kartAltyapilari[idx] = {...DB.kartAltyapilari[idx], ad, kod};
+  } else {
+    DB.kartAltyapilari.push({id: uid(), ad, kod});
+  }
+  editKartAltyapiId = null;
+  saveData();
+  closeModal('modal-kart-altyapi');
+  renderTanimlamalar();
+  if(typeof populateKartModal === 'function') {
+    const sel = document.getElementById('kart-altyapi');
+    if(sel) fillKartAltyapiSelect(sel.value);
+  }
+  showToast('Kart altyapısı kaydedildi');
+}
+
+function deleteKartAltyapi(id) {
+  showConfirm('Bu kart altyapısını silmek istiyor musunuz?', () => {
+    DB.kartAltyapilari = (DB.kartAltyapilari||[]).filter(t=>t.id!==id);
+    saveData();
+    renderTanimlamalar();
+  });
+}
+
+function fillKartAltyapiSelect(selectedId) {
+  const sel = document.getElementById('kart-altyapi');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Seçilmedi —</option>' +
+    (DB.kartAltyapilari||[]).map(t=>`<option value="${t.id}">${t.ad}</option>`).join('');
+  sel.value = selectedId || '';
+}
+
 let editTatilId = null;
 function editTatil(id) {
   editTatilId = id;
@@ -14531,6 +14750,15 @@ function renderTanimlamalar() {
       <td>${t.ad}</td>
       <td><span class="badge badge-blue">${t.kod}</span></td>
       <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKrediTipModal('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteKrediTip('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
+  }
+
+  const kartAltyapiTbody = document.getElementById('kart-altyapi-tbody');
+  if(kartAltyapiTbody) {
+    kartAltyapiTbody.innerHTML = (DB.kartAltyapilari||[]).map(t=>`<tr>
+      <td>${t.ad}</td>
+      <td><span class="badge badge-blue">${t.kod}</span></td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKartAltyapiModal('${t.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteKartAltyapi('${t.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
   }
 
@@ -15823,7 +16051,7 @@ function renderOzet() {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
                 <option value="" disabled hidden>— Faiz Aktarılacak Vadesiz Hesap —</option>
-                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';return`<option value="${h.id}">${h.ad}${b?' · '+b:''}</option>`}).join('')}
+                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';const bal=fmtCur(h.bakiye||0,h.paraBirimi||'TRY');return`<option value="${h.id}">${h.ad}${b?' · '+b:''} — ${bal}</option>`}).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.04);margin-bottom:10px">
@@ -15849,7 +16077,7 @@ function renderOzet() {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
                 <option value="" disabled hidden>— Ana Para + Faiz Aktarılacak Vadesiz Hesap —</option>
-                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';return`<option value="${h.id}">${h.ad}${b?' · '+b:''}</option>`}).join('')}
+                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';const bal=fmtCur(h.bakiye||0,h.paraBirimi||'TRY');return`<option value="${h.id}">${h.ad}${b?' · '+b:''} — ${bal}</option>`}).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04);margin-bottom:10px">
@@ -17199,7 +17427,8 @@ function populateEldenHesapSelect() {
   sel.innerHTML = aktifler.map(h=>{
     const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
     const ibanSon = h.iban ? '···'+h.iban.slice(-4) : '';
-    return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}${ibanSon?' ('+ibanSon+')':''}</option>`;
+    const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
+    return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}${ibanSon?' ('+ibanSon+')':''} — ${bakiyeStr}</option>`;
   }).join('');
   phSet(sel, 'Hesap seçin…', '');
 }
