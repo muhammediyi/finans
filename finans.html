@@ -10230,11 +10230,23 @@ function deleteKart(id) {
 
 function getKartKullanim(kartId) {
   const todayStr = localDateStr(new Date());
+  const kart = DB.kartlar.find(k=>k.id===kartId);
+  const tatilSet = kart ? getTatilSet() : null;
   let total = 0;
-  // Gelecekteki tüm taksitler limiti kullanır (ödenmemiş = tarih >= bugün)
+  // Henüz ödeme tarihi gelmemiş tüm taksitler/işlemler limiti kullanır
+  // (işlem tarihine değil, ait olduğu ekstrenin ödeme tarihine bakılır)
   DB.islemler.filter(i=>i.kart===kartId).forEach(i=>{
     getIslemTaksitliste(i).forEach(tak => {
-      if(tak.tarih >= todayStr) total += tak.tutar;
+      let odemeTarihStr = tak.tarih;
+      if(kart) {
+        const donem = getExtreDonemi(kart, tak.tarih);
+        if(donem) {
+          const extreDt = calcExtreTarihiOdemeModuyla(kart, donem.year, donem.month, tatilSet);
+          const odemeDt = extreDt ? calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet) : null;
+          if(odemeDt) odemeTarihStr = localDateStr(odemeDt);
+        }
+      }
+      if(odemeTarihStr >= todayStr) total += tak.tutar;
     });
   });
   // KMH kredileri — kalan borç
