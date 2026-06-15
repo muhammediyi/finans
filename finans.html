@@ -15784,6 +15784,8 @@ function _odLogRender(tip, id, key) {
       </div>
     </div>`;
   document.body.appendChild(bg);
+  // od-pop-tarih'i diğer date inputlar gibi date-wrap overlay'e sar
+  setTimeout(() => { if(window._applyDateOverlays) window._applyDateOverlays(); }, 0);
   // Dışına tıklayınca kapat
   bg.addEventListener('click', function(e){ if(e.target===bg) odModalKapat(); });
 })();
@@ -15930,7 +15932,13 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
   const tarihEl = document.getElementById('od-pop-tarih');
   const tutarEl = document.getElementById('od-pop-tutar');
   const notEl   = document.getElementById('od-pop-not');
-  if(tarihEl) tarihEl.value = ov?.tarih || todayStr2;
+  const _tarihVal = ov?.tarih || todayStr2;
+  if(tarihEl) {
+    tarihEl.setAttribute('value', _tarihVal);
+    tarihEl.defaultValue = _tarihVal;
+    tarihEl.value = _tarihVal;
+    tarihEl.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   if(tutarEl) { const tv = ov?.tutar !== undefined ? ov.tutar : (tutar||''); tutarEl.value = tv !== '' ? fmt(Number(tv)) : ''; }
   if(notEl)   notEl.value = ov?.not || '';
 
@@ -21950,6 +21958,7 @@ window.entegre = {
   function applyToAll() {
     document.querySelectorAll('input[type="date"]:not([data-date-no-overlay])').forEach(wrapInput);
   }
+  window._applyDateOverlays = applyToAll;
 
   if(document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', applyToAll);
