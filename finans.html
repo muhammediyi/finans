@@ -6219,6 +6219,9 @@ html[data-theme="light"] .mob-theme-toggle {
       <button class="nav-btn" onclick="showPage('elden',this)">
         <span class="nav-icon">🤝</span><span class="nav-label">Elden Ödeme</span>
       </button>
+      <button class="nav-btn" onclick="showPage('abonelik',this)">
+        <span class="nav-icon">🔄</span><span class="nav-label">Abonelikler</span>
+      </button>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Krediler</div>
@@ -8914,9 +8917,33 @@ html[data-theme="light"] .mob-theme-toggle {
   </div>
 </div>
 
-<script>
+<!-- ══════════════════════════════════════════════════════
+     ABONELİK / TEKRARLAYAN ÖDEME SAYFASI
+     ══════════════════════════════════════════════════════ -->
+<div id="page-abonelik" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Abonelikler & Tekrarlayan Ödemeler</h1>
+      <p>Netflix, fatura, sigorta gibi sabit periyodik giderler</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAbonelikModal()">+ Abonelik Ekle</button>
+  </div>
+  <div class="grid-4" id="abonelik-stats" style="margin-bottom:16px"></div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Ad</th><th>Kategori</th><th>Tutar</th><th>Periyot</th>
+          <th>Sonraki Ödeme</th><th>Hesap</th><th>Durum</th><th>Bu Ay</th>
+          <th style="position:sticky;right:0;background:var(--surface);z-index:2">İşlem</th>
+        </tr></thead>
+        <tbody id="abonelik-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-// ========== DATA ==========
+<script>
 // localStorage artık yalnızca gdrive_client_id ve gdrive_token için kullanılır.
 // Tüm finans verisi Google Drive'da saklanır.
 
@@ -9968,6 +9995,7 @@ function renderPage(id) {
   else if(id==='elden') renderElden();
   else if(id==='hesaplar') renderHesaplar();
   else if(id==='tanimlamalar') renderTanimlamalar();
+  else if(id==='abonelik') { if(typeof renderAbonelik==='function') renderAbonelik(); }
 }
 
 function showTab(id, btn) {
@@ -11131,12 +11159,12 @@ function renderIslemler() {
     const taksitStr = i.taksit > 1
       ? `<div style="min-width:80px">
           <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:2px">AYLIK</div>
-          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text1)">${fmtCur(tutarlar[0]||0, iCur)}</div>
+          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">${fmtCur(tutarlar[0]||0, iCur)}</div>
           ${tutarlar.some((t,i)=>i>0&&Math.abs(t-(tutarlar[0]||0))>0.01)?`<div style="font-size:10px;color:var(--text3);margin-top:2px">son: ${fmtCur(tutarlar[tutarlar.length-1], iCur)}</div>`:''}
         </div>`
       : `<div style="min-width:80px">
           <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:2px">TUTAR</div>
-          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text1)">${fmtCur(tutarlar[0]||i.tutar, iCur)}</div>
+          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">${fmtCur(tutarlar[0]||i.tutar, iCur)}</div>
         </div>`;
 
     // Ekstre/ödeme bilgisi
@@ -14724,31 +14752,6 @@ function openGenericModal(title, bodyHtml) {
 }
 
 
-function openGenericModal(title, bodyHtml) {
-  let modal = document.getElementById('modal-generic');
-  if(!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-generic';
-    modal.className = 'modal-bg';
-    modal.innerHTML = `<div class="modal" style="max-width:420px">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💵</div>
-          <div class="modal-header-text"><div class="modal-title" id="modal-generic-title"></div></div>
-        </div>
-        <button class="close-btn" onclick="closeModal('modal-generic')">✕</button>
-      </div>
-      <div class="modal-body" id="modal-generic-body"></div>
-    </div>`;
-    document.body.appendChild(modal);
-  }
-  document.getElementById('modal-generic-title').textContent = title;
-  document.getElementById('modal-generic-body').innerHTML = bodyHtml;
-  modal.classList.add('open');
-  document.body.classList.add('modal-open');
-  _sidebarDim(true);
-}
-
 function renderTanimlamalar() {
   renderKategoriGrid();
   renderHesapTurTablo();
@@ -16301,7 +16304,7 @@ function renderOzet() {
   const tatilSet = getTatilSet();
 
   // ── BAKİYE UYARILARI ────────────────────────────────────────────
-  renderOzetBakiyeUyarilar();
+  if(typeof renderOzetBakiyeUyarilar === 'function') renderOzetBakiyeUyarilar();
 
   // ── MEVDUAT VADE AKSIYON KARTLARI ──────────────────────────────
   const mevAksiyonEl = document.getElementById('ozet-mev-aksiyonlar');
@@ -21944,5 +21947,843 @@ window.entegre = {
 })();
 </script>
 
+<!-- ABONELİK MODAL -->
+<div class="modal-bg" id="modal-abonelik">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(79,110,247,.12);border:1px solid rgba(79,110,247,.2)">🔄</div>
+        <div class="modal-header-text">
+          <div class="modal-title" id="abonelik-modal-title">Abonelik Ekle</div>
+          <div class="modal-sub">Tekrarlayan ödemeyi tanımla</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-abonelik')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="req-error-banner" id="ab-error-banner" style="display:none"></div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:2">
+          <label class="has-required">Abonelik Adı</label>
+          <input id="ab-ad" placeholder="örn. Netflix, Elektrik Faturası…">
+        </div>
+        <div style="flex:1">
+          <label>İkon / Emoji</label>
+          <input id="ab-ikon" placeholder="📺" style="font-size:20px;text-align:center" maxlength="4">
+        </div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="has-required">Kategori</label>
+          <select id="ab-kategori">
+            <option value="" disabled selected>— Kategori seçin —</option>
+            <option value="eglence">🎬 Eğlence</option>
+            <option value="muzik">🎵 Müzik</option>
+            <option value="yazilim">💻 Yazılım</option>
+            <option value="fatura">⚡ Fatura</option>
+            <option value="sigorta">🛡️ Sigorta</option>
+            <option value="spor">🏋️ Spor</option>
+            <option value="egitim">📚 Eğitim</option>
+            <option value="diger">📦 Diğer</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <label class="has-required">Periyot</label>
+          <select id="ab-periyot">
+            <option value="" disabled selected>— Periyot seçin —</option>
+            <option value="haftalik">Haftalık</option>
+            <option value="aylik">Aylık</option>
+            <option value="3aylik">3 Aylık</option>
+            <option value="6aylik">6 Aylık</option>
+            <option value="yillik">Yıllık</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="has-required">Tutar</label>
+          <div class="money-wrap" data-symbol="₺" data-code="TRY">
+            <input id="ab-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+          </div>
+        </div>
+        <div style="flex:1">
+          <label>Para Birimi</label>
+          <select id="ab-para-birimi" onchange="(function(){const w=document.querySelector('#modal-abonelik .money-wrap');if(w){const cfg=(typeof CURRENCY_CONFIG!=='undefined'&&CURRENCY_CONFIG[this.value])||{};w.dataset.symbol=cfg.symbol||(this.value==='TRY'?'₺':this.value);w.dataset.code=this.value;}}).call(this)">
+            <option value="TRY">TRY ₺</option>
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="has-required">İlk / Sonraki Ödeme Tarihi</label>
+          <input id="ab-tarih" type="date">
+        </div>
+        <div style="flex:1">
+          <label>Bağlı Hesap <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+          <select id="ab-hesap"></select>
+        </div>
+      </div>
+      <div>
+        <label>Not <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+        <input id="ab-not" placeholder="Açıklama veya hatırlatma notu…">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="ab-pasif" style="width:16px;height:16px">
+        <span style="font-size:13px">Pasif (geçici durdur, silme)</span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-abonelik')">İptal</button>
+      <button class="btn btn-primary" onclick="saveAbonelik()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. ABONELİK MODÜLÜ
+// ══════════════════════════════════════════════════════════════════════════════
+let editAbonelikId = null;
+
+function abNextDate(ab, fromDate) {
+  const base = new Date(ab.tarih);
+  if(isNaN(base)) return new Date(9999,0,1); // fix: geçersiz tarih → çok uzak gelecek
+  const from = fromDate || new Date();
+  let d = new Date(base);
+  const perMap = { haftalik:7, aylik:1, '3aylik':3, '6aylik':6, yillik:12 };
+  if(ab.periyot === 'haftalik') {
+    while(d < from) d.setDate(d.getDate()+7);
+  } else {
+    const months = perMap[ab.periyot] || 1;
+    while(d < from) {
+      d.setMonth(d.getMonth() + months);
+    }
+  }
+  return d;
+}
+
+function abAylikTutar(ab) {
+  const perMap = { haftalik: 52/12, aylik: 1, '3aylik': 1/3, '6aylik': 1/6, yillik: 1/12 };
+  return Math.abs(ab.tutar||0) * (perMap[ab.periyot]||1); // fix: tutar negatif saklandığı için abs alınmalı
+}
+
+function openAbonelikModal(id=null) {
+  editAbonelikId = id;
+  document.getElementById('abonelik-modal-title').textContent = id ? 'Abonelik Düzenle' : 'Abonelik Ekle';
+  const ab = id ? (DB.abonelikler||[]).find(x=>x.id===id) : null;
+  document.getElementById('ab-ad').value = ab?.ad || '';
+  document.getElementById('ab-ikon').value = ab?.ikon || '';
+  document.getElementById('ab-kategori').value = ab?.kategori || '';
+  document.getElementById('ab-periyot').value = ab?.periyot || '';
+  document.getElementById('ab-not').value = ab?.not || '';
+  document.getElementById('ab-pasif').checked = !!ab?.pasif;
+  document.getElementById('ab-tarih').value = ab?.tarih || localDateStr(new Date());
+  setMoneyInput('ab-tutar', ab?.tutar ? Math.abs(ab.tutar) : '');
+  // Para birimi
+  const pbSel = document.getElementById('ab-para-birimi');
+  if(typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length) {
+    pbSel.innerHTML = buildCurrencyOptions();
+  }
+  pbSel.value = ab?.paraBirimi || defaultCurrency || 'TRY';
+  // Hesap select
+  const hSel = document.getElementById('ab-hesap');
+  hSel.innerHTML = '<option value="">— Hesap seçin (opsiyonel) —</option>' +
+    (DB.hesaplar||[]).filter(h=>h.durum==='aktif').map(h=>`<option value="${h.id}">${h.ad}</option>`).join('');
+  hSel.value = ab?.hesapId || '';
+  openModal('modal-abonelik');
+}
+
+function saveAbonelik() {
+  const banner = document.getElementById('ab-error-banner');
+  // Reset
+  banner.style.display = 'none';
+  ['ab-ad','ab-tutar','ab-kategori','ab-periyot','ab-tarih'].forEach(id=>{
+    document.getElementById(id).classList.remove('field-error');
+  });
+
+  const ad = document.getElementById('ab-ad').value.trim();
+  const tutar = getMoneyInput('ab-tutar') || 0;
+  const kategori = document.getElementById('ab-kategori').value;
+  const periyot = document.getElementById('ab-periyot').value;
+  const tarih = document.getElementById('ab-tarih').value;
+
+  const missing = [];
+  if(!ad) missing.push('Abonelik Adı');
+  if(!tutar) missing.push('Tutar');
+  if(!kategori) missing.push('Kategori');
+  if(!periyot) missing.push('Periyot');
+  if(!tarih) missing.push('Ödeme Tarihi');
+
+  if(missing.length) {
+    banner.innerHTML = '⚠️ Zorunlu alanları doldurun: ' + missing.join(', ');
+    banner.style.display = 'flex';
+    // Shake invalid fields
+    const idMap = {'Abonelik Adı':'ab-ad','Tutar':'ab-tutar','Kategori':'ab-kategori','Periyot':'ab-periyot','Ödeme Tarihi':'ab-tarih'};
+    missing.forEach(f=>{
+      const el = document.getElementById(idMap[f]);
+      if(el){ el.classList.add('field-error','shake'); setTimeout(()=>el.classList.remove('shake'),450); }
+    });
+    return;
+  }
+  if(!DB.abonelikler) DB.abonelikler = [];
+  const ab = {
+    id: editAbonelikId || uid(),
+    ad,
+    ikon: document.getElementById('ab-ikon').value.trim() || '🔄',
+    kategori: document.getElementById('ab-kategori').value,
+    periyot: document.getElementById('ab-periyot').value,
+    tutar: -Math.abs(tutar), // gider
+    paraBirimi: document.getElementById('ab-para-birimi').value,
+    tarih: document.getElementById('ab-tarih').value || localDateStr(new Date()),
+    hesapId: document.getElementById('ab-hesap').value || null,
+    not: document.getElementById('ab-not').value.trim(),
+    pasif: document.getElementById('ab-pasif').checked,
+  };
+  const isEdit = !!editAbonelikId; // fix: kaydet öncesi durumu sakla
+  if(isEdit) {
+    const idx = DB.abonelikler.findIndex(x=>x.id===editAbonelikId);
+    if(idx>=0) DB.abonelikler[idx] = ab;
+  } else {
+    DB.abonelikler.push(ab);
+  }
+  editAbonelikId = null;
+  saveData();
+  closeModal('modal-abonelik');
+  renderAbonelik();
+  showToast(isEdit ? 'Abonelik güncellendi ✓' : 'Abonelik eklendi ✓');
+}
+
+function deleteAbonelik(id) {
+  showConfirm('Bu aboneliği silmek istiyor musunuz?', ()=>{
+    DB.abonelikler = (DB.abonelikler||[]).filter(x=>x.id!==id);
+    saveData(); renderAbonelik();
+  });
+}
+
+function renderAbonelik() {
+  if(!DB.abonelikler) DB.abonelikler = [];
+  const today = new Date();
+  const todayStr = localDateStr(today);
+  const thisMonth = todayStr.slice(0,7);
+
+  // Stats
+  const aktif = DB.abonelikler.filter(a=>!a.pasif);
+  const toplamAylik = aktif.reduce((s,a)=>s+abAylikTutar(a),0);
+  const toplamYillik = toplamAylik * 12;
+  const buAyOdenecek = aktif.filter(a=>{
+    // fix: bu ayın herhangi bir ödeme tarihi bu aya düşüyor mu kontrol et
+    const base = new Date(a.tarih||new Date()); if(isNaN(base)) return false;
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    let d = new Date(base);
+    const perMap2 = {haftalik:null,aylik:1,"3aylik":3,"6aylik":6,yillik:12};
+    if(a.periyot==="haftalik"){while(d<monthStart)d.setDate(d.getDate()+7);return d<=monthEnd;}
+    const mo=perMap2[a.periyot]||1; while(d<monthStart)d.setMonth(d.getMonth()+mo);
+    return d<=monthEnd;
+  }).length;
+  const statsEl = document.getElementById('abonelik-stats');
+  if(statsEl) statsEl.innerHTML = `
+    <div class="stat s-blue"><div class="stat-label">Aktif Abonelik</div><div class="stat-val blue">${aktif.length}</div></div>
+    <div class="stat s-red"><div class="stat-label">Aylık Toplam</div><div class="stat-val red">${fmt(toplamAylik)}</div></div>
+    <div class="stat s-red"><div class="stat-label">Yıllık Toplam</div><div class="stat-val red">${fmt(toplamYillik)}</div></div>
+    <div class="stat s-warn"><div class="stat-label">Bu Ay Ödeme</div><div class="stat-val" style="color:var(--warn)">${buAyOdenecek}</div></div>`;
+
+  const katIkon = {eglence:'🎬',muzik:'🎵',yazilim:'💻',fatura:'⚡',sigorta:'🛡️',spor:'🏋️',egitim:'📚',diger:'📦'};
+  const perLabel = {haftalik:'Haftalık','aylik':'Aylık','3aylik':'3 Aylık','6aylik':'6 Aylık',yillik:'Yıllık'};
+
+  const sorted = [...DB.abonelikler].sort((a,b)=>{
+    const na = abNextDate(a), nb = abNextDate(b);
+    return na-nb;
+  });
+
+  const tbody = document.getElementById('abonelik-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = sorted.map(ab=>{
+    const next = abNextDate(ab);
+    const nextStr = localDateStr(next);
+    const daysLeft = Math.ceil((next-today)/86400000);
+    const hesap = ab.hesapId ? (DB.hesaplar||[]).find(h=>h.id===ab.hesapId) : null;
+    const buAyKey = thisMonth;
+    const buAyOd = odGetDurum(ab, buAyKey);
+    const yaklasiyor = !ab.pasif && daysLeft <= 7 && daysLeft >= 0;
+    const gecikti = !ab.pasif && daysLeft < 0;
+    return `<tr style="${ab.pasif?'opacity:.5':''}">
+      <td><span style="margin-right:6px">${ab.ikon||'🔄'}</span><b>${ab.ad}</b>${ab.not?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${ab.not}</div>`:''}</td>
+      <td><span style="font-size:11px">${katIkon[ab.kategori]||'📦'} ${ab.kategori}</span></td>
+      <td class="mono red">${fmtCur(Math.abs(ab.tutar),ab.paraBirimi||'TRY')}<div style="font-size:10px;color:var(--text3)">${fmtCur(abAylikTutar(ab),ab.paraBirimi||'TRY')}/ay</div></td>
+      <td><span class="badge badge-blue">${perLabel[ab.periyot]||ab.periyot}</span></td>
+      <td class="mono"><span class="${yaklasiyor?'orange':gecikti?'red':''}">${fmtDate(nextStr)}</span><div style="font-size:10px;color:${daysLeft<=3&&!ab.pasif?'var(--rose)':daysLeft<=7&&!ab.pasif?'var(--warn)':'var(--text3)'}">${ab.pasif?'Pasif':daysLeft===0?'Bugün':daysLeft>0?daysLeft+' gün':Math.abs(daysLeft)+' gün gecikti'}</div></td>
+      <td style="font-size:11px">${hesap?hesap.ad:'<span style="color:var(--text3)">—</span>'}</td>
+      <td>${ab.pasif?'<span class="badge badge-red">Pasif</span>':'<span class="badge badge-green">Aktif</span>'}</td>
+      <td>${odToggleBtn('abonelik', ab.id, buAyKey, nextStr, Math.abs(ab.tutar), ab.ad)}</td>
+      <td style="white-space:nowrap;position:sticky;right:0;background:var(--surface);z-index:1">
+        <button class="btn btn-ghost btn-sm btn-act" onclick="openAbonelikModal('${ab.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteAbonelik('${ab.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Abonelik bulunamadı — + Abonelik Ekle ile başlayın</td></tr>';
+}
+
+// renderPage ve renderAll'a abonelik ekle
+(function() {
+  const _origRenderPage = window.renderPage;
+  if(typeof _origRenderPage === 'function') {
+    window.renderPage = function(id) {
+      _origRenderPage.apply(this, arguments);
+      if(id === 'abonelik') { renderAbonelik(); }
+    };
+  }
+  // odGetItem'e abonelik ekle
+  const _origOdGetItem = window.odGetItem;
+  window.odGetItem = function(tip, id) {
+    if(tip === 'abonelik') return (DB.abonelikler||[]).find(x=>x.id===id);
+    if(typeof _origOdGetItem === 'function') return _origOdGetItem(tip, id);
+    return null;
+  };
+  // odRenderPage'e abonelik ekle
+  const _origOdRenderPage = window.odRenderPage;
+  window.odRenderPage = function(tip) {
+    if(tip === 'abonelik') { renderAbonelik(); return; }
+    if(typeof _origOdRenderPage === 'function') _origOdRenderPage.apply(this, arguments);
+  };
+  // _otoBakiyeGuncelle'ye abonelik ekle
+  const _origOtoBakiye = window._otoBakiyeGuncelle;
+  window._otoBakiyeGuncelle = function(tip, id, key, durum, tutar) {
+    if(tip === 'abonelik') { entAbonelikYansit(id, key, durum, tutar); return; }
+    if(typeof _origOtoBakiye === 'function') _origOtoBakiye(tip, id, key, durum, tutar);
+  };
+})();
+
+function entAbonelikYansit(abId, ayKey, durum, tutar) {
+  const ab = (DB.abonelikler||[]).find(x=>x.id===abId);
+  if(!ab || !ab.hesapId) return;
+  const lk = _lKey('abonelik', abId, ayKey);
+  const eski = _lGet(lk) || 0;
+  if(!durum || ['bekliyor','ertelendi','gecikti'].includes(durum)) {
+    if(eski !== 0) { _bakiyeDelta(ab.hesapId, eski); _lDel(lk); _sync(); }
+    return;
+  }
+  if(['iptal'].includes(durum)) {
+    if(eski !== 0) { _bakiyeDelta(ab.hesapId, eski); _lDel(lk); _sync(); }
+    return;
+  }
+  if(['odendi','kismi'].includes(durum)) {
+    const yeni = tutar || Math.abs(ab.tutar);
+    const delta = yeni - eski;
+    if(Math.abs(delta) < 0.001) return;
+    if(_bakiyeDelta(ab.hesapId, -delta)) { _lSet(lk, yeni); _sync('Abonelik ödendi — bakiye düşüldü'); }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. GRAFİK DASHBOARD — özet sayfasına SVG grafikler
+// ══════════════════════════════════════════════════════════════════════════════
+
+(function injectGrafikStyles() {
+  const s = document.createElement('style');
+  s.textContent = `
+    #ozet-grafik-row { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
+    @media(max-width:700px){ #ozet-grafik-row { grid-template-columns:1fr; } }
+    .grafik-card { background:var(--card-bg,var(--surface));border:1px solid var(--border2);border-radius:16px;padding:16px 18px; }
+    .grafik-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px; }
+    .grafik-legend { display:flex;gap:14px;flex-wrap:wrap;margin-top:10px; }
+    .grafik-legend-item { display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2); }
+    .grafik-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+    .bar-chart-wrap { display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:4px; }
+    .bar-group { display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0; }
+    .bar-pair { display:flex;gap:2px;align-items:flex-end;width:100%;height:100px; }
+    .bar-segment { border-radius:4px 4px 0 0;min-height:2px;transition:height .3s; }
+    .bar-label { font-size:9px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;width:100%;text-overflow:ellipsis; }
+    .donut-wrap { display:flex;align-items:center;gap:16px; }
+    .donut-legend { display:flex;flex-direction:column;gap:7px;flex:1; }
+    .donut-legend-row { display:flex;align-items:center;gap:7px;font-size:11.5px; }
+    .donut-legend-bar { height:7px;border-radius:99px;flex:1;min-width:40px; }
+    .donut-legend-val { font-size:11px;font-family:var(--mono);color:var(--text2);text-align:right;min-width:60px; }
+    .net-servet-bar { display:flex;height:10px;border-radius:99px;overflow:hidden;margin:6px 0 3px; }
+    .cash-flow-svg text { font-family:var(--mono, monospace); }
+  `;
+  document.head.appendChild(s);
+})();
+
+function renderOzetGrafikler() {
+  let container = document.getElementById('ozet-grafik-row');
+  if(!container) {
+    container = document.createElement('div');
+    container.id = 'ozet-grafik-row';
+    // Özet sayfasındaki stats grid'inden sonra ekle
+    const statsEl = document.getElementById('ozet-stats');
+    if(statsEl && statsEl.parentNode) {
+      statsEl.parentNode.insertBefore(container, statsEl.nextSibling);
+    }
+  }
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+
+  // ── 6 AYLIK GELİR/GİDER ÇUBUĞU ──────────────────────────────────
+  const months6 = [];
+  for(let i=5; i>=0; i--) {
+    const d = new Date(year, month-i, 1);
+    months6.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleDateString('tr-TR',{month:'short'}) });
+  }
+
+  function ayGelirGider(y, m) {
+    const mStr = `${y}-${String(m+1).padStart(2,'0')}`;
+    let gelir = 0, gider = 0;
+    // Kira
+    (DB.kiralar||[]).filter(k=>!k.pasif).forEach(k=>{
+      const pd = kiraPayInMonth(k, y, m);
+      if(!pd) return;
+      const ps = localDateStr(pd).slice(0,7);
+      if(ps !== mStr) return;
+      const ov = (k.taksitOverrides||{})[mStr];
+      const dur = ov?.durum;
+      if(dur === 'iptal') return;
+      const t = ov?.tutar !== undefined ? ov.tutar : Math.abs(k.tutar);
+      if(k.tutar >= 0) gelir += t; else gider += t;
+    });
+    // Maaş
+    (DB.maaslar||[]).filter(ms=>!ms.pasif).forEach(ms=>{
+      const pd = new Date(y, m, ms.gun);
+      const ps = localDateStr(pd).slice(0,7);
+      if(ps !== mStr) return;
+      const ov = (ms.taksitOverrides||{})[mStr];
+      const dur = ov?.durum;
+      if(dur === 'iptal') return;
+      const t = ov?.tutar !== undefined ? ov.tutar : Math.abs(ms.tutar);
+      if(ms.tutar >= 0) gelir += t; else gider += t;
+    });
+    // Elden
+    (DB.eldenler||[]).forEach(e=>{
+      if(e.tarih?.slice(0,7) !== mStr) return;
+      const ov = e.odDurum;
+      if(ov?.durum === 'iptal') return;
+      if(e.tutar >= 0) gelir += Math.abs(e.tutar); else gider += Math.abs(e.tutar);
+    });
+    // Abonelik
+    (DB.abonelikler||[]).filter(a=>!a.pasif).forEach(a=>{
+      const next = abNextDate(a, new Date(y,m,1));
+      if(localDateStr(next).slice(0,7) !== mStr) return;
+      gider += Math.abs(a.tutar) * (({haftalik:52/12,aylik:1,'3aylik':1/3,'6aylik':1/6,yillik:1/12})[a.periyot]||1);
+    });
+    return { gelir, gider };
+  }
+
+  const data6 = months6.map(mo => ({ ...mo, ...ayGelirGider(mo.y, mo.m) }));
+  const maxVal = Math.max(...data6.map(d => Math.max(d.gelir, d.gider)), 1);
+  const maxH = 100;
+
+  const barHtml = data6.map(d => {
+    const gh = Math.round((d.gelir / maxVal) * maxH);
+    const eh = Math.round((d.gider / maxVal) * maxH);
+    return `<div class="bar-group">
+      <div class="bar-pair">
+        <div class="bar-segment" style="width:46%;height:${gh}px;background:rgba(45,212,191,.7);align-self:flex-end"></div>
+        <div class="bar-segment" style="width:46%;height:${eh}px;background:rgba(251,113,133,.7);align-self:flex-end"></div>
+      </div>
+      <div class="bar-label">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  const thisData = data6[data6.length-1];
+
+  // ── NET SERVET / HESAP DAĞILIMI PIE ──────────────────────────────
+  const hesaplar = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && (h.bakiye||0) > 0);
+  const toplamBakiye = hesaplar.reduce((s,h)=>s+(h.bakiye||0),0) || 1;
+  const pieColors = ['#4f6ef7','#2dd4bf','#fb923c','#a78bfa','#38bdf8','#fb7185','#fbbf24','#86efac'];
+  let cumPct = 0;
+  const pieSegments = hesaplar.slice(0,6).map((h,i)=>{
+    const pct = (h.bakiye||0) / toplamBakiye;
+    const startAngle = cumPct * 360 - 90;
+    cumPct += pct;
+    const endAngle = cumPct * 360 - 90;
+    const toR = a => a * Math.PI / 180;
+    const r = 48, cx = 60, cy = 60;
+    const x1 = cx + r * Math.cos(toR(startAngle));
+    const y1 = cy + r * Math.sin(toR(startAngle));
+    const x2 = cx + r * Math.cos(toR(endAngle));
+    const y2 = cy + r * Math.sin(toR(endAngle));
+    const large = endAngle - startAngle > 180 ? 1 : 0;
+    return `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${pieColors[i%pieColors.length]}" opacity=".85"/>`;
+  }).join('');
+
+  const pieLegend = hesaplar.slice(0,5).map((h,i)=>{
+    const pct = Math.round((h.bakiye||0)/toplamBakiye*100);
+    return `<div class="donut-legend-row">
+      <div class="grafik-legend-dot" style="background:${pieColors[i%pieColors.length]}"></div>
+      <span style="flex:1;color:var(--text2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.ad}</span>
+      <div class="donut-legend-val">${pct}% · ${fmt(h.bakiye||0)}</div>
+    </div>`;
+  }).join('');
+
+  // ── KREDİ BORÇ DURUMU ──────────────────────────────────────────
+  let toplamKrediBorc = 0;
+  let toplamKartBorc = 0;
+  (DB.bireyselKrediler||[]).forEach(k=>{
+    const kalan = k.taksitler ? k.taksitler.filter(t=>{
+      const ov = (k.taksitOverrides||{})[t.no];
+      return !ov || ov.durum !== 'odendi';
+    }).reduce((s,t)=>s+t.tutar,0) : 0;
+    toplamKrediBorc += kalan;
+  });
+  (DB.kartlar||[]).forEach(kart=>{
+    // Bu ay ödenecek ekstre tahmini
+    const thisMonthStr = localDateStr(new Date()).slice(0,7);
+    (DB.islemler||[]).filter(i=>i.kart===kart.id).forEach(i=>{
+      if(i.taksitler) {
+        i.taksitler.forEach(t=>{
+          if(t.tarih?.slice(0,7)===thisMonthStr) toplamKartBorc += t.tutar;
+        });
+      }
+    });
+  });
+
+  const buAyNet = thisData.gelir - thisData.gider;
+
+  container.innerHTML = `
+    <div class="grafik-card">
+      <div class="grafik-title">📊 6 Aylık Gelir / Gider</div>
+      <div class="bar-chart-wrap">${barHtml}</div>
+      <div class="grafik-legend">
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:rgba(45,212,191,.7)"></div>Gelir</div>
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:rgba(251,113,133,.7)"></div>Gider</div>
+        <div style="margin-left:auto;font-size:11px;font-family:var(--mono);color:${buAyNet>=0?'var(--teal)':'var(--rose)'}">Bu ay net: ${buAyNet>=0?'+':''}${fmt(buAyNet)}</div>
+      </div>
+    </div>
+    <div class="grafik-card">
+      <div class="grafik-title">🏦 Hesap Dağılımı</div>
+      ${hesaplar.length ? `<div class="donut-wrap">
+        <svg viewBox="0 0 120 120" width="100" height="100" style="flex-shrink:0">
+          ${pieSegments}
+          <circle cx="60" cy="60" r="28" fill="var(--surface)"/>
+          <text x="60" y="56" text-anchor="middle" font-size="9" fill="var(--text3)">Toplam</text>
+          <text x="60" y="70" text-anchor="middle" font-size="10" font-weight="700" fill="var(--text)">${fmt(toplamBakiye)}</text>
+        </svg>
+        <div class="donut-legend">${pieLegend}</div>
+      </div>` : '<div style="color:var(--text3);font-size:12px">Henüz aktif hesap yok</div>'}
+    </div>
+    <div class="grafik-card">
+      <div class="grafik-title">💳 Bu Ay Özet</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">Gelir</span>
+          <span class="mono green">${fmt(thisData.gelir)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">Gider</span>
+          <span class="mono red">${fmt(thisData.gider)}</span>
+        </div>
+        <div style="height:1px;background:var(--border)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:700;color:var(--text)">Net</span>
+          <span class="mono ${buAyNet>=0?'green':'red'}" style="font-size:15px;font-weight:700">${buAyNet>=0?'+':''}${fmt(buAyNet)}</span>
+        </div>
+        ${thisData.gelir+thisData.gider > 0 ? `<div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
+          <div style="height:100%;background:var(--teal);border-radius:99px;width:${Math.min(100,Math.round(thisData.gelir/(thisData.gelir+thisData.gider)*100))}%"></div>
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="grafik-card">
+      <div class="grafik-title">📉 Borç Durumu</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text2)">Kredi Borcu</span>
+          <span class="mono red">${fmt(toplamKrediBorc)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text2)">Kart (Bu Ay)</span>
+          <span class="mono red">${fmt(toplamKartBorc)}</span>
+        </div>
+        <div style="height:1px;background:var(--border)"></div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--text)">Toplam Borç</span>
+          <span class="mono red" style="font-size:14px;font-weight:700">${fmt(toplamKrediBorc+toplamKartBorc)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text2)">Abonelik/Ay</span>
+          <span class="mono" style="color:var(--warn)">${fmt((DB.abonelikler||[]).filter(a=>!a.pasif).reduce((s,a)=>s+abAylikTutar(a),0))}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// renderOzet'i wrap ederek grafikleri de çiz
+(function(){
+  const _orig = window.renderOzet;
+  if(typeof _orig === 'function') {
+    window.renderOzet = function() {
+      _orig.apply(this, arguments);
+      try { renderOzetGrafikler(); } catch(e){ console.warn('Grafik hata:', e); }
+    };
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. ÇOKLU TAKSİT HESAP BAKIYE DÜŞME FİXİ
+// ══════════════════════════════════════════════════════════════════════════════
+// Eski entIslemHesabaYansit sadece 1 taksiti düşüyordu.
+// Yeni versiyon: o ayın toplam taksit tutarını hesaba yansıtır.
+window.entIslemHesabaYansit = function(islem, isEski) {
+  if(!islem) return;
+  const kart = (DB.kartlar||[]).find(k=>k.id===islem.kart);
+  if(!kart) return;
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===(kart.hesapId||'') || h.kartId===kart.id);
+  if(!hesap) return;
+
+  // Her taksit için ayrı log key kullan: islem|id|taksitNo
+  if(isEski) {
+    // Tüm taksit loglarını geri al
+    const taksitler = islem.taksitler || [{no:1,tutar:islem.aylik||(islem.tutar/Math.max(1,islem.taksit||1))}];
+    taksitler.forEach(t=>{
+      const lk = _lKey('islem', islem.id, t.no);
+      const eski = _lGet(lk)||0;
+      if(eski !== 0) { _bakiyeDelta(hesap.id, eski); _lDel(lk); }
+    });
+    _sync();
+    return;
+  }
+
+  // Kaydetme: her taksiti kendi key'iyle izle — sadece bugün ve geçmiş olanları düş
+  const todayStr = localDateStr(new Date());
+  const taksitler = islem.taksitler || [{no:1,tarih:islem.tarih||todayStr,tutar:islem.aylik||(islem.tutar/Math.max(1,islem.taksit||1))}];
+  let changed = false;
+  taksitler.forEach(t=>{
+    const tTarih = t.tarih || todayStr;
+    if(tTarih > todayStr) return; // gelecek taksitler henüz hesabı etkilemez
+    const lk = _lKey('islem', islem.id, t.no);
+    const eski = _lGet(lk)||0;
+    const yeni = t.tutar||0;
+    const delta = yeni - eski;
+    if(Math.abs(delta) < 0.001) return;
+    if(_bakiyeDelta(hesap.id, -delta)) { _lSet(lk, yeni); changed = true; }
+  });
+  if(changed) _sync();
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. MEVDUAT "YENİLE_TUM" TAM OTOMATİK
+// ══════════════════════════════════════════════════════════════════════════════
+// Eski mevduatYenile modal açıyordu. Strateji yenile_tum ise
+// vade dolunca yeni mevduatı IBAN/faiz bilgisi korunarak otomatik oluştur.
+(function(){
+  const _origStrateji = window.mevduatOtoStratejiUygula;
+  window.mevduatOtoStratejiUygula = function(mevId) {
+    const mev = (DB.mevduatlar||[]).find(x=>x.id===mevId);
+    if(!mev) return false;
+    if(mev.strateji === 'yenile_tum') {
+      // Tam otomatik yenile: mevcut parametrelerle yeni mevduat oluştur
+      const yeni = {
+        id: uid(),
+        banka: mev.banka,
+        hesapId: mev.hesapId,
+        vadesizHesapId: mev.vadesizHesapId,
+        baslangic: mev.bitis,
+        tutar: mev.nihai,         // ana para + brüt faiz → yeni anapara
+        faizOran: mev.faizOran,
+        stopaj: mev.stopaj,
+        vade: mev.vade,
+        valor: mev.valor||0,
+        kumulatif: mev.kumulatif,
+        paraBirimi: mev.paraBirimi||'TRY',
+        strateji: mev.strateji,
+      };
+      // Bitiş tarihi hesapla
+      const startD = new Date(yeni.baslangic);
+      startD.setDate(startD.getDate() + (yeni.vade||30));
+      yeni.bitis = localDateStr(startD);
+      // Faiz hesapla
+      if(typeof calcMevduatObj === 'function') {
+        const calc = calcMevduatObj(yeni);
+        yeni.faiz = calc.faiz; yeni.nihai = calc.nihai;
+      } else {
+        const brutFaiz = yeni.tutar * (yeni.faizOran/100) * (yeni.vade/365);
+        const stopajTutar = brutFaiz * (yeni.stopaj/100);
+        yeni.faiz = brutFaiz - stopajTutar;
+        yeni.nihai = yeni.tutar + yeni.faiz;
+      }
+      if(!DB.mevduatlar) DB.mevduatlar = [];
+      DB.mevduatlar.push(yeni);
+      // Eskiyi kapat (durum işaretle, silme)
+      mev._kapatildi = true;
+      saveData();
+      if(typeof renderMevduat==='function') renderMevduat();
+      showToast(`🔄 ${getBanka(mev.banka)||'?'} mevduatı otomatik yenilendi — ${fmtCur(yeni.tutar,yeni.paraBirimi)} · ${yeni.vade} gün`, 4500);
+      return true;
+    }
+    if(typeof _origStrateji === 'function') return _origStrateji.apply(this, arguments);
+    return false;
+  };
+})();
+
+// calcMevduatObj: mevduat nesnesinden faiz hesapla (modal bağımsız)
+function calcMevduatObj(m) {
+  const brutFaiz = (m.tutar||0) * ((m.faizOran||0)/100) * ((m.vade||30)/365);
+  const stopajTutar = brutFaiz * ((m.stopaj||15)/100);
+  const bsmv = (DB.bsmvOranlari||[]).length ?
+    (() => { const r=(DB.bsmvOranlari||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih))[0]; return r?r.oran/100:0.05; })() : 0.05;
+  const kkdf = (DB.kkdfOranlari||[]).length ?
+    (() => { const r=(DB.kkdfOranlari||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih))[0]; return r?r.oran/100:0.15; })() : 0.15;
+  const netFaiz = brutFaiz * (1 - (m.stopaj||15)/100);
+  return { faiz: Math.round(netFaiz*100)/100, nihai: Math.round(((m.tutar||0)+netFaiz)*100)/100 };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. ELDEN ÇİFT YANSITMA FİXİ
+// entEldenYansit artık yalnızca od-popup'tan (durum değişiminde) çalışır.
+// saveElden zaten bakiyeyi anında güncelliyor — entLog ile izleyerek çakışmayı önle.
+// ══════════════════════════════════════════════════════════════════════════════
+window.entEldenYansit = function(eldenId, durum, tutar) {
+  const e = (DB.eldenler||[]).find(x=>x.id===eldenId);
+  if(!e || !e.hesapId) return; // sadece havale'ler etkilenir
+  // saveElden zaten anında yansıttı ve entLog'a yazmadı.
+  // Biz burada sadece durum geçişlerini izleriz.
+  // Durum "odendi" → bakiye saveElden tarafından zaten uygulandı.
+  // Durum "iptal" ya da geri alım → bakiyeyi geri al (eğer entLog'da kayıt varsa).
+  const lk = _lKey('elden', eldenId, null);
+  const eski = _lGet(lk) || 0;
+  const yon = e.tur === 'gelir' ? 1 : -1;
+
+  if(!durum || ['bekliyor','ertelendi','gecikti'].includes(durum)) {
+    // Eğer önceden entLog'a kaydedilmişse geri al (od-popup üzerinden ödendi→bekliyor)
+    if(eski !== 0) { _bakiyeDelta(e.hesapId, -eski * yon); _lDel(lk); _sync(); }
+    return;
+  }
+  if(['iptal'].includes(durum)) {
+    if(eski !== 0) { _bakiyeDelta(e.hesapId, -eski * yon); _lDel(lk); _sync(); }
+    return;
+  }
+  if(['odendi','kismi'].includes(durum)) {
+    // saveElden zaten uyguladı; sadece lk yoksa ekle (od-popup'tan ilk kez "odendi" seçilirse)
+    const yeni = tutar || Math.abs(e.tutar);
+    if(eski !== 0) return; // zaten saveElden uyguladı, tekrar yapma
+    // saveElden'in uygulamadığı durum: od-popup üzerinden havale ödendi işaretlendi ama saveElden çağrılmadı
+    // Bu durumda lk boş olur; bakiyeyi biz uygularız
+    const delta = yeni - eski;
+    if(Math.abs(delta) < 0.001) return;
+    if(_bakiyeDelta(e.hesapId, delta * yon)) { _lSet(lk, yeni); _sync('Elden bakiye yansıtıldı'); }
+  }
+};
+
+// saveElden'i wrap ederek entLog'a kayıt ekle (çifte yansıtmayı önlemek için işaret koy)
+(function(){
+  // saveElden'in bakiye güncellemesi sırasında entLog'a yaz
+  const _origDoSaveElden = window._doSaveElden;
+  if(typeof _origDoSaveElden === 'function') {
+    window._doSaveElden = function() {
+      _origDoSaveElden.apply(this, arguments);
+      // Kaydedilen son elden'in entLog'unu güncelle
+      setTimeout(()=>{
+        const last = (DB.eldenler||[])[DB.eldenler.length-1];
+        if(last && last.hesapId && last.yontem==='havale') {
+          const lk = _lKey('elden', last.id, null);
+          _lSet(lk, Math.abs(last.tutar));
+        }
+      }, 50);
+    };
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 6. ENTLOG + ODLOG BİRLEŞTİRME
+// Her iki log da DB.odLog altında toplanır.
+// entLog bakiye hareketleri için, odLog durum geçişleri için ayrı prefix kullanır.
+// ══════════════════════════════════════════════════════════════════════════════
+(function unifyLogs(){
+  // _lGet/_lSet/_lDel: DB.entLog yerine DB.odLog["ent|..."] kullan
+  // Geriye dönük uyumluluk: hem eski entLog hem yeni odLog kontrol et
+  window._lKey = function(tip, id, key) {
+    return `${tip}|${id}|${key!=null?key:'_'}`;
+  };
+  window._lGet = function(k) {
+    if(!DB.odLog) DB.odLog = {};
+    if(!DB.entLog) DB.entLog = {};
+    // Önce odLog'da bak (yeni), yoksa entLog'da bak (eski)
+    const entK = 'ent:'+k;
+    if(DB.odLog[entK] !== undefined) return DB.odLog[entK];
+    if(DB.entLog[k] !== undefined) return DB.entLog[k]; // legacy
+    return null;
+  };
+  window._lSet = function(k, v) {
+    if(!DB.odLog) DB.odLog = {};
+    DB.odLog['ent:'+k] = v;
+    // Aynı zamanda legacy entLog'a da yaz (eski kod okuyabilsin)
+    if(!DB.entLog) DB.entLog = {};
+    DB.entLog[k] = v;
+  };
+  window._lDel = function(k) {
+    if(DB.odLog) delete DB.odLog['ent:'+k];
+    if(DB.entLog) delete DB.entLog[k];
+  };
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 7. OZET NAKIT AKIŞ SATIRLARINI GRAFİĞE DÖNÜŞTÜR
+// ══════════════════════════════════════════════════════════════════════════════
+(function(){
+  // renderOzet'teki nakit akış bölümünü override et
+  // Orijinal sadece satır listesiydi; şimdi mini görsel bar ekleyelim
+  const _patchNakit = function() {
+    const el = document.getElementById('ozet-nakit');
+    if(!el || !el.children.length) return;
+    // Mevcut içeriği koru ama başına mini bar chart ekle
+    const today = new Date();
+    const y = today.getFullYear(), m = today.getMonth();
+    // Günlük bakiye simülasyonu (basit)
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const pts = [];
+    let running = 0;
+    for(let d=1; d<=daysInMonth; d++) {
+      const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      // Kira + maaş
+      (DB.kiralar||[]).filter(k=>!k.pasif).forEach(k=>{
+        const pd = kiraPayInMonth(k, y, m);
+        if(pd && localDateStr(pd)===dStr) running += k.tutar;
+      });
+      (DB.maaslar||[]).filter(ms=>!ms.pasif).forEach(ms=>{
+        const pd = new Date(y,m,ms.gun);
+        if(localDateStr(pd)===dStr) running += ms.tutar;
+      });
+      if(d <= today.getDate()) pts.push(running);
+    }
+    if(!pts.length) return;
+    // Küçük SVG sparkline
+    const minV = Math.min(...pts,0), maxV = Math.max(...pts,0.01);
+    const W=200, H=40, pad=4;
+    const xS = (W-2*pad)/(pts.length-1||1), yS=(H-2*pad)/(maxV-minV||1);
+    const path = pts.map((v,i)=>`${i?'L':'M'}${pad+i*xS},${H-pad-(v-minV)*yS}`).join(' ');
+    const zero = H-pad-(0-minV)*yS;
+    const sparkEl = document.createElement('div');
+    sparkEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;margin-bottom:8px">
+      <line x1="${pad}" y1="${zero}" x2="${W-pad}" y2="${zero}" stroke="var(--border)" stroke-width="0.5"/>
+      <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${pad+(pts.length-1)*xS}" cy="${H-pad-(pts[pts.length-1]-minV)*yS}" r="3" fill="var(--teal)"/>
+    </svg>`;
+    el.insertBefore(sparkEl, el.firstChild);
+  };
+
+  const _origRenderOzet2 = window.renderOzet;
+  if(typeof _origRenderOzet2 === 'function') {
+    window.renderOzet = function() {
+      _origRenderOzet2.apply(this, arguments);
+      setTimeout(_patchNakit, 50);
+    };
+  }
+})();
+
+// İlk yüklemede renderAbonelik ve grafikleri de çalıştır
+(function(){
+  const _origRenderAll = window.renderAll;
+  if(typeof _origRenderAll === 'function') {
+    window.renderAll = function() {
+      _origRenderAll.apply(this, arguments);
+      if(!DB.abonelikler) DB.abonelikler = [];
+      try { renderOzetGrafikler(); } catch(e){}
+    };
+  }
+})();
+</script>
 </body>
 </html>
