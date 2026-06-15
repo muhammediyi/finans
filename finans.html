@@ -15474,14 +15474,29 @@ var _odPopupEl = null;
 var _odPopupClose = null;
 
 function odGetDurum(item, key) {
-  return (key !== undefined ? (item.taksitOverrides||{})[key] : item.odDurum) || null;
+  // kira ve maas odemeOverrides[ay] kullanır; diğerleri taksitOverrides[key] veya odDurum
+  if(key !== undefined) {
+    // key YYYY-MM formatındaysa (string, 7 karakter) → kira/maas odemeOverrides
+    if(typeof key === 'string' && /^\d{4}-\d{2}$/.test(key)) {
+      return (item.odemeOverrides||{})[key] || null;
+    }
+    return (item.taksitOverrides||{})[key] || null;
+  }
+  return item.odDurum || null;
 }
 
 function odSetDurum(item, key, data) {
   if(key !== undefined) {
-    if(!item.taksitOverrides) item.taksitOverrides = {};
-    if(data === null) delete item.taksitOverrides[key];
-    else item.taksitOverrides[key] = data;
+    // key YYYY-MM formatındaysa (string, 7 karakter) → kira/maas odemeOverrides
+    if(typeof key === 'string' && /^\d{4}-\d{2}$/.test(key)) {
+      if(!item.odemeOverrides) item.odemeOverrides = {};
+      if(data === null) delete item.odemeOverrides[key];
+      else item.odemeOverrides[key] = data;
+    } else {
+      if(!item.taksitOverrides) item.taksitOverrides = {};
+      if(data === null) delete item.taksitOverrides[key];
+      else item.taksitOverrides[key] = data;
+    }
   } else {
     if(data === null) delete item.odDurum;
     else item.odDurum = data;
@@ -15498,6 +15513,8 @@ function odBadgeHtml(durum, tarih, tutar) {
     ertelendi:['od-ertelendi','↷ Ertelendi'],
     kismi:    ['od-kismi',    '⊟ Kısmi'],
     iptal:    ['od-iptal',    '⊘ İptal'],
+    atlandi:  ['od-iptal',    '⊘ Atlandı'],
+    taksit:   ['od-kismi',    '⊟ Taksitli'],
   };
   const [cls, label] = map[d] || map.bekliyor;
   return `<span class="od-badge ${cls}">${label}</span>`;
@@ -15747,7 +15764,7 @@ function _odLogRender(tip, id, key) {
               <label class="od-field-lbl">Ödenen Tutar</label>
               <div style="position:relative">
                 <span id="od-pop-tutar-sym" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);font-weight:700;pointer-events:none;z-index:1">₺</span>
-                <input class="od-field-inp" id="od-pop-tutar" type="number" step="0.01" style="padding-left:24px">
+                <input class="od-field-inp" id="od-pop-tutar" type="text" inputmode="decimal" style="padding-left:24px">
               </div>
             </div>
           </div>
@@ -15799,7 +15816,8 @@ function odModalKaydet() {
   const ov = odGetDurum(item,key)||{};
   const newDurum = _odModal.seciliDurum || ov.durum || 'bekliyor';
   const newTarih = document.getElementById('od-pop-tarih')?.value || localDateStr(new Date());
-  const newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value);
+  const _odTutarRaw = (document.getElementById('od-pop-tutar')?.value||'').replace(/\s/g,'').replace(new RegExp('\\' + (FORMAT_CONFIG.binlikAyrac||'.'), 'g'), '').replace(FORMAT_CONFIG.ondalikAyrac||',', '.');
+  const newTutar = parseFloat(_odTutarRaw);
   const newNot   = document.getElementById('od-pop-not')?.value || '';
   let finalTutar = isNaN(newTutar) ? (tutar||0) : newTutar;
   if(newDurum==='iptal' && (tip==='kira'||tip==='maas')) finalTutar=0;
@@ -15876,7 +15894,9 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
   // Tarihi bugüne default — her zaman bugün, override varsa override
   const todayStr = localDateStr(new Date());
   document.getElementById('od-pop-tarih').value = ov?.tarih || todayStr;
-  document.getElementById('od-pop-tutar').value = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
+  // Tutar: formatlanmış göster (virgüllü)
+  const tutarVal = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
+  document.getElementById('od-pop-tutar').value = tutarVal !== '' ? fmt(Number(tutarVal)) : '';
   document.getElementById('od-pop-not').value   = ov?.not || '';
 
   // Sıfırla butonu
@@ -15925,7 +15945,8 @@ function odSecDurum(e, tip, id, key, tarih, tutar, durum) {
   if(!item) return;
   const ov = odGetDurum(item, key) || {};
   // İptal seçilince o ay için tutar 0 olsun (sadece kira/maas kontrat tipleri için)
-  let newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value) || tutar || 0;
+  const _odTR3 = (document.getElementById('od-pop-tutar')?.value||'').replace(/\s/g,'').replace(new RegExp('\\' + (FORMAT_CONFIG.binlikAyrac||'.'), 'g'), '').replace(FORMAT_CONFIG.ondalikAyrac||',', '.');
+  let newTutar = parseFloat(_odTR3) || tutar || 0;
   if(durum === 'iptal' && (tip === 'kira' || tip === 'maas')) {
     newTutar = 0;
   }
@@ -15957,7 +15978,8 @@ function odKaydet(e, tip, id, key, tarih, tutar) {
   if(!item) return;
   const ov = odGetDurum(item, key) || {};
   const newTarih = document.getElementById('od-pop-tarih')?.value || localDateStr(new Date());
-  const newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value);
+  const _odTutarRaw2 = (document.getElementById('od-pop-tutar')?.value||'').replace(/\s/g,'').replace(new RegExp('\\' + (FORMAT_CONFIG.binlikAyrac||'.'), 'g'), '').replace(FORMAT_CONFIG.ondalikAyrac||',', '.');
+  const newTutar = parseFloat(_odTutarRaw2);
   const newNot   = document.getElementById('od-pop-not')?.value || '';
   odSetDurum(item, key, { ...ov,
     tarih: newTarih,
@@ -16234,10 +16256,15 @@ function kontratPlanFormAc(ay, islem) {
     titleEl.textContent = '↷ Ödeme Erteleme — ' + ay;
     bodyEl.innerHTML = `
       <div class="form-row cols-2">
-        <div><label>Yeni Ödeme Tarihi</label><input id="kpf-tarih" type="date" value="${ertelemeTarih}"></div>
-        <div><label>Tutar (değişecekse)</label><input id="kpf-tutar" type="number" step="0.01" value="${mevcutTutar}" placeholder="${mevcutTutar}"></div>
+        <div><label>Yeni Ödeme Tarihi</label><input id="kpf-tarih" type="date"></div>
+        <div><label>Tutar (değişecekse)</label><input id="kpf-tutar" type="number" step="0.01" placeholder="${mevcutTutar}"></div>
       </div>
-      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Erteleme nedeni..." value="${mevcutNot}"></div></div>`;
+      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Erteleme nedeni..."></div></div>`;
+    setTimeout(()=>{
+      const el = document.getElementById('kpf-tarih'); if(el) el.value = ertelemeTarih;
+      const el2 = document.getElementById('kpf-tutar'); if(el2) el2.value = mevcutTutar;
+      const el3 = document.getElementById('kpf-not'); if(el3) el3.value = mevcutNot;
+    }, 0);
   } else if(islem==='taksit') {
     const t1 = ov.taksitler?.[0]?.tutar || (mevcutTutar/2).toFixed(2);
     const t2 = ov.taksitler?.[1]?.tutar || (mevcutTutar/2).toFixed(2);
@@ -16249,20 +16276,28 @@ function kontratPlanFormAc(ay, islem) {
     bodyEl.innerHTML = `
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Toplam tutar: ${fmt(mevcutTutar)} — İki taksit olarak bölebilirsiniz</div>
       <div class="form-row cols-2">
-        <div><label>1. Taksit Tarihi</label><input id="kpf-t1-tarih" type="date" value="${d1}"></div>
-        <div><label>1. Taksit Tutarı</label><input id="kpf-t1-tutar" type="number" step="0.01" value="${t1}"></div>
+        <div><label>1. Taksit Tarihi</label><input id="kpf-t1-tarih" type="date"></div>
+        <div><label>1. Taksit Tutarı</label><input id="kpf-t1-tutar" type="number" step="0.01"></div>
       </div>
       <div class="form-row cols-2">
-        <div><label>2. Taksit Tarihi</label><input id="kpf-t2-tarih" type="date" value="${d2}"></div>
-        <div><label>2. Taksit Tutarı</label><input id="kpf-t2-tutar" type="number" step="0.01" value="${t2}"></div>
+        <div><label>2. Taksit Tarihi</label><input id="kpf-t2-tarih" type="date"></div>
+        <div><label>2. Taksit Tutarı</label><input id="kpf-t2-tutar" type="number" step="0.01"></div>
       </div>
-      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Taksit nedeni..." value="${mevcutNot}"></div></div>`;
+      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Taksit nedeni..."></div></div>`;
+    setTimeout(()=>{
+      const i1t = document.getElementById('kpf-t1-tarih'); if(i1t) i1t.value = d1;
+      const i1a = document.getElementById('kpf-t1-tutar'); if(i1a) i1a.value = t1;
+      const i2t = document.getElementById('kpf-t2-tarih'); if(i2t) i2t.value = d2;
+      const i2a = document.getElementById('kpf-t2-tutar'); if(i2a) i2a.value = t2;
+      const iN  = document.getElementById('kpf-not');      if(iN)  iN.value  = mevcutNot;
+    }, 0);
   } else if(islem==='not') {
     titleEl.textContent = '✎ Not Ekle — ' + ay;
     bodyEl.innerHTML = `
       <div class="form-row">
-        <div><label>Not</label><input id="kpf-not" placeholder="Bu ödeme için not..." value="${mevcutNot}" style="width:100%"></div>
+        <div><label>Not</label><input id="kpf-not" placeholder="Bu ödeme için not..." style="width:100%"></div>
       </div>`;
+    setTimeout(()=>{ const el = document.getElementById('kpf-not'); if(el) el.value = mevcutNot; }, 0);
   }
 
   formEl.style.display = '';
