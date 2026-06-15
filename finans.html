@@ -6408,8 +6408,8 @@ html[data-theme="light"] .mob-theme-toggle {
   <div class="page-header"><div class="page-header-left"><h1>Mevduat Takibi</h1><p>Vadeli mevduat hesaplarınızı yönetin</p></div><button class="btn btn-primary" onclick="openModal('modal-mevduat')">+ Yeni Mevduat</button></div>
   <div class="grid-4" id="mevduat-stats" style="margin-bottom:16px"></div>
   <div class="card">
-    <div class="tbl-wrap"><table>
-      <thead><tr><th>Banka</th><th>Vadeli Hesap</th><th>Başlangıç</th><th>Bitiş</th><th>Para Birimi</th><th>Tutar</th><th>Faiz %</th><th>Stopaj %</th><th>Vade</th><th>Faiz</th><th>Nihai</th><th>Kümülatif</th><th>Durum</th><th>→ Vadesiz Hesap</th><th>Ödeme</th><th>İşlem</th></tr></thead>
+    <div class="tbl-wrap" style="overflow-x:auto"><table>
+      <thead><tr><th>Banka</th><th>Vadeli Hesap</th><th>Başlangıç</th><th>Bitiş</th><th>Tutar</th><th>Faiz %</th><th>Stopaj %</th><th>Vade</th><th>Faiz</th><th>Nihai</th><th>Kümülatif</th><th>Durum</th><th>→ Vadesiz Hesap</th><th>Aktarım</th><th style="position:sticky;right:0;background:var(--surface);z-index:2">İşlem</th></tr></thead>
       <tbody id="mevduat-tbody"></tbody>
     </table></div>
   </div>
@@ -9678,6 +9678,20 @@ function initAllSelectPlaceholders() {
     ['kira-depozito-durum',  null],
     ['kira-gun-kisa-ay-davranis', null],
     ['maas-gun-kisa-ay-davranis', null],
+    ['kart-altyapi',             'Altyapı seçin…'],
+    ['kart-varsayilan-pb',       'Para birimi seçin…'],
+    ['kart-odeme-hesap',         'Hesap seçin…'],
+    ['kira-kisi',                'Kişi seçin…'],
+    ['kira-yontem',              null],
+    ['kira-depozito-pb',         null],
+    ['maas-kisi',                'Kişi seçin…'],
+    ['maas-yontem',              null],
+    ['elden-para-birimi',        null],
+    ['na-kart',                  'Kart seçin…'],
+    ['na-para-birimi',           null],
+    ['na-tavan-pb',              null],
+    ['mev-kaynak-hesap-id',      'Kaynak hesap seçin…'],
+    ['mev-vadesiz-hesap-id',     'Vadesiz hesap seçin…'],
   ];
   map.forEach(([id, label]) => {
     const sel = document.getElementById(id);
@@ -10809,7 +10823,7 @@ function editNakitAvans(id) {
   // Tarih
   document.getElementById('na-tarih').value = i.tarih;
 
-  // Para birimi
+  // Para birimi — onNaKartChange faizi KMH'dan doldurur, sonra kaydedilmiş değerlerle eziyoruz
   onNaKartChange();
   const pbSel = document.getElementById('na-para-birimi');
   const supported = getKartCurrencies(i.kart);
@@ -10818,7 +10832,7 @@ function editNakitAvans(id) {
   // Açıklama (💵 ön ekini kaldır)
   document.getElementById('na-aciklama').value = (i.aciklama||'').replace(/^💵\s*/, '');
 
-  // Faiz / KKDF / BSMV
+  // Faiz / KKDF / BSMV — onNaKartChange→onNaPbChange KMH oranını yazdı, kaydedilen oranlarla override et
   const bilgi = i.nakitAvansBilgi || {};
   document.getElementById('na-faiz').value = bilgi.faiz != null ? bilgi.faiz : 0;
   document.getElementById('na-kkdf').value = bilgi.kkdf != null ? bilgi.kkdf : 0;
@@ -10869,12 +10883,15 @@ function onNaKartChange() {
 function onNaPbChange() {
   const pb = document.getElementById('na-para-birimi').value;
   const tarih = document.getElementById('na-tarih').value || localDateStr(new Date());
-  const faiz = getNakitAvansFaizOrani(pb, tarih);
-  document.getElementById('na-faiz').value = faiz;
-  const kaynakEl = document.getElementById('na-faiz-kaynak');
-  if(kaynakEl) {
-    const kmh = getKmhFaizOrani(tarih);
-    kaynakEl.textContent = `KMH Faiz: %${kmh} aylık (tanımlamalardan otomatik)`;
+  // Edit modunda kullanıcının kaydettiği faiz oranını koruyoruz; sadece yeni kayıtta otomatik doldur
+  if(!editNaId) {
+    const faiz = getNakitAvansFaizOrani(pb, tarih);
+    document.getElementById('na-faiz').value = faiz;
+    const kaynakEl = document.getElementById('na-faiz-kaynak');
+    if(kaynakEl) {
+      const kmh = getKmhFaizOrani(tarih);
+      kaynakEl.textContent = `KMH Faiz: %${kmh} aylık (tanımlamalardan otomatik)`;
+    }
   }
   updateNaLimitInfo();
   calcNakitAvans();
@@ -12149,16 +12166,14 @@ function checkMevduatHesapKapat(mevduatId) {
   if(!hesap || hesap.durum==='kapali') return;
   const today = localDateStr(new Date());
   if(mev.bitis > today) return; // vade dolmadı
-  // Check if marked as vadeli type
   if(hesap.tur !== 'vadeli') return;
+  // Otomatik kapat — onay sorma
   setTimeout(()=>{
-    showConfirm(`"${hesap.ad}" vadeli hesabı artık kapatılsın mı? (Durum: Kapalı olarak işaretlenir)`, ()=>{
-      hesap.durum = 'kapali';
-      saveData();
-      renderHesaplar();
-      showToast(`${hesap.ad} hesabı kapatıldı.`);
-    });
-  }, 400);
+    hesap.durum = 'kapali';
+    saveData();
+    if(typeof renderHesaplar==='function') renderHesaplar();
+    showToast(`🔒 "${hesap.ad}" vadeli hesabı otomatik kapatıldı`, 4000);
+  }, 600);
 }
 
 function editMevduat(id) {
@@ -12227,6 +12242,18 @@ function deleteMevduat(id) {
 }
 
 function renderMevduat() {
+  // Vade dolmuş mevduatları otomatik aktar (strateji varsa)
+  const todayCheck = localDateStr(new Date());
+  (DB.mevduatlar||[]).forEach(m=>{
+    if(m.bitis < todayCheck && m.strateji && m.strateji !== '') {
+      const lk = _lKey('mevduat', m.id, null);
+      if(_lGet(lk) == null) {
+        // Henüz aktarılmamış, otomatik tetikle
+        entMevduatYansit(m.id, 'odendi');
+        checkMevduatHesapKapat(m.id);
+      }
+    }
+  });
   const today = new Date();
   const todayStr = localDateStr(today);
   let toplamAna=0, toplamNihai=0, toplamFaiz=0, aktif=0;
@@ -12248,19 +12275,22 @@ function renderMevduat() {
     const aktif = m.bitis >= todayStr;
     const bank = getBanka(m.banka);
     const cur = m.paraBirimi || 'TRY';
-    const mature = m.bitis < todayStr;
-    const paid = (odGetDurum(m, undefined)||{}).durum === 'odendi';
     const vadesizH = m.vadesizHesapId ? (DB.hesaplar||[]).find(h=>h.id===m.vadesizHesapId) : null;
     const vadesizLabel = vadesizH ? `<span class="badge badge-blue" title="Vade sonunda geçecek hesap">${vadesizH.ad}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>';
     const hesapH = m.hesapId ? (DB.hesaplar||[]).find(h=>h.id===m.hesapId) : null;
     const hesapLabel = hesapH ? `<span style="font-size:11px;color:var(--text2)">${hesapH.ad}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>';
+    // Aktarım durumu
+    const lk = _lKey('mevduat', m.id, null);
+    const aktarimYapildi = _lGet(lk) != null;
+    const aktarimLabel = aktarimYapildi
+      ? `<span class="badge badge-green" title="Vadesiz hesaba aktarım tamamlandı">✓ Aktarıldı</span>`
+      : (aktif ? '<span style="color:var(--text3);font-size:11px">Vade bekleniyor</span>' : '<span class="badge badge-red" style="cursor:pointer" onclick="entMevduatYansit(\''+m.id+'\',\'odendi\');renderMevduat();" title="Aktarımı manuel tetikle">Manuel Aktar</span>');
     return `<tr>
       <td>${bank||'-'}</td>
       <td>${hesapLabel}</td>
       <td class="mono">${fmtDate(m.baslangic)}</td>
       <td class="mono">${fmtDate(m.bitis)}</td>
-      <td><span class="badge badge-blue" style="font-family:var(--mono);letter-spacing:.04em">${cur}</span></td>
-      <td class="mono">${fmtCur(m.tutar, cur)}</td>
+      <td class="mono"><span class="badge badge-blue" style="font-family:var(--mono);letter-spacing:.04em;margin-right:4px;font-size:10px">${cur}</span>${fmtCur(m.tutar, cur)}</td>
       <td class="mono">${m.faizOran}%</td>
       <td class="mono">${m.stopaj}%</td>
       <td class="mono">${m.vade}g</td>
@@ -12269,10 +12299,10 @@ function renderMevduat() {
       <td><span class="badge ${m.kumulatif?'badge-blue':'badge-green'}">${m.kumulatif?'Evet':'Hayır'}</span></td>
       <td><span class="badge ${aktif?'badge-green':'badge-red'}">${aktif?'Aktif':'Bitti'}</span></td>
       <td>${vadesizLabel}</td>
-      <td>${odToggleBtn('mevduat', m.id, undefined, m.bitis, m.nihai, m.banka ? getBanka(m.banka)+' mevduat' : 'Mevduat')}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editMevduat('${m.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMevduat('${m.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
+      <td>${aktarimLabel}</td>
+      <td style="white-space:nowrap;position:sticky;right:0;background:var(--surface);z-index:1"><button class="btn btn-ghost btn-sm btn-act" onclick="editMevduat('${m.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMevduat('${m.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="16" style="text-align:center;color:var(--text3);padding:20px">Mevduat bulunamadı</td></tr>';
+  }).join('') || '<tr><td colspan="15" style="text-align:center;color:var(--text3);padding:20px">Mevduat bulunamadı</td></tr>';
 }
 
 function toggleKiraDepozito() {
@@ -12528,7 +12558,7 @@ function openKiraModal(id=null) {
     const kiraKisiSelNew = document.getElementById('kira-kisi');
     if(kiraKisiSelNew) {
       const kisilerN = DB.kisiler||[];
-      kiraKisiSelNew.innerHTML = '<option value="">— Kişi Seçin —</option>' + kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+      kiraKisiSelNew.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' + kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
       phSet(kiraKisiSelNew, '— Kişi Seçin —', '');
     }
     // KT block sıfırla
@@ -12764,7 +12794,7 @@ function openMaasModal() {
   const maasKisiSel = document.getElementById('maas-kisi');
   if(maasKisiSel) {
     const kisiler = DB.kisiler||[];
-    maasKisiSel.innerHTML = '<option value="">— Kişi Seçin —</option>' + kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+    maasKisiSel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' + kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
     phSet(maasKisiSel, '— Kişi Seçin —', '');
   }
   // KT block sıfırla
@@ -14394,7 +14424,7 @@ function deleteKartAltyapi(id) {
 function fillKartAltyapiSelect(selectedId) {
   const sel = document.getElementById('kart-altyapi');
   if(!sel) return;
-  sel.innerHTML = '<option value="">— Seçilmedi —</option>' +
+  sel.innerHTML = '<option value="" disabled hidden>— Seçilmedi —</option>' +
     (DB.kartAltyapilari||[]).map(t=>`<option value="${t.id}">${t.ad}</option>`).join('');
   sel.value = selectedId || '';
 }
@@ -15075,7 +15105,7 @@ function populateKiraKisiSelects() {
   if(!sel) return;
   const kisiler = DB.kisiler||[];
   const prev = sel.value;
-  sel.innerHTML = '<option value="">— Kişi Seçin —</option>' +
+  sel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' +
     kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
   if(prev) sel.value = prev;
   phSet(sel, '— Kişi Seçin —', sel.value||'');
@@ -15086,7 +15116,7 @@ function populateMaasKisiSelects() {
   if(!sel) return;
   const kisiler = DB.kisiler||[];
   const prev = sel.value;
-  sel.innerHTML = '<option value="">— Kişi Seçin —</option>' +
+  sel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' +
     kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
   if(prev) sel.value = prev;
   phSet(sel, '— Kişi Seçin —', sel.value||'');
@@ -15502,104 +15532,366 @@ function odKapatPopup() {
   if(_odPopupClose) { document.removeEventListener('click', _odPopupClose); _odPopupClose = null; }
 }
 
+// ══════════════════════════════════════════════════════
+// ÖDEME DURUMU LOG SİSTEMİ
+// DB.odLog = { [lKey]: [ {ts, durum, tutar, not, bakiyeDelta}, ... ] }
+// ══════════════════════════════════════════════════════
+
+function odLogEkle(tip, id, key, durum, tutar, not, bakiyeDelta) {
+  if(!DB.odLog) DB.odLog = {};
+  const lk = `${tip}|${id}|${key!=null?key:'_'}`;
+  if(!DB.odLog[lk]) DB.odLog[lk] = [];
+  DB.odLog[lk].push({
+    ts: new Date().toISOString(),
+    durum: durum || 'sıfırlandı',
+    tutar: tutar || 0,
+    not: not || '',
+    bakiyeDelta: bakiyeDelta || 0
+  });
+  // Sadece son 50 kaydı tut (overflow önle)
+  if(DB.odLog[lk].length > 50) DB.odLog[lk] = DB.odLog[lk].slice(-50);
+}
+
+function odLogGetir(tip, id, key) {
+  if(!DB.odLog) return [];
+  const lk = `${tip}|${id}|${key!=null?key:'_'}`;
+  return (DB.odLog[lk] || []).slice().reverse(); // en yeni önce
+}
+
+function _odLogRender(tip, id, key) {
+  const kayitlar = odLogGetir(tip, id, key);
+  const el = document.getElementById('od-modal-log');
+  if(!el) return;
+  if(!kayitlar.length) { el.innerHTML=''; return; }
+  const durumDot = {
+    odendi:'#2dd4bf', kismi:'#a78bfa', ertelendi:'#fb923c',
+    bekliyor:'#38bdf8', gecikti:'#fb7185', iptal:'#6b7280', 'sıfırlandı':'#6b7280'
+  };
+  el.innerHTML = `<div class="od-log-title">Geçmiş (${kayitlar.length})</div>` +
+    kayitlar.map(k=>{
+      const dt = new Date(k.ts);
+      const dtStr = dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' +
+                    dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+      const dot = durumDot[k.durum] || '#6b7280';
+      return `<div class="od-log-item">
+        <div class="od-log-dot" style="background:${dot}"></div>
+        <div class="od-log-meta">
+          <div class="od-log-durum">${k.durum.charAt(0).toUpperCase()+k.durum.slice(1)}${k.not?' · <span class="od-log-not">'+k.not+'</span>':''}</div>
+          <div class="od-log-tarih">${dtStr}</div>
+        </div>
+        ${k.tutar ? `<div class="od-log-tutar">${fmt(k.tutar)}</div>` : ''}
+      </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// ÖDEME DURUMU MODAL — popup yerine tam ekran modal
+// ══════════════════════════════════════════════════════
+
+(function injectOdModalDOM() {
+  if(document.getElementById('od-modal-bg')) return;
+  const style = document.createElement('style');
+  style.textContent = `
+    #od-modal-bg {
+      display:none;position:fixed;inset:0;z-index:10000;
+      background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+      align-items:center;justify-content:center;padding:16px;
+      animation:modalBgIn .18s ease;
+    }
+    #od-modal-bg.open { display:flex; }
+    #od-modal-box {
+      background:var(--surface);border:1px solid var(--border2);
+      border-radius:20px;width:100%;max-width:460px;
+      box-shadow:0 32px 80px rgba(0,0,0,.6);
+      overflow:hidden;animation:modalSlideIn .22s cubic-bezier(.22,.68,0,1.2);
+    }
+    html[data-theme="light"] #od-modal-box {
+      background:#fff;border-color:rgba(0,0,0,.1);box-shadow:0 20px 60px rgba(0,0,0,.2);
+    }
+    #od-modal-header {
+      display:flex;align-items:flex-start;justify-content:space-between;
+      padding:20px 20px 0;gap:12px;
+    }
+    #od-modal-icon {
+      width:44px;height:44px;border-radius:12px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;font-size:20px;
+    }
+    #od-modal-titles { flex:1;min-width:0; }
+    #od-modal-label {
+      font-size:13px;font-weight:700;color:var(--text);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    #od-modal-sub { font-size:11.5px;color:var(--text3);margin-top:2px; }
+    #od-modal-close {
+      width:32px;height:32px;border-radius:10px;border:none;cursor:pointer;
+      background:var(--surface2);color:var(--text2);font-size:16px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      transition:background .12s;
+    }
+    #od-modal-close:hover { background:var(--surface3); }
+    #od-modal-info-bar {
+      margin:14px 20px 0;padding:11px 14px;
+      background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+      display:flex;align-items:center;gap:12px;
+    }
+    .od-info-kol { display:flex;flex-direction:column;gap:2px; }
+    .od-info-lbl { font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.06em; }
+    .od-info-val { font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono); }
+    .od-info-sep { width:1px;height:28px;background:var(--border);margin:0 4px; }
+    #od-modal-body { padding:16px 20px; }
+    #od-modal-log {
+      margin-top:14px;border-top:1px solid var(--border);padding-top:12px;
+    }
+    .od-log-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px; }
+    .od-log-item {
+      display:flex;align-items:flex-start;gap:9px;padding:6px 0;
+      border-bottom:1px solid var(--border);font-size:11.5px;
+    }
+    .od-log-item:last-child { border-bottom:none; }
+    .od-log-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px; }
+    .od-log-meta { display:flex;flex-direction:column;gap:1px;flex:1; }
+    .od-log-durum { font-weight:600;color:var(--text); }
+    .od-log-tarih { font-size:10.5px;color:var(--text3);font-family:var(--mono); }
+    .od-log-not { font-size:11px;color:var(--text2);font-style:italic; }
+    .od-log-tutar { font-size:11px;font-family:var(--mono);color:var(--text2);flex-shrink:0;align-self:center; }
+    .od-log-empty { font-size:12px;color:var(--text3);text-align:center;padding:8px 0; }
+    .od-status-grid {
+      display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;
+    }
+    .od-status-card {
+      padding:10px 12px;border-radius:12px;border:2px solid transparent;
+      cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:9px;
+      background:var(--surface2);
+    }
+    .od-status-card:hover { border-color:var(--border2);background:var(--surface3); }
+    .od-status-card.selected { border-color:currentColor !important; }
+    .od-status-card .od-sc-icon { font-size:16px;width:22px;text-align:center;flex-shrink:0; }
+    .od-status-card .od-sc-text { display:flex;flex-direction:column;gap:1px;min-width:0; }
+    .od-status-card .od-sc-lbl { font-size:12px;font-weight:600;line-height:1.2; }
+    .od-status-card .od-sc-sub { font-size:10px;color:var(--text3);line-height:1.2; }
+    .od-status-card.sel-odendi   { color:var(--teal);  background:rgba(45,212,191,.1); border-color:rgba(45,212,191,.4);}
+    .od-status-card.sel-kismi    { color:var(--violet);background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);}
+    .od-status-card.sel-ertelendi{ color:var(--warn);  background:rgba(251,146,60,.1); border-color:rgba(251,146,60,.4);}
+    .od-status-card.sel-iptal    { color:var(--text3); background:rgba(107,114,128,.1);border-color:rgba(107,114,128,.4);}
+    .od-status-card.sel-bekliyor { color:var(--sky);   background:rgba(56,189,248,.1); border-color:rgba(56,189,248,.4);}
+    .od-status-card.sel-gecikti  { color:var(--rose);  background:rgba(251,113,133,.1);border-color:rgba(251,113,133,.4);}
+    #od-modal-fields { display:flex;flex-direction:column;gap:10px; }
+    .od-field-row { display:flex;gap:10px; }
+    .od-field-row > * { flex:1;min-width:0; }
+    .od-field-lbl { font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;display:block; }
+    .od-field-inp {
+      width:100%;box-sizing:border-box;
+      background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);padding:9px 11px;font-size:13px;font-family:var(--mono);
+      transition:border-color .12s;
+    }
+    .od-field-inp:focus { outline:none;border-color:var(--accent); }
+    #od-modal-footer {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 20px 20px;gap:10px;
+    }
+    #od-modal-vadesiz-info {
+      margin:0 20px 12px;padding:10px 12px;
+      background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.25);
+      border-radius:10px;font-size:11.5px;color:var(--teal);
+      display:none;align-items:center;gap:8px;
+    }
+    #od-modal-vadesiz-info.show { display:flex; }
+    @keyframes modalSlideIn {
+      from { opacity:0;transform:translateY(20px) scale(.97); }
+      to   { opacity:1;transform:translateY(0) scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  const bg = document.createElement('div');
+  bg.id = 'od-modal-bg';
+  bg.innerHTML = `
+    <div id="od-modal-box">
+      <div id="od-modal-header">
+        <div id="od-modal-icon"></div>
+        <div id="od-modal-titles">
+          <div id="od-modal-label"></div>
+          <div id="od-modal-sub"></div>
+        </div>
+        <button id="od-modal-close" onclick="odModalKapat()">✕</button>
+      </div>
+      <div id="od-modal-info-bar">
+        <div class="od-info-kol"><div class="od-info-lbl">Vade Tarihi</div><div class="od-info-val" id="od-mi-tarih">—</div></div>
+        <div class="od-info-sep"></div>
+        <div class="od-info-kol"><div class="od-info-lbl">Tutar</div><div class="od-info-val" id="od-mi-tutar">—</div></div>
+        <div class="od-info-sep"></div>
+        <div class="od-info-kol"><div class="od-info-lbl">Mevcut Durum</div><div id="od-mi-durum"></div></div>
+      </div>
+      <div id="od-modal-body">
+        <div class="od-status-grid" id="od-status-grid"></div>
+        <div id="od-modal-vadesiz-info">
+          <span>⚡</span>
+          <span id="od-vadesiz-msg"></span>
+        </div>
+        <div id="od-modal-fields">
+          <div class="od-field-row">
+            <div>
+              <label class="od-field-lbl">Ödeme Tarihi</label>
+              <input class="od-field-inp" id="od-pop-tarih" type="date">
+            </div>
+            <div>
+              <label class="od-field-lbl">Ödenen Tutar</label>
+              <input class="od-field-inp" id="od-pop-tutar" type="number" step="0.01">
+            </div>
+          </div>
+          <div>
+            <label class="od-field-lbl">Not</label>
+            <input class="od-field-inp" id="od-pop-not" type="text" placeholder="Opsiyonel not...">
+          </div>
+        </div>
+        <div id="od-modal-log"></div>
+      </div>
+      <div id="od-modal-footer">
+        <button class="btn btn-ghost btn-sm" id="od-modal-sifirla-btn" onclick="odModalSifirla()" style="display:none">↺ Sıfırla</button>
+        <div style="display:flex;gap:8px;margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="odModalKapat()">İptal</button>
+          <button class="btn btn-primary btn-sm" onclick="odModalKaydet()" id="od-modal-kaydet-btn">✓ Kaydet</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  // Dışına tıklayınca kapat
+  bg.addEventListener('click', function(e){ if(e.target===bg) odModalKapat(); });
+})();
+
+// Modal state
+var _odModal = { tip:null, id:null, key:null, tarih:null, tutar:0, seciliDurum:null };
+
+function odModalKapat() {
+  const bg = document.getElementById('od-modal-bg');
+  if(bg) bg.classList.remove('open');
+  document.body.classList.remove('modal-open');
+}
+
+function odModalSifirla() {
+  const {tip,id,key} = _odModal;
+  const item = odGetItem(tip, id);
+  if(!item) return;
+  odLogEkle(tip, id, key, 'sıfırlandı', 0, 'Durum sıfırlandı');
+  odSetDurum(item, key, null);
+  saveData();
+  odModalKapat();
+  odRenderPage(tip);
+  showToast('Ödeme durumu sıfırlandı');
+}
+
+function odModalKaydet() {
+  const {tip,id,key,tarih,tutar} = _odModal;
+  const item = odGetItem(tip,id);
+  if(!item) return;
+  const ov = odGetDurum(item,key)||{};
+  const newDurum = _odModal.seciliDurum || ov.durum || 'bekliyor';
+  const newTarih = document.getElementById('od-pop-tarih')?.value || tarih || '';
+  const newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value);
+  const newNot   = document.getElementById('od-pop-not')?.value || '';
+  let finalTutar = isNaN(newTutar) ? (tutar||0) : newTutar;
+  if(newDurum==='iptal' && (tip==='kira'||tip==='maas')) finalTutar=0;
+  odSetDurum(item, key, {...ov, durum:newDurum, tarih:newTarih, tutar:finalTutar, not:newNot});
+  // Log kaydet
+  odLogEkle(tip, id, key, newDurum, finalTutar, newNot);
+  saveData();
+  odModalKapat();
+  odRenderPage(tip);
+  showToast('Ödeme durumu kaydedildi');
+  _otoBakiyeGuncelle(tip, id, key, newDurum, finalTutar);
+  if(tip==='mevduat' && newDurum==='odendi') {
+    const _ms = ((DB.mevduatlar||[]).find(x=>x.id===id)||{}).strateji;
+    if(_ms && _ms!=='') setTimeout(()=>mevduatOtoStratejiUygula(id), 300);
+    else checkMevduatHesapKapat(id);
+  }
+}
+
+function _odModalSecDurum(durum) {
+  _odModal.seciliDurum = durum;
+  // Grid'i güncelle
+  document.querySelectorAll('.od-status-card').forEach(c => {
+    const d = c.dataset.dur;
+    c.className = 'od-status-card' + (d===durum ? ' sel-'+d+' selected' : '');
+  });
+  // Vadesiz bilgi göster
+  if(durum==='odendi' && _odModal.tip==='mevduat') {
+    const m = (DB.mevduatlar||[]).find(x=>x.id===_odModal.id);
+    const vadesizH = m?.vadesizHesapId ? (DB.hesaplar||[]).find(h=>h.id===m.vadesizHesapId) : null;
+    const src = m?.hesapId ? (DB.hesaplar||[]).find(h=>h.id===m.hesapId) : null;
+    const infoEl = document.getElementById('od-modal-vadesiz-info');
+    const msgEl  = document.getElementById('od-vadesiz-msg');
+    if(m?.strateji && (vadesizH||src)) {
+      const hedef = vadesizH?.ad || src?.ad || '?';
+      const str = m.strateji==='tumu_vadesiz' ? `Ana para + faiz (${fmt(m.nihai||0)}) → "${hedef}" hesabına otomatik aktarılacak` :
+                  m.strateji==='yenile_ana_faiz_vadesiz' ? `Net faiz (${fmt(m.faiz||0)}) → "${hedef}" hesabına aktarılacak, ana para yeni mevduat açacak` :
+                  m.strateji==='yenile_tum' ? 'Ana para + faiz ile yeni mevduat otomatik açılacak' : '';
+      if(str) { msgEl.textContent=str; infoEl.classList.add('show'); }
+      else infoEl.classList.remove('show');
+    } else { infoEl.classList.remove('show'); }
+  } else {
+    document.getElementById('od-modal-vadesiz-info')?.classList.remove('show');
+  }
+}
+
 function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
-  e.stopPropagation();
-  odKapatPopup();
+  if(e) e.stopPropagation();
   const item = odGetItem(tip, id);
   if(!item) return;
   const ov = odGetDurum(item, key);
   const curDurum = ov?.durum || null;
-  const curNot   = ov?.not || '';
-  const curTarih = ov?.tarih || tarih || '';
-  const curTutar = ov?.tutar !== undefined ? ov.tutar : (tutar || 0);
+
+  _odModal = { tip, id, key, tarih: tarih||'', tutar: tutar||0, seciliDurum: curDurum };
+
+  // Tip ikonları
+  const tipIcon = {mevduat:'🏦',kira:'🏠',maas:'💼',kredi:'💳',kmh:'💳',elden:'💵',islem:'🧾'};
+  const tipLbl  = {mevduat:'Mevduat',kira:'Kira',maas:'Maaş',kredi:'Kredi',kmh:'KMH Kredi',elden:'Elden Ödeme',islem:'İşlem'};
+
+  document.getElementById('od-modal-icon').textContent = tipIcon[tip]||'📋';
+  document.getElementById('od-modal-icon').style.background = tip==='mevduat'?'rgba(79,110,247,.15)':tip==='kira'?'rgba(16,185,129,.15)':'rgba(251,146,60,.15)';
+  document.getElementById('od-modal-label').textContent = extraLabel || (tarih ? fmtDate(tarih) : 'Ödeme Durumu');
+  document.getElementById('od-modal-sub').textContent   = tipLbl[tip]||tip;
+  document.getElementById('od-mi-tarih').textContent    = tarih ? fmtDate(tarih) : '—';
+  document.getElementById('od-mi-tutar').textContent    = tutar ? fmt(tutar) : '—';
+  document.getElementById('od-mi-durum').innerHTML      = odBadgeHtml(curDurum, tarih, tutar);
+
+  // Tarihi bugüne default
   const todayStr = localDateStr(new Date());
-  const gecikti  = tarih && tarih < todayStr && curDurum !== 'odendi';
+  document.getElementById('od-pop-tarih').value = ov?.tarih || (tarih && tarih <= todayStr ? tarih : todayStr);
+  document.getElementById('od-pop-tutar').value = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
+  document.getElementById('od-pop-not').value   = ov?.not || '';
 
-  const popup = document.createElement('div');
-  popup.className = 'od-popup';
+  // Sıfırla butonu
+  document.getElementById('od-modal-sifirla-btn').style.display = ov ? '' : 'none';
 
+  // Durum kartları
   const seçenekler = [
-    { durum:'odendi',    cls:'od-odendi',    label:'✓ Ödendi' },
-    { durum:'kismi',     cls:'od-kismi',     label:'⊟ Kısmi Ödeme' },
-    { durum:'ertelendi', cls:'od-ertelendi', label:'↷ Ertelendi' },
-    { durum:'iptal',     cls:'od-iptal',     label: (tip==='kira'||tip==='maas') ? '⊘ İptal (Bu ay 0 ₺)' : '⊘ İptal / Atla' },
-    { durum:'bekliyor',  cls:'od-bekliyor',  label:'◉ Bekliyor' },
+    { durum:'odendi',    icon:'✓', lbl:'Ödendi',       sub:'Ödeme tamamlandı' },
+    { durum:'kismi',     icon:'⊟', lbl:'Kısmi Ödeme',  sub:'Bir kısmı ödendi' },
+    { durum:'ertelendi', icon:'↷', lbl:'Ertelendi',    sub:'Sonraya bırakıldı' },
+    { durum:'bekliyor',  icon:'◉', lbl:'Bekliyor',     sub:'Henüz ödenmedi' },
+    { durum:'gecikti',   icon:'⚠', lbl:'Gecikti',      sub:'Vade geçti' },
+    { durum:'iptal',     icon:'⊘', lbl:(tip==='kira'||tip==='maas')?'İptal (0₺)':'İptal / Atla', sub:'Bu dönemi atla' },
   ];
+  document.getElementById('od-status-grid').innerHTML = seçenekler.map(s=>`
+    <div class="od-status-card ${curDurum===s.durum?'sel-'+s.durum+' selected':''}" data-dur="${s.durum}" onclick="_odModalSecDurum('${s.durum}')">
+      <div class="od-sc-icon">${s.icon}</div>
+      <div class="od-sc-text">
+        <div class="od-sc-lbl">${s.lbl}</div>
+        <div class="od-sc-sub">${s.sub}</div>
+      </div>
+    </div>`).join('');
 
-  // Tüm state popup element'in dataset'ine sakla — onclick string'inde tırnak sorunu olmasın
-  popup.dataset.odTip    = tip;
-  popup.dataset.odId     = id;
-  popup.dataset.odKey    = key !== undefined ? String(key) : '';
-  popup.dataset.odKeyNull= key === undefined ? '1' : '';
-  popup.dataset.odTarih  = tarih || '';
-  popup.dataset.odTutar  = tutar || 0;
+  // Vadesiz bilgi (başlangıç)
+  _odModalSecDurum(curDurum);
 
-  popup.innerHTML = `
-    <div class="od-popup-title">${extraLabel || (tarih ? fmtDate(tarih) : 'Ödeme Durumu')}</div>
-    ${seçenekler.map(s => `
-      <div class="od-popup-row${curDurum===s.durum?' od-'+s.durum:''}" data-sec-durum="${s.durum}" style="cursor:pointer">
-        <span class="od-badge ${s.cls}" style="pointer-events:none">${s.label}</span>
-        ${curDurum===s.durum?'<span style="margin-left:auto;font-size:10px;color:var(--text3)">✓ seçili</span>':''}
-      </div>`).join('')}
-    <div class="od-popup-sep"></div>
-    <span class="od-popup-label">Ödeme Tarihi</span>
-    <input class="od-popup-input" id="od-pop-tarih" type="date" value="${curTarih}">
-    <span class="od-popup-label">Ödenen Tutar</span>
-    <input class="od-popup-input" id="od-pop-tutar" type="number" step="0.01" value="${curTutar}" placeholder="${fmt(tutar||0)}">
-    <span class="od-popup-label">Not</span>
-    <input class="od-popup-input" id="od-pop-not" type="text" value="${curNot}" placeholder="Notunuz...">
-    <div class="od-popup-sep"></div>
-    <div style="display:flex;gap:6px;justify-content:flex-end">
-      ${ov ? '<button class="btn btn-ghost btn-sm" style="font-size:11px" data-od-sifirla="1">↺ Sıfırla</button>' : ''}
-      <button class="btn btn-primary btn-sm" style="font-size:11px" data-od-kaydet="1">Kaydet</button>
-    </div>`;
-
-  // Popup içi event delegation
-  popup.addEventListener('click', function(ev) {
-    ev.stopPropagation();
-    const tip2    = popup.dataset.odTip;
-    const id2     = popup.dataset.odId;
-    const keyRaw  = popup.dataset.odKeyNull==='1' ? undefined : (isNaN(popup.dataset.odKey) ? popup.dataset.odKey : Number(popup.dataset.odKey));
-    const tarih2  = popup.dataset.odTarih;
-    const tutar2  = parseFloat(popup.dataset.odTutar)||0;
-    const row = ev.target.closest('[data-sec-durum]');
-    if(row) { odSecDurum(ev, tip2, id2, keyRaw, tarih2, tutar2, row.dataset.secDurum); return; }
-    if(ev.target.closest('[data-od-sifirla]')) { odSifirla(ev, tip2, id2, keyRaw); return; }
-    if(ev.target.closest('[data-od-kaydet]'))  { odKaydet(ev, tip2, id2, keyRaw, tarih2, tutar2); return; }
-  });
-
-  // Konumlandır — viewport-aware, mobilde ortala
-  document.body.appendChild(popup);
-  _odPopupEl = popup;
-  const r = e.target.getBoundingClientRect();
-  const pw = popup.offsetWidth || 260;
-  const ph = popup.offsetHeight || 340;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const isMobile = vw < 600;
-  if(isMobile) {
-    // Mobilde tam ortalı, alt kısımda sabit
-    popup.style.left = Math.max(8, (vw - pw) / 2) + 'px';
-    popup.style.top  = Math.max(8, vh - ph - 16) + 'px';
-  } else {
-    let left = r.left;
-    let top  = r.bottom + 6;
-    if(left + pw > vw - 8) left = vw - pw - 8;
-    if(left < 8) left = 8;
-    if(top + ph > vh - 8) top = Math.max(8, r.top - ph - 6);
-    if(top < 8) top = 8;
-    popup.style.left = left + 'px';
-    popup.style.top  = top + 'px';
-  }
-
-  // Dışına tıklayınca kapat
-  setTimeout(() => {
-    _odPopupClose = (ev) => { if(!popup.contains(ev.target)) odKapatPopup(); };
-    document.addEventListener('click', _odPopupClose);
-  }, 50);
+  document.getElementById('od-modal-bg').classList.add('open');
+  document.body.classList.add('modal-open');
+  // Log göster
+  _odLogRender(tip, id, key);
 }
 
-// Event delegation — od-btn span'ına tıklanınca popup aç
+// Event delegation — od-btn span'ına tıklanınca modal aç
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('.od-btn');
   if(!btn) return;
@@ -15624,6 +15916,7 @@ function odSecDurum(e, tip, id, key, tarih, tutar, durum) {
     tarih: document.getElementById('od-pop-tarih')?.value || tarih || '',
     tutar: newTutar,
     not:   document.getElementById('od-pop-not')?.value || ov.not || '' });
+  odLogEkle(tip, id, key, durum, newTutar, document.getElementById('od-pop-not')?.value || '');
   saveData();
   odKapatPopup();
   odRenderPage(tip);
@@ -20910,10 +21203,13 @@ function entMevduatYansit(mevId, durum) {
     miktar = m.faiz || 0;
   }
 
-  if (miktar > 0.001 && hedefId) {
-    if (_bakiyeDelta(hedefId, miktar)) {
+  const finalHedef = hedefId;
+  if (miktar > 0.001 && finalHedef) {
+    if (_bakiyeDelta(finalHedef, miktar)) {
       _lSet(lk, miktar);
+      const hesapAd = ((DB.hesaplar||[]).find(h=>h.id===finalHedef)||{}).ad || 'hesap';
       _sync(`Mevduat ${fmtCur(miktar, m.paraBirimi)} hesaba aktarıldı ✓`);
+      setTimeout(()=>showToast(`\u{1F4B0} ${fmtCur(miktar, m.paraBirimi||'TRY')} \u2192 ${hesapAd} otomatik aktarıldı`, 4000), 400);
     }
   }
 }
