@@ -1707,6 +1707,19 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .exk-box-bar { height: 4px; border-radius: 3px; background: var(--surface3); overflow: hidden; margin-top: 4px; }
 .exk-box-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
 
+/* Ekstre accordion */
+.exk-acc-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 18px; cursor:pointer; user-select:none; flex-wrap:wrap; }
+.exk-acc-head:hover { background: rgba(255,255,255,.02); }
+.exk-acc-left { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+.exk-acc-title { font-size:14px; font-weight:700; color:var(--text); white-space:nowrap; }
+.exk-acc-right { display:flex; align-items:center; gap:14px; }
+.exk-acc-sum { font-family:var(--mono); font-size:16px; font-weight:700; }
+.exk-acc-chev { font-size:12px; color:var(--text3); transition: transform .2s; }
+.exk-acc-card.open .exk-acc-chev { transform: rotate(90deg); }
+.exk-acc-body { display:none; border-top:1px solid var(--border); }
+.exk-acc-card.open .exk-acc-body { display:block; }
+.exk-acc-meta { font-size:11px; color:var(--text3); font-family:var(--mono); }
+
 /* ─── TOAST ───────────────────────────────────────────── */
 .toast {
   position: fixed;
@@ -6778,7 +6791,7 @@ html[data-theme="light"] .mob-theme-toggle {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div>
           <label style="font-size:11px;font-weight:600;color:var(--text2)">Limit Tipi</label>
-          <select id="nakit-avans-limit-tip" style="margin-top:4px" onchange="updateNakitAvansLimitPreview()">
+          <select id="nakit-avans-limit-tip" style="margin-top:4px" onchange="autoSaveNakitAvansLimitKural()">
             <option value="kullanilabilir">Kullanılabilir Limit</option>
             <option value="toplam">Toplam Limit</option>
           </select>
@@ -6786,7 +6799,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div>
           <label style="font-size:11px;font-weight:600;color:var(--text2)">Maksimum Oran (%)</label>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-            <input id="nakit-avans-max-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 50" style="flex:1" oninput="updateNakitAvansLimitPreview()">
+            <input id="nakit-avans-max-oran" type="number" min="0" max="100" step="0.5" placeholder="örn. 50" style="flex:1" oninput="autoSaveNakitAvansLimitKural()">
             <span style="font-size:18px;font-weight:700;color:var(--accent)">%</span>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Oranla hesaplanan tutar = tavan miktar üst sınırıdır</div>
@@ -6807,7 +6820,6 @@ html[data-theme="light"] .mob-theme-toggle {
       </div>
 
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-primary" onclick="saveNakitAvansLimitKural()">💾 Kaydet</button>
         <span id="nakit-avans-limit-status" style="font-size:12px;color:var(--teal)"></span>
       </div>
       <div id="nakit-avans-limit-preview" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
@@ -6840,7 +6852,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2">
           <div>
             <label>Format Deseni</label>
-            <input id="ga-tarih-format" placeholder="dd/MM/yyyy" style="font-family:var(--mono)" oninput="updateGoruntuPreview()">
+            <input id="ga-tarih-format" placeholder="dd/MM/yyyy" style="font-family:var(--mono)" oninput="autoSaveGoruntuAyarlari()">
           </div>
           <div>
             <label>Ayraç</label>
@@ -6887,7 +6899,7 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-2">
           <div>
             <label>Format Deseni</label>
-            <input id="ga-saat-format" placeholder="HH:mm" style="font-family:var(--mono)" oninput="updateGoruntuPreview()">
+            <input id="ga-saat-format" placeholder="HH:mm" style="font-family:var(--mono)" oninput="autoSaveGoruntuAyarlari()">
           </div>
           <div>
             <label>Ayraç</label>
@@ -6919,14 +6931,14 @@ html[data-theme="light"] .mob-theme-toggle {
         <div class="form-row cols-3" style="align-items:end">
           <div>
             <label>Ondalık Ayraç</label>
-            <select id="ga-ondalik-ayrac" onchange="updateGoruntuPreview()">
+            <select id="ga-ondalik-ayrac" onchange="autoSaveGoruntuAyarlari()">
               <option value=",">, (virgül) — 1.234,56</option>
               <option value=".">. (nokta) — 1,234.56</option>
             </select>
           </div>
           <div>
             <label>Binlik Ayraç</label>
-            <select id="ga-binlik-ayrac" onchange="updateGoruntuPreview()">
+            <select id="ga-binlik-ayrac" onchange="autoSaveGoruntuAyarlari()">
               <option value=".">. (nokta)</option>
               <option value=",">, (virgül)</option>
               <option value=" "> (boşluk)</option>
@@ -6935,7 +6947,7 @@ html[data-theme="light"] .mob-theme-toggle {
           </div>
           <div>
             <label>Ondalık Basamak</label>
-            <select id="ga-ondalik-basamak" onchange="updateGoruntuPreview()">
+            <select id="ga-ondalik-basamak" onchange="autoSaveGoruntuAyarlari()">
               <option value="0">0</option>
               <option value="1">1</option>
               <option value="2" selected>2</option>
@@ -6962,18 +6974,17 @@ html[data-theme="light"] .mob-theme-toggle {
     </div>
 
     <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
-      <input type="checkbox" id="ga-tarih-giris-kolay" onchange="updateGoruntuPreview()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <input type="checkbox" id="ga-tarih-giris-kolay" onchange="autoSaveGoruntuAyarlari()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
       <label for="ga-tarih-giris-kolay" style="cursor:pointer;margin:0;font-size:13px">Hızlı tarih girişi <span style="color:var(--text3);font-size:11px">— ayraç olmadan yaz: <span style="font-family:var(--mono);color:var(--accent2)">010125</span> veya <span style="font-family:var(--mono);color:var(--accent2)">01012025</span> otomatik <span id="ga-tarih-kolay-ornek" style="color:var(--teal);font-family:var(--mono)">01/01/2025</span> olur</span></label>
     </div>
 
     <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
-      <input type="checkbox" id="ga-show-weekday" onchange="updateGoruntuPreview()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <input type="checkbox" id="ga-show-weekday" onchange="autoSaveGoruntuAyarlari()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
       <label for="ga-show-weekday" style="cursor:pointer;margin:0;font-size:13px">Tarihlerde gün adını göster <span style="color:var(--text3);font-size:11px">(ör. Pazartesi, 01/01/2025)</span></label>
     </div>
 
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-ghost" onclick="resetGoruntuAyarlari()">↺ Varsayılana Dön</button>
-      <button class="btn btn-primary" onclick="saveGoruntuAyarlari()">💾 Kaydet</button>
     </div>
   </div>
 
@@ -9361,7 +9372,7 @@ function syncTarihAyrac() {
   // Yalnızca token harfleri arasındaki ayraçları değiştir
   fmt = fmt.replace(/(?<=[dMy])([\/\.\- ])(?=[dMy])/g, ayrac);
   input.value = fmt;
-  updateGoruntuPreview();
+  autoSaveGoruntuAyarlari();
 }
 
 function syncSaatAyrac() {
@@ -9373,20 +9384,20 @@ function syncSaatAyrac() {
   // Tüm :, . ve h ayraçlarını yeni ayraçla değiştir (token harfleri dışında)
   fmt = fmt.replace(/(?<=[mMsHhA\d])[:\.h](?=[mMsHhA\d])/g, ayrac);
   input.value = fmt;
-  updateGoruntuPreview();
+  autoSaveGoruntuAyarlari();
 }
 
 function setTarihFormat(fmt) {
   const inp = document.getElementById('ga-tarih-format');
   if(inp) inp.value = fmt;
-  updateGoruntuPreview();
+  autoSaveGoruntuAyarlari();
 }
 
 function setSaatFormat(fmt) {
   const inp = document.getElementById('ga-saat-format');
   if(inp) inp.value = fmt;
   syncSaatAyracFromFormat();
-  updateGoruntuPreview();
+  autoSaveGoruntuAyarlari();
 }
 
 function setMoneyFormat(ondalik, binlik, basamak) {
@@ -9396,7 +9407,7 @@ function setMoneyFormat(ondalik, binlik, basamak) {
   if(oa) oa.value = ondalik;
   if(ba) ba.value = binlik;
   if(ob) ob.value = basamak;
-  updateGoruntuPreview();
+  autoSaveGoruntuAyarlari();
 }
 
 function updateGoruntuPreview() {
@@ -9430,7 +9441,7 @@ function updateGoruntuPreview() {
   }
 }
 
-function saveGoruntuAyarlari() {
+function saveGoruntuAyarlari(silent) {
   FORMAT_CONFIG.tarihFormat  = (document.getElementById('ga-tarih-format')||{}).value || 'dd/MM/yyyy';
   FORMAT_CONFIG.saatFormat   = (document.getElementById('ga-saat-format')||{}).value  || 'HH:mm';
   FORMAT_CONFIG.ondalikAyrac = (document.getElementById('ga-ondalik-ayrac')||{}).value || ',';
@@ -9442,7 +9453,7 @@ function saveGoruntuAyarlari() {
   const gkEl = document.getElementById('ga-tarih-giris-kolay');
   if(gkEl) FORMAT_CONFIG.tarihGirisKolay = gkEl.checked;
   saveFormatConfig();
-  showToast('Görüntü ayarları kaydedildi ✓');
+  if(!silent) showToast('Görüntü ayarları kaydedildi ✓');
   // fmtCur override'ını güncelle
   updateFmtCurOverride();
   // Topbar & sidebar saatini anında güncelle
@@ -9450,6 +9461,14 @@ function saveGoruntuAyarlari() {
   // Vergi tablosu ve date overlay'leri yenile
   renderTumOranTablolari();
   if(typeof window._refreshDateOverlays === 'function') window._refreshDateOverlays();
+}
+
+// Görüntü ayarları için otomatik kaydet: önizlemeyi güncelle + sessizce kaydet
+let _gaAutoSaveTimer = null;
+function autoSaveGoruntuAyarlari() {
+  updateGoruntuPreview();
+  clearTimeout(_gaAutoSaveTimer);
+  _gaAutoSaveTimer = setTimeout(() => saveGoruntuAyarlari(true), 300);
 }
 
 function resetGoruntuAyarlari() {
@@ -11150,7 +11169,7 @@ function renderExtreler() {
     return;
   }
 
-  function renderExstreKart(p, pb) {
+  function renderExstreKart(p, pb, defaultOpen) {
     const rows       = p.rowsByPb[pb] || [];
     const toplamBorc = p.totalByPb[pb] || 0;
     const isPast     = p.odeme < todayStr;
@@ -11182,16 +11201,33 @@ function renderExtreler() {
     const kalanStr = isPast ? 'Geçti' : kalanGun === 0 ? 'Bugün!' : `${kalanGun} gün`;
     const kalanColor = isPast ? 'var(--danger)' : kalanGun <= 3 ? '#f59e0b' : 'var(--text3)';
 
-    return `<div class="card" style="margin-bottom:16px${isThisMonth?' border-color:rgba(251,191,36,.3)':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 0;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <div style="font-size:15px;font-weight:700;color:var(--text)">${p.label} Ekstresi</div>
+    // Ödenmiş mi? (özet rozeti için)
+    const odemelerAll = (DB.kartOdemeleri||[]).filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key);
+    const odenenTopAll = odemelerAll.reduce((s,o)=>s+o.tutar,0);
+    const kalanAll = Math.max(0, toplamBorc - odenenTopAll);
+    const odendiBadge = kalanAll<=0 && toplamBorc>0
+      ? `<span style="background:rgba(45,212,191,.15);color:#2dd4bf;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">✓ ÖDENDİ</span>`
+      : '';
+
+    const accId = `exk-${kart.id}-${p.key}-${pb}`;
+    const openCls = defaultOpen ? ' open' : '';
+
+    return `<div class="card exk-acc-card${openCls}" id="${accId}" style="margin-bottom:10px${isThisMonth?';border-color:rgba(251,191,36,.3)':''}">
+      <div class="exk-acc-head" onclick="document.getElementById('${accId}').classList.toggle('open')">
+        <div class="exk-acc-left">
+          <span class="exk-acc-chev">▶</span>
+          <div class="exk-acc-title">${p.label}</div>
           ${pbBadge}
           ${statusBadge}
+          ${odendiBadge}
+          <span class="exk-acc-meta">Son ödeme: ${fmtDate(p.odeme)} · ${kalanStr}</span>
         </div>
-        <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${isPast?'var(--text2)':'var(--warn)'}">${fmtCur(toplamBorc, pb)}</div>
+        <div class="exk-acc-right">
+          <div class="exk-acc-sum" style="color:${kalanAll<=0&&toplamBorc>0?'var(--teal)':(isPast?'var(--danger)':'var(--warn)')}">${fmtCur(toplamBorc, pb)}</div>
+        </div>
       </div>
-      <div class="exk-boxes">
+      <div class="exk-acc-body">
+      <div class="exk-boxes" style="margin:14px 18px 0">
         <div class="exk-box">
           <div class="exk-box-icon">✂️</div>
           <div class="exk-box-label">Ekstre Kesim</div>
@@ -11213,7 +11249,7 @@ function renderExtreler() {
           <div class="exk-box-bar"><div class="exk-box-bar-fill" style="width:${kbPct}%;background:${kb/kart.limit>0.9?'var(--danger)':kb/kart.limit>0.7?'#f59e0b':'#2dd4bf'}"></div></div>
         </div>`; })() : ''}
       </div>
-      <div class="tbl-wrap" style="margin:0;border-top:1px solid var(--border)"><table>
+      <div class="tbl-wrap" style="margin:14px 0 0;border-top:1px solid var(--border)"><table>
         <thead><tr><th>İşlem Tarihi</th><th>Açıklama</th><th>Taksit</th><th>Tutar</th></tr></thead>
         <tbody>${rows.map(r=>`<tr>
           <td class="mono">${r.tarih}</td>
@@ -11228,9 +11264,9 @@ function renderExtreler() {
       </table></div>
       <!-- Ödemeler -->
       ${(()=>{
-        const odemeler = (DB.kartOdemeleri||[]).filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key);
-        const odenenTop = odemeler.reduce((s,o)=>s+o.tutar,0);
-        const kalan = Math.max(0, toplamBorc - odenenTop);
+        const odemeler = odemelerAll;
+        const odenenTop = odenenTopAll;
+        const kalan = kalanAll;
         const odemelerHtml = odemeler.length ? `
           <div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px">
             ${odemeler.map(o=>`
@@ -11253,6 +11289,7 @@ function renderExtreler() {
             </button>
           </div>`;
       })()}
+      </div>
     </div>`;
   }
 
@@ -11260,10 +11297,23 @@ function renderExtreler() {
   periods.forEach(p => {
     // Dönemdeki para birimlerini kartın tanımlı sırasına göre sırala
     const pbsInPeriod = kartPbList.filter(pb => p.rowsByPb[pb] && p.rowsByPb[pb].length > 0);
-    pbsInPeriod.forEach(pb => cards.push(renderExstreKart(p, pb)));
+    const isThisMonth = p.key === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+    pbsInPeriod.forEach(pb => {
+      const toplamBorc = p.totalByPb[pb] || 0;
+      const odenenTop = (DB.kartOdemeleri||[]).filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key).reduce((s,o)=>s+o.tutar,0);
+      const kalan = Math.max(0, toplamBorc - odenenTop);
+      const isPast = p.odeme < todayStr;
+      // Varsayılan açık: güncel ay, veya ödenmemiş geçmiş dönem
+      const defaultOpen = isThisMonth || (isPast && kalan > 0);
+      cards.push(renderExstreKart(p, pb, defaultOpen));
+    });
   });
 
-  content.innerHTML = cards.join('');
+  // En güncel/önemli dönemler üstte: tarihe göre ters sırala (en yeni en üstte)
+  // periods zaten kronolojik sıralı geldiği için cards'ı ters çeviriyoruz
+  cards.reverse();
+
+  content.innerHTML = `<div style="margin-bottom:10px;font-size:11px;color:var(--text3)">${cards.length} dönem · başlığa tıklayarak detayları aç/kapat</div>` + cards.join('');
 }
 
 // ========== KART BORÇ ÖDEME ==========
@@ -11817,23 +11867,9 @@ function saveMevduat() {
     const kaynakHesap = (DB.hesaplar||[]).find(h=>h.id===kaynakHesapId);
     const hedefHesap  = (DB.hesaplar||[]).find(h=>h.id===hesapId);
     if(kaynakHesap && hedefHesap) {
-      // Bakiye transferi
+      // Bakiye transferi — arka planda otomatik yapılır, İşlemler listesine kayıt eklenmez
       kaynakHesap.bakiye = (kaynakHesap.bakiye||0) - tutar;
       hedefHesap.bakiye  = (hedefHesap.bakiye||0)  + tutar;
-      // Transfer işlem kaydı oluştur
-      if(!DB.islemler) DB.islemler = [];
-      const transferId = uid();
-      DB.islemler.push({
-        id: transferId,
-        tarih: bas || localDateStr(new Date()),
-        tur: 'transfer',
-        tutar: tutar,
-        paraBirimi: kaynakHesap.paraBirimi || 'TRY',
-        hesapId: kaynakHesapId,
-        hedefHesapId: hesapId,
-        aciklama: `Mevduat transferi — ${kaynakHesap.ad} → ${hedefHesap.ad}`,
-        otomatik: true,
-      });
       showToast(`✓ ${fmtCur(tutar, kaynakHesap.paraBirimi||'TRY')} — ${kaynakHesap.ad} → ${hedefHesap.ad} transfer edildi`, 'success');
     }
   }
@@ -11912,15 +11948,15 @@ function mevduatYenileAnaPara(mevId) {
 }
 
 // Strateji 3: Ana para + faiz → Vadesiz hesaba aktar
-function mevduatTumunuVadesizeAktar(mevId) {
+function mevduatTumunuVadesizeAktar(mevId, silent) {
   const m = (DB.mevduatlar||[]).find(x=>x.id===mevId);
   if(!m) return;
   const selEl = document.getElementById(`mev-aksiyon-vadesiz-${mevId}`);
   const vadesizId = selEl ? selEl.value : (m.vadesizHesapId||'');
-  if(!vadesizId) { showToast('Lütfen aktarım yapılacak vadesiz hesabı seçin', 'error'); return; }
+  if(!vadesizId) { if(!silent) showToast('Lütfen aktarım yapılacak vadesiz hesabı seçin', 'error'); return; }
   const hesap = (DB.hesaplar||[]).find(h=>h.id===vadesizId);
-  if(!hesap) { showToast('Hesap bulunamadı', 'error'); return; }
-  showConfirm(`${fmtCur(m.nihai, m.paraBirimi)} tutarını "${hesap.ad}" hesabına aktarmak istiyor musunuz?\nMevduat kapatılacak.`, ()=>{
+  if(!hesap) { if(!silent) showToast('Hesap bulunamadı', 'error'); return; }
+  const _yap = () => {
     hesap.bakiye = (hesap.bakiye||0) + m.nihai;
     // Mevduatı "tamamlandı" olarak işaretle veya sil
     const idx = DB.mevduatlar.findIndex(x=>x.id===mevId);
@@ -11930,7 +11966,12 @@ function mevduatTumunuVadesizeAktar(mevId) {
     if(typeof renderMevduat==='function') renderMevduat();
     if(typeof renderHesaplar==='function') renderHesaplar();
     showToast(`${fmtCur(m.nihai,m.paraBirimi)} → ${hesap.ad} aktarıldı ✓`, 'success');
-  });
+  };
+  if(silent) {
+    _yap();
+  } else {
+    showConfirm(`${fmtCur(m.nihai, m.paraBirimi)} tutarını "${hesap.ad}" hesabına aktarmak istiyor musunuz?\nMevduat kapatılacak.`, _yap);
+  }
 }
 
 // Aksiyon kartını geçici olarak gizle (session)
@@ -14357,16 +14398,24 @@ function renderNakitAvansLimitKural() {
   updateNakitAvansLimitPreview();
 }
 
-function saveNakitAvansLimitKural() {
+function saveNakitAvansLimitKural(silent) {
   const tip = document.getElementById('nakit-avans-limit-tip').value;
   const oran = parseFloat(document.getElementById('nakit-avans-max-oran').value);
-  if(isNaN(oran)||oran<0||oran>100) { showToast('Geçerli bir oran giriniz (0-100)','warn'); return; }
+  if(isNaN(oran)||oran<0||oran>100) { if(!silent) showToast('Geçerli bir oran giriniz (0-100)','warn'); return; }
   DB.nakitAvansLimitTip = tip;
   DB.nakitAvansMaxOran = oran;
   saveData();
   updateNakitAvansLimitPreview();
   const st = document.getElementById('nakit-avans-limit-status');
   if(st) { st.textContent = '✓ Kaydedildi'; setTimeout(()=>st.textContent='',2000); }
+}
+
+// Limit tipi/oran değiştikçe önizlemeyi güncelle ve geçerliyse sessizce kaydet
+let _naLimitAutoSaveTimer = null;
+function autoSaveNakitAvansLimitKural() {
+  updateNakitAvansLimitPreview();
+  clearTimeout(_naLimitAutoSaveTimer);
+  _naLimitAutoSaveTimer = setTimeout(() => saveNakitAvansLimitKural(true), 300);
 }
 
 function updateNakitAvansLimitPreview() {
@@ -20421,7 +20470,7 @@ function mevduatOtoStratejiUygula(mevId) {
   if(!strateji) return false;
 
   if(strateji === 'tumu_vadesiz' && mev.vadesizHesapId) {
-    mevduatTumunuVadesizeAktar(mevId);
+    mevduatTumunuVadesizeAktar(mevId, true);
     return true;
   } else if(strateji === 'yenile_ana_faiz_vadesiz' && mev.vadesizHesapId) {
     mevduatYenileAnaPara(mevId);
