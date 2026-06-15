@@ -8991,6 +8991,10 @@ function loadData() {
 function applyMigrations(d) {
   if(!d) return defaultData();
 
+  // ── Eksik alanları varsayılanlarla tamamla (eski Drive verilerinde
+  //    bulunmayan diziler/objeler için DB.xxx undefined olmasın) ───────────
+  d = {...defaultData(), ...d};
+
   // ── FORMAT_CONFIG ve para birimi Drive verisinden uygula ─────────────────
   if(d._formatConfig) FORMAT_CONFIG = {...FORMAT_CONFIG, ...d._formatConfig};
   if(d._currency)     defaultCurrency = d._currency;
@@ -9025,7 +9029,7 @@ function defaultData() {
     bankalar: [], hesapTurleri: [], urunTipler: [], krediTipleri: [], kartAltyapilari: defaultKartAltyapilari(),
     tatiller: [], kartlar: [], islemler: [], mevduatlar: [], kiralar: [],
     maaslar: [], eldenler: [], ozelExtreler: [], krediler: [],
-    bireyselKrediler: [], paraBirimleri: [], kategoriler: [],
+    bireyselKrediler: [], paraBirimleri: [], kategoriler: [], abonelikler: [],
     stopajOranlari: [], kkdfOranlari: [], bsmvOranlari: [], kmhFaizOranlari: [],
     hesaplar: [], subeler: {}, kisiler: [],
     asgariOdemeKurallari: [],
@@ -12270,6 +12274,7 @@ function deleteMevduat(id) {
 }
 
 function renderMevduat() {
+  if(!DB.mevduatlar) DB.mevduatlar = [];
   // Vade dolmuş mevduatları otomatik aktar (strateji varsa)
   const todayCheck = localDateStr(new Date());
   (DB.mevduatlar||[]).forEach(m=>{
@@ -12286,9 +12291,9 @@ function renderMevduat() {
   const todayStr = localDateStr(today);
   let toplamAna=0, toplamNihai=0, toplamFaiz=0, aktif=0;
   DB.mevduatlar.forEach(m=>{
-    toplamAna+=m.tutar;
-    toplamNihai+=m.nihai;
-    toplamFaiz+=m.faiz;
+    toplamAna+=m.tutar||0;
+    toplamNihai+=m.nihai||0;
+    toplamFaiz+=m.faiz||0;
     if(m.bitis>=todayStr) aktif++;
   });
 
@@ -15485,7 +15490,7 @@ function odSetDurum(item, key, data) {
 
 function odBadgeHtml(durum, tarih, tutar) {
   const todayStr = localDateStr(new Date());
-  const d = durum || (tarih && tarih < todayStr ? 'gecikti' : 'bekliyor');
+  const d = durum || (tarih && tarih.length === 10 && tarih < todayStr ? 'gecikti' : 'bekliyor');
   const map = {
     odendi:   ['od-odendi',   '✓ Ödendi'],
     bekliyor: ['od-bekliyor', '◉ Bekliyor'],
@@ -15740,7 +15745,10 @@ function _odLogRender(tip, id, key) {
             </div>
             <div>
               <label class="od-field-lbl">Ödenen Tutar</label>
-              <input class="od-field-inp" id="od-pop-tutar" type="number" step="0.01">
+              <div style="position:relative">
+                <span id="od-pop-tutar-sym" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);font-weight:700;pointer-events:none;z-index:1">₺</span>
+                <input class="od-field-inp" id="od-pop-tutar" type="number" step="0.01" style="padding-left:24px">
+              </div>
             </div>
           </div>
           <div>
@@ -15790,7 +15798,7 @@ function odModalKaydet() {
   if(!item) return;
   const ov = odGetDurum(item,key)||{};
   const newDurum = _odModal.seciliDurum || ov.durum || 'bekliyor';
-  const newTarih = document.getElementById('od-pop-tarih')?.value || tarih || '';
+  const newTarih = document.getElementById('od-pop-tarih')?.value || localDateStr(new Date());
   const newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value);
   const newNot   = document.getElementById('od-pop-not')?.value || '';
   let finalTutar = isNaN(newTutar) ? (tutar||0) : newTutar;
@@ -15846,6 +15854,13 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
 
   _odModal = { tip, id, key, tarih: tarih||'', tutar: tutar||0, seciliDurum: curDurum };
 
+  // Para birimi sembolünü item'dan çek
+  const itemPb = item.paraBirimi || (tip==='kmh'||tip==='kredi' ? (item.paraBirimleri?.[0]||defaultCurrency) : defaultCurrency);
+  const pbCfg = (typeof CURRENCY_CONFIG!=='undefined' && CURRENCY_CONFIG[itemPb]) || {};
+  const pbSym = pbCfg.symbol || (itemPb==='TRY' ? '₺' : itemPb);
+  const symEl = document.getElementById('od-pop-tutar-sym');
+  if(symEl) symEl.textContent = pbSym;
+
   // Tip ikonları
   const tipIcon = {mevduat:'🏦',kira:'🏠',maas:'💼',kredi:'💳',kmh:'💳',elden:'💵',islem:'🧾'};
   const tipLbl  = {mevduat:'Mevduat',kira:'Kira',maas:'Maaş',kredi:'Kredi',kmh:'KMH Kredi',elden:'Elden Ödeme',islem:'İşlem'};
@@ -15858,9 +15873,9 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
   document.getElementById('od-mi-tutar').textContent    = tutar ? fmt(tutar) : '—';
   document.getElementById('od-mi-durum').innerHTML      = odBadgeHtml(curDurum, tarih, tutar);
 
-  // Tarihi bugüne default
+  // Tarihi bugüne default — her zaman bugün, override varsa override
   const todayStr = localDateStr(new Date());
-  document.getElementById('od-pop-tarih').value = ov?.tarih || (tarih && tarih <= todayStr ? tarih : todayStr);
+  document.getElementById('od-pop-tarih').value = ov?.tarih || todayStr;
   document.getElementById('od-pop-tutar').value = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
   document.getElementById('od-pop-not').value   = ov?.not || '';
 
@@ -15916,7 +15931,7 @@ function odSecDurum(e, tip, id, key, tarih, tutar, durum) {
   }
   // Anında kaydet, popup'ı güncelle
   odSetDurum(item, key, { ...ov, durum,
-    tarih: document.getElementById('od-pop-tarih')?.value || tarih || '',
+    tarih: document.getElementById('od-pop-tarih')?.value || localDateStr(new Date()),
     tutar: newTutar,
     not:   document.getElementById('od-pop-not')?.value || ov.not || '' });
   odLogEkle(tip, id, key, durum, newTutar, document.getElementById('od-pop-not')?.value || '');
@@ -15941,7 +15956,7 @@ function odKaydet(e, tip, id, key, tarih, tutar) {
   const item = odGetItem(tip, id);
   if(!item) return;
   const ov = odGetDurum(item, key) || {};
-  const newTarih = document.getElementById('od-pop-tarih')?.value || tarih || '';
+  const newTarih = document.getElementById('od-pop-tarih')?.value || localDateStr(new Date());
   const newTutar = parseFloat(document.getElementById('od-pop-tutar')?.value);
   const newNot   = document.getElementById('od-pop-not')?.value || '';
   odSetDurum(item, key, { ...ov,
@@ -16215,10 +16230,11 @@ function kontratPlanFormAc(ay, islem) {
   const mevcutNot   = ov.not || '';
 
   if(islem==='ertele') {
+    const ertelemeTarih = ov.tarih || localDateStr(new Date());
     titleEl.textContent = '↷ Ödeme Erteleme — ' + ay;
     bodyEl.innerHTML = `
       <div class="form-row cols-2">
-        <div><label>Yeni Ödeme Tarihi</label><input id="kpf-tarih" type="date" value="${mevcutTarih}"></div>
+        <div><label>Yeni Ödeme Tarihi</label><input id="kpf-tarih" type="date" value="${ertelemeTarih}"></div>
         <div><label>Tutar (değişecekse)</label><input id="kpf-tutar" type="number" step="0.01" value="${mevcutTutar}" placeholder="${mevcutTutar}"></div>
       </div>
       <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Erteleme nedeni..." value="${mevcutNot}"></div></div>`;
@@ -21316,9 +21332,8 @@ if (typeof _origSaveIslem === 'function') {
     _origSaveIslem.apply(this, arguments);
     // Yeni işlemi uygula (DB'ye yazıldıktan sonra)
     setTimeout(() => {
-      const yeniIslem = (DB.islemler || []).find(i =>
-        eskiId ? i.id === eskiId : i === DB.islemler[DB.islemler.length - 1]
-      ) || DB.islemler[DB.islemler.length - 1];
+      const arr = DB.islemler || [];
+      const yeniIslem = eskiId ? arr.find(i => i.id === eskiId) : arr[arr.length - 1];
       if (yeniIslem) entIslemHesabaYansit(yeniIslem, false);
     }, 50);
   };
@@ -22621,12 +22636,7 @@ window.entIslemHesabaYansit = function(islem, isEski) {
 // calcMevduatObj: mevduat nesnesinden faiz hesapla (modal bağımsız)
 function calcMevduatObj(m) {
   const brutFaiz = (m.tutar||0) * ((m.faizOran||0)/100) * ((m.vade||30)/365);
-  const stopajTutar = brutFaiz * ((m.stopaj||15)/100);
-  const bsmv = (DB.bsmvOranlari||[]).length ?
-    (() => { const r=(DB.bsmvOranlari||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih))[0]; return r?r.oran/100:0.05; })() : 0.05;
-  const kkdf = (DB.kkdfOranlari||[]).length ?
-    (() => { const r=(DB.kkdfOranlari||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih))[0]; return r?r.oran/100:0.15; })() : 0.15;
-  const netFaiz = brutFaiz * (1 - (m.stopaj||15)/100);
+  const netFaiz = brutFaiz * (1 - (m.stopaj!=null?m.stopaj:15)/100);
   return { faiz: Math.round(netFaiz*100)/100, nihai: Math.round(((m.tutar||0)+netFaiz)*100)/100 };
 }
 
