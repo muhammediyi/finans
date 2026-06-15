@@ -15793,7 +15793,7 @@ var _odModal = { tip:null, id:null, key:null, tarih:null, tutar:0, seciliDurum:n
 
 function odModalKapat() {
   const bg = document.getElementById('od-modal-bg');
-  if(bg) bg.classList.remove('open');
+  if(bg) { bg.classList.remove('open'); bg.style.display = ''; }
   document.body.classList.remove('modal-open');
 }
 
@@ -15893,17 +15893,7 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
 
   // Tarihi bugüne default — her zaman bugün, override varsa override
   const todayStr = localDateStr(new Date());
-  // setTimeout: modal display:flex olduktan sonra set et (gizli elementlerde date value kaybolabilir)
-  const _setTarih = () => {
-    const tarihEl = document.getElementById('od-pop-tarih');
-    if(tarihEl) tarihEl.value = ov?.tarih || todayStr;
-  };
-  _setTarih();
-  setTimeout(_setTarih, 0);
-  // Tutar: formatlanmış göster (virgüllü)
-  const tutarVal = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
-  document.getElementById('od-pop-tutar').value = tutarVal !== '' ? fmt(Number(tutarVal)) : '';
-  document.getElementById('od-pop-not').value   = ov?.not || '';
+
 
   // Sıfırla butonu
   document.getElementById('od-modal-sifirla-btn').style.display = ov ? '' : 'none';
@@ -15929,8 +15919,21 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
   // Vadesiz bilgi (başlangıç)
   _odModalSecDurum(curDurum);
 
-  document.getElementById('od-modal-bg').classList.add('open');
+  // display:none CSS'ini inline style ile eziyoruz — ÖNCE display ver, SONRA value set et
+  // Böylece type="date" inputu "görünür" durumdayken value alıyor (Chrome/Safari bug'ı önlemi)
+  const _bg = document.getElementById('od-modal-bg');
+  _bg.style.display = 'flex';
+  _bg.classList.add('open');
   document.body.classList.add('modal-open');
+
+  const todayStr2 = localDateStr(new Date());
+  const tarihEl = document.getElementById('od-pop-tarih');
+  const tutarEl = document.getElementById('od-pop-tutar');
+  const notEl   = document.getElementById('od-pop-not');
+  if(tarihEl) tarihEl.value = ov?.tarih || todayStr2;
+  if(tutarEl) { const tv = ov?.tutar !== undefined ? ov.tutar : (tutar||''); tutarEl.value = tv !== '' ? fmt(Number(tv)) : ''; }
+  if(notEl)   notEl.value = ov?.not || '';
+
   // Log göster
   _odLogRender(tip, id, key);
 }
