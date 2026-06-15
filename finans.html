@@ -15893,7 +15893,13 @@ function odAcPopup(e, tip, id, key, tarih, tutar, extraLabel) {
 
   // Tarihi bugüne default — her zaman bugün, override varsa override
   const todayStr = localDateStr(new Date());
-  document.getElementById('od-pop-tarih').value = ov?.tarih || todayStr;
+  // setTimeout: modal display:flex olduktan sonra set et (gizli elementlerde date value kaybolabilir)
+  const _setTarih = () => {
+    const tarihEl = document.getElementById('od-pop-tarih');
+    if(tarihEl) tarihEl.value = ov?.tarih || todayStr;
+  };
+  _setTarih();
+  setTimeout(_setTarih, 0);
   // Tutar: formatlanmış göster (virgüllü)
   const tutarVal = ov?.tutar !== undefined ? ov.tutar : (tutar||'');
   document.getElementById('od-pop-tutar').value = tutarVal !== '' ? fmt(Number(tutarVal)) : '';
