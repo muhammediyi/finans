@@ -11683,19 +11683,17 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
 
   // Hesap listesi — varsayılan para birimiyle eşleşenleri öne al
   const hesapSel = document.getElementById('kart-odeme-hesap');
-  hesapSel.innerHTML = '<option value="" disabled hidden>— Hesap seçiniz —</option>';
+  hesapSel.innerHTML = '';
   (DB.hesaplar||[]).filter(h => h.durum !== 'kapali' && h.tur !== 'vadeli').forEach(h => {
     const opt = document.createElement('option');
     opt.value = h.id;
-    const banka = (DB.bankalar||[]).find(b=>b.id===h.banka);
-    const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
-    opt.textContent = (banka?banka.kisa+' · ':'')+h.ad+(h.paraBirimi?' ('+h.paraBirimi+')':'')+' — '+bakiyeStr;
+    opt.textContent = hesapOptionMetin(h);
     opt.dataset.bakiye = h.bakiye||0;
     opt.dataset.pb = h.paraBirimi||'TRY';
     opt.dataset.kmh = h.kmhLimit||0;
     hesapSel.appendChild(opt);
   });
-  hesapSel.value = '';
+  phSet(hesapSel, 'Hesap seçiniz…', '');
   document.getElementById('kart-odeme-hesap-bakiye').textContent = '';
 
   // Bilgi kutusu
@@ -11966,10 +11964,7 @@ function _fillMevHesapSel(selectedId) {
   const hesapSel = document.getElementById('mev-hesap-id');
   if(!hesapSel) return;
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
-  hesapSel.innerHTML = aktifler.map(h=>{
-    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
-    return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}</option>`;
-  }).join('');
+  hesapSel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(hesapSel, 'Hesap seçin…', selectedId||'');
 }
 
@@ -12012,11 +12007,7 @@ function _fillMevVadesizSel(selectedId, bankaId) {
   let vadesizler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   // Eğer banka biliniyorsa önce o bankadan filtrele, yoksa hepsini göster
   if(bankaId) vadesizler = vadesizler.filter(h=>h.banka === bankaId);
-  sel.innerHTML = vadesizler.map(h=>{
-      const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
-      const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
-      return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''} — ${bakiyeStr}</option>`;
-    }).join('');
+  sel.innerHTML = vadesizler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(sel, 'Hesap seçin…', selectedId||'');
 }
 
@@ -12098,12 +12089,7 @@ function _fillMevKaynakSel(bankaId) {
     phSet(sel, '— Vadesiz hesap bulunamadı —', '');
     return;
   }
-  sel.innerHTML = hesaplar.map(h => {
-      const bankaAd = (DB.bankalar||[]).find(b=>b.id===h.banka);
-      const bankaKisa = bankaAd ? ' · ' + bankaAd.kisa : '';
-      const bakiye = typeof fmtCur === 'function' ? ' · ' + fmtCur(h.bakiye||0, h.paraBirimi||'TRY') : '';
-      return `<option value="${h.id}">${h.ad}${bankaKisa}${bakiye}</option>`;
-    }).join('');
+  sel.innerHTML = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(sel, 'Seçin (isteğe bağlı)…', '');
 }
 
@@ -15713,8 +15699,8 @@ function populateKategoriSelects() {
   const abKatEl = document.getElementById('ab-kategori');
   if(abKatEl) {
     const prev = abKatEl.value;
-    abKatEl.innerHTML = '<option value="" disabled>— Kategori seçin —</option>' + getKategoriOpts('gider');
-    if(prev) abKatEl.value = prev;
+    abKatEl.innerHTML = getKategoriOpts('gider');
+    phSet(abKatEl, 'Kategori seçin…', prev || '');
   }
 }
 
@@ -16763,7 +16749,7 @@ function renderOzet() {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
                 <option value="" disabled hidden>— Faiz Aktarılacak Vadesiz Hesap —</option>
-                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';const bal=fmtCur(h.bakiye||0,h.paraBirimi||'TRY');return`<option value="${h.id}">${h.ad}${b?' · '+b:''} — ${bal}</option>`}).join('')}
+                ${vadesizHesaplar.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.04);margin-bottom:10px">
@@ -16789,7 +16775,7 @@ function renderOzet() {
           const vadesizSel = vadesizHesaplar.length
             ? `<select id="mev-aksiyon-vadesiz-${m.id}" style="margin:8px 0 10px;font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;width:100%">
                 <option value="" disabled hidden>— Ana Para + Faiz Aktarılacak Vadesiz Hesap —</option>
-                ${vadesizHesaplar.map(h=>{const b=(DB.bankalar.find(x=>x.id===h.banka)||{}).kisa||'';const bal=fmtCur(h.bakiye||0,h.paraBirimi||'TRY');return`<option value="${h.id}">${h.ad}${b?' · '+b:''} — ${bal}</option>`}).join('')}
+                ${vadesizHesaplar.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('')}
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04);margin-bottom:10px">
@@ -17040,15 +17026,21 @@ function renderOzet() {
 }
 
 // ========== HESAP SELECT HELPERS ==========
+// Tüm "Hesap Seçin" dropdown'larında ortak görünüm: Banka - Hesap Adı - IBAN son 4 hane - Bakiye - Para Birimi
+function hesapOptionMetin(h) {
+  if(!h) return '';
+  const banka = ((DB.bankalar||[]).find(b=>b.id===h.banka)||{}).kisa || '';
+  const pb = h.paraBirimi || 'TRY';
+  const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(h.bakiye||0, pb) : `${h.bakiye||0} ${pb}`;
+  const ibanTemiz = (h.iban||'').replace(/\s/g,'');
+  const ibanSon = ibanTemiz.length >= 4 ? '····'+ibanTemiz.slice(-4) : '';
+  const parcalar = [banka, h.ad || 'Hesap', ibanSon, bakiyeStr, pb].filter(Boolean);
+  return parcalar.join(' - ');
+}
+
 function getAktifHesapOptions() {
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
-  return aktifler.map(h => {
-    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
-    const pb = h.paraBirimi||'TRY';
-    const cfg = CURRENCY_CONFIG[pb];
-    const sym = cfg ? cfg.symbol : pb;
-    return `<option value="${h.id}" data-pb="${pb}">${bankaAd ? bankaAd+' · ' : ''}${h.ad} (${pb} ${sym})</option>`;
-  }).join('');
+  return aktifler.map(h => `<option value="${h.id}" data-pb="${h.paraBirimi||'TRY'}">${hesapOptionMetin(h)}</option>`).join('');
 }
 
 function _setPbBadge(badgeId, selectId, code) {
@@ -18156,12 +18148,7 @@ function populateEldenHesapSelect() {
   const sel = document.getElementById('elden-hesap');
   if(!sel) return;
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
-  sel.innerHTML = aktifler.map(h=>{
-    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa||'';
-    const ibanSon = h.iban ? '···'+h.iban.slice(-4) : '';
-    const bakiyeStr = fmtCur(h.bakiye||0, h.paraBirimi||'TRY');
-    return `<option value="${h.id}">${h.ad}${bankaAd?' · '+bankaAd:''}${ibanSon?' ('+ibanSon+')':''} — ${bakiyeStr}</option>`;
-  }).join('');
+  sel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(sel, 'Hesap seçin…', '');
 }
 
@@ -22399,7 +22386,7 @@ function openAbonelikModal(id=null) {
   document.getElementById('ab-ikon').value = ab?.ikon || '';
   // Gider kategorilerini dinamik doldur
   const abKatEl = document.getElementById('ab-kategori');
-  abKatEl.innerHTML = '<option value="" disabled>— Kategori seçin —</option>' + getKategoriOpts('gider');
+  abKatEl.innerHTML = '<option value="" disabled hidden>— Kategori seçin —</option>' + getKategoriOpts('gider');
   abKatEl.value = ab?.kategori || '';
   document.getElementById('ab-periyot').value = ab?.periyot || '';
   document.getElementById('ab-not').value = ab?.not || '';
@@ -22414,9 +22401,8 @@ function openAbonelikModal(id=null) {
   pbSel.value = ab?.paraBirimi || defaultCurrency || 'TRY';
   // Hesap select
   const hSel = document.getElementById('ab-hesap');
-  hSel.innerHTML = '<option value="" disabled>— Hesap seçin —</option>' +
-    (DB.hesaplar||[]).filter(h=>h.durum==='aktif').map(h=>`<option value="${h.id}">${h.ad}</option>`).join('');
-  hSel.value = ab?.hesapId || '';
+  hSel.innerHTML = (DB.hesaplar||[]).filter(h=>h.durum==='aktif').map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+  phSet(hSel, 'Hesap seçin…', ab?.hesapId || '');
   openModal('modal-abonelik');
 }
 
@@ -23272,12 +23258,7 @@ function _populateTransferHesaplar(excludeId) {
     return ph + hesaplar
       .filter(h => h.id !== excludeVal)
       .filter(h => !filterPb || (h.paraBirimi || 'TRY') === filterPb)
-      .map(h => {
-        const banka = ((DB.bankalar || []).find(b => b.id === h.banka) || {}).kisa || '';
-        const pb = h.paraBirimi || 'TRY';
-        const bak = fmtCur(h.bakiye || 0, pb);
-        return `<option value="${h.id}">${banka ? banka + ' · ' : ''}${h.ad} — ${bak} (${pb})</option>`;
-      }).join('');
+      .map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   };
 
   const kSel = document.getElementById('transfer-kaynak');
