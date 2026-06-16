@@ -331,6 +331,109 @@ html[data-theme="light"] .stat.s-red    .stat-icon { background: rgba(225,29,72,
 html[data-theme="light"] .stat.s-warn   .stat-icon { background: rgba(194,65,12,.08);   border-color: rgba(194,65,12,.2); }
 html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237,.08);  border-color: rgba(124,58,237,.2); }
 
+/* ════════════════════════════════════════════════════════
+   İŞLEMLER — kompakt modüler tasarım
+   ════════════════════════════════════════════════════════ */
+.islem-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.islem-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px; min-width: 0;
+}
+.islem-chip-icon {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3); border: 1px solid var(--border2);
+}
+.islem-chip-icon svg { width: 14px; height: 14px; color: var(--text2); }
+.islem-chip.c-gold .islem-chip-icon { background: var(--gold-glow); border-color: rgba(251,191,36,.25); }
+.islem-chip.c-gold .islem-chip-icon svg { color: var(--gold); }
+.islem-chip.c-teal .islem-chip-icon { background: var(--teal-glow); border-color: rgba(45,212,191,.25); }
+.islem-chip.c-teal .islem-chip-icon svg { color: var(--teal); }
+.islem-chip.c-warn .islem-chip-icon { background: var(--warn-glow); border-color: rgba(251,146,60,.25); }
+.islem-chip.c-warn .islem-chip-icon svg { color: var(--warn); }
+.islem-chip.c-rose .islem-chip-icon { background: var(--danger-glow); border-color: rgba(251,113,133,.25); }
+.islem-chip.c-rose .islem-chip-icon svg { color: var(--danger); }
+.islem-chip-body { min-width: 0; }
+.islem-chip-label { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
+.islem-chip-val { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.islem-chip-sub { font-size: 10px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.islem-card { padding: 14px 16px 6px; }
+.islem-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.islem-search-wrap { position: relative; flex: 1 1 200px; min-width: 160px; }
+.islem-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+.islem-search-wrap input { padding-left: 31px; }
+.islem-toolbar select { width: auto; min-width: 128px; flex-shrink: 0; }
+
+.islem-list-head {
+  display: flex; align-items: center; gap: 12px; padding: 0 10px 9px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .08em; color: var(--text3); text-transform: uppercase;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.islem-list-head span:nth-child(1) { flex: 0 0 42px; }
+.islem-list-head span:nth-child(2) { flex: 1 1 auto; }
+.islem-list-head span:nth-child(3) { flex: 0 0 78px; }
+.islem-list-head span:nth-child(4) { flex: 0 0 118px; text-align: right; }
+.islem-list-head span:nth-child(5) { flex: 0 0 116px; }
+.islem-list-head span:nth-child(6) { flex: 0 0 58px; }
+
+.islem-list { display: flex; flex-direction: column; gap: 2px; max-height: 600px; overflow-y: auto; padding-right: 2px; }
+.islem-list::-webkit-scrollbar { width: 5px; }
+.islem-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.islem-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: var(--radius-xs); transition: background .15s; }
+.islem-row:hover { background: var(--surface2); }
+.islem-row:hover .islem-actions { opacity: 1; }
+
+.islem-date { flex: 0 0 42px; text-align: center; line-height: 1.15; }
+.islem-date-d { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+.islem-date-m { font-size: 9px; font-weight: 700; letter-spacing: .05em; color: var(--text3); text-transform: uppercase; }
+
+.islem-main { flex: 1 1 auto; min-width: 0; }
+.islem-main-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
+.islem-kart-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.islem-kart-name { font-size: 11.5px; font-weight: 600; color: var(--text2); }
+.islem-cat { font-size: 10.5px; color: var(--text3); }
+.islem-desc { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.islem-taksit { flex: 0 0 78px; }
+.islem-amount { flex: 0 0 118px; text-align: right; }
+.islem-amount-val { font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.islem-amount-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+.islem-pay { flex: 0 0 116px; font-size: 11px; line-height: 1.55; }
+.islem-pay-row { display: flex; justify-content: space-between; gap: 6px; }
+.islem-pay-label { color: var(--text3); }
+.islem-pay-val { font-family: var(--mono); color: var(--text2); }
+.islem-pay-val.next { color: var(--accent2); font-weight: 600; }
+
+.islem-actions { flex: 0 0 58px; display: flex; gap: 4px; justify-content: flex-end; opacity: .45; transition: opacity .15s; }
+@media (hover: none) { .islem-actions { opacity: 1; } }
+
+.islem-empty { text-align: center; padding: 44px 20px; color: var(--text3); }
+.islem-empty svg { opacity: .3; margin-bottom: 10px; }
+.islem-empty-title { font-size: 13px; color: var(--text2); }
+.islem-empty-sub { font-size: 11px; margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .islem-stats { grid-template-columns: repeat(2,1fr); }
+  .islem-list-head { display: none; }
+  .islem-row {
+    flex-wrap: wrap; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 6px; background: var(--surface);
+  }
+  .islem-row:hover { background: var(--surface2); }
+  .islem-date { order: 1; flex: 0 0 auto; display: flex; align-items: baseline; gap: 4px; text-align: left; }
+  .islem-main { order: 2; flex: 1 1 auto; }
+  .islem-amount { order: 3; flex: 0 0 auto; margin-left: auto; }
+  .islem-taksit { order: 4; flex: 0 0 auto; }
+  .islem-actions { order: 5; flex: 0 0 auto; opacity: 1; }
+  .islem-pay { order: 6; flex: 1 1 100%; display: flex; gap: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .islem-pay-row { flex-direction: row; gap: 4px; }
+  .islem-list { gap: 8px; max-height: none; }
+}
+
 /* Cards */
 html[data-theme="light"] .card {
   background: #ffffff;
@@ -6560,17 +6663,31 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   <div class="page-header">
     <div class="page-header-left"><h1>İşlemler</h1><p>Kart / hesap bazlı işlem ekle ve görüntüle</p></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <select id="filter-kart" onchange="renderIslemler()" style="width:200px"><option value="" disabled hidden>Tüm Kartlar</option></select>
-      <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
       <button class="btn btn-primary" onclick="openModal('modal-islem')">+ Yeni İşlem</button>
       <button class="btn" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--gold)" onclick="openNakitAvansModal()">💵 Nakit Avans</button>
     </div>
   </div>
-  <div class="card">
-    <div class="tbl-wrap"><table>
-      <thead><tr><th>Tarih</th><th>Kart/Hesap</th><th>Açıklama</th><th>Kategori</th><th>Toplam</th><th>Taksit</th><th>Taksit Tutarları</th><th>Ekstre / Ödeme</th><th>İşlem</th></tr></thead>
-      <tbody id="islemler-tbody"></tbody>
-    </table></div>
+
+  <div class="islem-stats" id="islem-stats"></div>
+
+  <div class="card islem-card">
+    <div class="islem-toolbar">
+      <div class="islem-search-wrap">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="filter-q" placeholder="Açıklamada ara…" oninput="renderIslemler()">
+      </div>
+      <select id="filter-kart" onchange="renderIslemler()" style="width:180px"><option value="" disabled hidden>Tüm Kartlar</option></select>
+      <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
+      <select id="filter-taksit" onchange="renderIslemler()" style="width:170px">
+        <option value="">Peşin + Taksitli</option>
+        <option value="pesin">Sadece Peşin</option>
+        <option value="taksitli">Sadece Taksitli</option>
+      </select>
+    </div>
+    <div class="islem-list-head">
+      <span>Tarih</span><span>Kart / Açıklama</span><span>Taksit</span><span>Tutar</span><span>Ekstre / Ödeme</span><span></span>
+    </div>
+    <div class="islem-list" id="islemler-list"></div>
   </div>
 </div>
 
@@ -11324,6 +11441,8 @@ function deleteIslem(id) {
   });
 }
 
+const AY_KISA_TR = ['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
+
 function renderIslemler() {
   // populate filter
   const fk = document.getElementById('filter-kart');
@@ -11343,72 +11462,145 @@ function renderIslemler() {
   }).join('');
   phSet(fa, 'Tüm Aylar', (curAy && months.has(curAy)) ? curAy : '');
 
+  const fq = document.getElementById('filter-q');
+  const ft = document.getElementById('filter-taksit');
+  const qVal = (fq && fq.value || '').trim().toLocaleLowerCase('tr-TR');
+  const tVal = ft ? ft.value : '';
+
   let islemler = [...DB.islemler];
   if(fk.value) islemler = islemler.filter(i=>i.kart===fk.value);
   if(fa.value) islemler = islemler.filter(i=>i.tarih.startsWith(fa.value));
+  if(tVal === 'pesin') islemler = islemler.filter(i=>(i.taksit||1) <= 1);
+  if(tVal === 'taksitli') islemler = islemler.filter(i=>(i.taksit||1) > 1);
+  if(qVal) islemler = islemler.filter(i=>(i.aciklama||'').toLocaleLowerCase('tr-TR').includes(qVal));
   islemler.sort((a,b)=>b.tarih.localeCompare(a.tarih));
 
   const tatilSet = getTatilSet();
-  const tbody = document.getElementById('islemler-tbody');
-  tbody.innerHTML = islemler.map(i=>{
+
+  renderIslemStatsStrip(islemler, tatilSet);
+
+  const list = document.getElementById('islemler-list');
+  if(!list) return;
+
+  if(!islemler.length) {
+    list.innerHTML = `<div class="islem-empty">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <div class="islem-empty-title">İşlem bulunamadı</div>
+      <div class="islem-empty-sub">Filtreleri temizleyin veya yeni bir işlem ekleyin</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = islemler.map(i=>{
     const k = getKart(i.kart);
     const tutarlar = i.taksitTutarlari || Array(i.taksit||1).fill(i.aylik||0);
     const iCur = i.paraBirimi || getKartCurrency(i.kart);
-    const taksitStr = i.taksit > 1
-      ? `<div style="min-width:80px">
-          <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:2px">AYLIK</div>
-          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">${fmtCur(tutarlar[0]||0, iCur)}</div>
-          ${tutarlar.some((t,i)=>i>0&&Math.abs(t-(tutarlar[0]||0))>0.01)?`<div style="font-size:10px;color:var(--text3);margin-top:2px">son: ${fmtCur(tutarlar[tutarlar.length-1], iCur)}</div>`:''}
-        </div>`
-      : `<div style="min-width:80px">
-          <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:2px">TUTAR</div>
-          <div class="mono" style="font-size:13px;font-weight:600;color:var(--text)">${fmtCur(tutarlar[0]||i.tutar, iCur)}</div>
-        </div>`;
+    const isTaksitli = (i.taksit||1) > 1;
+    const dt = new Date(i.tarih+'T00:00:00');
+    const dateD = String(dt.getDate()).padStart(2,'0');
+    const dateM = AY_KISA_TR[dt.getMonth()];
+    const kat = (DB.kategoriler||[]).find(x=>x.id===i.kategori);
 
-    // Ekstre/ödeme bilgisi
-    let extreOdemeHtml = '<span style="color:var(--text3);font-size:11px">—</span>';
+    // Ekstre/ödeme bilgisi (kompakt)
+    let payHtml = '<span style="color:var(--text3);font-size:11px">—</span>';
     if(k) {
       const taksitler = getIslemTaksitliste(i);
-      if(taksitler.length === 1) {
-        const pd = getExtreDonemi(k, taksitler[0].tarih);
-        if(pd) {
-          const extreDt = calcExtreTarihiOdemeModuyla(k, pd.year, pd.month, tatilSet);
-          const odemeDt = extreDt ? calcOdemeTarihi(extreDt, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-          extreOdemeHtml = `<div style="display:flex;flex-direction:column;gap:4px;min-width:90px">
-            <div><div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:1px">EKSTRE</div><div class="mono" style="font-size:12px;color:var(--text2)">${extreDt?fmtDate(extreDt):'?'}</div></div>
-            <div><div style="font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.06em;margin-bottom:1px">ÖDEME</div><div class="mono" style="font-size:12px;font-weight:600;color:var(--accent2)">${odemeDt?fmtDate(odemeDt):'?'}</div></div>
-          </div>`;
-        }
-      } else {
-        // Çok taksitli: ilk ve son ekstreyi göster
-        const ilk = taksitler[0];
-        const son = taksitler[taksitler.length-1];
-        const pd1 = getExtreDonemi(k, ilk.tarih);
+      const ilk = taksitler[0];
+      const son = taksitler[taksitler.length-1];
+      const pd1 = getExtreDonemi(k, ilk.tarih);
+      const extre1 = pd1 ? calcExtreTarihiOdemeModuyla(k, pd1.year, pd1.month, tatilSet) : null;
+      const odeme1 = extre1 ? calcOdemeTarihi(extre1, k.odemeSure, k.odemeGunTip, tatilSet) : null;
+      let sonOdemeStr = '';
+      if(taksitler.length > 1) {
         const pd2 = getExtreDonemi(k, son.tarih);
-        const extre1 = pd1 ? calcExtreTarihiOdemeModuyla(k, pd1.year, pd1.month, tatilSet) : null;
         const extre2 = pd2 ? calcExtreTarihiOdemeModuyla(k, pd2.year, pd2.month, tatilSet) : null;
-        const odeme1 = extre1 ? calcOdemeTarihi(extre1, k.odemeSure, k.odemeGunTip, tatilSet) : null;
         const odeme2 = extre2 ? calcOdemeTarihi(extre2, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-        extreOdemeHtml = `<div style="display:flex;flex-direction:column;gap:4px;min-width:90px">
-          <div><div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:1px">1. EKSTRE</div><div class="mono" style="font-size:12px;color:var(--text2)">${extre1?fmtDate(extre1):'?'}</div></div>
-          <div><div style="font-size:9px;font-weight:700;color:var(--accent2);letter-spacing:.06em;margin-bottom:1px">1. ÖDEME</div><div class="mono" style="font-size:12px;font-weight:600;color:var(--accent2)">${odeme1?fmtDate(odeme1):'?'}</div></div>
-          ${taksitler.length > 1 && odeme2 ? `<div><div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:1px">SON ÖDEME</div><div class="mono" style="font-size:12px;color:var(--text3)">${fmtDate(odeme2)}</div></div>` : ''}
-        </div>`;
+        sonOdemeStr = odeme2 ? fmtDate(odeme2) : '?';
       }
+      payHtml = `<div class="islem-pay-row"><span class="islem-pay-label">Ekstre</span><span class="islem-pay-val">${extre1?fmtDate(extre1):'?'}</span></div>
+        <div class="islem-pay-row"><span class="islem-pay-label">Ödeme</span><span class="islem-pay-val next">${odeme1?fmtDate(odeme1):'?'}</span></div>
+        ${sonOdemeStr ? `<div class="islem-pay-row"><span class="islem-pay-label">Son</span><span class="islem-pay-val">${sonOdemeStr}</span></div>` : ''}`;
     }
 
-    return `<tr>
-      <td class="mono">${fmtDate(i.tarih)}</td>
-      <td>${k?k.ad:'-'}</td>
-      <td>${i.aciklama||'-'}</td>
-      <td>${(()=>{ const k=(DB.kategoriler||[]).find(x=>x.id===i.kategori); return k?'<span style="font-size:11px">'+k.ikon+' '+k.ad+'</span>':'-'; })()}</td>
-      <td class="mono">${fmtCur(i.tutar, i.paraBirimi || getKartCurrency(i.kart))}</td>
-      <td><span class="badge ${i.taksit>1?'badge-warn':'badge-blue'}">${i.taksit>1?i.taksit+' Taksit':'Peşin'}</span></td>
-      <td style="font-size:11px;color:var(--text2)">${taksitStr}</td>
-      <td>${extreOdemeHtml}</td>
-      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">İşlem bulunamadı</td></tr>';
+    const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
+
+    return `<div class="islem-row">
+      <div class="islem-date"><div class="islem-date-d">${dateD}</div><div class="islem-date-m">${dateM}</div></div>
+      <div class="islem-main">
+        <div class="islem-main-top">
+          <span class="islem-kart-dot" style="background:${(k&&k.renk)||'var(--accent)'}"></span>
+          <span class="islem-kart-name">${k?k.ad:'-'}</span>
+          ${kat?`<span class="islem-cat">${kat.ikon||''} ${kat.ad}</span>`:''}
+        </div>
+        <div class="islem-desc" title="${aciklamaSafe}">${aciklamaSafe}</div>
+      </div>
+      <div class="islem-taksit"><span class="badge ${isTaksitli?'badge-warn':'badge-blue'}">${isTaksitli?i.taksit+' Taksit':'Peşin'}</span></div>
+      <div class="islem-amount">
+        <div class="islem-amount-val">${fmtCur(i.tutar, iCur)}</div>
+        ${isTaksitli?`<div class="islem-amount-sub">${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`:''}
+      </div>
+      <div class="islem-pay">${payHtml}</div>
+      <div class="islem-actions">
+        <button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        <button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// İşlemler sayfası üst kısmındaki kompakt özet şeridi
+function renderIslemStatsStrip(islemler, tatilSet) {
+  const wrap = document.getElementById('islem-stats');
+  if(!wrap) return;
+
+  const count = islemler.length;
+  const taksitliCount = islemler.filter(i=>(i.taksit||1) > 1).length;
+
+  // Para birimine göre toplam tutar
+  const totals = {};
+  islemler.forEach(i=>{
+    const cur = i.paraBirimi || getKartCurrency(i.kart);
+    totals[cur] = (totals[cur]||0) + (i.tutar||0);
+  });
+  const totalStr = Object.keys(totals).length
+    ? Object.entries(totals).map(([c,v])=>fmtCur(v,c)).join(' + ')
+    : '—';
+
+  // En yakın gelecek ödeme tarihi
+  let nearest = null;
+  const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+  islemler.forEach(i=>{
+    const k = getKart(i.kart);
+    if(!k) return;
+    getIslemTaksitliste(i).forEach(t=>{
+      const pd = getExtreDonemi(k, t.tarih);
+      if(!pd) return;
+      const extreDt = calcExtreTarihiOdemeModuyla(k, pd.year, pd.month, tatilSet);
+      const odemeDt = extreDt ? calcOdemeTarihi(extreDt, k.odemeSure, k.odemeGunTip, tatilSet) : null;
+      if(odemeDt && odemeDt >= todayMid && (!nearest || odemeDt < nearest.date)) {
+        nearest = { date: odemeDt, kart: k.ad };
+      }
+    });
+  });
+
+  wrap.innerHTML = `
+    <div class="islem-chip c-gold">
+      <div class="islem-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+      <div class="islem-chip-body"><div class="islem-chip-label">Toplam İşlem</div><div class="islem-chip-val">${count}</div></div>
+    </div>
+    <div class="islem-chip c-teal">
+      <div class="islem-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <div class="islem-chip-body"><div class="islem-chip-label">Toplam Tutar</div><div class="islem-chip-val">${totalStr}</div></div>
+    </div>
+    <div class="islem-chip c-warn">
+      <div class="islem-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="islem-chip-body"><div class="islem-chip-label">Taksitli İşlem</div><div class="islem-chip-val">${taksitliCount}</div></div>
+    </div>
+    <div class="islem-chip c-rose">
+      <div class="islem-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="islem-chip-body"><div class="islem-chip-label">En Yakın Ödeme</div><div class="islem-chip-val" style="font-size:13px">${nearest?fmtDate(nearest.date):'—'}</div>${nearest?`<div class="islem-chip-sub">${nearest.kart}</div>`:''}</div>
+    </div>
+  `;
 }
 
 // ========== EXTRELER ==========
@@ -17042,7 +17234,7 @@ function hesapOptionMetin(h) {
 }
 
 function getAktifHesapOptions() {
-  const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
+  const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   return aktifler.map(h => `<option value="${h.id}" data-pb="${h.paraBirimi||'TRY'}">${hesapOptionMetin(h)}</option>`).join('');
 }
 
@@ -18150,7 +18342,7 @@ function onEldenKarsiIbanInput() {
 function populateEldenHesapSelect() {
   const sel = document.getElementById('elden-hesap');
   if(!sel) return;
-  const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
+  const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   sel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(sel, 'Hesap seçin…', '');
 }
@@ -20439,6 +20631,7 @@ document.addEventListener('click', function(e) {
   const ID_MAP = {
     'filter-kart':              SVG.card,
     'filter-ay':                SVG.calendar,
+    'filter-taksit':            SVG.filter,
     'extre-kart-filter':        SVG.card,
     'para-birimi-select':       SVG.currency,
     'ga-tarih-ayrac':           SVG.separator,
@@ -22404,7 +22597,7 @@ function openAbonelikModal(id=null) {
   pbSel.value = ab?.paraBirimi || defaultCurrency || 'TRY';
   // Hesap select
   const hSel = document.getElementById('ab-hesap');
-  hSel.innerHTML = (DB.hesaplar||[]).filter(h=>h.durum==='aktif').map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+  hSel.innerHTML = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli').map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(hSel, 'Hesap seçin…', ab?.hesapId || '');
   openModal('modal-abonelik');
 }
@@ -23245,7 +23438,7 @@ function openTransferModal() {
 
 // ── Hesap listelerini doldur ──────────────────────────────────
 function _populateTransferHesaplar(excludeId) {
-  const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif');
+  const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
   const kaynakId = document.getElementById('transfer-kaynak').value;
   const hedefId  = document.getElementById('transfer-hedef').value;
 
