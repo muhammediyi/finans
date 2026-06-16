@@ -7624,7 +7624,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
           İşlem Bilgileri
         </div>
         <div class="form-row cols-2">
-          <div><label>Kart / Hesap</label><select id="islem-kart" onchange="onIslemKartChange()"></select></div>
+          <div style="grid-column:1/-1"><label>Kart / Hesap</label><select id="islem-kart" onchange="onIslemKartChange()"></select></div>
           <div><label>İşlem Tarihi</label><input id="islem-tarih" type="date" onchange="calcTaksit(false)"></div>
         </div>
         <div class="form-row">
@@ -8010,7 +8010,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
               <option value="havale">🏦 Havale / EFT</option>
             </select>
           </div>
-          <div id="kira-hesap-wrap" style="display:none">
+          <div id="kira-hesap-wrap" style="display:none;grid-column:1/-1">
             <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
             <select id="kira-hesap" onchange="onKiraHesapFullChange()">
               <option value="" disabled hidden>— Hesap Seçin —</option>
@@ -8255,7 +8255,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
               <option value="havale">🏦 Havale / EFT (IBAN)</option>
             </select>
           </div>
-          <div id="maas-hesap-wrap" style="display:none">
+          <div id="maas-hesap-wrap" style="display:none;grid-column:1/-1">
             <label>Banka Hesabı <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
             <select id="maas-hesap" onchange="onMaasHesapChange()">
               <option value="" disabled hidden>— Hesap Seçin —</option>
@@ -8734,7 +8734,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
               <option value="havale">🏦 Havale / EFT (IBAN)</option>
             </select>
           </div>
-          <div id="elden-hesap-wrap" style="display:none">
+          <div id="elden-hesap-wrap" style="display:none;grid-column:1/-1">
             <label>Kendi Hesabım <span style="color:var(--text3);font-size:10px">(kayıtlı)</span></label>
             <select id="elden-hesap" onchange="onEldenHesapChange()"><option value="" disabled hidden>— Hesap Seçin —</option></select>
           </div>
@@ -22337,12 +22337,12 @@ window.entegre = {
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:12px">
-        <div style="flex:1">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
           <label class="has-required">İlk / Sonraki Ödeme Tarihi</label>
           <input id="ab-tarih" type="date">
         </div>
-        <div style="flex:1">
+        <div style="flex:1 1 100%">
           <label class="has-required">Bağlı Hesap</label>
           <select id="ab-hesap"><option value="" disabled selected>— Hesap seçin —</option></select>
         </div>
