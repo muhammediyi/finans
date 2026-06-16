@@ -9914,6 +9914,9 @@ function initAllSelectPlaceholders() {
     ['na-tavan-pb',              null],
     ['mev-kaynak-hesap-id',      'Kaynak hesap seçin…'],
     ['mev-vadesiz-hesap-id',     'Vadesiz hesap seçin…'],
+    ['ab-kategori',              'Kategori seçin…'],
+    ['ab-periyot',               'Periyot seçin…'],
+    ['ab-hesap',                 'Hesap seçin…'],
   ];
   map.forEach(([id, label]) => {
     const sel = document.getElementById(id);
@@ -22294,12 +22297,12 @@ window.entegre = {
       <div style="display:flex;gap:12px">
         <div style="flex:1">
           <label class="has-required">Kategori</label>
-          <select id="ab-kategori"><option value="" disabled selected>— Kategori seçin —</option></select>
+          <select id="ab-kategori"><option value="" disabled selected hidden>— Kategori seçin —</option></select>
         </div>
         <div style="flex:1">
           <label class="has-required">Periyot</label>
           <select id="ab-periyot">
-            <option value="" disabled selected>— Periyot seçin —</option>
+            <option value="" disabled selected hidden>— Periyot seçin —</option>
             <option value="haftalik">Haftalık</option>
             <option value="aylik">Aylık</option>
             <option value="3aylik">3 Aylık</option>
@@ -22331,7 +22334,7 @@ window.entegre = {
         </div>
         <div style="flex:1 1 100%">
           <label class="has-required">Bağlı Hesap</label>
-          <select id="ab-hesap"><option value="" disabled selected>— Hesap seçin —</option></select>
+          <select id="ab-hesap"><option value="" disabled selected hidden>— Hesap seçin —</option></select>
         </div>
       </div>
       <div>
@@ -22386,9 +22389,9 @@ function openAbonelikModal(id=null) {
   document.getElementById('ab-ikon').value = ab?.ikon || '';
   // Gider kategorilerini dinamik doldur
   const abKatEl = document.getElementById('ab-kategori');
-  abKatEl.innerHTML = '<option value="" disabled hidden>— Kategori seçin —</option>' + getKategoriOpts('gider');
-  abKatEl.value = ab?.kategori || '';
-  document.getElementById('ab-periyot').value = ab?.periyot || '';
+  abKatEl.innerHTML = getKategoriOpts('gider');
+  phSet(abKatEl, 'Kategori seçin…', ab?.kategori || '');
+  phSet('ab-periyot', 'Periyot seçin…', ab?.periyot || '');
   document.getElementById('ab-not').value = ab?.not || '';
   document.getElementById('ab-pasif').checked = !!ab?.pasif;
   document.getElementById('ab-tarih').value = ab?.tarih || localDateStr(new Date());
