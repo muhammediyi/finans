@@ -7357,7 +7357,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         <div class="form-row cols-3" style="margin-bottom:0">
           <div><label>İlk Ekstre Tarihi <span style="color:var(--danger)">*</span></label><input id="kmhkredi-ilk-ekstre" type="date" onchange="calcKmhKredi()"><div style="font-size:10px;color:var(--text3);margin-top:3px">İlk taksit bu ekstre dönemine işlenir</div></div>
           <div><label>KKDF Oranı (%)</label><input id="kmhkredi-kkdf" type="number" step="0.01" value="0" placeholder="0" oninput="calcKmhKredi()"></div>
-          <div><label>BSMV Oranı (%)</label><input id="kmhkredi-bsmv" type="number" step="0.01" value="5" placeholder="5" oninput="calcKmhKredi()"></div>
+          <div><label>BSMV Oranı (%)</label><input id="kmhkredi-bsmv" type="number" step="0.01" value="0" placeholder="0" oninput="calcKmhKredi()"></div>
         </div>
       </div>
 
@@ -7437,8 +7437,8 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
         <div class="form-row cols-3" style="margin-bottom:0">
           <div><label>İlk Taksit Tarihi <span style="color:var(--danger)">*</span></label><input id="kredi-ilk-taksit" type="date" onchange="calcKredi()"></div>
-          <div><label>KKDF Oranı (%)</label><input id="kredi-kkdf" type="number" step="0.01" value="5" placeholder="5" oninput="calcKredi()"></div>
-          <div><label>BSMV Oranı (%)</label><input id="kredi-bsmv" type="number" step="0.01" value="5" placeholder="5" oninput="calcKredi()"></div>
+          <div><label>KKDF Oranı (%)</label><input id="kredi-kkdf" type="number" step="0.01" value="0" placeholder="0" oninput="calcKredi()"></div>
+          <div><label>BSMV Oranı (%)</label><input id="kredi-bsmv" type="number" step="0.01" value="0" placeholder="0" oninput="calcKredi()"></div>
         </div>
       </div>
 
@@ -13600,7 +13600,7 @@ function calcKmhKredi(preserveManuel=false) {
   const faizYuzde = parseFloat(document.getElementById('kmhkredi-faiz').value)||0;
   const vade = parseInt(document.getElementById('kmhkredi-vade').value)||0;
   const kkdfYuzde = parseFloat(document.getElementById('kmhkredi-kkdf').value)||0;
-  const bsmvYuzde = parseFloat(document.getElementById('kmhkredi-bsmv').value)||5;
+  const bsmvYuzde = parseFloat(document.getElementById('kmhkredi-bsmv').value)||0;
   const ilkEkstre = document.getElementById('kmhkredi-ilk-ekstre').value;
 
   if(!anaPara||!vade) {
@@ -13625,8 +13625,37 @@ function calcKmhKredi(preserveManuel=false) {
   const odemeGunTipVal = document.getElementById('kmhkredi-odeme-gun-tip').value;
   const odemeGunTipLabel = odemeGunTipVal === 'ilerle' ? ' &nbsp;|&nbsp; 📅 Tatilde → sonraki iş günü' : odemeGunTipVal === 'geri' ? ' &nbsp;|&nbsp; 📅 Tatilde → önceki iş günü' : '';
 
-  document.getElementById('kmhkredi-preview').innerHTML =
-    `Efektif aylık faiz: <b>%${(aylikFaiz*100).toFixed(3)}</b> &nbsp;|&nbsp; KKDF <b>%${kkdfYuzde}</b> + BSMV <b>%${bsmvYuzde}</b> &nbsp;|&nbsp; Aylık taksit: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b> &nbsp;|&nbsp; Toplam faiz: <b class="red">${fmt(toplamFaiz)}</b> &nbsp;|&nbsp; Toplam borç: <b>${fmt(toplamBorc)}</b>${bitisTarihStr}${odemeGunTipLabel}`;
+  const tatilBadge = odemeGunTipLabel
+    ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:8px;font-size:11px;color:var(--violet)">📅 <span>Taksit tatile denk gelirse → <b>${odemeGunTipVal === 'ilerle' ? 'sonraki iş günü' : 'önceki iş günü'}</b></span></div>`
+    : '';
+  const sonTaksitBadge = bitisTarihStr
+    ? `<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Son Taksit</div><div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)">${fmtDate(new Date(ilkEkstre+'T00:00:00').setMonth(new Date(ilkEkstre+'T00:00:00').getMonth()+vade-1) && (() => { const d=new Date(ilkEkstre+'T00:00:00'); d.setMonth(d.getMonth()+vade-1); return d; })())}</div></div>`
+    : '';
+  document.getElementById('kmhkredi-preview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:0">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Efektif Aylık Faiz</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)">%${(aylikFaiz*100).toFixed(3)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">KKDF / BSMV</div>
+        <div style="font-size:13px;font-weight:700;color:var(--sky);font-family:var(--mono)">%${kkdfYuzde} / %${bsmvYuzde}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Aylık Taksit</div>
+        <div style="font-size:13px;font-weight:700;color:var(--warn);font-family:var(--mono)">${fmt(aylikTaksit)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Toplam Faiz</div>
+        <div style="font-size:13px;font-weight:700;color:var(--danger);font-family:var(--mono)">${fmt(toplamFaiz)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Toplam Borç</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)">${fmt(toplamBorc)}</div>
+      </div>
+      ${ilkEkstre && vade ? `<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Son Taksit</div><div style="font-size:13px;font-weight:700;color:var(--teal);font-family:var(--mono)">${(() => { const d=new Date(ilkEkstre+'T00:00:00'); d.setMonth(d.getMonth()+vade-1); return fmtDate(d); })()}</div></div>` : ''}
+      ${tatilBadge}
+    </div>`;
 
   if(ilkEkstre && vade) {
     renderKrediTaksitPlani('kmh', ilkEkstre, vade, aylikTaksit, preserveManuel, odemeGunTipVal);
@@ -13659,7 +13688,7 @@ function openKmhKrediModal(id=null) {
       document.getElementById('kmhkredi-faiz').value = kr.faizOran;
       document.getElementById('kmhkredi-vade').value = kr.vade;
       document.getElementById('kmhkredi-kkdf').value = kr.kkdf||0;
-      document.getElementById('kmhkredi-bsmv').value = kr.bsmv||5;
+      document.getElementById('kmhkredi-bsmv').value = kr.bsmv||0;
       document.getElementById('kmhkredi-ilk-ekstre').value = kr.ilkEkstre||'';
       document.getElementById('kmhkredi-odeme-gun-tip').value = kr.odemeGunTip||'';
       calcKmhKredi(true);
@@ -13686,7 +13715,7 @@ function saveKmhKredi() {
   const faizOran = parseFloat(document.getElementById('kmhkredi-faiz').value)||0;
   const vade = parseInt(document.getElementById('kmhkredi-vade').value)||0;
   const kkdf = parseFloat(document.getElementById('kmhkredi-kkdf').value)||0;
-  const bsmv = parseFloat(document.getElementById('kmhkredi-bsmv').value)||5;
+  const bsmv = parseFloat(document.getElementById('kmhkredi-bsmv').value)||0;
   const ilkEkstre = document.getElementById('kmhkredi-ilk-ekstre').value;
   const odemeGunTip = document.getElementById('kmhkredi-odeme-gun-tip').value;
 
@@ -13943,7 +13972,7 @@ function calcKredi(preserveManuel=false) {
   const faizYuzde = parseFloat(document.getElementById('kredi-faiz').value)||0;
   const vade = parseInt(document.getElementById('kredi-vade').value)||0;
   const kkdfYuzde = parseFloat(document.getElementById('kredi-kkdf').value)||0;
-  const bsmvYuzde = parseFloat(document.getElementById('kredi-bsmv').value)||5;
+  const bsmvYuzde = parseFloat(document.getElementById('kredi-bsmv').value)||0;
   const ilkTaksit = document.getElementById('kredi-ilk-taksit').value;
 
   if(!anaPara||!vade) {
@@ -13968,8 +13997,34 @@ function calcKredi(preserveManuel=false) {
   const odemeGunTipKrVal = document.getElementById('kredi-odeme-gun-tip').value;
   const odemeGunTipKrLabel = odemeGunTipKrVal === 'ilerle' ? ' &nbsp;|&nbsp; 📅 Tatilde → sonraki iş günü' : odemeGunTipKrVal === 'geri' ? ' &nbsp;|&nbsp; 📅 Tatilde → önceki iş günü' : '';
 
-  document.getElementById('kredi-preview').innerHTML =
-    `Efektif aylık faiz: <b>%${(aylikFaiz*100).toFixed(3)}</b> &nbsp;|&nbsp; KKDF <b>%${kkdfYuzde}</b> + BSMV <b>%${bsmvYuzde}</b> &nbsp;|&nbsp; Aylık taksit: <b style="color:var(--warn)">${fmt(aylikTaksit)}</b> &nbsp;|&nbsp; Toplam faiz: <b class="red">${fmt(toplamFaiz)}</b> &nbsp;|&nbsp; Toplam borç: <b>${fmt(toplamBorc)}</b>${bitisTarihStr}${odemeGunTipKrLabel}`;
+  const tatilBadgeKr = odemeGunTipKrVal
+    ? `<div style="grid-column:1/-1;display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:8px;font-size:11px;color:var(--violet)">📅 <span>Taksit tatile denk gelirse → <b>${odemeGunTipKrVal === 'ilerle' ? 'sonraki iş günü' : 'önceki iş günü'}</b></span></div>`
+    : '';
+  document.getElementById('kredi-preview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:0">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Efektif Aylık Faiz</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)">%${(aylikFaiz*100).toFixed(3)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">KKDF / BSMV</div>
+        <div style="font-size:13px;font-weight:700;color:var(--sky);font-family:var(--mono)">%${kkdfYuzde} / %${bsmvYuzde}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Aylık Taksit</div>
+        <div style="font-size:13px;font-weight:700;color:var(--warn);font-family:var(--mono)">${fmt(aylikTaksit)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Toplam Faiz</div>
+        <div style="font-size:13px;font-weight:700;color:var(--danger);font-family:var(--mono)">${fmt(toplamFaiz)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Toplam Borç</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)">${fmt(toplamBorc)}</div>
+      </div>
+      ${ilkTaksit && vade ? `<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Son Taksit</div><div style="font-size:13px;font-weight:700;color:var(--teal);font-family:var(--mono)">${(() => { const d=new Date(ilkTaksit+'T00:00:00'); d.setMonth(d.getMonth()+vade-1); return fmtDate(d); })()}</div></div>` : ''}
+      ${tatilBadgeKr}
+    </div>`;
 
   if(ilkTaksit && vade) {
     renderKrediTaksitPlani('kredi', ilkTaksit, vade, aylikTaksit, preserveManuel, odemeGunTipKrVal);
@@ -13998,8 +14053,8 @@ function openKrediModal(id=null) {
       setMoneyInput('kredi-anapara', kr.anaPara);
       document.getElementById('kredi-faiz').value = kr.faizOran;
       document.getElementById('kredi-vade').value = kr.vade;
-      document.getElementById('kredi-kkdf').value = kr.kkdf||5;
-      document.getElementById('kredi-bsmv').value = kr.bsmv||5;
+      document.getElementById('kredi-kkdf').value = kr.kkdf||0;
+      document.getElementById('kredi-bsmv').value = kr.bsmv||0;
       document.getElementById('kredi-ilk-taksit').value = kr.ilkTaksit||'';
       document.getElementById('kredi-odeme-gun-tip').value = kr.odemeGunTip||'';
       calcKredi(true);
@@ -14030,7 +14085,7 @@ function saveKredi() {
   const faizOran = parseFloat(document.getElementById('kredi-faiz').value)||0;
   const vade = parseInt(document.getElementById('kredi-vade').value)||0;
   const kkdf = parseFloat(document.getElementById('kredi-kkdf').value)||0;
-  const bsmv = parseFloat(document.getElementById('kredi-bsmv').value)||5;
+  const bsmv = parseFloat(document.getElementById('kredi-bsmv').value)||0;
   const ilkTaksit = document.getElementById('kredi-ilk-taksit').value;
   const odemeGunTipKr = document.getElementById('kredi-odeme-gun-tip').value;
 
