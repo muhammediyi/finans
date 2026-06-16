@@ -15709,6 +15709,13 @@ function populateKategoriSelects() {
   if(islemEl) { islemEl.innerHTML = getKategoriOpts(''); phSet(islemEl, 'Kategori seçin…', islemEl.value||''); }
   // elden-kategori tür bazlı doldurulur (onEldenTurChange ile)
   onEldenTurChange();
+  // ab-kategori: sadece gider kategorileri
+  const abKatEl = document.getElementById('ab-kategori');
+  if(abKatEl) {
+    const prev = abKatEl.value;
+    abKatEl.innerHTML = '<option value="" disabled>— Kategori seçin —</option>' + getKategoriOpts('gider');
+    if(prev) abKatEl.value = prev;
+  }
 }
 
 function onEldenTurChange() {
@@ -22300,17 +22307,7 @@ window.entegre = {
       <div style="display:flex;gap:12px">
         <div style="flex:1">
           <label class="has-required">Kategori</label>
-          <select id="ab-kategori">
-            <option value="" disabled selected>— Kategori seçin —</option>
-            <option value="eglence">🎬 Eğlence</option>
-            <option value="muzik">🎵 Müzik</option>
-            <option value="yazilim">💻 Yazılım</option>
-            <option value="fatura">⚡ Fatura</option>
-            <option value="sigorta">🛡️ Sigorta</option>
-            <option value="spor">🏋️ Spor</option>
-            <option value="egitim">📚 Eğitim</option>
-            <option value="diger">📦 Diğer</option>
-          </select>
+          <select id="ab-kategori"><option value="" disabled selected>— Kategori seçin —</option></select>
         </div>
         <div style="flex:1">
           <label class="has-required">Periyot</label>
@@ -22346,8 +22343,8 @@ window.entegre = {
           <input id="ab-tarih" type="date">
         </div>
         <div style="flex:1">
-          <label>Bağlı Hesap <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
-          <select id="ab-hesap"></select>
+          <label class="has-required">Bağlı Hesap</label>
+          <select id="ab-hesap"><option value="" disabled selected>— Hesap seçin —</option></select>
         </div>
       </div>
       <div>
@@ -22400,7 +22397,10 @@ function openAbonelikModal(id=null) {
   const ab = id ? (DB.abonelikler||[]).find(x=>x.id===id) : null;
   document.getElementById('ab-ad').value = ab?.ad || '';
   document.getElementById('ab-ikon').value = ab?.ikon || '';
-  document.getElementById('ab-kategori').value = ab?.kategori || '';
+  // Gider kategorilerini dinamik doldur
+  const abKatEl = document.getElementById('ab-kategori');
+  abKatEl.innerHTML = '<option value="" disabled>— Kategori seçin —</option>' + getKategoriOpts('gider');
+  abKatEl.value = ab?.kategori || '';
   document.getElementById('ab-periyot').value = ab?.periyot || '';
   document.getElementById('ab-not').value = ab?.not || '';
   document.getElementById('ab-pasif').checked = !!ab?.pasif;
@@ -22414,7 +22414,7 @@ function openAbonelikModal(id=null) {
   pbSel.value = ab?.paraBirimi || defaultCurrency || 'TRY';
   // Hesap select
   const hSel = document.getElementById('ab-hesap');
-  hSel.innerHTML = '<option value="">— Hesap seçin (opsiyonel) —</option>' +
+  hSel.innerHTML = '<option value="" disabled>— Hesap seçin —</option>' +
     (DB.hesaplar||[]).filter(h=>h.durum==='aktif').map(h=>`<option value="${h.id}">${h.ad}</option>`).join('');
   hSel.value = ab?.hesapId || '';
   openModal('modal-abonelik');
@@ -22433,6 +22433,7 @@ function saveAbonelik() {
   const kategori = document.getElementById('ab-kategori').value;
   const periyot = document.getElementById('ab-periyot').value;
   const tarih = document.getElementById('ab-tarih').value;
+  const hesapId = document.getElementById('ab-hesap').value;
 
   const missing = [];
   if(!ad) missing.push('Abonelik Adı');
@@ -22440,12 +22441,13 @@ function saveAbonelik() {
   if(!kategori) missing.push('Kategori');
   if(!periyot) missing.push('Periyot');
   if(!tarih) missing.push('Ödeme Tarihi');
+  if(!hesapId) missing.push('Bağlı Hesap');
 
   if(missing.length) {
     banner.innerHTML = '⚠️ Zorunlu alanları doldurun: ' + missing.join(', ');
     banner.style.display = 'flex';
     // Shake invalid fields
-    const idMap = {'Abonelik Adı':'ab-ad','Tutar':'ab-tutar','Kategori':'ab-kategori','Periyot':'ab-periyot','Ödeme Tarihi':'ab-tarih'};
+    const idMap = {'Abonelik Adı':'ab-ad','Tutar':'ab-tutar','Kategori':'ab-kategori','Periyot':'ab-periyot','Ödeme Tarihi':'ab-tarih','Bağlı Hesap':'ab-hesap'};
     missing.forEach(f=>{
       const el = document.getElementById(idMap[f]);
       if(el){ el.classList.add('field-error','shake'); setTimeout(()=>el.classList.remove('shake'),450); }
