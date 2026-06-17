@@ -7787,7 +7787,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option><select>
+            <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
         </div>
       </div>
@@ -19289,7 +19289,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   navigateToHash();
   // ────────────────────────────────────────────────────────────
 
-  // Clock
+  // Clock (tek otoriter güncelleyici — sidebar saat + topbar tarih)
   function updateClock() {
     const now = new Date();
     const t = fmtTime(now);
@@ -19297,11 +19297,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const cl = document.getElementById('sidebar-clock');
     const td = document.getElementById('topbar-date');
     if(cl) cl.textContent = t;
-    if(td) td.textContent = d;
+    if(td) {
+      td.textContent = d;
+      const h = now.getHours();
+      if (h >= 8 && h <= 20) td.classList.add('today-mark');
+      else td.classList.remove('today-mark');
+    }
   }
   window.updateClockFn = updateClock;
   updateClock();
-  setInterval(updateClock, 15000);
+  setInterval(updateClock, 1000);
 });
 
 // ═══ MİNİ KİŞİ POPUP ══════════════════════════════════════
@@ -19970,19 +19975,7 @@ document.addEventListener('click', function(e) {
   r.addEventListener('animationend', () => r.remove());
 }, { passive: true });
 
-// ── Topbar'daki tarihi dinamik olarak güncelle ──
-(function updateTopbarDate() {
-  const el = document.getElementById('topbar-date');
-  if (!el) return;
-  function fmt() {
-    const now = new Date();
-    const days = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
-    const months = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
-    el.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-  }
-  fmt();
-  setInterval(fmt, 60000);
-})();
+// ── Topbar tarihi: ana updateClock() tarafından yönetiliyor (çakışan eski kopya kaldırıldı) ──
 
 // ── Sayfa geçişlerinde smooth scroll to top ──
 const _origShowPageV36 = window.showPage;
@@ -20023,19 +20016,7 @@ if (typeof showPage === 'function') {
   };
 })();
 
-// ── Sidebar saate her dakika güncelle ──
-(function clockTick() {
-  const el = document.getElementById('sidebar-clock');
-  if (!el) return;
-  function tick() {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    el.textContent = `${h}:${m}`;
-  }
-  tick();
-  setInterval(tick, 1000);
-})();
+// ── Sidebar saat: ana updateClock() tarafından yönetiliyor (çakışan eski kopya kaldırıldı) ──
 
 // ── Input: para alanlarında otomatik binlik ayırıcı (görsel) ──
 // Not: Sadece display amaçlı — gerçek işlemler JS logic'te yapılıyor
@@ -20262,20 +20243,7 @@ document.addEventListener('dblclick', function(e) {
   }, { passive: true });
 })();
 
-// ── Sidebar: mevcut saat animasyonu ──
-(function() {
-  const el = document.getElementById('sidebar-clock');
-  if (!el) return;
-  function tick() {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
-    const s = String(now.getSeconds()).padStart(2,'0');
-    el.innerHTML = `<span style="font-variant-numeric:tabular-nums;letter-spacing:.06em">${h}:${m}</span><span style="opacity:.4;font-size:9px">:${s}</span>`;
-  }
-  tick();
-  setInterval(tick, 1000);
-})();
+// ── Sidebar saat animasyonu: ana updateClock() tarafından yönetiliyor (çakışan eski kopya kaldırıldı) ──
 
 // ── Input: sayısal alanlarda yukarı/aşağı ok ile artır/azalt ──
 document.addEventListener('keydown', function(e) {
@@ -20547,22 +20515,7 @@ document.addEventListener('click', function(e) {
   }, { passive: true });
 })();
 
-// 2. Topbar date — bugünün işareti
-(function() {
-  const el = document.getElementById('topbar-date');
-  if (!el) return;
-  const updateDate = () => {
-    const now = new Date();
-    const options = { weekday: 'long', day: 'numeric', month: 'long' };
-    el.textContent = now.toLocaleDateString('tr-TR', options);
-    // Pazartesi sabahı özel renk
-    const h = now.getHours();
-    if (h >= 8 && h <= 20) el.classList.add('today-mark');
-    else el.classList.remove('today-mark');
-  };
-  updateDate();
-  setInterval(updateDate, 60000);
-})();
+// Topbar tarih + today-mark: ana updateClock() tarafından yönetiliyor (çakışan eski kopya kaldırıldı)
 
 // 3. Kart başlıklarına sol çizgi sınıfı ekle (form-field wrapper)
 (function() {
