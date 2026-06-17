@@ -23368,27 +23368,11 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
       <!-- ── KAYNAK ─────────────────────────────────────────────── -->
       <div class="msec">
         <div class="msec-label blue">Kaynak</div>
-        <div class="form-row cols-2" style="align-items:flex-end">
-          <div>
-            <label>Tür</label>
-            <select id="transfer-kaynak-tip" onchange="onTransferKaynakTipChange()">
-              <option value="hesap">🏛️ Hesap</option>
-              <option value="nakit">💵 Nakit</option>
-            </select>
-          </div>
-          <div id="transfer-kaynak-hesap-wrap" style="grid-column:1/-1">
+        <div class="form-row" style="align-items:flex-end">
+          <div id="transfer-kaynak-hesap-wrap">
             <label>Hesap <span style="color:var(--danger)">*</span></label>
             <select id="transfer-kaynak" onchange="onTransferKaynakChange()">
               <option value="" disabled selected hidden>— Hesap Seçin —</option>
-            </select>
-          </div>
-          <div id="transfer-kaynak-nakit-wrap" style="display:none">
-            <label>Para Birimi</label>
-            <select id="transfer-kaynak-pb" onchange="onTransferKaynakNakitChange()">
-              <option value="TRY">₺ TRY</option>
-              <option value="USD">$ USD</option>
-              <option value="EUR">€ EUR</option>
-              <option value="GBP">£ GBP</option>
             </select>
           </div>
         </div>
@@ -23398,27 +23382,11 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
       <!-- ── HEDEF ─────────────────────────────────────────────── -->
       <div class="msec">
         <div class="msec-label teal">Hedef</div>
-        <div class="form-row cols-2" style="align-items:flex-end">
-          <div>
-            <label>Tür</label>
-            <select id="transfer-hedef-tip" onchange="onTransferHedefTipChange()">
-              <option value="hesap">🏛️ Hesap</option>
-              <option value="nakit">💵 Nakit</option>
-            </select>
-          </div>
-          <div id="transfer-hedef-hesap-wrap" style="grid-column:1/-1">
+        <div class="form-row" style="align-items:flex-end">
+          <div id="transfer-hedef-hesap-wrap">
             <label>Hesap <span style="color:var(--danger)">*</span></label>
             <select id="transfer-hedef" onchange="onTransferHedefChange()">
               <option value="" disabled selected hidden>— Hesap Seçin —</option>
-            </select>
-          </div>
-          <div id="transfer-hedef-nakit-wrap" style="display:none">
-            <label>Para Birimi</label>
-            <select id="transfer-hedef-pb">
-              <option value="TRY">₺ TRY</option>
-              <option value="USD">$ USD</option>
-              <option value="EUR">€ EUR</option>
-              <option value="GBP">£ GBP</option>
             </select>
           </div>
         </div>
@@ -23436,8 +23404,8 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
             </div>
           </div>
           <div>
-            <label>Tarih</label>
-            <input id="transfer-tarih" type="date">
+            <label>Tarih <span style="color:var(--danger)">*</span></label>
+            <input id="transfer-tarih" type="date" required>
           </div>
         </div>
         <div class="form-row" style="margin-bottom:0">
@@ -23477,93 +23445,96 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
 function openTransferModal() {
   const inp = document.getElementById('transfer-tarih');
   if (inp) inp.value = localDateStr(new Date());
-  // Reset tipler
-  document.getElementById('transfer-kaynak-tip').value = 'hesap';
-  document.getElementById('transfer-hedef-tip').value  = 'hesap';
-  onTransferKaynakTipChange();
-  onTransferHedefTipChange();
+  document.getElementById('transfer-kaynak-bilgi').innerHTML = '';
+  document.getElementById('transfer-hedef-bilgi').innerHTML = '';
+  document.getElementById('transfer-kaynak').innerHTML = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
+  document.getElementById('transfer-hedef').innerHTML  = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
   _populateTransferHesaplar();
+  _checkNakitNakit();
   renderTransferLog();
   openModal('modal-transfer');
   setTimeout(() => bindMoneyInputs(document.getElementById('modal-transfer')), 20);
 }
 
-// ── Hesap listelerini doldur ──────────────────────────────────
-function _populateTransferHesaplar(excludeId) {
-  const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
-  const kaynakId = document.getElementById('transfer-kaynak').value;
-  const hedefId  = document.getElementById('transfer-hedef').value;
+// ── Hesap/Nakit seçim değerini ayrıştır ───────────────────────
+// "nakit:USD" → {tip:'nakit', id:null, pb:'USD'} | "<hesapId>" → {tip:'hesap', id:..., pb:null}
+function _parseTransferSel(val) {
+  if (!val) return { tip: null, id: null, pb: null };
+  if (val.indexOf('nakit:') === 0) return { tip: 'nakit', id: null, pb: val.slice(6) };
+  return { tip: 'hesap', id: val, pb: null };
+}
 
-  // Seçili kaynak hesabın para birimini bul
-  const kaynakHesap = hesaplar.find(h => h.id === kaynakId);
-  const kaynakPb = kaynakHesap ? (kaynakHesap.paraBirimi || 'TRY') : null;
-  // Seçili hedef hesabın para birimini bul
-  const hedefHesap = hesaplar.find(h => h.id === hedefId);
-  const hedefPb = hedefHesap ? (hedefHesap.paraBirimi || 'TRY') : null;
+// ── Nakit için gösterilecek para birimi listesi ───────────────
+function _nakitCurrencyList() {
+  if (typeof ALL_CURRENCIES === 'undefined' || !ALL_CURRENCIES.length) {
+    if (typeof rebuildAllCurrencies === 'function') rebuildAllCurrencies();
+  }
+  return (typeof ALL_CURRENCIES !== 'undefined' && ALL_CURRENCIES.length)
+    ? ALL_CURRENCIES
+    : [{ code: 'TRY', symbol: '₺', flag: '🇹🇷' }];
+}
+
+// ── Hesap + Nakit listelerini doldur (tek dropdown) ───────────
+function _populateTransferHesaplar() {
+  const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
+  const curList  = _nakitCurrencyList();
+
+  const kVal = document.getElementById('transfer-kaynak').value;
+  const hVal = document.getElementById('transfer-hedef').value;
+  const kInfo = _parseTransferSel(kVal);
+  const hInfo = _parseTransferSel(hVal);
+
+  const pbOf = (info) => {
+    if (info.tip === 'hesap') { const h = hesaplar.find(x => x.id === info.id); return h ? (h.paraBirimi || 'TRY') : null; }
+    if (info.tip === 'nakit') return info.pb;
+    return null;
+  };
+  const kaynakPb = pbOf(kInfo);
+  const hedefPb  = pbOf(hInfo);
 
   const makeOpts = (excludeVal, filterPb) => {
-    const ph = '<option value="" disabled selected hidden>Hesap seçin</option>';
-    return ph + hesaplar
+    const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
+    const hesapOpts = hesaplar
       .filter(h => h.id !== excludeVal)
       .filter(h => !filterPb || (h.paraBirimi || 'TRY') === filterPb)
       .map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+    const nakitOpts = curList
+      .filter(c => `nakit:${c.code}` !== excludeVal)
+      .filter(c => !filterPb || c.code === filterPb)
+      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    return ph
+      + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
+      + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
   };
 
   const kSel = document.getElementById('transfer-kaynak');
   const hSel = document.getElementById('transfer-hedef');
-  // Kaynak: hedef seçiliyse aynı para biriminden olanları göster
-  if (kSel) { const prev = kSel.value; kSel.innerHTML = makeOpts(hedefId || '', hedefPb); kSel.value = prev; }
-  // Hedef: kaynak seçiliyse aynı para biriminden olanları göster
-  if (hSel) { const prev = hSel.value; hSel.innerHTML = makeOpts(kaynakId || '', kaynakPb); hSel.value = prev; }
-}
-
-// ── Kaynak tip değişince ─────────────────────────────────────
-function onTransferKaynakTipChange() {
-  const tip = document.getElementById('transfer-kaynak-tip').value;
-  const hesapWrap = document.getElementById('transfer-kaynak-hesap-wrap');
-  const nakitWrap = document.getElementById('transfer-kaynak-nakit-wrap');
-  hesapWrap.style.display = tip === 'hesap' ? '' : 'none';
-  nakitWrap.style.display = tip === 'nakit' ? '' : 'none';
-  document.getElementById('transfer-kaynak-bilgi').innerHTML = '';
-  if (tip === 'nakit') onTransferKaynakNakitChange();
-  else onTransferKaynakChange();
-  // Hedef: nakit iken kaynak da nakit ise uyarı
-  _checkNakitNakit();
-}
-
-function onTransferHedefTipChange() {
-  const tip = document.getElementById('transfer-hedef-tip').value;
-  const hesapWrap = document.getElementById('transfer-hedef-hesap-wrap');
-  const nakitWrap = document.getElementById('transfer-hedef-nakit-wrap');
-  hesapWrap.style.display = tip === 'hesap' ? '' : 'none';
-  nakitWrap.style.display = tip === 'nakit' ? '' : 'none';
-  document.getElementById('transfer-hedef-bilgi').innerHTML = '';
-  if (tip === 'nakit') _showNakitBilgi('hedef');
-  else onTransferHedefChange();
-  _checkNakitNakit();
-  // Hedef tipi değişince kaynak hesap listesini yenile (exclude değişmez ama simetri için)
-  _populateTransferHesaplar();
+  // Kaynak: hedef seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
+  if (kSel) { const prev = kSel.value; kSel.innerHTML = makeOpts(hVal || '', hedefPb); kSel.value = prev; }
+  // Hedef: kaynak seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
+  if (hSel) { const prev = hSel.value; hSel.innerHTML = makeOpts(kVal || '', kaynakPb); hSel.value = prev; }
 }
 
 function _checkNakitNakit() {
-  const k = document.getElementById('transfer-kaynak-tip').value;
-  const h = document.getElementById('transfer-hedef-tip').value;
+  const k = _parseTransferSel(document.getElementById('transfer-kaynak').value);
+  const h = _parseTransferSel(document.getElementById('transfer-hedef').value);
   const sub = document.getElementById('transfer-modal-subtitle');
-  if (k === 'nakit' && h === 'nakit') {
+  if (!sub) return;
+  if (!k.tip || !h.tip) {
+    sub.textContent = 'Hesap veya nakit arası hareket'; sub.style.color = '';
+  } else if (k.tip === 'nakit' && h.tip === 'nakit') {
     sub.textContent = '⚠️ İki nakit arasında transfer yapılamaz'; sub.style.color = 'var(--danger)';
-  } else if (k === 'hesap' && h === 'hesap') {
+  } else if (k.tip === 'hesap' && h.tip === 'hesap') {
     // Para birimi uyumu kontrolü
-    const kaynakId = document.getElementById('transfer-kaynak').value;
-    const hedefId  = document.getElementById('transfer-hedef').value;
-    const kH = (DB.hesaplar || []).find(x => x.id === kaynakId);
-    const hH = (DB.hesaplar || []).find(x => x.id === hedefId);
+    const kH = (DB.hesaplar || []).find(x => x.id === k.id);
+    const hH = (DB.hesaplar || []).find(x => x.id === h.id);
     if (kH && hH && (kH.paraBirimi || 'TRY') !== (hH.paraBirimi || 'TRY')) {
       sub.textContent = `⚠️ Para birimi uyuşmuyor: ${kH.paraBirimi||'TRY'} ↔ ${hH.paraBirimi||'TRY'}`;
       sub.style.color = 'var(--danger)';
     } else {
       sub.textContent = 'Hesaplar arası transfer'; sub.style.color = '';
     }
-  } else if (k === 'hesap' && h === 'nakit') {
+  } else if (k.tip === 'hesap' && h.tip === 'nakit') {
     sub.textContent = 'Hesaptan nakite çekme'; sub.style.color = '';
   } else {
     sub.textContent = 'Hesaba Nakit Yatırma'; sub.style.color = '';
@@ -23571,66 +23542,74 @@ function _checkNakitNakit() {
 }
 
 function onTransferKaynakChange() {
-  const kaynakId = document.getElementById('transfer-kaynak').value;
-  const hesap = (DB.hesaplar || []).find(h => h.id === kaynakId);
-  const info  = document.getElementById('transfer-kaynak-bilgi');
-  if (hesap) {
-    const pb = hesap.paraBirimi || 'TRY';
-    const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
-    info.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+  const info  = _parseTransferSel(document.getElementById('transfer-kaynak').value);
+  const infoEl = document.getElementById('transfer-kaynak-bilgi');
+  let pb = null;
+  if (info.tip === 'hesap') {
+    const hesap = (DB.hesaplar || []).find(h => h.id === info.id);
+    if (hesap) {
+      pb = hesap.paraBirimi || 'TRY';
+      const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
+      infoEl.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+    } else {
+      infoEl.innerHTML = '';
+    }
+  } else if (info.tip === 'nakit') {
+    pb = info.pb;
+    const bak = (DB._nakitBakiye || {})[pb] || 0;
+    const color = bak >= 0 ? 'var(--teal)' : 'var(--danger)';
+    infoEl.innerHTML = `Nakit bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(bak, pb)}</span>`;
+  } else {
+    infoEl.innerHTML = '';
+  }
+  if (pb) {
     const wrap = document.getElementById('transfer-tutar-wrap');
     if (wrap) { wrap.dataset.symbol = pb === 'TRY' ? '₺' : pb; wrap.dataset.code = pb; }
-  } else {
-    info.innerHTML = '';
   }
-  // Hedef listesinden bu hesabı çıkar
+  // Hedef listesinden bu seçimi çıkar
   _populateTransferHesaplar();
   _checkNakitNakit();
-}
-
-function onTransferKaynakNakitChange() {
-  const pb  = document.getElementById('transfer-kaynak-pb').value || 'TRY';
-  const bak = (DB._nakitBakiye || {})[pb] || 0;
-  const color = bak >= 0 ? 'var(--teal)' : 'var(--danger)';
-  document.getElementById('transfer-kaynak-bilgi').innerHTML =
-    `Nakit bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(bak, pb)}</span>`;
-  const wrap = document.getElementById('transfer-tutar-wrap');
-  if (wrap) { wrap.dataset.symbol = pb === 'TRY' ? '₺' : pb; wrap.dataset.code = pb; }
 }
 
 function onTransferHedefChange() {
-  const hedefId = document.getElementById('transfer-hedef').value;
-  const hesap = (DB.hesaplar || []).find(h => h.id === hedefId);
-  const info  = document.getElementById('transfer-hedef-bilgi');
-  if (hesap) {
-    const pb = hesap.paraBirimi || 'TRY';
-    const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
-    info.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+  const info  = _parseTransferSel(document.getElementById('transfer-hedef').value);
+  const infoEl = document.getElementById('transfer-hedef-bilgi');
+  if (info.tip === 'hesap') {
+    const hesap = (DB.hesaplar || []).find(h => h.id === info.id);
+    if (hesap) {
+      const pb = hesap.paraBirimi || 'TRY';
+      const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
+      infoEl.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+    } else {
+      infoEl.innerHTML = '';
+    }
+  } else if (info.tip === 'nakit') {
+    const pb = info.pb;
+    const bak = (DB._nakitBakiye || {})[pb] || 0;
+    const color = bak >= 0 ? 'var(--teal)' : 'var(--danger)';
+    infoEl.innerHTML = `Nakit bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(bak, pb)}</span>`;
   } else {
-    info.innerHTML = '';
+    infoEl.innerHTML = '';
   }
-  // Kaynak listesinden bu hesabı çıkar
+  // Kaynak listesinden bu seçimi çıkar
   _populateTransferHesaplar();
   _checkNakitNakit();
-}
-
-function _showNakitBilgi(taraf) {
-  const pbSel = document.getElementById(taraf === 'hedef' ? 'transfer-hedef-pb' : 'transfer-kaynak-pb');
-  const pb = pbSel ? pbSel.value : 'TRY';
-  const bak = (DB._nakitBakiye || {})[pb] || 0;
-  const color = bak >= 0 ? 'var(--teal)' : 'var(--danger)';
-  const el = document.getElementById(`transfer-${taraf}-bilgi`);
-  if (el) el.innerHTML = `Nakit bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(bak, pb)}</span>`;
 }
 
 // ── Kaydet ───────────────────────────────────────────────────
 function saveTransfer() {
   const tutar    = getMoneyInput('transfer-tutar');
-  const tarih    = document.getElementById('transfer-tarih').value || localDateStr(new Date());
+  const tarih    = document.getElementById('transfer-tarih').value;
   const aciklama = (document.getElementById('transfer-aciklama').value || '').trim();
-  const kTip = document.getElementById('transfer-kaynak-tip').value;
-  const hTip = document.getElementById('transfer-hedef-tip').value;
 
+  if (!tarih) { showToast('Tarih seçimi zorunludur', 'error'); return; }
+
+  const kInfo = _parseTransferSel(document.getElementById('transfer-kaynak').value);
+  const hInfo = _parseTransferSel(document.getElementById('transfer-hedef').value);
+  const kTip = kInfo.tip, hTip = hInfo.tip;
+
+  if (!kTip) { showToast('Kaynak seçin', 'error'); return; }
+  if (!hTip) { showToast('Hedef seçin', 'error'); return; }
   if (!tutar || tutar <= 0) { showToast('Geçerli bir tutar girin', 'error'); return; }
   if (kTip === 'nakit' && hTip === 'nakit') { showToast('İki nakit arasında transfer yapılamaz', 'error'); return; }
 
@@ -23638,16 +23617,16 @@ function saveTransfer() {
   {
     let _kPb = 'TRY', _hPb = 'TRY';
     if (kTip === 'hesap') {
-      const _kHesap = (DB.hesaplar || []).find(h => h.id === document.getElementById('transfer-kaynak').value);
+      const _kHesap = (DB.hesaplar || []).find(h => h.id === kInfo.id);
       if (_kHesap) _kPb = _kHesap.paraBirimi || 'TRY';
     } else {
-      _kPb = document.getElementById('transfer-kaynak-pb').value || 'TRY';
+      _kPb = kInfo.pb || 'TRY';
     }
     if (hTip === 'hesap') {
-      const _hHesap = (DB.hesaplar || []).find(h => h.id === document.getElementById('transfer-hedef').value);
+      const _hHesap = (DB.hesaplar || []).find(h => h.id === hInfo.id);
       if (_hHesap) _hPb = _hHesap.paraBirimi || 'TRY';
     } else {
-      _hPb = document.getElementById('transfer-hedef-pb').value || 'TRY';
+      _hPb = hInfo.pb || 'TRY';
     }
     if (_kPb !== _hPb) {
       showToast(`⚠️ Para birimi uyuşmuyor: ${_kPb} → ${_hPb}. Sadece aynı para birimleri arasında transfer yapılabilir.`, 'error');
@@ -23660,16 +23639,15 @@ function saveTransfer() {
   // ── Kaynak bilgisi ──
   let kaynakHesap = null, kaynakPb = 'TRY';
   if (kTip === 'hesap') {
-    const kaynakId = document.getElementById('transfer-kaynak').value;
-    if (!kaynakId) { showToast('Kaynak hesap seçin', 'error'); return; }
-    kaynakHesap = (DB.hesaplar || []).find(h => h.id === kaynakId);
+    if (!kInfo.id) { showToast('Kaynak hesap seçin', 'error'); return; }
+    kaynakHesap = (DB.hesaplar || []).find(h => h.id === kInfo.id);
     if (!kaynakHesap) { showToast('Kaynak hesap bulunamadı', 'error'); return; }
     kaynakPb = kaynakHesap.paraBirimi || 'TRY';
     if ((kaynakHesap.bakiye || 0) < tutar) {
       showToast(`Yetersiz bakiye! ${kaynakHesap.ad}: ${fmtCur(kaynakHesap.bakiye || 0, kaynakPb)}`, 'error'); return;
     }
   } else {
-    kaynakPb = document.getElementById('transfer-kaynak-pb').value || 'TRY';
+    kaynakPb = kInfo.pb || 'TRY';
     const nakitBak = (DB._nakitBakiye || {})[kaynakPb] || 0;
     if (nakitBak < tutar) {
       showToast(`Yetersiz nakit! ${kaynakPb} bakiye: ${fmtCur(nakitBak, kaynakPb)}`, 'error'); return;
@@ -23679,13 +23657,12 @@ function saveTransfer() {
   // ── Hedef bilgisi ──
   let hedefHesap = null, hedefPb = 'TRY';
   if (hTip === 'hesap') {
-    const hedefId = document.getElementById('transfer-hedef').value;
-    if (!hedefId) { showToast('Hedef hesap seçin', 'error'); return; }
-    hedefHesap = (DB.hesaplar || []).find(h => h.id === hedefId);
+    if (!hInfo.id) { showToast('Hedef hesap seçin', 'error'); return; }
+    hedefHesap = (DB.hesaplar || []).find(h => h.id === hInfo.id);
     if (!hedefHesap) { showToast('Hedef hesap bulunamadı', 'error'); return; }
     hedefPb = hedefHesap.paraBirimi || 'TRY';
   } else {
-    hedefPb = document.getElementById('transfer-hedef-pb').value || 'TRY';
+    hedefPb = hInfo.pb || 'TRY';
   }
 
   // ── Bakiye güncelle ──
