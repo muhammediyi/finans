@@ -12253,6 +12253,47 @@ function populateMevduatModal() {
   }
 }
 
+// Banka Hesapları listesinden tek tıkla: seçilen vadesiz hesabın tüm bakiyesini
+// vadeli mevduata aktarma modalını açar, "Vade (Gün)" hariç her şeyi doldurur.
+function vadeliyeKoy(hesapId) {
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(!hesap) { showToast('Hesap bulunamadı', 'error'); return; }
+  if(!(hesap.bakiye > 0)) { showToast('Hesap bakiyesi 0 veya negatif, vadeliye konulamaz', 'error'); return; }
+
+  openModal('modal-mevduat'); // populateMevduatModal() ile formu sıfırlar
+
+  // "Yeni Vadeli Hesap Kaydı Oluştur" modunu aç → kaynak hesap seçilebilsin
+  const otoToggle = document.getElementById('mev-oto-hesap');
+  if(otoToggle) { otoToggle.checked = true; onMevOtoHesapToggle(); }
+
+  // Kaynak hesabı bu hesaba ayarla → banka & para birimi otomatik algılanır
+  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
+  if(kaynakSel) { kaynakSel.value = hesapId; onMevKaynakHesapChange(); }
+
+  // Tutar = hesabın tüm bakiyesi
+  setMoneyInput('mev-tutar', hesap.bakiye);
+
+  // Faiz oranı: bu bankadan açılmış en güncel mevduat kaydının oranını öner
+  if(hesap.banka) {
+    const gecmis = (DB.mevduatlar||[])
+      .filter(m=>m.banka===hesap.banka && m.faizOran)
+      .sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''));
+    if(gecmis.length) document.getElementById('mev-faiz').value = gecmis[0].faizOran;
+  }
+
+  // Vade sonu stratejisi: ana para + faiz vade dolunca yine bu vadesiz hesaba dönsün
+  const stratejiSel = document.getElementById('mev-strateji');
+  if(stratejiSel) { stratejiSel.value = 'tumu_vadesiz'; onMevStratejiChange(); }
+  _fillMevVadesizSel(hesapId, hesap.banka||'');
+
+  calcMevduat();
+
+  // Tek eksik alan olan "Vade (Gün)" kutusuna odaklan
+  setTimeout(()=>{ const v = document.getElementById('mev-vade'); if(v) v.focus(); }, 60);
+
+  showToast(`${hesap.ad} — ${fmtCur(hesap.bakiye, hesap.paraBirimi||'TRY')} vadeliye hazır, sadece vade gününü girin`, 'info');
+}
+
 function _fillMevHesapSel(selectedId) {
   const hesapSel = document.getElementById('mev-hesap-id');
   if(!hesapSel) return;
@@ -18344,6 +18385,7 @@ function renderHesaplar() {
       <td style="white-space:nowrap">
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapLogModal('${h.id}')" style="margin-right:4px" title="İşlem Logu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M2 4h12M2 8h8M2 12h5"/></svg></button>
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+        ${(h.tur !== 'vadeli' && h.durum==='aktif' && h.bakiye>0) ? `<button class="btn btn-ghost btn-sm btn-act" onclick="vadeliyeKoy('${h.id}')" style="margin-right:4px" title="Vadeliye Koy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>` : ''}
         <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
@@ -24008,7 +24050,6 @@ function _renderHesapLog(liste) {
     <span style="color:var(--danger)">↓ Çıkış: <b class="mono">${fmtCur(topGider,ozetPb)}</b></span>
     <span style="color:var(--text2)">Net: <b class="mono">${fmtCur(topGelir-topGider,ozetPb)}</b></span>`;
 }
-	
 </script>
 </body>
 </html>
