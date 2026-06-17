@@ -366,185 +366,6 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 .islem-search-wrap input { padding-left: 31px; }
 .islem-toolbar select { width: auto; min-width: 128px; flex-shrink: 0; }
 
-/* ─── Gelişmiş Filtre Paneli ─── */
-.filter-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  position: relative;
-}
-.filter-panel::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  border-radius: var(--radius) var(--radius) 0 0;
-  background: linear-gradient(90deg, var(--gold) 0%, var(--teal) 50%, var(--violet) 100%);
-  opacity: .55;
-}
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.filter-row-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: var(--text3);
-  text-transform: uppercase;
-  min-width: 54px;
-  flex-shrink: 0;
-}
-.filter-pills {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  flex: 1;
-  align-items: center;
-}
-.filter-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid var(--border2);
-  background: var(--surface2);
-  color: var(--text2);
-  transition: all .15s ease;
-  white-space: nowrap;
-  user-select: none;
-}
-.filter-pill:hover {
-  border-color: var(--border-active);
-  color: var(--text);
-  background: var(--surface3);
-}
-.filter-pill.active {
-  background: var(--gold-glow);
-  border-color: rgba(251,191,36,.4);
-  color: var(--gold);
-  font-weight: 600;
-}
-.filter-pill.active.c-teal {
-  background: var(--teal-glow);
-  border-color: rgba(45,212,191,.4);
-  color: var(--teal);
-}
-.filter-pill.active.c-violet {
-  background: var(--violet-glow);
-  border-color: rgba(167,139,250,.4);
-  color: var(--violet);
-}
-.filter-pill.active.c-sky {
-  background: var(--sky-glow);
-  border-color: rgba(56,189,248,.4);
-  color: var(--sky);
-}
-.filter-pill-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: .7;
-}
-.filter-search-wrap {
-  position: relative;
-  flex: 1 1 180px;
-  min-width: 160px;
-  max-width: 320px;
-}
-.filter-search-wrap svg {
-  position: absolute;
-  left: 10px; top: 50%;
-  transform: translateY(-50%);
-  color: var(--text3);
-  pointer-events: none;
-}
-.filter-search-wrap input {
-  padding-left: 30px;
-  border-radius: 20px;
-  height: 32px;
-  font-size: 12px;
-}
-.filter-select-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-.filter-select-wrap select {
-  border-radius: 20px;
-  height: 32px;
-  font-size: 12px;
-  padding: 0 28px 0 12px;
-  appearance: none;
-  -webkit-appearance: none;
-  min-width: 0;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8eaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-.filter-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border2);
-  flex-shrink: 0;
-}
-.filter-active-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gold);
-  background: var(--gold-glow);
-  border: 1px solid rgba(251,191,36,.3);
-  border-radius: 10px;
-  padding: 2px 8px;
-  cursor: pointer;
-  transition: opacity .15s;
-}
-.filter-active-badge:hover { opacity: .7; }
-
-html[data-theme="light"] .filter-panel {
-  background: #fff;
-  border-color: rgba(0,0,0,.09);
-  box-shadow: 0 2px 12px rgba(0,0,0,.05);
-}
-html[data-theme="light"] .filter-pill {
-  background: rgba(0,0,0,.04);
-  border-color: rgba(0,0,0,.1);
-  color: rgba(15,22,41,.55);
-}
-html[data-theme="light"] .filter-pill:hover {
-  background: rgba(0,0,0,.07);
-  color: rgba(15,22,41,.85);
-}
-html[data-theme="light"] .filter-pill.active {
-  background: rgba(196,122,0,.08);
-  border-color: rgba(196,122,0,.35);
-  color: #c47a00;
-}
-html[data-theme="light"] .filter-pill.active.c-teal {
-  background: rgba(13,148,136,.08);
-  border-color: rgba(13,148,136,.35);
-  color: #0d9488;
-}
-html[data-theme="light"] .filter-pill.active.c-violet {
-  background: rgba(124,58,237,.08);
-  border-color: rgba(124,58,237,.35);
-  color: #7c3aed;
-}
-
 .islem-list-head {
   display: flex; align-items: center; gap: 12px; padding: 0 10px 9px;
   font-size: 9.5px; font-weight: 700; letter-spacing: .08em; color: var(--text3); text-transform: uppercase;
@@ -6879,38 +6700,18 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   <div class="islem-stats" id="islem-stats"></div>
 
   <div class="card islem-card">
-    <!-- Gelişmiş Filtre Paneli -->
-    <div class="filter-panel" id="islem-filter-panel">
-      <!-- Satır 1: Arama + Kart Seçimi -->
-      <div class="filter-row">
-        <div class="filter-search-wrap">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="filter-q" placeholder="Açıklamada ara…" oninput="renderIslemler()">
-        </div>
-        <div class="filter-divider"></div>
-        <div class="filter-select-wrap">
-          <select id="filter-kart" onchange="renderIslemler()" style="width:180px"><option value="" disabled hidden>Tüm Kartlar</option></select>
-        </div>
-        <div class="filter-select-wrap">
-          <select id="filter-ay" onchange="renderIslemler()" style="width:150px"></select>
-        </div>
-        <div id="islem-filter-badge" style="display:none" onclick="clearIslemFilters()" class="filter-active-badge">✕ Sıfırla</div>
+    <div class="islem-toolbar">
+      <div class="islem-search-wrap">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="filter-q" placeholder="Açıklamada ara…" oninput="renderIslemler()">
       </div>
-      <!-- Satır 2: Taksit Pill Seçimi -->
-      <div class="filter-row">
-        <span class="filter-row-label">Tür</span>
-        <div class="filter-pills" id="filter-taksit-pills">
-          <div class="filter-pill active" data-val="" onclick="setTaksitFilter(this,'')"><span class="filter-pill-dot"></span>Hepsi</div>
-          <div class="filter-pill" data-val="pesin" onclick="setTaksitFilter(this,'pesin')">💳 Peşin</div>
-          <div class="filter-pill c-teal" data-val="taksitli" onclick="setTaksitFilter(this,'taksitli')">🔢 Taksitli</div>
-        </div>
-        <!-- Gizli select, JS uyumu için tutulur -->
-        <select id="filter-taksit" onchange="renderIslemler()" style="display:none">
-          <option value="">Peşin + Taksitli</option>
-          <option value="pesin">Sadece Peşin</option>
-          <option value="taksitli">Sadece Taksitli</option>
-        </select>
-      </div>
+      <select id="filter-kart" onchange="renderIslemler()" style="width:180px"><option value="" disabled hidden>Tüm Kartlar</option></select>
+      <select id="filter-ay" onchange="renderIslemler()" style="width:160px"></select>
+      <select id="filter-taksit" onchange="renderIslemler()" style="width:170px">
+        <option value="">Peşin + Taksitli</option>
+        <option value="pesin">Sadece Peşin</option>
+        <option value="taksitli">Sadece Taksitli</option>
+      </select>
     </div>
     <div class="islem-list-head">
       <span>Tarih</span><span>Kart / Açıklama</span><span>Taksit</span><span>Tutar</span><span>Ekstre / Ödeme</span><span></span>
@@ -6925,31 +6726,15 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
 
   <div class="islem-stats" id="extre-stats"></div>
 
-  <!-- Gelişmiş Ekstre Filtre Paneli -->
-  <div class="filter-panel" id="extre-filter-panel">
-    <div class="filter-row">
-      <div class="filter-select-wrap">
-        <select id="extre-kart-filter" onchange="renderExtreler()" style="width:200px"><option value="" disabled hidden>Kart Seçin</option></select>
-      </div>
-      <div class="filter-divider"></div>
-      <button class="btn btn-ghost btn-sm" onclick="openOzelExtreModal()" style="border-radius:20px;height:32px;font-size:12px;padding:0 14px">📅 Özel Kesim Tarihi</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-row-label">Dönem</span>
-      <div class="filter-pills" id="extre-durum-pills">
-        <div class="filter-pill active" data-val="" onclick="setExtreDurumFilter(this,'')"><span class="filter-pill-dot"></span>Tümü</div>
-        <div class="filter-pill c-violet" data-val="gecmis" onclick="setExtreDurumFilter(this,'gecmis')">📁 Geçmiş</div>
-        <div class="filter-pill c-teal" data-val="guncel" onclick="setExtreDurumFilter(this,'guncel')">🟢 Güncel</div>
-        <div class="filter-pill c-sky" data-val="gelecek" onclick="setExtreDurumFilter(this,'gelecek')">🔮 Gelecek</div>
-      </div>
-      <!-- Gizli select, JS uyumu için -->
-      <select id="extre-durum-filter" onchange="renderExtreler()" style="display:none">
-        <option value="">Tüm Dönemler</option>
-        <option value="gecmis">Geçmiş</option>
-        <option value="guncel">Güncel</option>
-        <option value="gelecek">Gelecek</option>
-      </select>
-    </div>
+  <div class="islem-toolbar" style="margin-bottom:16px">
+    <select id="extre-kart-filter" onchange="renderExtreler()" style="width:200px"><option value="" disabled hidden>Kart Seçin</option></select>
+    <select id="extre-durum-filter" onchange="renderExtreler()" style="width:150px">
+      <option value="">Tüm Dönemler</option>
+      <option value="gecmis">Geçmiş</option>
+      <option value="guncel">Güncel</option>
+      <option value="gelecek">Gelecek</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="openOzelExtreModal()">📅 Özel Ekstre Kesim Tarihi</button>
   </div>
   <div id="extre-content"></div>
 </div>
@@ -23638,10 +23423,10 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
               <option value="nakit">💵 Nakit</option>
             </select>
           </div>
-          <div id="transfer-kaynak-hesap-wrap">
+          <div id="transfer-kaynak-hesap-wrap" style="grid-column:1/-1">
             <label>Hesap <span style="color:var(--danger)">*</span></label>
             <select id="transfer-kaynak" onchange="onTransferKaynakChange()">
-              <option value="" disabled selected hidden>Hesap seçin</option>
+              <option value="" disabled selected hidden>— Hesap Seçin —</option>
             </select>
           </div>
           <div id="transfer-kaynak-nakit-wrap" style="display:none">
@@ -23668,10 +23453,10 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
               <option value="nakit">💵 Nakit</option>
             </select>
           </div>
-          <div id="transfer-hedef-hesap-wrap">
+          <div id="transfer-hedef-hesap-wrap" style="grid-column:1/-1">
             <label>Hesap <span style="color:var(--danger)">*</span></label>
             <select id="transfer-hedef" onchange="onTransferHedefChange()">
-              <option value="" disabled selected hidden>Hesap seçin</option>
+              <option value="" disabled selected hidden>— Hesap Seçin —</option>
             </select>
           </div>
           <div id="transfer-hedef-nakit-wrap" style="display:none">
@@ -24096,58 +23881,6 @@ function deleteTransfer(id) {
 </div>
 
 <script>
-// ═══ PILL FİLTRE FONKSİYONLARI ══════════════════════════════════════
-
-function setTaksitFilter(el, val) {
-  // Tüm pill'leri pasif yap
-  document.querySelectorAll('#filter-taksit-pills .filter-pill').forEach(p => {
-    p.classList.remove('active');
-  });
-  el.classList.add('active');
-  // Gizli select'i güncelle
-  const sel = document.getElementById('filter-taksit');
-  if (sel) { sel.value = val; }
-  updateIslemFilterBadge();
-  renderIslemler();
-}
-
-function setExtreDurumFilter(el, val) {
-  document.querySelectorAll('#extre-durum-pills .filter-pill').forEach(p => {
-    p.classList.remove('active');
-  });
-  el.classList.add('active');
-  const sel = document.getElementById('extre-durum-filter');
-  if (sel) { sel.value = val; }
-  renderExtreler();
-}
-
-function updateIslemFilterBadge() {
-  const badge = document.getElementById('islem-filter-badge');
-  if (!badge) return;
-  const q = (document.getElementById('filter-q') || {}).value || '';
-  const kart = (document.getElementById('filter-kart') || {}).value || '';
-  const taksit = (document.getElementById('filter-taksit') || {}).value || '';
-  const ay = (document.getElementById('filter-ay') || {}).value || '';
-  const hasFilter = q || kart || taksit || (ay && ay !== 'all');
-  badge.style.display = hasFilter ? 'inline-flex' : 'none';
-}
-
-function clearIslemFilters() {
-  const q = document.getElementById('filter-q');
-  if (q) q.value = '';
-  const kart = document.getElementById('filter-kart');
-  if (kart) kart.value = '';
-  const taksit = document.getElementById('filter-taksit');
-  if (taksit) taksit.value = '';
-  // Pill'leri sıfırla
-  document.querySelectorAll('#filter-taksit-pills .filter-pill').forEach(p => {
-    p.classList.remove('active');
-    if (p.dataset.val === '') p.classList.add('active');
-  });
-  updateIslemFilterBadge();
-  renderIslemler();
-}
-
 // ═══ BİRLEŞİK BAKİYE LOG MODALI (Hesap + Nakit) ══════════════════════
 let _hesapLogId = null;
 let _hesapLogKayitlar = [];
