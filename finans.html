@@ -8050,7 +8050,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
 
         <!-- Paranın alınacağı hesap (toggle AÇIK) -->
         <div id="mev-kaynak-hesap-wrap" style="display:none;margin-bottom:8px">
-          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="font-size:10px;color:var(--text3)">(isteğe bağlı)</span></label>
+          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="color:var(--danger)">*</span></label>
           <select id="mev-kaynak-hesap-id" style="width:100%" onchange="onMevKaynakHesapChange()">
             <option value="" disabled hidden>— Hesap seçin —</option>
           </select>
@@ -11332,6 +11332,7 @@ function onNaKartChange() {
   let naParaBirimleri = naCurlar.filter(c=>kartCurlar.includes(c));
   if(!naParaBirimleri.length) naParaBirimleri = kartCurlar; // kesişim boşsa kartın para birimlerine düş
   pbSel.innerHTML = naParaBirimleri.map(c=>`<option value="${c}">${c}</option>`).join('');
+  phSet(pbSel, 'Para birimi seçin…', '', '— Para birimi bulunamadı —');
   const kartDef = getKartDefaultCurrency(kartId);
   if(naParaBirimleri.includes(kartDef)) pbSel.value = kartDef;
   onNaPbChange();
@@ -11575,7 +11576,7 @@ function renderIslemler() {
     const [y,mo]=m.split('-');
     return `<option value="${m}">${new Date(y,mo-1,1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'})}</option>`;
   }).join('');
-  phSet(fa, 'Tüm Aylar', (curAy && months.has(curAy)) ? curAy : '');
+  phSet(fa, 'Tüm Aylar', (curAy && months.has(curAy)) ? curAy : '', '— Henüz işlem yok —');
 
   const fq = document.getElementById('filter-q');
   const ft = document.getElementById('filter-taksit');
@@ -12581,6 +12582,16 @@ function saveMevduat() {
   if(!tutar) { showToast('Lütfen tutar girin', 'error'); return; }
   if(!vade)  { showToast('Lütfen vade (gün) girin', 'error'); return; }
   if(!bas)   { showToast('Lütfen başlangıç tarihi girin', 'error'); return; }
+  if(otoAktif && !editMevduatId) {
+    const kaynakIdCheck = (document.getElementById('mev-kaynak-hesap-id')||{}).value || '';
+    if(!kaynakIdCheck) {
+      showToast('Lütfen paranın alınacağı hesabı seçin', 'error');
+      _markFieldError('mev-kaynak-hesap-id');
+      const kaynakSelEl = document.getElementById('mev-kaynak-hesap-id');
+      if(kaynakSelEl) { kaynakSelEl.scrollIntoView({behavior:'smooth', block:'center'}); kaynakSelEl.focus(); }
+      return;
+    }
+  }
 
   const faizBazis = tutar - faizsiz;
   const brutFaiz = faizBazis * (faizOran/100) * (vade/365);
@@ -14087,7 +14098,7 @@ function openKmhKrediModal(id=null) {
     }
   } else {
     document.getElementById('kmhkredi-modal-title').textContent = 'KMH Taksitli Kredi Ekle';
-    phSet(sel, 'KMH hesabı seçin…', '');
+    phSet(sel, 'KMH hesabı seçin…', '', '— KMH hesabı bulunamadı —');
     setMoneyInput('kmhkredi-anapara', '');
     document.getElementById('kmhkredi-faiz').value = getKmhFaizOrani(localDateStr(new Date()));
     document.getElementById('kmhkredi-vade').value = '';
@@ -20944,7 +20955,26 @@ document.addEventListener('click', function(e) {
     'asgari-kosul-alan':        SVG.filter,
     'asgari-kosul-op':          SVG.compare,
     'asgari-prev-pb':           SVG.currency,
+    'ab-kategori':              SVG.category,
+    'ab-para-birimi':           SVG.currency,
+    'ab-periyot':               SVG.calendar,
+    'ab-hesap':                 SVG.account,
+    'hesap-log-tur':            SVG.filter,
+    'kart-altyapi':             SVG.card,
+    'kart-odeme-hesap':         SVG.account,
+    'na-kart':                  SVG.card,
+    'na-para-birimi':           SVG.currency,
+    'na-tavan-pb':              SVG.currency,
+    'nakit-avans-limit-tip':    SVG.type,
+    'transfer-hedef':           SVG.account,
+    'transfer-kaynak':          SVG.account,
+    'transfer-log-filtre':      SVG.filter,
   };
+
+  // Dinamik (sayısal/ID suffix'li) select id'leri için önek eşlemesi
+  const ID_PREFIX_MAP = [
+    ['mev-aksiyon-vadesiz-', SVG.account],
+  ];
 
   // Label metninden ikon tahmini (ID map'te yoksa)
   function guessIconFromLabel(labelText) {
@@ -20984,6 +21014,11 @@ document.addEventListener('click', function(e) {
 
       // İkon belirle
       let icon = ID_MAP[sel.id];
+      if (!icon && sel.id) {
+        // Önek eşlemesi (dinamik id'li select'ler, örn. mev-aksiyon-vadesiz-123)
+        const prefixHit = ID_PREFIX_MAP.find(([prefix]) => sel.id.startsWith(prefix));
+        if (prefixHit) icon = prefixHit[1];
+      }
       if (!icon) {
         // Üstündeki label'a bak
         const parent = sel.parentElement;
