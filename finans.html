@@ -12915,9 +12915,39 @@ function editMevduat(id) {
 }
 
 function deleteMevduat(id) {
-  showConfirm('Bu mevduatı silmek istiyor musunuz?', () => {
+  const mev = (DB.mevduatlar||[]).find(m=>m.id===id);
+  if(!mev) return;
+
+  // İlişkili vadeli hesap ve vadesiz hesap bilgilerini hazırla
+  const vadelihesap = mev.hesapId ? (DB.hesaplar||[]).find(h=>h.id===mev.hesapId) : null;
+  const vadesizHesap = mev.vadesizHesapId ? (DB.hesaplar||[]).find(h=>h.id===mev.vadesizHesapId) : null;
+
+  // Onay mesajını dinamik oluştur
+  let onayMesaji = 'Bu mevduatı silmek istiyor musunuz?';
+  const anaParaTutar = mev.tutar || 0;
+  if (vadelihesap && vadesizHesap && anaParaTutar > 0) {
+    onayMesaji = `Bu mevduatı silmek istiyor musunuz?\n\n` +
+      `• "${vadelihesap.ad}" vadeli hesabı kapatılacak\n` +
+      `• Ana para (${fmtCur(anaParaTutar, mev.paraBirimi)}) → "${vadesizHesap.ad}" hesabına aktarılacak`;
+  } else if (vadelihesap) {
+    onayMesaji = `Bu mevduatı silmek istiyor musunuz?\n\n• "${vadelihesap.ad}" vadeli hesabı kapatılacak`;
+  }
+
+  showConfirm(onayMesaji, () => {
+    // 1) İlişkili vadeli hesabı kapat ve ana parayı vadesiz hesaba aktar
+    if (vadelihesap && vadelihesap.tur === 'vadeli') {
+      if (vadesizHesap && anaParaTutar > 0) {
+        vadesizHesap.bakiye = (vadesizHesap.bakiye || 0) + anaParaTutar;
+        showToast(`Ana para (${fmtCur(anaParaTutar, mev.paraBirimi)}) → "${vadesizHesap.ad}" hesabına aktarıldı`, 'success');
+      }
+      vadelihesap.durum = 'kapali';
+      vadelihesap.bakiye = 0;
+    }
+
+    // 2) Mevduat kaydını sil
     DB.mevduatlar = DB.mevduatlar.filter(m=>m.id!==id);
     saveData();
+    if(typeof renderHesaplar==='function') renderHesaplar();
     renderMevduat();
   });
 }
