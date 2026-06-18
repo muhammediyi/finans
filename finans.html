@@ -1356,6 +1356,19 @@ input::placeholder { color: var(--text2); opacity: .7; }
 }
 .btn-icon svg { width: 15px; height: 15px; display: block; }
 
+/* ─── TRANSFER KAYNAK/HEDEF DEĞİŞTİR BUTONU ──────────── */
+.transfer-swap-row { display: flex; justify-content: center; align-items: center; margin: -10px 0 6px; position: relative; z-index: 1; }
+.transfer-swap-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3); border: 1px solid var(--border2);
+  color: var(--text2); cursor: pointer;
+  transition: transform .3s ease, background .15s ease, color .15s ease, border-color .15s ease;
+}
+.transfer-swap-btn:hover { background: rgba(79,110,247,.14); border-color: rgba(79,110,247,.4); color: #7c9aff; }
+.transfer-swap-btn.spin { transform: rotate(180deg); }
+.transfer-swap-btn svg { width: 16px; height: 16px; display: block; }
+
 /* ─── KARŞI TARAF BLOĞU ───────────────────────────── */
 .kt-block {
   background: var(--surface2);
@@ -23724,6 +23737,13 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
         <div id="transfer-kaynak-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
       </div>
 
+      <!-- ── KAYNAK/HEDEF DEĞİŞTİR ───────────────────────────────── -->
+      <div class="transfer-swap-row">
+        <button type="button" id="transfer-swap-btn" class="transfer-swap-btn" onclick="swapTransferHesaplar()" title="Kaynak ve hedefi değiştir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3v15M7.5 18l-3.5-3.5M7.5 18l3.5-3.5"/><path d="M16.5 21V6M16.5 6l-3.5 3.5M16.5 6l3.5 3.5"/></svg>
+        </button>
+      </div>
+
       <!-- ── HEDEF ─────────────────────────────────────────────── -->
       <div class="msec">
         <div class="msec-label teal">Hedef</div>
@@ -23858,6 +23878,44 @@ function _populateTransferHesaplar() {
   if (kSel) { const prev = kSel.value; kSel.innerHTML = makeOpts(hVal || '', hedefPb); kSel.value = prev; }
   // Hedef: kaynak seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
   if (hSel) { const prev = hSel.value; hSel.innerHTML = makeOpts(kVal || '', kaynakPb); hSel.value = prev; }
+}
+
+// ── Kaynak ve hedefi birbiriyle değiştir ──────────────────────
+function swapTransferHesaplar() {
+  const kSel = document.getElementById('transfer-kaynak');
+  const hSel = document.getElementById('transfer-hedef');
+  if (!kSel || !hSel) return;
+  const kVal = kSel.value;
+  const hVal = hSel.value;
+  if (!kVal && !hVal) { showToast('Değiştirilecek bir seçim yok', 'error'); return; }
+
+  // Her iki select'i de karşılıklı filtre/exclude uygulamadan tüm seçeneklerle yeniden oluştur,
+  // böylece karşı tarafın eski değeri her iki select'te de geçerli bir seçenek olur.
+  const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
+  const curList  = _nakitCurrencyList();
+  const fullOpts = () => {
+    const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
+    const hesapOpts = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+    const nakitOpts = curList.map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    return ph
+      + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
+      + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
+  };
+  kSel.innerHTML = fullOpts();
+  hSel.innerHTML = fullOpts();
+  kSel.value = hVal;
+  hSel.value = kVal;
+
+  // Karşılıklı filtre/exclude mantığını ve bilgi alanlarını/tutar para birimini güncelle
+  onTransferKaynakChange();
+  onTransferHedefChange();
+
+  // Buton dönme animasyonu
+  const btn = document.getElementById('transfer-swap-btn');
+  if (btn) {
+    btn.classList.remove('spin');
+    requestAnimationFrame(() => btn.classList.add('spin'));
+  }
 }
 
 function _checkNakitNakit() {
