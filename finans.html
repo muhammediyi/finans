@@ -1125,6 +1125,8 @@ select option { background: var(--surface3); }
 /* Placeholder select — boş değer seçiliyken gri göster */
 select.ph { color: var(--text2); }
 select.ph option:not([value=""]) { color: var(--text); }
+/* Liste boş — bilgilendirici mesaj göster, seçimi devre dışı bırak */
+select.ph-empty { color: var(--text3); font-style: italic; cursor: not-allowed; opacity: .75; }
 
 /* ─── SELECT ICON WRAPPER ─────────────────────────────── */
 .select-wrap {
@@ -10042,7 +10044,7 @@ function phUpdate(sel) {
   sel.classList.toggle('ph', isEmpty);
 }
 
-function phInit(sel, label) {
+function phInit(sel, label, emptyLabel) {
   if(!sel) return;
   // Mevcut boş option'ı bul ya da oluştur
   let ph = sel.querySelector('option[value=""]');
@@ -10051,9 +10053,14 @@ function phInit(sel, label) {
     ph.value = '';
     sel.prepend(ph);
   }
-  ph.textContent = label || 'Seçiniz…';
+  // Placeholder dışında gerçek seçenek var mı? (liste boşsa bilgilendirici mesaj göster)
+  const hasItems = !!sel.querySelector('option[value]:not([value=""])');
+  const isEmptyList = !hasItems && !!emptyLabel;
+  ph.textContent = isEmptyList ? emptyLabel : (label || 'Seçiniz…');
   ph.disabled = true;
   ph.hidden = true;
+  sel.classList.toggle('ph-empty', isEmptyList);
+  sel.disabled = isEmptyList;
   // Başlangıç rengi
   phUpdate(sel);
   // Değişince renk güncelle
@@ -10064,11 +10071,12 @@ function phInit(sel, label) {
 }
 
 // Bir selecte innerHTML atandıktan sonra çağır — mevcut placeholder'ı düzeltir
-function phSet(selOrId, label, currentVal) {
+// emptyLabel verilirse ve listede gerçek seçenek yoksa, placeholder yerine bu bilgilendirici metin gösterilir (örn. "Hesap bulunamadı")
+function phSet(selOrId, label, currentVal, emptyLabel) {
   const sel = typeof selOrId === 'string' ? document.getElementById(selOrId) : selOrId;
   if(!sel) return;
-  phInit(sel, label);
-  if(currentVal !== undefined) sel.value = currentVal;
+  phInit(sel, label, emptyLabel);
+  if(currentVal !== undefined && !sel.disabled) sel.value = currentVal;
   phUpdate(sel);
 }
 
@@ -10589,8 +10597,8 @@ function populateKartModal(kart=null) {
   const tipEl = document.getElementById('kart-tip');
   tipEl.innerHTML = DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
   fillKartAltyapiSelect(kart ? kart.altyapiId||'' : '');
-  phSet(bankaEl, 'Banka seçin…', kart ? kart.banka||'' : '');
-  phSet(tipEl, 'Ürün tipi seçin…', kart ? kart.tip||'' : '');
+  phSet(bankaEl, 'Banka seçin…', kart ? kart.banka||'' : '', '— Banka bulunamadı —');
+  phSet(tipEl, 'Ürün tipi seçin…', kart ? kart.tip||'' : '', '— Ürün tipi bulunamadı —');
   // Para birimi chip grid oluştur
   const selectedCurs = kart
     ? (kart.paraBirimleri && kart.paraBirimleri.length ? kart.paraBirimleri : (kart.paraBirimi ? [kart.paraBirimi] : [defaultCurrency]))
@@ -10944,6 +10952,7 @@ function renderKartlar() {
 function populateIslemModal() {
   const el = document.getElementById('islem-kart');
   el.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
+  phSet(el, 'Kart / Hesap seçin…', '', '— Kart bulunamadı —');
   document.getElementById('islem-tarih').value = localDateStr(new Date());
   document.getElementById('islem-taksit').value = 1;
   setMoneyInput('islem-tutar', '');
@@ -11151,7 +11160,7 @@ function editIslem(id) {
   document.getElementById('islem-modal-title').textContent = 'İşlem Düzenle';
   const el = document.getElementById('islem-kart');
   el.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  el.value = i.kart;
+  phSet(el, 'Kart / Hesap seçin…', i.kart, '— Kart bulunamadı —');
   document.getElementById('islem-tarih').value = i.tarih;
   document.getElementById('islem-aciklama').value = i.aciklama||'';
   document.getElementById('islem-kategori').value = i.kategori||'';
@@ -11212,6 +11221,7 @@ function openNakitAvansModal() {
   // Kart listesi
   const kartSel = document.getElementById('na-kart');
   kartSel.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
+  phSet(kartSel, 'Kart seçin…', '', '— Kart bulunamadı —');
 
   // Tarih
   document.getElementById('na-tarih').value = todayStr;
@@ -11253,7 +11263,7 @@ function editNakitAvans(id) {
   // Kart listesi
   const kartSel = document.getElementById('na-kart');
   kartSel.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  kartSel.value = i.kart;
+  phSet(kartSel, 'Kart seçin…', i.kart, '— Kart bulunamadı —');
 
   // Tarih
   document.getElementById('na-tarih').value = i.tarih;
@@ -11540,7 +11550,7 @@ function renderIslemler() {
   const fk = document.getElementById('filter-kart');
   const curKart = fk.value;
   fk.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  phSet(fk, 'Tüm Kartlar', curKart);
+  phSet(fk, 'Tüm Kartlar', curKart, '— Kart bulunamadı —');
 
   const fa = document.getElementById('filter-ay');
   const curAy = fa.value;
@@ -11700,7 +11710,7 @@ function renderExtreler() {
   const kf = document.getElementById('extre-kart-filter');
   const kfVal = kf.value;
   kf.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  phSet(kf, 'Kart seçin…', kfVal);
+  phSet(kf, 'Kart seçin…', kfVal, '— Kart bulunamadı —');
 
   const df = document.getElementById('extre-durum-filter');
   const dfVal = df ? df.value : '';
@@ -12040,7 +12050,7 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
     opt.dataset.kmh = h.kmhLimit||0;
     hesapSel.appendChild(opt);
   });
-  phSet(hesapSel, 'Hesap seçiniz…', '');
+  phSet(hesapSel, 'Hesap seçiniz…', '', '— Hesap bulunamadı —');
   document.getElementById('kart-odeme-hesap-bakiye').textContent = '';
 
   // Bilgi kutusu
@@ -12353,7 +12363,7 @@ function _fillMevHesapSel(selectedId) {
   if(!hesapSel) return;
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
   hesapSel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  phSet(hesapSel, 'Hesap seçin…', selectedId||'');
+  phSet(hesapSel, 'Hesap seçin…', selectedId||'', '— Aktif hesap bulunamadı —');
 }
 
 function onMevStratejiChange() {
@@ -12396,7 +12406,7 @@ function _fillMevVadesizSel(selectedId, bankaId) {
   // Eğer banka biliniyorsa önce o bankadan filtrele, yoksa hepsini göster
   if(bankaId) vadesizler = vadesizler.filter(h=>h.banka === bankaId);
   sel.innerHTML = vadesizler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  phSet(sel, 'Hesap seçin…', selectedId||'');
+  phSet(sel, 'Hesap seçin…', selectedId||'', '— Vadesiz hesap bulunamadı —');
 }
 
 function onMevOtoHesapToggle() {
@@ -12472,13 +12482,8 @@ function _fillMevKaynakSel(bankaId) {
   if(!sel) return;
   // Tüm aktif vadesiz hesapları göster
   let hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli');
-  if(!hesaplar.length) {
-    sel.innerHTML = '';
-    phSet(sel, '— Vadesiz hesap bulunamadı —', '');
-    return;
-  }
   sel.innerHTML = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  phSet(sel, 'Seçin (isteğe bağlı)…', '');
+  phSet(sel, 'Seçin (isteğe bağlı)…', '', '— Vadesiz hesap bulunamadı —');
 }
 
 
@@ -13064,7 +13069,7 @@ function openKiraModal(id=null) {
       if(kiraKisiSelEdit) {
         const kisilerE = DB.kisiler||[];
         kiraKisiSelEdit.innerHTML = kisilerE.map(ki=>`<option value="${ki.id}">${ki.ad}${ki.ibanlar&&ki.ibanlar.length?' ('+ki.ibanlar.length+' IBAN)':''}</option>`).join('');
-        phSet(kiraKisiSelEdit, 'Kişi seçin…', k.kisiId||'');
+        phSet(kiraKisiSelEdit, 'Kişi seçin…', k.kisiId||'', '— Kişi bulunamadı —');
         // Kayıtlı kişi varsa IBAN field'ını göster
         if (k.kisiId) {
           const kiraIbanField = document.getElementById('kira-iban-field');
@@ -13156,8 +13161,8 @@ function openKiraModal(id=null) {
     const kiraKisiSelNew = document.getElementById('kira-kisi');
     if(kiraKisiSelNew) {
       const kisilerN = DB.kisiler||[];
-      kiraKisiSelNew.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' + kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
-      phSet(kiraKisiSelNew, '— Kişi Seçin —', '');
+      kiraKisiSelNew.innerHTML = kisilerN.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+      phSet(kiraKisiSelNew, 'Kişi seçin…', '', '— Kişi bulunamadı —');
     }
     // KT block sıfırla
     const kiraKtBlockNew = document.getElementById('kira-kt-block');
@@ -13392,8 +13397,8 @@ function openMaasModal() {
   const maasKisiSel = document.getElementById('maas-kisi');
   if(maasKisiSel) {
     const kisiler = DB.kisiler||[];
-    maasKisiSel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' + kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
-    phSet(maasKisiSel, '— Kişi Seçin —', '');
+    maasKisiSel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+    phSet(maasKisiSel, 'Kişi seçin…', '', '— Kişi bulunamadı —');
   }
   // KT block sıfırla
   const maasKtBlockNew = document.getElementById('maas-kt-block');
@@ -13690,7 +13695,7 @@ function editMaas(id) {
   if (maasKisiSelEdit) {
     const kisilerEdit = DB.kisiler || [];
     maasKisiSelEdit.innerHTML = kisilerEdit.map(ki => `<option value="${ki.id}">${ki.ad}${ki.ibanlar && ki.ibanlar.length ? ' (' + ki.ibanlar.length + ' IBAN)' : ''}</option>`).join('');
-    phSet(maasKisiSelEdit, '— Kişi Seçin —', m.kisiId || '');
+    phSet(maasKisiSelEdit, 'Kişi seçin…', m.kisiId || '', '— Kişi bulunamadı —');
   }
   // Ödeme yöntemi geri yükle
   const editYontemEl = document.getElementById('maas-yontem');
@@ -14057,7 +14062,7 @@ function openKmhKrediModal(id=null) {
     const kr = (DB.krediler||[]).find(x=>x.id===id);
     if(kr) {
       document.getElementById('kmhkredi-modal-title').textContent = 'KMH Kredisi Düzenle';
-      phSet(sel, 'KMH hesabı seçin…', kr.kmhId);
+      phSet(sel, 'KMH hesabı seçin…', kr.kmhId, '— KMH hesabı bulunamadı —');
       setMoneyInput('kmhkredi-anapara', kr.anaPara);
       document.getElementById('kmhkredi-faiz').value = kr.faizOran;
       document.getElementById('kmhkredi-vade').value = kr.vade;
@@ -14410,19 +14415,19 @@ function openKrediModal(id=null) {
   editKrediId = id;
   const bankaSel = document.getElementById('kredi-banka');
   bankaSel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
-  phSet(bankaSel, 'Banka seçin…', '');
+  phSet(bankaSel, 'Banka seçin…', '', '— Banka bulunamadı —');
 
   // Kredi türü dropdown'u DB.krediTipleri'nden doldur
   const krediTurSel = document.getElementById('kredi-tur');
   krediTurSel.innerHTML = (DB.krediTipleri||[]).map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
-  phSet(krediTurSel, 'Tür seçin…', '');
+  phSet(krediTurSel, 'Tür seçin…', '', '— Kredi türü bulunamadı —');
 
   if(id) {
     const kr = (DB.bireyselKrediler||[]).find(x=>x.id===id);
     if(kr) {
       document.getElementById('kredi-modal-title').textContent = 'Kredi Düzenle';
-      phSet(bankaSel, 'Banka seçin…', kr.banka||'');
-      phSet(krediTurSel, 'Tür seçin…', kr.tur||'ihtiyac');
+      phSet(bankaSel, 'Banka seçin…', kr.banka||'', '— Banka bulunamadı —');
+      phSet(krediTurSel, 'Tür seçin…', kr.tur||'ihtiyac', '— Kredi türü bulunamadı —');
       document.getElementById('kredi-aciklama').value = kr.aciklama||'';
       setMoneyInput('kredi-anapara', kr.anaPara);
       document.getElementById('kredi-faiz').value = kr.faizOran;
@@ -14435,8 +14440,8 @@ function openKrediModal(id=null) {
     }
   } else {
     document.getElementById('kredi-modal-title').textContent = 'Bireysel Kredi Ekle';
-    phSet(bankaSel, 'Banka seçin…', '');
-    phSet(krediTurSel, 'Tür seçin…', '');
+    phSet(bankaSel, 'Banka seçin…', '', '— Banka bulunamadı —');
+    phSet(krediTurSel, 'Tür seçin…', '', '— Kredi türü bulunamadı —');
     document.getElementById('kredi-aciklama').value = '';
     setMoneyInput('kredi-anapara', '');
     document.getElementById('kredi-faiz').value = '';
@@ -14760,7 +14765,7 @@ function editElden(id) {
   document.getElementById('elden-tur').value = e.tur;
   // Türe göre kategori listesini filtrele
   const katElEdit = document.getElementById('elden-kategori');
-  if(katElEdit) { katElEdit.innerHTML = getKategoriOpts(e.tur); phSet(katElEdit, 'Kategori seçin…', e.kategori||''); }
+  if(katElEdit) { katElEdit.innerHTML = getKategoriOpts(e.tur); phSet(katElEdit, 'Kategori seçin…', e.kategori||'', '— Kategori bulunamadı —'); }
   document.getElementById('elden-aciklama').value = e.aciklama||'';
   setMoneyInput('elden-tutar', Math.abs(e.tutar));
   // Para birimi
@@ -15170,9 +15175,8 @@ function deleteKartAltyapi(id) {
 function fillKartAltyapiSelect(selectedId) {
   const sel = document.getElementById('kart-altyapi');
   if(!sel) return;
-  sel.innerHTML = '<option value="" disabled hidden>— Seçilmedi —</option>' +
-    (DB.kartAltyapilari||[]).map(t=>`<option value="${t.id}">${t.ad}</option>`).join('');
-  sel.value = selectedId || '';
+  sel.innerHTML = (DB.kartAltyapilari||[]).map(t=>`<option value="${t.id}">${t.ad}</option>`).join('');
+  phSet(sel, 'Seçilmedi (isteğe bağlı)', selectedId || '', '— Altyapı bulunamadı —');
 }
 
 let editTatilId = null;
@@ -15817,7 +15821,7 @@ function populateEldenKisiSelect() {
   if(!sel) return;
   const kisiler = DB.kisiler||[];
   sel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
-  phSet(sel, 'Kişi seçin…', sel.value||'');
+  phSet(sel, 'Kişi seçin…', sel.value||'', '— Kişi bulunamadı —');
 }
 
 
@@ -15826,10 +15830,9 @@ function populateKiraKisiSelects() {
   if(!sel) return;
   const kisiler = DB.kisiler||[];
   const prev = sel.value;
-  sel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' +
-    kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+  sel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
   if(prev) sel.value = prev;
-  phSet(sel, '— Kişi Seçin —', sel.value||'');
+  phSet(sel, 'Kişi seçin…', sel.value||'', '— Kişi bulunamadı —');
 }
 
 function populateMaasKisiSelects() {
@@ -15837,10 +15840,9 @@ function populateMaasKisiSelects() {
   if(!sel) return;
   const kisiler = DB.kisiler||[];
   const prev = sel.value;
-  sel.innerHTML = '<option value="" disabled hidden>— Kişi Seçin —</option>' +
-    kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
+  sel.innerHTML = kisiler.map(k=>`<option value="${k.id}">${k.ad}${k.ibanlar&&k.ibanlar.length?' ('+k.ibanlar.length+' IBAN)':''}</option>`).join('');
   if(prev) sel.value = prev;
-  phSet(sel, '— Kişi Seçin —', sel.value||'');
+  phSet(sel, 'Kişi seçin…', sel.value||'', '— Kişi bulunamadı —');
 }
 
 // ─── IBAN PICKER SHARED HELPER ─────────────────────────────────
@@ -16080,7 +16082,7 @@ function getKategoriOpts(tur) {
 
 function populateKategoriSelects() {
   const islemEl = document.getElementById('islem-kategori');
-  if(islemEl) { islemEl.innerHTML = getKategoriOpts(''); phSet(islemEl, 'Kategori seçin…', islemEl.value||''); }
+  if(islemEl) { islemEl.innerHTML = getKategoriOpts(''); phSet(islemEl, 'Kategori seçin…', islemEl.value||'', '— Kategori bulunamadı —'); }
   // elden-kategori tür bazlı doldurulur (onEldenTurChange ile)
   onEldenTurChange();
   // ab-kategori: sadece gider kategorileri
@@ -16088,14 +16090,14 @@ function populateKategoriSelects() {
   if(abKatEl) {
     const prev = abKatEl.value;
     abKatEl.innerHTML = getKategoriOpts('gider');
-    phSet(abKatEl, 'Kategori seçin…', prev || '');
+    phSet(abKatEl, 'Kategori seçin…', prev || '', '— Kategori bulunamadı —');
   }
 }
 
 function onEldenTurChange() {
   const tur = (document.getElementById('elden-tur')||{}).value || 'gider';
   const katEl = document.getElementById('elden-kategori');
-  if(katEl) { katEl.innerHTML = getKategoriOpts(tur); phSet(katEl, 'Kategori seçin…', katEl.value||''); }
+  if(katEl) { katEl.innerHTML = getKategoriOpts(tur); phSet(katEl, 'Kategori seçin…', katEl.value||'', '— Kategori bulunamadı —'); }
 }
 
 function renderKategoriGrid() {
@@ -17729,7 +17731,7 @@ function _populateMaasHesapSel(currentHesapId, currentPb) {
   const sel = document.getElementById('maas-hesap');
   if(!sel) return;
   sel.innerHTML = getAktifHesapOptions();
-  phSet(sel, 'Hesap seçin…', currentHesapId || '');
+  phSet(sel, 'Hesap seçin…', currentHesapId || '', '— Aktif hesap bulunamadı —');
   _fillPbManualSelect('maas-para-birimi-manual', currentPb || defaultCurrency || 'TRY');
   onMaasHesapChange();
 }
@@ -17738,7 +17740,7 @@ function _populateKiraHesapSel(currentHesapId, currentPb) {
   const sel = document.getElementById('kira-hesap');
   if(!sel) return;
   sel.innerHTML = getAktifHesapOptions();
-  phSet(sel, 'Hesap seçin…', currentHesapId || '');
+  phSet(sel, 'Hesap seçin…', currentHesapId || '', '— Aktif hesap bulunamadı —');
   _fillPbManualSelect('kira-para-birimi-manual', currentPb || defaultCurrency || 'TRY');
   onKiraHesapChange();
 }
@@ -18269,12 +18271,13 @@ function openHesapModal(id=null) {
   if(turSel) {
     const turler = DB.hesapTurleri || [];
     turSel.innerHTML = turler.map(t=>`<option value="${t.kod}">${t.ad}</option>`).join('');
+    phSet(turSel, 'Hesap türü…', turSel.value||'', '— Hesap türü bulunamadı —');
   }
 
   // Banka select
   const sel = document.getElementById('hesap-banka');
   sel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
-  phSet(sel, 'Banka seçin…', '');
+  phSet(sel, 'Banka seçin…', '', '— Banka bulunamadı —');
 
   // Para birimi select — her zaman yeniden doldur
   const curSel = document.getElementById('hesap-para-birimi');
@@ -18289,7 +18292,7 @@ function openHesapModal(id=null) {
       document.getElementById('hesap-no').value = h.hesapNo||'';
       document.getElementById('hesap-parsed-row').style.display = h.iban ? '' : 'none';
       document.getElementById('hesap-iban-status').textContent = '';
-      phSet(sel, 'Banka seçin…', h.banka||'');
+      phSet(sel, 'Banka seçin…', h.banka||'', '— Banka bulunamadı —');
       document.getElementById('hesap-ad').value = h.ad||'';
       document.getElementById('hesap-tur').value = h.tur||'vadesiz';
       curSel.value = h.paraBirimi||'TRY';
@@ -18622,7 +18625,7 @@ function populateEldenHesapSelect() {
   if(!sel) return;
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   sel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  phSet(sel, 'Hesap seçin…', '');
+  phSet(sel, 'Hesap seçin…', '', '— Aktif hesap bulunamadı —');
 }
 
 // ========== VERGİ & FAİZ ORANLARI CRUD ==========
@@ -22821,7 +22824,7 @@ function openAbonelikModal(id=null) {
   // Gider kategorilerini dinamik doldur
   const abKatEl = document.getElementById('ab-kategori');
   abKatEl.innerHTML = getKategoriOpts('gider');
-  phSet(abKatEl, 'Kategori seçin…', ab?.kategori || '');
+  phSet(abKatEl, 'Kategori seçin…', ab?.kategori || '', '— Kategori bulunamadı —');
   phSet('ab-periyot', 'Periyot seçin…', ab?.periyot || '');
   document.getElementById('ab-not').value = ab?.not || '';
   document.getElementById('ab-pasif').checked = !!ab?.pasif;
@@ -22836,7 +22839,7 @@ function openAbonelikModal(id=null) {
   // Hesap select
   const hSel = document.getElementById('ab-hesap');
   hSel.innerHTML = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli').map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  phSet(hSel, 'Hesap seçin…', ab?.hesapId || '');
+  phSet(hSel, 'Hesap seçin…', ab?.hesapId || '', '— Aktif hesap bulunamadı —');
   openModal('modal-abonelik');
 }
 
