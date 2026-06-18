@@ -6731,12 +6731,6 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   <!-- Bakiye uyarıları -->
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
 
-  <!-- Vadesiz Mevduat -->
-  <div class="card ozet-card" id="ozet-vadesiz-card" style="margin-bottom:16px">
-    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="card-title">Vadesiz Mevduat</span></div>
-    <div id="ozet-vadesiz-mevduat"></div>
-  </div>
-
   <div class="ozet-section-label">Genel Bakış</div>
   <div id="ozet-grafik-row" class="ozet-grafik-row"></div>
 
@@ -17185,7 +17179,6 @@ function renderOzet() {
   if(typeof renderOzetBakiyeUyarilar === 'function') renderOzetBakiyeUyarilar();
 
   // ── VADESİZ MEVDUAT KARTI ───────────────────────────────────────
-  if(typeof renderOzetVadesizMevduat === 'function') renderOzetVadesizMevduat();
 
   // ── MEVDUAT VADE AKSIYON KARTLARI ──────────────────────────────
   const mevAksiyonEl = document.getElementById('ozet-mev-aksiyonlar');
@@ -17315,6 +17308,25 @@ function renderOzet() {
   // Bireysel kredi kalan borç
   const bireyselKrediKalan = (DB.bireyselKrediler||[]).reduce((s,kr)=>s+getBireyselKrediKalan(kr), 0);
 
+  // Vadesiz Mevduat — vadeli olmayan, bakiyesi pozitif aktif hesaplar
+  const vadesizHesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli' && h.bakiye > 0);
+  const vadesizToplam = vadesizHesaplar.reduce((s,h)=>s+(Number(h.bakiye)||0),0);
+  const vadesizListHtml = vadesizHesaplar.length ? vadesizHesaplar.map((h,i)=>{
+    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa || '-';
+    const lastStyle = i === vadesizHesaplar.length-1 ? 'border-bottom:none' : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap;${lastStyle}">
+      <div style="min-width:0;flex:1 1 130px">
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.ad}</div>
+        <div style="font-size:10.5px;color:var(--text3)">${bankaAd}</div>
+      </div>
+      <div class="mono" style="font-size:12px;font-weight:700;color:var(--teal);white-space:nowrap;margin-right:2px">${fmtCur(h.bakiye, h.paraBirimi||'TRY')}</div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="event.stopPropagation();vadeliyeKoy('${h.id}')" title="Bu hesaptan vadeli mevduat aç">⏱ Vadeli</button>
+        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="event.stopPropagation();gunlukVadeliyeKoy('${h.id}')" title="Bu hesaptan günlük vadeli mevduat aç">☀ Günlük</button>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text3);font-size:12px;padding:6px 0">Bakiyesi olan vadesiz hesap yok</div>';
+
   // Nakit bakiye — varsayılan para birimi öne çıkar, diğer tüm tanımlı para birimleri (0 olsa da) tek kart içinde kompakt liste halinde gösterilir
   const nakitMap = DB._nakitBakiye || {};
   const nbDefCur = defaultCurrency || 'TRY';
@@ -17379,6 +17391,15 @@ function renderOzet() {
       </div>`;
   }
 
+  const vadesizHtml = `<div class="ozet-stat ozet-stat-wide os-green ozet-stat-list">
+      <div class="ozet-stat-top">
+        <div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      </div>
+      <div class="ozet-stat-label">Vadesiz Mevduat</div>
+      <div class="ozet-stat-val">${fmt(vadesizToplam)}</div>
+      <div class="ozet-stat-list-body" style="${vadesizHesaplar.length>3?'max-height:172px;overflow-y:auto;':''}margin-top:8px">${vadesizListHtml}</div>
+    </div>`;
+
   const nakitHtml = `<div class="ozet-stat ozet-stat-wide os-${nbTutar>0?'green':nbTutar<0?'red':'blue'}">
       <div class="ozet-stat-top">
         <div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
@@ -17428,6 +17449,7 @@ function renderOzet() {
       <div class="ozet-stat-val">${fmt(maasTop)}</div>
       <div class="ozet-stat-sub">${(DB.maaslar||[]).filter(m=>!m.pasif).length} kaynak</div>
     </div>
+    ${vadesizHtml}
     ${nakitHtml}`;
 
   // Kart limit bars
@@ -17591,38 +17613,6 @@ function renderOzet() {
     '<div style="color:var(--text3);font-size:12px;padding:12px">Bu ay nakit akışı yok</div>';
 }
 
-// Anasayfa — Vadesiz Mevduat kartı: her vadesiz (vadeli olmayan) hesabı listeler,
-// hesap bazlı "Vadeli Mevduat Aç" ve "Günlük Vadeli Mevduat Aç" butonları sunar.
-function renderOzetVadesizMevduat() {
-  const el = document.getElementById('ozet-vadesiz-mevduat');
-  if(!el) return;
-  const hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli' && h.bakiye > 0);
-
-  if(!hesaplar.length) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:6px 0">Bakiyesi olan vadesiz hesap yok</div>';
-    el.style.maxHeight = '';
-    return;
-  }
-
-  el.style.maxHeight = hesaplar.length > 4 ? '230px' : '';
-  el.style.overflowY = hesaplar.length > 4 ? 'auto' : '';
-
-  el.innerHTML = hesaplar.map((h,i)=>{
-    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa || '-';
-    const lastStyle = i === hesaplar.length-1 ? 'border-bottom:none' : '';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap;${lastStyle}">
-      <div style="min-width:0;flex:1 1 130px">
-        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.ad}</div>
-        <div style="font-size:10.5px;color:var(--text3)">${bankaAd}</div>
-      </div>
-      <div class="mono" style="font-size:12px;font-weight:700;color:var(--teal);white-space:nowrap;margin-right:2px">${fmtCur(h.bakiye, h.paraBirimi||'TRY')}</div>
-      <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="vadeliyeKoy('${h.id}')" title="Bu hesaptan vadeli mevduat aç">⏱ Vadeli</button>
-        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="gunlukVadeliyeKoy('${h.id}')" title="Bu hesaptan günlük vadeli mevduat aç">☀ Günlük</button>
-      </div>
-    </div>`;
-  }).join('');
-}
 
 // ========== HESAP SELECT HELPERS ==========
 // Tüm "Hesap Seçin" dropdown'larında ortak görünüm: Banka - Hesap Adı - IBAN son 4 hane - Bakiye - Para Birimi
