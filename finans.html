@@ -2948,6 +2948,20 @@ html[data-theme="light"] #gdrive-signin-panel {
   background: rgba(0,0,0,.02);
 }
 
+/* ─── Tema değiştirme butonu ─────────────────────────────── */
+.theme-toggle-btn {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.4);
+}
+.theme-toggle-btn:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.75); }
+html[data-theme="light"] .theme-toggle-btn {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(15,22,41,.55);
+}
+html[data-theme="light"] .theme-toggle-btn:hover { background: rgba(0,0,0,.07); color: rgba(15,22,41,.85); }
+
 /* ─── TOPBAR ─────────────────────────────────────────────── */
 .topbar {
   height: 52px;
@@ -6641,15 +6655,14 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     </div>
     <div class="sidebar-time" id="sidebar-clock" style="text-align:center;letter-spacing:.08em">--:--</div>
     <div style="padding:4px 10px 8px;display:flex;justify-content:center">
-      <button id="theme-toggle-btn" onclick="toggleTheme()" style="
+      <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:7px;
         padding:6px 14px;width:100%;justify-content:center;
-        background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-        border-radius:8px;color:rgba(255,255,255,.4);
+        border-radius:8px;
         font-size:11px;font-weight:600;letter-spacing:.04em;
         cursor:pointer;font-family:var(--sans);
         transition:all .18s ease;
-      " onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.75)'" onmouseout="this.style.borderColor=''">
+      ">
         <span id="theme-toggle-icon" style="font-size:13px">☀️</span>
         <span id="theme-toggle-label">Aydınlık Tema</span>
       </button>
@@ -18997,7 +19010,7 @@ function onMevBaslangicChange() {
 
 // Client ID localStorage'dan okunur — kaynak kodda yer almaz
 let GDRIVE_CLIENT_ID   = localStorage.getItem('gdrive_client_id') || '';
-const GDRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 const GDRIVE_FILE_NAME = 'finans_data.json';
 
 let gTokenClient = null;
@@ -19116,7 +19129,10 @@ function gDriveSilentRefresh() {
 function gFetchUserInfo(expMs) {
   fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: 'Bearer ' + gAccessToken }
-  }).then(r => r.json()).then(info => {
+  }).then(r => {
+    if (!r.ok) throw new Error('userinfo HTTP ' + r.status);
+    return r.json();
+  }).then(info => {
     const name   = info.name || info.email || 'Kullanıcı';
     const avatar = info.picture || '';
     localStorage.setItem('gdrive_token', JSON.stringify({
@@ -19125,7 +19141,10 @@ function gFetchUserInfo(expMs) {
       name, avatar
     }));
     gDriveShowUserInfo(name, avatar);
-  }).catch(() => gDriveShowUserInfo('Kullanıcı', ''));
+  }).catch((err) => {
+    console.warn('gFetchUserInfo basarisiz:', err);
+    gDriveShowUserInfo('Kullanıcı', '');
+  });
 }
 
 function gDriveShowUserInfo(name, avatar) {
