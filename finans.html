@@ -17596,26 +17596,29 @@ function renderOzet() {
 function renderOzetVadesizMevduat() {
   const el = document.getElementById('ozet-vadesiz-mevduat');
   if(!el) return;
-  const hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli');
+  const hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli' && h.bakiye > 0);
 
   if(!hesaplar.length) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:10px 0">Vadesiz hesap tanımlı değil</div>';
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:6px 0">Bakiyesi olan vadesiz hesap yok</div>';
+    el.style.maxHeight = '';
     return;
   }
 
+  el.style.maxHeight = hesaplar.length > 4 ? '230px' : '';
+  el.style.overflowY = hesaplar.length > 4 ? 'auto' : '';
+
   el.innerHTML = hesaplar.map((h,i)=>{
     const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa || '-';
-    const aktarilabilir = h.bakiye > 0;
     const lastStyle = i === hesaplar.length-1 ? 'border-bottom:none' : '';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap;${lastStyle}">
-      <div style="min-width:0;flex:1 1 160px">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">${h.ad}</div>
-        <div style="font-size:11px;color:var(--text3)">${bankaAd}</div>
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap;${lastStyle}">
+      <div style="min-width:0;flex:1 1 130px">
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.ad}</div>
+        <div style="font-size:10.5px;color:var(--text3)">${bankaAd}</div>
       </div>
-      <div class="mono" style="font-size:13px;font-weight:700;color:${h.bakiye>=0?'var(--teal)':'var(--rose)'};white-space:nowrap;margin-right:4px">${fmtCur(h.bakiye, h.paraBirimi||'TRY')}</div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-ghost btn-sm" ${aktarilabilir?'':'disabled style="opacity:.4;cursor:not-allowed"'} onclick="vadeliyeKoy('${h.id}')" title="Bu hesaptan vadeli mevduat aç">⏱ Vadeli Mevduat</button>
-        <button class="btn btn-ghost btn-sm" ${aktarilabilir?'':'disabled style="opacity:.4;cursor:not-allowed"'} onclick="gunlukVadeliyeKoy('${h.id}')" title="Bu hesaptan günlük vadeli mevduat aç">☀ Günlük Vadeli</button>
+      <div class="mono" style="font-size:12px;font-weight:700;color:var(--teal);white-space:nowrap;margin-right:2px">${fmtCur(h.bakiye, h.paraBirimi||'TRY')}</div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="vadeliyeKoy('${h.id}')" title="Bu hesaptan vadeli mevduat aç">⏱ Vadeli</button>
+        <button class="btn btn-ghost btn-sm" style="padding:4px 9px;font-size:11px" onclick="gunlukVadeliyeKoy('${h.id}')" title="Bu hesaptan günlük vadeli mevduat aç">☀ Günlük</button>
       </div>
     </div>`;
   }).join('');
