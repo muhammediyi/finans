@@ -6706,24 +6706,32 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
       <p id="ozet-date"></p>
     </div>
   </div>
-  <div class="grid-5" id="ozet-stats" style="margin-bottom:16px"></div>
+
+  <!-- HERO: Net Varlık şeridi -->
+  <div id="ozet-hero" class="ozet-hero"></div>
+
+  <div class="grid-5 ozet-stat-grid" id="ozet-stats" style="margin-bottom:18px"></div>
   <!-- Mevduat vade aksiyon kartları -->
   <div id="ozet-mev-aksiyonlar" style="display:none;margin-bottom:16px"></div>
   <!-- Bakiye uyarıları -->
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
+
+  <div class="ozet-section-label">Genel Bakış</div>
+  <div id="ozet-grafik-row" class="ozet-grafik-row"></div>
+
   <div class="grid-2" style="margin-bottom:16px">
-    <div class="card">
+    <div class="card ozet-card">
       <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span><span class="card-title">Kart Limit Kullanımı</span></div>
       <div id="ozet-kartlar" style="max-height:260px;overflow-y:auto;padding-right:4px"></div>
     </div>
-    <div class="card">
+    <div class="card ozet-card">
       <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="card-title">Bu Ay Günlük Nakit Akışı</span></div>
       <div id="ozet-nakit"></div>
     </div>
   </div>
-  <div class="card">
+  <div class="card ozet-card">
     <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="card-title">Yaklaşan Ödemeler (30 Gün)</span></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Tarih</th><th>Açıklama</th><th>Tür</th><th>Tutar</th><th>Bakiye</th><th>Durum</th></tr></thead><tbody id="ozet-odemeler"></tbody></table></div>
+    <div id="ozet-odemeler-list" class="ozet-od-list"></div>
   </div>
 </div>
 
@@ -17237,23 +17245,95 @@ function renderOzet() {
     return `<span class="nb-chip${val>0?' pos':val<0?' neg':''}" onclick="event.stopPropagation();openNakitLogModal('${pb}')" title="${cfg.ad||pb} logu"><b>${cfg.symbol||pb} ${pb}</b>${fmtCur(val,pb)}</span>`;
   }).join('');
   const nbLogIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M2 8h8M2 12h5"/></svg>`;
-  const nakitHtml = `<div class="stat s-${nbTutar>0?'green':nbTutar<0?'red':'blue'} nb-card">
-      <div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
-      <div class="nb-head">
-        <div class="stat-label" style="margin-bottom:0">Nakit Bakiye (${nbDefCur})</div>
+
+  // ── NET VARLIK HESABI (hero şerit için) ──────────────────────────
+  const toplamHesapBakiye = (DB.hesaplar||[]).filter(h=>h.durum!=='kapali').reduce((s,h)=>s+(Number(h.bakiye)||0),0);
+  const safeMevduatAktif = Number(mevduatAktif)||0;
+  const safeNbTutar = Number(nbTutar)||0;
+  const safeToplamKullanim = Number(toplamKullanim)||0;
+  const safeKrediKalan = Number(krediKalan)||0;
+  const safeBireyselKrediKalan = Number(bireyselKrediKalan)||0;
+  const toplamVarlik = toplamHesapBakiye + safeMevduatAktif + (safeNbTutar>0?safeNbTutar:0);
+  const toplamBorc = safeToplamKullanim + safeKrediKalan + safeBireyselKrediKalan + (safeNbTutar<0?-safeNbTutar:0);
+  const netVarlik = toplamVarlik - toplamBorc;
+  const heroEl = document.getElementById('ozet-hero');
+  if(heroEl) {
+    heroEl.innerHTML = `
+      <div class="ozet-hero-main">
+        <div class="ozet-hero-label">Net Varlık</div>
+        <div class="ozet-hero-val ${netVarlik>=0?'pos':'neg'}">${fmt(netVarlik,true)}</div>
+        <div class="ozet-hero-sub">Toplam varlık − toplam borç</div>
+      </div>
+      <div class="ozet-hero-split">
+        <div class="ozet-hero-mini">
+          <div class="ozet-hero-mini-dot pos"></div>
+          <div>
+            <div class="ozet-hero-mini-label">Varlıklar</div>
+            <div class="ozet-hero-mini-val pos">${fmt(toplamVarlik)}</div>
+          </div>
+        </div>
+        <div class="ozet-hero-mini">
+          <div class="ozet-hero-mini-dot neg"></div>
+          <div>
+            <div class="ozet-hero-mini-label">Borçlar</div>
+            <div class="ozet-hero-mini-val neg">${fmt(toplamBorc)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="ozet-hero-bar">
+        <div class="ozet-hero-bar-fill" style="width:${toplamVarlik+toplamBorc>0?Math.min(100,Math.round(toplamVarlik/(toplamVarlik+toplamBorc)*100)):50}%"></div>
+      </div>`;
+  }
+
+  const nakitHtml = `<div class="ozet-stat ozet-stat-wide os-${nbTutar>0?'green':nbTutar<0?'red':'blue'}">
+      <div class="ozet-stat-top">
+        <div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="15" r="2"/></svg></div>
         <button class="nb-logbtn" onclick="openNakitLogModal('${nbDefCur}')" title="Nakit İşlem Logu">${nbLogIcon}</button>
       </div>
-      <div class="stat-val ${nbTutar>0?'green':nbTutar<0?'red':'blue'}" style="margin-top:9px">${fmtCur(nbTutar, nbDefCur)}</div>
-      ${nbDigerHtml ? `<div class="nb-chips">${nbDigerHtml}</div>` : `<div class="stat-sub">Elden / nakit işlemler</div>`}
+      <div class="ozet-stat-label">Nakit Bakiye (${nbDefCur})</div>
+      <div class="ozet-stat-val">${fmtCur(nbTutar, nbDefCur)}</div>
+      ${nbDigerHtml ? `<div class="nb-chips">${nbDigerHtml}</div>` : `<div class="ozet-stat-sub">Elden / nakit işlemler</div>`}
     </div>`;
 
+  const kartPct = toplamLimit>0 ? Math.round(toplamKullanim/toplamLimit*100) : 0;
   document.getElementById('ozet-stats').innerHTML=`
-    <div class="stat s-warn"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Kart Kullanımı</div><div class="stat-val warn">${fmt(toplamKullanim)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">/ ${fmt(toplamLimit)} limit</div></div>
-    <div class="stat s-blue"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="stat-label">Aktif Mevduat</div><div class="stat-val blue">${fmt(mevduatAktif)}</div></div>
-    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-label">KMH Kredi Kalan</div><div class="stat-val red">${fmt(krediKalan)}</div></div>
-    <div class="stat s-red"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div class="stat-label">Bireysel Kredi Kalan</div><div class="stat-val red">${fmt(bireyselKrediKalan)}</div></div>
-    <div class="stat s-${kiraNET>=0?'green':'red'}"><div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="stat-label">Bu Ay Kira Net</div><div class="stat-val ${kiraNET>=0?'green':'red'}">${fmt(kiraNET,true)}</div></div>
-    <div class="stat s-green"><div class="stat-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="stat-label">Bu Ay Maaş</div><div class="stat-val green">${fmt(maasTop)}</div></div>
+    <div class="ozet-stat os-warn">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><span class="ozet-stat-pct">${kartPct}%</span></div>
+      <div class="ozet-stat-label">Kart Kullanımı</div>
+      <div class="ozet-stat-val">${fmt(toplamKullanim)}</div>
+      <div class="ozet-stat-mini-bar"><div class="ozet-stat-mini-fill" style="width:${Math.min(100,kartPct)}%"></div></div>
+      <div class="ozet-stat-sub">/ ${fmt(toplamLimit)} limit</div>
+    </div>
+    <div class="ozet-stat os-blue">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div></div>
+      <div class="ozet-stat-label">Aktif Mevduat</div>
+      <div class="ozet-stat-val">${fmt(mevduatAktif)}</div>
+      <div class="ozet-stat-sub">${(DB.mevduatlar||[]).filter(m=>m.bitis&&m.bitis>=todayStr).length} aktif hesap</div>
+    </div>
+    <div class="ozet-stat os-red">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div></div>
+      <div class="ozet-stat-label">KMH Kredi Kalan</div>
+      <div class="ozet-stat-val">${fmt(krediKalan)}</div>
+      <div class="ozet-stat-sub">${(DB.krediler||[]).length} kredi</div>
+    </div>
+    <div class="ozet-stat os-red">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div></div>
+      <div class="ozet-stat-label">Bireysel Kredi Kalan</div>
+      <div class="ozet-stat-val">${fmt(bireyselKrediKalan)}</div>
+      <div class="ozet-stat-sub">${(DB.bireyselKrediler||[]).length} kredi</div>
+    </div>
+    <div class="ozet-stat ${kiraNET>=0?'os-green':'os-red'}">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div></div>
+      <div class="ozet-stat-label">Bu Ay Kira Net</div>
+      <div class="ozet-stat-val">${fmt(kiraNET,true)}</div>
+      <div class="ozet-stat-sub">${(DB.kiralar||[]).filter(k=>!k.pasif).length} kontrat</div>
+    </div>
+    <div class="ozet-stat os-green">
+      <div class="ozet-stat-top"><div class="ozet-stat-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+      <div class="ozet-stat-label">Bu Ay Maaş</div>
+      <div class="ozet-stat-val">${fmt(maasTop)}</div>
+      <div class="ozet-stat-sub">${(DB.maaslar||[]).filter(m=>!m.pasif).length} kaynak</div>
+    </div>
     ${nakitHtml}`;
 
   // Kart limit bars
@@ -17367,18 +17447,30 @@ function renderOzet() {
     return `<span style="color:var(--teal);font-size:11px">✓</span>`;
   }
 
-  document.getElementById('ozet-odemeler').innerHTML = upcoming.length ?
-    upcoming.map(u=>`<tr>
-      <td class="mono">${fmtDate(u.tarih)}</td>
-      <td>${u.aciklama}</td>
-      <td><span class="badge badge-blue">${u.tur}</span></td>
-      <td class="mono ${u.tutar>=0?'green':'red'}">${fmt(u.tutar,true)}</td>
-      <td>${getBakiyeYeterlilik(u)}</td>
-      <td>${u.tip==='kart'
-        ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px" onclick="openKartOdemeModal('${u.id}','${u.pb}','${u.donemKey}',${Math.abs(u.tutar)})">💳 Öde</button>`
-        : u.tip ? odToggleBtn(u.tip, u.id, u.key, localDateStr(u.tarih), Math.abs(u.tutar), u.aciklama) : ''}</td>
-    </tr>`).join('') :
-    '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Yaklaşan ödeme yok</td></tr>';
+  document.getElementById('ozet-odemeler-list').innerHTML = upcoming.length ?
+    upcoming.map(u=>{
+      const gunFarki = Math.round((u.tarih - today) / 86400000);
+      const aciliyet = gunFarki<=1 ? 'acil' : gunFarki<=7 ? 'yakin' : 'normal';
+      const gunEtiket = gunFarki<=0 ? 'Bugün' : gunFarki===1 ? 'Yarın' : `${gunFarki} gün sonra`;
+      const turIconMap = {Kart:'💳', Mevduat:'🏦', Kira:'🏠', Maaş:'💼', 'KMH Kredi':'📄', Kredi:'💰'};
+      const aksiyon = u.tip==='kart'
+        ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px" onclick="openKartOdemeModal('${u.id}','${u.pb}','${u.donemKey}',${Math.abs(u.tutar)})">Öde</button>`
+        : u.tip ? odToggleBtn(u.tip, u.id, u.key, localDateStr(u.tarih), Math.abs(u.tutar), u.aciklama) : '';
+      return `<div class="ozet-od-row ozet-od-${aciliyet}">
+        <div class="ozet-od-date">
+          <div class="ozet-od-day">${u.tarih.getDate()}</div>
+          <div class="ozet-od-month">${u.tarih.toLocaleDateString('tr-TR',{month:'short'})}</div>
+        </div>
+        <div class="ozet-od-icon">${turIconMap[u.tur]||'📌'}</div>
+        <div class="ozet-od-info">
+          <div class="ozet-od-aciklama">${u.aciklama}</div>
+          <div class="ozet-od-meta"><span class="badge badge-blue">${u.tur}</span><span class="ozet-od-gun ozet-od-gun-${aciliyet}">${gunEtiket}</span>${getBakiyeYeterlilik(u)}</div>
+        </div>
+        <div class="ozet-od-tutar ${u.tutar>=0?'green':'red'}">${fmt(u.tutar,true)}</div>
+        <div class="ozet-od-aksiyon">${aksiyon}</div>
+      </div>`;
+    }).join('') :
+    '<div class="ozet-od-empty">✓ Önümüzdeki 30 gün için planlı ödeme yok</div>';
 
   // Nakit akış özeti bu ay
   const cashItems = [];
@@ -22939,30 +23031,192 @@ function entAbonelikYansit(abId, ayKey, durum, tutar) {
 (function injectGrafikStyles() {
   const s = document.createElement('style');
   s.textContent = `
-    #ozet-grafik-row { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
+    /* ═══ ÖZET SAYFASI — DASHBOARD YENİDEN TASARIM ═══════════════════ */
+
+    /* ── Section label ── */
+    .ozet-section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--text3); margin: 4px 0 12px; display: flex; align-items: center; gap: 10px;
+    }
+    .ozet-section-label::after { content:''; flex:1; height:1px; background: var(--border); }
+
+    /* ── HERO: Net Varlık şeridi ── */
+    .ozet-hero {
+      display: grid; grid-template-columns: 1.3fr auto 1fr; align-items: center; gap: 28px;
+      background: linear-gradient(135deg, rgba(251,191,36,.07) 0%, rgba(45,212,191,.04) 100%);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 22px 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ozet-hero::before {
+      content:''; position:absolute; top:-40%; right:-8%; width:260px; height:260px;
+      background: radial-gradient(circle, rgba(251,191,36,.1), transparent 70%);
+      pointer-events:none;
+    }
+    .ozet-hero-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text3); margin-bottom: 6px; }
+    .ozet-hero-val { font-family: var(--serif, 'Playfair Display', serif); font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -.01em; }
+    .ozet-hero-val.pos { color: var(--teal); }
+    .ozet-hero-val.neg { color: var(--rose); }
+    .ozet-hero-sub { font-size: 11.5px; color: var(--text3); margin-top: 8px; }
+    .ozet-hero-split { display:flex; flex-direction:column; gap:14px; padding: 0 24px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); height: 100%; justify-content:center; }
+    .ozet-hero-mini { display:flex; align-items:center; gap:10px; }
+    .ozet-hero-mini-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .ozet-hero-mini-dot.pos { background: var(--teal); box-shadow: 0 0 8px rgba(45,212,191,.6); }
+    .ozet-hero-mini-dot.neg { background: var(--rose); box-shadow: 0 0 8px rgba(251,113,133,.6); }
+    .ozet-hero-mini-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+    .ozet-hero-mini-val { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 1px; }
+    .ozet-hero-mini-val.pos { color: var(--text); }
+    .ozet-hero-mini-val.neg { color: var(--text); }
+    .ozet-hero-bar { height: 8px; border-radius: 99px; background: rgba(251,113,133,.25); overflow: hidden; align-self: center; }
+    .ozet-hero-bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal), #5eead4); border-radius: 99px; }
+    @media(max-width: 900px) {
+      .ozet-hero { grid-template-columns: 1fr; gap: 16px; }
+      .ozet-hero-split { flex-direction: row; border-left:none; border-right:none; border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding: 14px 0; justify-content: space-between; }
+      .ozet-hero-bar { display:none; }
+    }
+
+    /* ── STAT KARTLARI (Özet sayfasına özel) ── */
+    .ozet-stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+    @media(max-width:1300px) { .ozet-stat-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media(max-width:700px)  { .ozet-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    .ozet-stat {
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 14px;
+      padding: 16px 16px 14px; position: relative; overflow: hidden;
+      transition: var(--transition, all .18s ease);
+    }
+    .ozet-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .ozet-stat:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.18); border-color: var(--border-active, var(--border2)); }
+    .ozet-stat.os-warn::before   { background: var(--warn); }
+    .ozet-stat.os-blue::before   { background: var(--sky); }
+    .ozet-stat.os-red::before    { background: var(--rose); }
+    .ozet-stat.os-green::before  { background: var(--teal); }
+    .ozet-stat-top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px; }
+    .ozet-stat-icon {
+      width: 30px; height: 30px; border-radius: 9px; display:flex; align-items:center; justify-content:center;
+      background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); flex-shrink:0;
+    }
+    .ozet-stat.os-warn  .ozet-stat-icon { background: rgba(251,146,60,.1);  border-color: rgba(251,146,60,.25);  color: var(--warn); }
+    .ozet-stat.os-blue  .ozet-stat-icon { background: rgba(56,189,248,.1);  border-color: rgba(56,189,248,.25);  color: var(--sky); }
+    .ozet-stat.os-red   .ozet-stat-icon { background: rgba(251,113,133,.1); border-color: rgba(251,113,133,.25); color: var(--rose); }
+    .ozet-stat.os-green .ozet-stat-icon { background: rgba(45,212,191,.1);  border-color: rgba(45,212,191,.25);  color: var(--teal); }
+    .ozet-stat-pct { font-size: 11px; font-family: var(--mono); font-weight: 700; color: var(--warn); }
+    .ozet-stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .ozet-stat-val { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .ozet-stat.os-warn  .ozet-stat-val { color: var(--warn); }
+    .ozet-stat.os-blue  .ozet-stat-val { color: var(--sky); }
+    .ozet-stat.os-red   .ozet-stat-val { color: var(--rose); }
+    .ozet-stat.os-green .ozet-stat-val { color: var(--teal); }
+    .ozet-stat-sub { font-size: 10.5px; color: var(--text3); margin-top: 6px; }
+    .ozet-stat-mini-bar { height: 4px; border-radius: 99px; background: var(--surface3); overflow: hidden; margin-top: 8px; }
+    .ozet-stat-mini-fill { height: 100%; background: var(--warn); border-radius: 99px; }
+    .ozet-stat-wide { grid-column: span 2; }
+    @media(max-width:1300px) { .ozet-stat-wide { grid-column: span 1; } }
+    .ozet-stat .nb-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+
+    /* ── Grafik kartları ── */
+    #ozet-grafik-row { display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:16px;margin-bottom:18px; }
+    @media(max-width:1300px){ #ozet-grafik-row { grid-template-columns:1fr 1fr; } }
     @media(max-width:700px){ #ozet-grafik-row { grid-template-columns:1fr; } }
-    .grafik-card { background:var(--card-bg,var(--surface));border:1px solid var(--border2);border-radius:16px;padding:16px 18px; }
-    .grafik-title { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px; }
-    .grafik-legend { display:flex;gap:14px;flex-wrap:wrap;margin-top:10px; }
+    .grafik-card { background:var(--card-bg,var(--surface));border:1px solid var(--border2);border-radius:16px;padding:18px 20px; transition: var(--transition, all .18s ease); }
+    .grafik-card:hover { border-color: var(--border-active, var(--border2)); }
+    .grafik-card-wide { grid-column: span 1; }
+    .grafik-title { font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:8px; }
+    .grafik-title-icon { font-size: 13px; opacity: .85; }
+    .grafik-legend { display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center; }
     .grafik-legend-item { display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2); }
     .grafik-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
-    .bar-chart-wrap { display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:4px; }
-    .bar-group { display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0; }
-    .bar-pair { display:flex;gap:2px;align-items:flex-end;width:100%;height:100px; }
-    .bar-segment { border-radius:4px 4px 0 0;min-height:2px;transition:height .3s; }
-    .bar-label { font-size:9px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;width:100%;text-overflow:ellipsis; }
-    .donut-wrap { display:flex;align-items:center;gap:16px; }
-    .donut-legend { display:flex;flex-direction:column;gap:7px;flex:1; }
+    .grafik-legend-net { margin-left:auto;font-size:11.5px;font-family:var(--mono);font-weight:700;padding:3px 10px;border-radius:99px; }
+    .grafik-legend-net.pos { color: var(--teal); background: rgba(45,212,191,.1); }
+    .grafik-legend-net.neg { color: var(--rose); background: rgba(251,113,133,.1); }
+    .grafik-empty { color:var(--text3);font-size:12px; padding: 30px 0; text-align:center; }
+    .bar-chart-wrap { display:flex;align-items:flex-end;gap:6px;height:130px;padding-top:4px; }
+    .bar-group { display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0; cursor: default; }
+    .bar-pair { display:flex;gap:3px;align-items:flex-end;width:100%;height:100px; }
+    .bar-segment { border-radius:4px 4px 0 0;min-height:2px;transition:height .3s, opacity .15s; }
+    .bar-gelir { background: linear-gradient(180deg, #5eead4, var(--teal)); }
+    .bar-gider { background: linear-gradient(180deg, #fda4af, var(--rose)); }
+    .bar-group:hover .bar-segment { opacity: .75; }
+    .bar-label { font-size:9.5px;color:var(--text3);text-align:center;white-space:nowrap;overflow:hidden;width:100%;text-overflow:ellipsis; }
+    .bar-group-current .bar-label { color: var(--gold); font-weight: 700; }
+    .donut-wrap { display:flex;align-items:center;gap:18px; }
+    .donut-legend { display:flex;flex-direction:column;gap:8px;flex:1; }
     .donut-legend-row { display:flex;align-items:center;gap:7px;font-size:11.5px; }
     .donut-legend-bar { height:7px;border-radius:99px;flex:1;min-width:40px; }
     .donut-legend-val { font-size:11px;font-family:var(--mono);color:var(--text2);text-align:right;min-width:60px; }
     .net-servet-bar { display:flex;height:10px;border-radius:99px;overflow:hidden;margin:6px 0 3px; }
     .cash-flow-svg text { font-family:var(--mono, monospace); }
+
+    /* ── Ring (dairesel progress) kartı ── */
+    .grafik-card-ring { display:flex; flex-direction:column; }
+    .ring-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 14px; }
+    .ring-svg circle { transition: stroke-dashoffset .4s ease; }
+    .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .ring-net { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+    .ring-net.pos { color: var(--teal); }
+    .ring-net.neg { color: var(--rose); }
+    .ring-net-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+    .ring-rows { display:flex; flex-direction:column; gap: 9px; }
+    .ring-row { display:flex; align-items:center; gap: 8px; font-size: 12px; }
+    .ring-row-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .ring-row-dot.pos { background: var(--teal); }
+    .ring-row-dot.neg { background: var(--rose); }
+    .ring-row-label { color: var(--text2); flex:1; }
+    .ring-row-val { font-family: var(--mono); font-weight: 600; }
+    .ring-row-val.pos { color: var(--teal); }
+    .ring-row-val.neg { color: var(--rose); }
+
+    /* ── Borç durumu ── */
+    .debt-total { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--rose); margin-bottom: 10px; }
+    .debt-bar { height: 8px; border-radius: 99px; background: rgba(251,113,133,.25); overflow:hidden; margin-bottom: 4px; }
+    .debt-bar-fill { height: 100%; background: var(--rose); border-radius: 99px; }
+
+    /* ── Kartlar (Özet sayfasındaki .card override) ── */
+    .ozet-card { transition: var(--transition, all .18s ease); }
+    .ozet-card:hover { border-color: var(--border-active, var(--border2)); }
+
+    /* ── Yaklaşan ödemeler — satır listesi ── */
+    .ozet-od-list { display:flex; flex-direction:column; }
+    .ozet-od-row {
+      display:grid; grid-template-columns: 44px 28px 1fr auto auto; align-items:center; gap: 14px;
+      padding: 12px 6px; border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .ozet-od-row:last-child { border-bottom: none; }
+    .ozet-od-row:hover { background: var(--surface2); }
+    .ozet-od-date { text-align:center; line-height:1.1; }
+    .ozet-od-day { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--text); }
+    .ozet-od-month { font-size: 9px; color: var(--text3); text-transform:uppercase; letter-spacing:.05em; }
+    .ozet-od-icon { font-size: 16px; text-align:center; opacity:.85; }
+    .ozet-od-info { min-width: 0; }
+    .ozet-od-aciklama { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ozet-od-meta { display:flex; align-items:center; gap: 8px; flex-wrap:wrap; }
+    .ozet-od-gun { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; font-weight: 600; }
+    .ozet-od-gun-acil { background: rgba(251,113,133,.14); color: var(--rose); }
+    .ozet-od-gun-yakin { background: rgba(251,191,36,.14); color: var(--gold); }
+    .ozet-od-gun-normal { background: var(--surface3); color: var(--text3); }
+    .ozet-od-tutar { font-family: var(--mono); font-size: 14px; font-weight: 700; text-align:right; white-space:nowrap; }
+    .ozet-od-tutar.green { color: var(--teal); }
+    .ozet-od-tutar.red { color: var(--rose); }
+    .ozet-od-aksiyon { text-align:right; }
+    .ozet-od-acil { border-left: 2px solid var(--rose); }
+    .ozet-od-empty { text-align:center; color: var(--text3); font-size: 13px; padding: 32px 0; }
+    @media(max-width:640px) {
+      .ozet-od-row { grid-template-columns: 38px 1fr auto; grid-template-areas: "date info tutar" "date info aksiyon"; }
+      .ozet-od-icon { display:none; }
+      .ozet-od-date { grid-area: date; }
+      .ozet-od-info { grid-area: info; }
+      .ozet-od-tutar { grid-area: tutar; }
+      .ozet-od-aksiyon { grid-area: aksiyon; }
+    }
   `;
   document.head.appendChild(s);
 })();
 
 function renderOzetGrafikler() {
+
   let container = document.getElementById('ozet-grafik-row');
   if(!container) {
     container = document.createElement('div');
@@ -23031,13 +23285,14 @@ function renderOzetGrafikler() {
   const maxVal = Math.max(...data6.map(d => Math.max(d.gelir, d.gider)), 1);
   const maxH = 100;
 
-  const barHtml = data6.map(d => {
-    const gh = Math.round((d.gelir / maxVal) * maxH);
-    const eh = Math.round((d.gider / maxVal) * maxH);
-    return `<div class="bar-group">
+  const barHtml = data6.map((d,idx) => {
+    const gh = Math.max(d.gelir>0?2:0, Math.round((d.gelir / maxVal) * maxH));
+    const eh = Math.max(d.gider>0?2:0, Math.round((d.gider / maxVal) * maxH));
+    const isLast = idx === data6.length-1;
+    return `<div class="bar-group${isLast?' bar-group-current':''}" title="${d.label}: Gelir ${fmt(d.gelir)} · Gider ${fmt(d.gider)}">
       <div class="bar-pair">
-        <div class="bar-segment" style="width:46%;height:${gh}px;background:rgba(45,212,191,.7);align-self:flex-end"></div>
-        <div class="bar-segment" style="width:46%;height:${eh}px;background:rgba(251,113,133,.7);align-self:flex-end"></div>
+        <div class="bar-segment bar-gelir" style="width:46%;height:${gh}px;align-self:flex-end"></div>
+        <div class="bar-segment bar-gider" style="width:46%;height:${eh}px;align-self:flex-end"></div>
       </div>
       <div class="bar-label">${d.label}</div>
     </div>`;
@@ -23103,70 +23358,63 @@ function renderOzetGrafikler() {
   });
 
   const buAyNet = thisData.gelir - thisData.gider;
+  const gelirGiderToplam = thisData.gelir + thisData.gider;
+  const gelirPct = gelirGiderToplam > 0 ? Math.round(thisData.gelir/gelirGiderToplam*100) : 50;
+  // Dairesel progress için çevre hesabı
+  const ringR = 42, ringC = 2*Math.PI*ringR;
+  const ringOffset = ringC * (1 - gelirPct/100);
+
+  const toplamBorcGenel = toplamKrediBorc + toplamKartBorc;
+  const krediBorcPct = toplamBorcGenel>0 ? Math.round(toplamKrediBorc/toplamBorcGenel*100) : 0;
 
   container.innerHTML = `
-    <div class="grafik-card">
-      <div class="grafik-title">📊 6 Aylık Gelir / Gider</div>
+    <div class="grafik-card grafik-card-wide">
+      <div class="grafik-title"><span class="grafik-title-icon">📊</span>6 Aylık Gelir / Gider</div>
       <div class="bar-chart-wrap">${barHtml}</div>
       <div class="grafik-legend">
-        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:rgba(45,212,191,.7)"></div>Gelir</div>
-        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:rgba(251,113,133,.7)"></div>Gider</div>
-        <div style="margin-left:auto;font-size:11px;font-family:var(--mono);color:${buAyNet>=0?'var(--teal)':'var(--rose)'}">Bu ay net: ${buAyNet>=0?'+':''}${fmt(buAyNet)}</div>
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:var(--teal)"></div>Gelir</div>
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:var(--rose)"></div>Gider</div>
+        <div class="grafik-legend-net ${buAyNet>=0?'pos':'neg'}">Bu ay net: ${buAyNet>=0?'+':''}${fmt(buAyNet)}</div>
       </div>
     </div>
     <div class="grafik-card">
-      <div class="grafik-title">🏦 Hesap Dağılımı</div>
+      <div class="grafik-title"><span class="grafik-title-icon">🏦</span>Hesap Dağılımı</div>
       ${hesaplar.length ? `<div class="donut-wrap">
-        <svg viewBox="0 0 160 160" width="130" height="130" style="flex-shrink:0">
+        <svg viewBox="0 0 160 160" width="138" height="138" style="flex-shrink:0">
           ${pieSegments}
           <circle cx="80" cy="80" r="38" fill="var(--surface)"/>
-          <text x="80" y="74" text-anchor="middle" font-size="10" fill="var(--text3)">Toplam</text>
-          <text x="80" y="90" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">${fmt(toplamBakiye)}</text>
+          <text x="80" y="74" text-anchor="middle" font-size="9.5" fill="var(--text3)">Toplam</text>
+          <text x="80" y="90" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--text)">${fmt(toplamBakiye)}</text>
         </svg>
         <div class="donut-legend">${pieLegend}</div>
-      </div>` : '<div style="color:var(--text3);font-size:12px">Henüz aktif hesap yok</div>'}
+      </div>` : '<div class="grafik-empty">Henüz aktif hesap yok</div>'}
     </div>
-    <div class="grafik-card">
-      <div class="grafik-title">💳 Bu Ay Özet</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--text2)">Gelir</span>
-          <span class="mono green">${fmt(thisData.gelir)}</span>
+    <div class="grafik-card grafik-card-ring">
+      <div class="grafik-title"><span class="grafik-title-icon">💳</span>Bu Ay Özet</div>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 100 100" width="100" height="100" class="ring-svg">
+          <circle cx="50" cy="50" r="${ringR}" fill="none" stroke="var(--rose)" stroke-opacity=".25" stroke-width="9"/>
+          <circle cx="50" cy="50" r="${ringR}" fill="none" stroke="var(--teal)" stroke-width="9" stroke-linecap="round"
+            stroke-dasharray="${ringC}" stroke-dashoffset="${ringOffset}" transform="rotate(-90 50 50)"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-net ${buAyNet>=0?'pos':'neg'}">${buAyNet>=0?'+':''}${fmt(buAyNet)}</div>
+          <div class="ring-net-label">Net</div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--text2)">Gider</span>
-          <span class="mono red">${fmt(thisData.gider)}</span>
-        </div>
-        <div style="height:1px;background:var(--border)"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;font-weight:700;color:var(--text)">Net</span>
-          <span class="mono ${buAyNet>=0?'green':'red'}" style="font-size:15px;font-weight:700">${buAyNet>=0?'+':''}${fmt(buAyNet)}</span>
-        </div>
-        ${thisData.gelir+thisData.gider > 0 ? `<div style="height:6px;background:var(--surface2);border-radius:99px;overflow:hidden">
-          <div style="height:100%;background:var(--teal);border-radius:99px;width:${Math.min(100,Math.round(thisData.gelir/(thisData.gelir+thisData.gider)*100))}%"></div>
-        </div>` : ''}
+      </div>
+      <div class="ring-rows">
+        <div class="ring-row"><span class="ring-row-dot pos"></span><span class="ring-row-label">Gelir</span><span class="ring-row-val pos">${fmt(thisData.gelir)}</span></div>
+        <div class="ring-row"><span class="ring-row-dot neg"></span><span class="ring-row-label">Gider</span><span class="ring-row-val neg">${fmt(thisData.gider)}</span></div>
       </div>
     </div>
     <div class="grafik-card">
-      <div class="grafik-title">📉 Borç Durumu</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-size:12px;color:var(--text2)">Kredi Borcu</span>
-          <span class="mono red">${fmt(toplamKrediBorc)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-size:12px;color:var(--text2)">Kart (Bu Ay)</span>
-          <span class="mono red">${fmt(toplamKartBorc)}</span>
-        </div>
-        <div style="height:1px;background:var(--border)"></div>
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-size:12px;font-weight:700;color:var(--text)">Toplam Borç</span>
-          <span class="mono red" style="font-size:14px;font-weight:700">${fmt(toplamKrediBorc+toplamKartBorc)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between">
-          <span style="font-size:12px;color:var(--text2)">Abonelik/Ay</span>
-          <span class="mono" style="color:var(--warn)">${fmt((DB.abonelikler||[]).filter(a=>!a.pasif).reduce((s,a)=>s+abAylikTutar(a),0))}</span>
-        </div>
+      <div class="grafik-title"><span class="grafik-title-icon">📉</span>Borç Durumu</div>
+      <div class="debt-total">${fmt(toplamBorcGenel)}</div>
+      <div class="debt-bar"><div class="debt-bar-fill" style="width:${krediBorcPct}%"></div></div>
+      <div class="ring-rows" style="margin-top:10px">
+        <div class="ring-row"><span class="ring-row-dot" style="background:var(--rose)"></span><span class="ring-row-label">Kredi Borcu</span><span class="ring-row-val neg">${fmt(toplamKrediBorc)}</span></div>
+        <div class="ring-row"><span class="ring-row-dot" style="background:rgba(251,113,133,.45)"></span><span class="ring-row-label">Kart (Bu Ay)</span><span class="ring-row-val neg">${fmt(toplamKartBorc)}</span></div>
+        <div class="ring-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:2px"><span class="ring-row-dot" style="background:var(--warn)"></span><span class="ring-row-label">Abonelik/Ay</span><span class="ring-row-val" style="color:var(--warn)">${fmt((DB.abonelikler||[]).filter(a=>!a.pasif).reduce((s,a)=>s+abAylikTutar(a),0))}</span></div>
       </div>
     </div>`;
 }
