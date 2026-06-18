@@ -23983,7 +23983,26 @@ function _populateTransferHesaplar() {
   const kaynakPb = pbOf(kInfo);
   const hedefPb  = pbOf(hInfo);
 
-  const makeOpts = (excludeVal, filterPb) => {
+  // Bir hesabın ek limit (KMH) dahil kullanılabilir bakiyesini hesapla
+  const hesapKullanilabilirBakiye = (h) => (h.bakiye || 0) + (h.kmhLimit || 0);
+
+  const makeKaynakOpts = (excludeVal, filterPb) => {
+    // Kaynak: sadece ek limit dahil bakiyesi 0'dan büyük hesaplar listelenir
+    const hesapOpts = hesaplar
+      .filter(h => h.id !== excludeVal)
+      .filter(h => !filterPb || (h.paraBirimi || 'TRY') === filterPb)
+      .filter(h => hesapKullanilabilirBakiye(h) > 0)
+      .map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+    const nakitOpts = curList
+      .filter(c => `nakit:${c.code}` !== excludeVal)
+      .filter(c => !filterPb || c.code === filterPb)
+      .filter(c => ((DB._nakitBakiye || {})[c.code] || 0) > 0)
+      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    return (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
+      + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
+  };
+
+  const makeHedefOpts = (excludeVal, filterPb) => {
     const hesapOpts = hesaplar
       .filter(h => h.id !== excludeVal)
       .filter(h => !filterPb || (h.paraBirimi || 'TRY') === filterPb)
@@ -23998,16 +24017,16 @@ function _populateTransferHesaplar() {
 
   const kSel = document.getElementById('transfer-kaynak');
   const hSel = document.getElementById('transfer-hedef');
-  // Kaynak: hedef seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
+  // Kaynak: hedef seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster; sadece bakiyesi > 0 hesaplar
   if (kSel) {
     const prev = kSel.value;
-    kSel.innerHTML = makeOpts(hVal || '', hedefPb);
+    kSel.innerHTML = makeKaynakOpts(hVal || '', hedefPb);
     phSet(kSel, '— Hesap Seçin —', prev, hedefPb ? '— Eşleşen hesap/nakit bulunamadı —' : '— Hesap bulunamadı —');
   }
   // Hedef: kaynak seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
   if (hSel) {
     const prev = hSel.value;
-    hSel.innerHTML = makeOpts(kVal || '', kaynakPb);
+    hSel.innerHTML = makeHedefOpts(kVal || '', kaynakPb);
     phSet(hSel, '— Hesap Seçin —', prev, kaynakPb ? '— Eşleşen hesap/nakit bulunamadı —' : '— Hesap bulunamadı —');
   }
 }
@@ -24019,13 +24038,59 @@ function swapTransferHesaplar() {
   if (!kSel || !hSel) return;
   const kVal = kSel.value;
   const hVal = hSel.value;
+
+  // Kaynak seçili değilse engelle
+  if (!kVal) { showToast('Lütfen önce kaynak hesabı seçin', 'error'); return; }
+
+  // Kaynak hesabın bakiyesini (ek limit dahil) kontrol et
+  const kInfo = _parseTransferSel(kVal);
+  if (kInfo.tip === 'hesap') {
+    const kHesap = (DB.hesaplar || []).find(h => h.id === kInfo.id);
+    if (kHesap && ((kHesap.bakiye || 0) + (kHesap.kmhLimit || 0)) <= 0) {
+      showToast('Kaynak hesabın kullanılabilir bakiyesi yetersiz', 'error');
+      return;
+    }
+  } else if (kInfo.tip === 'nakit') {
+    const nakitBak = (DB._nakitBakiye || {})[kInfo.pb] || 0;
+    if (nakitBak <= 0) {
+      showToast('Kaynak nakit bakiyesi yetersiz', 'error');
+      return;
+    }
+  }
+
   if (!kVal && !hVal) { showToast('Değiştirilecek bir seçim yok', 'error'); return; }
 
   // Her iki select'i de karşılıklı filtre/exclude uygulamadan tüm seçeneklerle yeniden oluştur,
   // böylece karşı tarafın eski değeri her iki select'te de geçerli bir seçenek olur.
   const hesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
   const curList  = _nakitCurrencyList();
-  const fullOpts = () => {
+
+  // Swap sonrası yeni kaynak (eski hedef) bakiye kontrolü
+  const hInfo = _parseTransferSel(hVal);
+  if (hInfo.tip === 'hesap') {
+    const hHesap = hesaplar.find(h => h.id === hInfo.id);
+    if (hHesap && ((hHesap.bakiye || 0) + (hHesap.kmhLimit || 0)) <= 0) {
+      showToast('Hedef hesabın kullanılabilir bakiyesi yetersiz — tersine çevrilemez', 'error');
+      return;
+    }
+  } else if (hInfo.tip === 'nakit') {
+    const hBak = (DB._nakitBakiye || {})[hInfo.pb] || 0;
+    if (hBak <= 0) {
+      showToast('Hedef nakit bakiyesi yetersiz — tersine çevrilemez', 'error');
+      return;
+    }
+  }
+
+  // Kaynak için bakiyesi > 0 filtrelenmiş seçenekler, hedef için tüm seçenekler
+  const kaynakFullOpts = () => {
+    const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
+    const hesapOpts = hesaplar.filter(h => ((h.bakiye||0)+(h.kmhLimit||0)) > 0).map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
+    const nakitOpts = curList.filter(c => ((DB._nakitBakiye||{})[c.code]||0) > 0).map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    return ph
+      + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
+      + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
+  };
+  const hedefFullOpts = () => {
     const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
     const hesapOpts = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
     const nakitOpts = curList.map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
@@ -24033,8 +24098,8 @@ function swapTransferHesaplar() {
       + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
   };
-  kSel.innerHTML = fullOpts();
-  hSel.innerHTML = fullOpts();
+  kSel.innerHTML = kaynakFullOpts();
+  hSel.innerHTML = hedefFullOpts();
   kSel.value = hVal;
   hSel.value = kVal;
 
