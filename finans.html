@@ -6731,6 +6731,12 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   <!-- Bakiye uyarıları -->
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
 
+  <!-- Vadesiz Mevduat -->
+  <div class="card ozet-card" id="ozet-vadesiz-card" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="card-title">Vadesiz Mevduat</span></div>
+    <div id="ozet-vadesiz-mevduat"></div>
+  </div>
+
   <div class="ozet-section-label">Genel Bakış</div>
   <div id="ozet-grafik-row" class="ozet-grafik-row"></div>
 
@@ -12285,6 +12291,7 @@ function onMevHesapChange() {
 
 function populateMevduatModal() {
   editMevduatId = null;
+  _mevGunlukMod = false;
   document.getElementById('mev-modal-title').textContent = 'Mevduat Ekle';
 
   // Oto hesap toggle sıfırla
@@ -12370,6 +12377,54 @@ function vadeliyeKoy(hesapId) {
   setTimeout(()=>{ const v = document.getElementById('mev-vade'); if(v) v.focus(); }, 60);
 
   showToast(`${hesap.ad} — ${fmtCur(hesap.bakiye, hesap.paraBirimi||'TRY')} vadeliye hazır, sadece vade gününü girin`, 'info');
+}
+
+// Vadesiz Mevduat kartından tek tıkla: seçilen hesabın tüm bakiyesini
+// "günlük vadeli mevduat" (vade=1 gün, vade sonunda ana para + faiz vadesize döner) olarak açar.
+function gunlukVadeliyeKoy(hesapId) {
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+  if(!hesap) { showToast('Hesap bulunamadı', 'error'); return; }
+  if(!(hesap.bakiye > 0)) { showToast('Hesap bakiyesi 0 veya negatif, günlük vadeliye konulamaz', 'error'); return; }
+
+  _mevGunlukMod = true;
+  openModal('modal-mevduat'); // populateMevduatModal() ile formu sıfırlar (ve _mevGunlukMod'u false yapar)
+  _mevGunlukMod = true; // sıfırlamadan sonra yeniden işaretle
+
+  document.getElementById('mev-modal-title').textContent = 'Günlük Vadeli Mevduat Ekle';
+
+  // "Yeni Vadeli Hesap Kaydı Oluştur" modunu aç → kaynak hesap seçilebilsin
+  const otoToggle = document.getElementById('mev-oto-hesap');
+  if(otoToggle) { otoToggle.checked = true; onMevOtoHesapToggle(); }
+
+  // Kaynak hesabı bu hesaba ayarla → banka & para birimi otomatik algılanır
+  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
+  if(kaynakSel) { kaynakSel.value = hesapId; onMevKaynakHesapChange(); }
+
+  // Tutar = hesabın tüm bakiyesi
+  setMoneyInput('mev-tutar', hesap.bakiye);
+
+  // Faiz oranı: bu bankadan açılmış en güncel mevduat kaydının oranını öner
+  if(hesap.banka) {
+    const gecmis = (DB.mevduatlar||[])
+      .filter(m=>m.banka===hesap.banka && m.faizOran)
+      .sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''));
+    if(gecmis.length) document.getElementById('mev-faiz').value = gecmis[0].faizOran;
+  }
+
+  // Günlük vadeli mevduat: vade sabit 1 gün, her gün ana para + faiz aynı vadesiz hesaba döner
+  const vadeInp = document.getElementById('mev-vade');
+  if(vadeInp) vadeInp.value = 1;
+  const kumulatifInp = document.getElementById('mev-kumulatif');
+  if(kumulatifInp) kumulatifInp.checked = true;
+
+  // Vade sonu stratejisi: ana para + faiz vade dolunca yine bu vadesiz hesaba dönsün
+  const stratejiSel = document.getElementById('mev-strateji');
+  if(stratejiSel) { stratejiSel.value = 'tumu_vadesiz'; onMevStratejiChange(); }
+  _fillMevVadesizSel(hesapId, hesap.banka||'');
+
+  calcMevduat();
+
+  showToast(`${hesap.ad} — ${fmtCur(hesap.bakiye, hesap.paraBirimi||'TRY')} günlük vadeliye hazır, faiz oranını kontrol edip kaydedin`, 'info');
 }
 
 function _fillMevHesapSel(selectedId) {
@@ -12565,6 +12620,7 @@ function calcMevduat() {
 }
 
 let editMevduatId = null;
+let _mevGunlukMod = false; // true ise açılan/kaydedilen mevduat "günlük vadeli mevduat" olarak işaretlenir
 function saveMevduat() {
   const tutar = getMoneyInput('mev-tutar')||0;
   const faizsiz = 0;
@@ -12617,7 +12673,7 @@ function saveMevduat() {
     const bankaObj = (DB.bankalar||[]).find(b=>b.id===bankaId);
     const bankaKisa = bankaObj ? bankaObj.kisa : '';
     let adInp = (document.getElementById('mev-oto-hesap-ad')||{}).value.trim();
-    if(!adInp) adInp = `${bankaKisa} Vadeli ${paraBirimi}`.trim() || 'Vadeli Hesap';
+    if(!adInp) adInp = _mevGunlukMod ? `${bankaKisa} Günlük Vadeli ${paraBirimi}`.trim() || 'Günlük Vadeli Hesap' : `${bankaKisa} Vadeli ${paraBirimi}`.trim() || 'Vadeli Hesap';
 
     const yeniHesap = {
       id: uid(),
@@ -12657,7 +12713,8 @@ function saveMevduat() {
     tutar, faizOran, stopaj, vade, valor,
     faiz: parseFloat(netFaiz.toFixed(2)),
     nihai: parseFloat(nihai.toFixed(2)),
-    kumulatif: document.getElementById('mev-kumulatif').checked
+    kumulatif: document.getElementById('mev-kumulatif').checked,
+    gunluk: _mevGunlukMod
   };
   if(editMevduatId) {
     const idx = DB.mevduatlar.findIndex(m=>m.id===editMevduatId);
@@ -12666,6 +12723,7 @@ function saveMevduat() {
     DB.mevduatlar.push(mev);
   }
   editMevduatId = null;
+  _mevGunlukMod = false;
 
   // ── OTOMATİK TRANSFER: Vadesiz → Vadeli ──────────────────────────
   if(otoAktif && kaynakHesapId && hesapId && tutar > 0) {
@@ -12696,6 +12754,8 @@ function mevduatYenile(mevId) {
   openModal('modal-mevduat');
   // Yeni mevduat modal'ını doldur
   setTimeout(()=>{
+    _mevGunlukMod = !!m.gunluk;
+    if(m.gunluk) document.getElementById('mev-modal-title').textContent = 'Günlük Vadeli Mevduat Yenile';
     // Banka — hidden + display
     const bankaObj = m.banka ? (DB.bankalar||[]).find(b=>b.id===m.banka) : null;
     const hid = document.getElementById('mev-banka-hidden');
@@ -12806,7 +12866,8 @@ function editMevduat(id) {
   editMevduatId = id;
   const m = DB.mevduatlar.find(x=>x.id===id);
   if(!m) return;
-  document.getElementById('mev-modal-title').textContent = 'Mevduat Düzenle';
+  _mevGunlukMod = !!m.gunluk;
+  document.getElementById('mev-modal-title').textContent = m.gunluk ? 'Günlük Vadeli Mevduat Düzenle' : 'Mevduat Düzenle';
 
   // Oto hesap toggle — düzenleme modunda kapalı
   const otoToggle = document.getElementById('mev-oto-hesap');
@@ -12905,7 +12966,8 @@ function renderMevduat() {
     const vadesizH = m.vadesizHesapId ? (DB.hesaplar||[]).find(h=>h.id===m.vadesizHesapId) : null;
     const vadesizLabel = vadesizH ? `<span class="badge badge-blue" title="Vade sonunda geçecek hesap">${vadesizH.ad}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>';
     const hesapH = m.hesapId ? (DB.hesaplar||[]).find(h=>h.id===m.hesapId) : null;
-    const hesapLabel = hesapH ? `<span style="font-size:11px;color:var(--text2)">${hesapH.ad}</span>` : '<span style="color:var(--text3);font-size:11px">—</span>';
+    const gunlukBadge = m.gunluk ? '<span class="badge badge-blue" style="margin-right:4px" title="Günlük vadeli mevduat">☀ Günlük</span>' : '';
+    const hesapLabel = hesapH ? `${gunlukBadge}<span style="font-size:11px;color:var(--text2)">${hesapH.ad}</span>` : `${gunlukBadge}<span style="color:var(--text3);font-size:11px">${gunlukBadge?'':'—'}</span>`;
     // Aktarım durumu
     const lk = _lKey('mevduat', m.id, null);
     const aktarimYapildi = _lGet(lk) != null;
@@ -17122,6 +17184,9 @@ function renderOzet() {
   // ── BAKİYE UYARILARI ────────────────────────────────────────────
   if(typeof renderOzetBakiyeUyarilar === 'function') renderOzetBakiyeUyarilar();
 
+  // ── VADESİZ MEVDUAT KARTI ───────────────────────────────────────
+  if(typeof renderOzetVadesizMevduat === 'function') renderOzetVadesizMevduat();
+
   // ── MEVDUAT VADE AKSIYON KARTLARI ──────────────────────────────
   const mevAksiyonEl = document.getElementById('ozet-mev-aksiyonlar');
   if(mevAksiyonEl) {
@@ -17273,7 +17338,10 @@ function renderOzet() {
   const nbLogIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12M2 8h8M2 12h5"/></svg>`;
 
   // ── NET VARLIK HESABI (hero şerit için) ──────────────────────────
-  const toplamHesapBakiye = (DB.hesaplar||[]).filter(h=>h.durum!=='kapali').reduce((s,h)=>s+(Number(h.bakiye)||0),0);
+  // NOT: 'vadeli' türü hesaplar, vadeli mevduat açılırken otomatik oluşturulan ve parayı tutan hesaplardır.
+  // Bu paralar zaten aşağıda mevduatAktif (m.nihai) olarak sayılıyor — aksi halde aynı para iki kez sayılır
+  // (mükerrer sayım net varlığın şişmesine sebep oluyordu).
+  const toplamHesapBakiye = (DB.hesaplar||[]).filter(h=>h.durum!=='kapali' && h.tur!=='vadeli').reduce((s,h)=>s+(Number(h.bakiye)||0),0);
   const safeMevduatAktif = Number(mevduatAktif)||0;
   const safeNbTutar = Number(nbTutar)||0;
   const safeToplamKullanim = Number(toplamKullanim)||0;
@@ -17418,7 +17486,7 @@ function renderOzet() {
       const d = kiraPayInMonth(k, year, month+offset);
       if(!d) continue;
       const ds=localDateStr(d);
-      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:'Kira', tutar:k.tutar, tip:'kira', id:k.id, key:ds.slice(0,7)});
+      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:(k.tutar>=0?'Kira Geliri':'Kira Gideri'), tutar:k.tutar, tip:'kira', id:k.id, key:ds.slice(0,7)});
     }
   });
 
@@ -17478,7 +17546,7 @@ function renderOzet() {
       const gunFarki = Math.round((u.tarih - today) / 86400000);
       const aciliyet = gunFarki<=1 ? 'acil' : gunFarki<=7 ? 'yakin' : 'normal';
       const gunEtiket = gunFarki<=0 ? 'Bugün' : gunFarki===1 ? 'Yarın' : `${gunFarki} gün sonra`;
-      const turIconMap = {Kart:'💳', Mevduat:'🏦', Kira:'🏠', Maaş:'💼', 'KMH Kredi':'📄', Kredi:'💰'};
+      const turIconMap = {Kart:'💳', Mevduat:'🏦', 'Kira Geliri':'🏠', 'Kira Gideri':'🏠', Maaş:'💼', 'KMH Kredi':'📄', Kredi:'💰'};
       const aksiyon = u.tip==='kart'
         ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px" onclick="openKartOdemeModal('${u.id}','${u.pb}','${u.donemKey}',${Math.abs(u.tutar)})">Öde</button>`
         : u.tip ? odToggleBtn(u.tip, u.id, u.key, localDateStr(u.tarih), Math.abs(u.tutar), u.aciklama) : '';
@@ -17521,6 +17589,36 @@ function renderOzet() {
       <span class="mono ${c.tutar>=0?'green':'red'}">${fmt(c.tutar,true)}</span>
     </div>`).join('') :
     '<div style="color:var(--text3);font-size:12px;padding:12px">Bu ay nakit akışı yok</div>';
+}
+
+// Anasayfa — Vadesiz Mevduat kartı: her vadesiz (vadeli olmayan) hesabı listeler,
+// hesap bazlı "Vadeli Mevduat Aç" ve "Günlük Vadeli Mevduat Aç" butonları sunar.
+function renderOzetVadesizMevduat() {
+  const el = document.getElementById('ozet-vadesiz-mevduat');
+  if(!el) return;
+  const hesaplar = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && h.tur !== 'vadeli');
+
+  if(!hesaplar.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:10px 0">Vadesiz hesap tanımlı değil</div>';
+    return;
+  }
+
+  el.innerHTML = hesaplar.map((h,i)=>{
+    const bankaAd = (DB.bankalar.find(b=>b.id===h.banka)||{}).kisa || '-';
+    const aktarilabilir = h.bakiye > 0;
+    const lastStyle = i === hesaplar.length-1 ? 'border-bottom:none' : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border);flex-wrap:wrap;${lastStyle}">
+      <div style="min-width:0;flex:1 1 160px">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${h.ad}</div>
+        <div style="font-size:11px;color:var(--text3)">${bankaAd}</div>
+      </div>
+      <div class="mono" style="font-size:13px;font-weight:700;color:${h.bakiye>=0?'var(--teal)':'var(--rose)'};white-space:nowrap;margin-right:4px">${fmtCur(h.bakiye, h.paraBirimi||'TRY')}</div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" ${aktarilabilir?'':'disabled style="opacity:.4;cursor:not-allowed"'} onclick="vadeliyeKoy('${h.id}')" title="Bu hesaptan vadeli mevduat aç">⏱ Vadeli Mevduat</button>
+        <button class="btn btn-ghost btn-sm" ${aktarilabilir?'':'disabled style="opacity:.4;cursor:not-allowed"'} onclick="gunlukVadeliyeKoy('${h.id}')" title="Bu hesaptan günlük vadeli mevduat aç">☀ Günlük Vadeli</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ========== HESAP SELECT HELPERS ==========
@@ -18548,9 +18646,9 @@ function renderHesaplar() {
       <td>${kmhLimitHtml}</td>
       <td><span class="badge ${durumBadge}">${h.durum||'aktif'}</span></td>
       <td style="white-space:nowrap">
+        ${(h.tur !== 'vadeli' && h.durum==='aktif' && h.bakiye>0) ? `<button class="btn btn-ghost btn-sm btn-act" onclick="vadeliyeKoy('${h.id}')" style="margin-right:4px" title="Vadeliye Koy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>` : `<button class="btn btn-ghost btn-sm btn-act" style="margin-right:4px;visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" style="display:block"></svg></button>`}
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapLogModal('${h.id}')" style="margin-right:4px" title="İşlem Logu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M2 4h12M2 8h8M2 12h5"/></svg></button>
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
-        ${(h.tur !== 'vadeli' && h.durum==='aktif' && h.bakiye>0) ? `<button class="btn btn-ghost btn-sm btn-act" onclick="vadeliyeKoy('${h.id}')" style="margin-right:4px" title="Vadeliye Koy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>` : `<button class="btn btn-ghost btn-sm btn-act" style="margin-right:4px;visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" style="display:block"></svg></button>`}
         <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
       </td>
     </tr>`;
