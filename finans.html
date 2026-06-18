@@ -23858,7 +23858,6 @@ function _populateTransferHesaplar() {
   const hedefPb  = pbOf(hInfo);
 
   const makeOpts = (excludeVal, filterPb) => {
-    const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
     const hesapOpts = hesaplar
       .filter(h => h.id !== excludeVal)
       .filter(h => !filterPb || (h.paraBirimi || 'TRY') === filterPb)
@@ -23867,17 +23866,24 @@ function _populateTransferHesaplar() {
       .filter(c => `nakit:${c.code}` !== excludeVal)
       .filter(c => !filterPb || c.code === filterPb)
       .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
-    return ph
-      + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
+    return (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
   };
 
   const kSel = document.getElementById('transfer-kaynak');
   const hSel = document.getElementById('transfer-hedef');
   // Kaynak: hedef seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
-  if (kSel) { const prev = kSel.value; kSel.innerHTML = makeOpts(hVal || '', hedefPb); kSel.value = prev; }
+  if (kSel) {
+    const prev = kSel.value;
+    kSel.innerHTML = makeOpts(hVal || '', hedefPb);
+    phSet(kSel, '— Hesap Seçin —', prev, hedefPb ? '— Eşleşen hesap/nakit bulunamadı —' : '— Hesap bulunamadı —');
+  }
   // Hedef: kaynak seçiliyse aynı değeri ve (varsa) aynı para biriminden olanları göster
-  if (hSel) { const prev = hSel.value; hSel.innerHTML = makeOpts(kVal || '', kaynakPb); hSel.value = prev; }
+  if (hSel) {
+    const prev = hSel.value;
+    hSel.innerHTML = makeOpts(kVal || '', kaynakPb);
+    phSet(hSel, '— Hesap Seçin —', prev, kaynakPb ? '— Eşleşen hesap/nakit bulunamadı —' : '— Hesap bulunamadı —');
+  }
 }
 
 // ── Kaynak ve hedefi birbiriyle değiştir ──────────────────────
