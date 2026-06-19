@@ -12135,7 +12135,7 @@ function onKartOdemeHesapChange() {
   const pb     = opt.dataset.pb||'TRY';
   const kmh    = parseFloat(opt.dataset.kmh||'0');
   let txt = `Bakiye: ${fmtCur(bakiye, pb)}`;
-  if(kmh>0) txt += ` · KMH: ${fmtCur(kmh, pb)}`;
+  if(kmh>0) txt += ` · Kullanılabilir: ${fmtCur(bakiye + kmh, pb)} (KMH dahil)`;
   out.textContent = txt;
   out.style.color = bakiye<0 ? 'var(--danger)' : 'var(--text3)';
 }
@@ -17777,10 +17777,21 @@ function hesapOptionMetin(h) {
   if(!h) return '';
   const banka = ((DB.bankalar||[]).find(b=>b.id===h.banka)||{}).kisa || '';
   const pb = h.paraBirimi || 'TRY';
-  const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(h.bakiye||0, pb) : `${h.bakiye||0} ${pb}`;
+  const bakiye = h.bakiye || 0;
+  const kmhLimit = h.kmhLimit || 0;
+  const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(bakiye, pb) : `${bakiye} ${pb}`;
+  // KMH'i olan hesaplarda dropdown'da kullanılabilir bakiye de gösterilir
+  // (hesaptaki para + kullanılabilir KMH limiti) — sadece bakiyeye bakıp
+  // "param yok" denmesin diye.
+  let bakiyeGosterim = bakiyeStr;
+  if(kmhLimit > 0) {
+    const kullanilabilirBakiye = bakiye + kmhLimit;
+    const kullanilabilirStr = typeof fmtCur === 'function' ? fmtCur(kullanilabilirBakiye, pb) : `${kullanilabilirBakiye} ${pb}`;
+    bakiyeGosterim = `Bakiye: ${bakiyeStr} · Kullanılabilir: ${kullanilabilirStr}`;
+  }
   const ibanTemiz = (h.iban||'').replace(/\s/g,'');
   const ibanSon = ibanTemiz.length >= 4 ? '····'+ibanTemiz.slice(-4) : '';
-  const parcalar = [banka, h.ad || 'Hesap', ibanSon, bakiyeStr, pb].filter(Boolean);
+  const parcalar = [banka, h.ad || 'Hesap', ibanSon, bakiyeGosterim, pb].filter(Boolean);
   return parcalar.join(' - ');
 }
 
@@ -24560,8 +24571,10 @@ function saveTransfer() {
     kaynakHesap = (DB.hesaplar || []).find(h => h.id === kInfo.id);
     if (!kaynakHesap) { showToast('Kaynak hesap bulunamadı', 'error'); return; }
     kaynakPb = kaynakHesap.paraBirimi || 'TRY';
-    if ((kaynakHesap.bakiye || 0) < tutar) {
-      showToast(`Yetersiz bakiye! ${kaynakHesap.ad}: ${fmtCur(kaynakHesap.bakiye || 0, kaynakPb)}`, 'error'); return;
+    const kaynakKullanilabilir = (kaynakHesap.bakiye || 0) + (kaynakHesap.kmhLimit || 0);
+    if (kaynakKullanilabilir < tutar) {
+      const kmhStr = kaynakHesap.kmhLimit > 0 ? ` (KMH dahil kullanılabilir: ${fmtCur(kaynakKullanilabilir, kaynakPb)})` : '';
+      showToast(`Yetersiz bakiye! ${kaynakHesap.ad}: ${fmtCur(kaynakHesap.bakiye || 0, kaynakPb)}${kmhStr}`, 'error'); return;
     }
   } else {
     kaynakPb = kInfo.pb || 'TRY';
