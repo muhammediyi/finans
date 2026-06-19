@@ -7455,15 +7455,12 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         <div class="card-header"><span class="card-title">💱 Gösterim Para Birimi</span></div>
         <div>
           <label>Gösterim Birimi</label>
-          <select id="para-birimi-select" onchange="setParaBirimi(this.value)" style="margin-top:4px"></select>
+          <div class="cur-grid" id="para-birimi-grid" style="margin-top:6px"></div>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart bazlı para birimi kart ayarından gelir. Bu seçim genel gösterim ve para birimi tanımlı olmayan işlemler için geçerlidir. Yeni para birimi tanımlamak için <b>💱 Para Birimi Yönetimi</b> sekmesini kullanın.</div>
-        <div style="margin-top:12px;background:var(--violet-glow);border:1px solid rgba(167,139,250,.3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono);display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div>
-            <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Önizleme</span>
-            <div id="para-birimi-preview" style="font-size:22px;color:var(--violet);margin-top:4px"></div>
-          </div>
-          <span id="para-birimi-preview-chip" class="badge badge-purple" style="font-family:var(--sans)"></span>
+        <div style="margin-top:12px;background:var(--violet-glow);border:1px solid rgba(167,139,250,.3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
+          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Önizleme</span>
+          <div id="para-birimi-preview" style="font-size:22px;color:var(--violet);margin-top:4px"></div>
         </div>
       </div>
 
@@ -9588,13 +9585,17 @@ var defaultCurrency = 'TRY'; // Drive'dan yüklenir, localStorage kullanılmaz
 // DEFAULT_CURRENCY_CONFIG ve DB tanımlandıktan sonra yükle
 loadCurrencyConfig();
 
-// Gösterim para birimi önizleme metnini ve kod chip'ini günceller
+// Gösterim para birimi önizleme metnini ve seçim chip grid'ini günceller
 function updateParaBirimiPreview(code) {
   code = code || defaultCurrency;
   const preview = document.getElementById('para-birimi-preview');
   if(preview) preview.textContent = fmtCur(1234567.89, code);
-  const chip = document.getElementById('para-birimi-preview-chip');
-  if(chip) chip.textContent = code;
+  const grid = document.getElementById('para-birimi-grid');
+  if(grid) {
+    grid.querySelectorAll('.cur-chip').forEach(chip => {
+      chip.classList.toggle('selected', chip.dataset.code === code);
+    });
+  }
 }
 
 function setParaBirimi(code) {
@@ -9609,6 +9610,22 @@ function setParaBirimi(code) {
   updateMoneyWrapSymbols(code);
   const activePage = document.querySelector('.page.active');
   if(activePage) renderPage(activePage.id.replace('page-',''));
+}
+
+// Gösterim para birimi seçim chip grid'i
+function renderParaBirimiGrid() {
+  if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
+  const grid = document.getElementById('para-birimi-grid');
+  if(!grid) return;
+  grid.innerHTML = ALL_CURRENCIES.map(c => {
+    const isSel = c.code === defaultCurrency;
+    return `<div class="cur-chip${isSel?' selected':''}" data-code="${c.code}" onclick="selectParaBirimi('${c.code}')">${c.flag} ${c.label}</div>`;
+  }).join('');
+}
+
+function selectParaBirimi(code) {
+  setParaBirimi(code);
+  renderParaBirimiGrid();
 }
 
 // money-wrap'lerdeki sembol/kod etiketini aktif para birimine göre güncelle
@@ -9662,9 +9679,8 @@ function populateCurrencySelects() {
   // islem para birimi
   const islemPb = document.getElementById('islem-para-birimi');
   if(islemPb) { islemPb.innerHTML = opts; islemPb.value = defaultCurrency; }
-  // varsayılan para birimi select
-  const pbSel = document.getElementById('para-birimi-select');
-  if(pbSel) { pbSel.innerHTML = opts; pbSel.value = defaultCurrency; }
+  // varsayılan para birimi (chip grid)
+  renderParaBirimiGrid();
   // mevduat para birimi
   const mevPb = document.getElementById('mev-para-birimi');
   if(mevPb) { const prev = mevPb.value; mevPb.innerHTML = opts; mevPb.value = prev || defaultCurrency; }
@@ -10215,7 +10231,6 @@ function initAllSelectPlaceholders() {
     ['kart-tip',             'Ürün tipi seçin…'],
     ['filter-kart',          'Tüm kartlar'],
     ['extre-kart-filter',    'Kart seçin…'],
-    ['para-birimi-select',   'Para birimi seçin…'],
     ['kat-tur',              null],
     ['kira-depozito-durum',  null],
     ['kira-gun-kisa-ay-davranis', null],
@@ -21280,7 +21295,6 @@ document.addEventListener('click', function(e) {
     'filter-taksit':            SVG.filter,
     'extre-kart-filter':        SVG.card,
     'extre-durum-filter':       SVG.filter,
-    'para-birimi-select':       SVG.currency,
     'ga-tarih-ayrac':           SVG.separator,
     'ga-saat-ayrac':            SVG.separator,
     'ga-ondalik-ayrac':         SVG.decimal,
