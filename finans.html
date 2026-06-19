@@ -9492,7 +9492,8 @@ function defaultData() {
     nakitAvansCurlar: [],
     nakitAvansTavanlar: [],
     nakitAvansLimitTip: 'kullanilabilir',
-    nakitAvansMaxOran: 50
+    nakitAvansMaxOran: 50,
+    snapshots: {}
   };
 }
 
@@ -12088,7 +12089,7 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
   document.getElementById('kart-odeme-kart-id').value = kartId;
   document.getElementById('kart-odeme-pb').value = pb;
   document.getElementById('kart-odeme-donem-key').value = donemKey;
-  document.getElementById('kart-odeme-tutar').value = kalan > 0 ? kalan.toFixed(2) : toplamBorc.toFixed(2);
+  setMoneyInput('kart-odeme-tutar', kalan > 0 ? kalan : toplamBorc);
   document.getElementById('kart-odeme-tarih').value = localDateStr(new Date());
 
 
@@ -12143,7 +12144,7 @@ function saveKartOdeme() {
   const kartId   = document.getElementById('kart-odeme-kart-id').value;
   const pb       = document.getElementById('kart-odeme-pb').value;
   const donemKey = document.getElementById('kart-odeme-donem-key').value;
-  const tutar    = parseFloat(document.getElementById('kart-odeme-tutar').value);
+  const tutar    = getMoneyInput('kart-odeme-tutar');
   const tarih    = document.getElementById('kart-odeme-tarih').value;
   const hesapId  = document.getElementById('kart-odeme-hesap').value;
 
@@ -17263,6 +17264,49 @@ function kontratPlanFormKaydet() {
 }
 
 // ========== ÖZET ==========
+// ── NET SERVET SNAPSHOT ALTYAPISI ──────────────────────────────────────
+// Kullanıcı her gün sisteme girmeyebilir. Bu durumda Net Servet Trendi
+// grafiğinde günler arasında "boşluk" oluşmaması için, son gerçek kayıt
+// (sisteme en son girilen gün) ile bugün arasındaki girilmemiş günler
+// lineer interpolasyonla doldurulur ve tahmini (s:true) olarak işaretlenir.
+// Gerçek kayıtlara (s alanı olmayan / s:false) ASLA dokunulmaz; sadece
+// aradaki boşluklar bir kerelik tahmini değerlerle doldurulur — kullanıcı
+// o güne ait gerçek veriyle tekrar girerse (örn. ileride geçmişe dönük bir
+// düzeltme mekanizması eklenirse) tahmini kayıt kolayca ayırt edilebilir.
+function addDaysStr(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return localDateStr(d);
+}
+
+function fillSnapshotGaps(todayStr, todayV, todayB) {
+  if(!DB.snapshots) DB.snapshots = {};
+  const keys = Object.keys(DB.snapshots).filter(k => k < todayStr).sort();
+  if(!keys.length) return; // ilk kayıt — doldurulacak boşluk yok
+
+  const lastKey = keys[keys.length - 1];
+  const lastSnap = DB.snapshots[lastKey];
+
+  // Aradaki gün sayısı (lastKey hariç, todayStr hariç)
+  let gapDays = [];
+  let cursor = addDaysStr(lastKey, 1);
+  while(cursor < todayStr) {
+    gapDays.push(cursor);
+    cursor = addDaysStr(cursor, 1);
+  }
+  if(!gapDays.length) return; // ardışık gün — boşluk yok
+
+  const n = gapDays.length + 1; // lastKey -> ... -> todayStr arasındaki adım sayısı
+  const startV = lastSnap.v || 0, startB = lastSnap.b || 0;
+  gapDays.forEach((dStr, idx) => {
+    if(DB.snapshots[dStr]) return; // her ihtimale karşı, var olan kaydın üzerine yazma
+    const t = (idx + 1) / n; // 0–1 arası interpolasyon oranı
+    const v = startV + (todayV - startV) * t;
+    const b = startB + (todayB - startB) * t;
+    DB.snapshots[dStr] = { v: Math.round(v), b: Math.round(b), s: true };
+  });
+}
+
 function renderOzet() {
   const today = new Date();
   document.getElementById('ozet-date').textContent = today.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -17459,6 +17503,22 @@ function renderOzet() {
   const toplamVarlik = toplamHesapBakiye + safeMevduatAktif + (safeNbTutar>0?safeNbTutar:0);
   const toplamBorc = safeToplamKullanim + safeKrediKalan + safeBireyselKrediKalan + (safeNbTutar<0?-safeNbTutar:0);
   const netVarlik = toplamVarlik - toplamBorc;
+
+  // ── GÜNLÜK SNAPSHOT: sadece bugün yazılır, gerçek (ziyaret edilmiş) geçmiş kayıtlar asla değişmez ─────
+  if(!DB.snapshots) DB.snapshots = {};
+  if(!DB.snapshots[todayStr]) {
+    // Araya girilmemiş günler varsa (kullanıcı birkaç gün sisteme girmemiş olabilir):
+    // bunları boş bırakmak yerine son gerçek kayıt ile bugünkü değer arasında
+    // lineer interpolasyonla doldur ve "tahmini" (s:true) olarak işaretle.
+    // Gerçek (s yok / s:false) kayıtlar asla üzerine yazılmaz.
+    fillSnapshotGaps(todayStr, toplamVarlik, toplamBorc);
+    DB.snapshots[todayStr] = { v: Math.round(toplamVarlik), b: Math.round(toplamBorc) };
+    if(typeof saveData === 'function') setTimeout(saveData, 2000);
+  }
+  // NOT: Gerçek (sisteme girilmiş) geçmiş tarihli kayıtlara asla dokunulmaz —
+  //      sonradan eklenen işlemler geçmiş snapshot'ları etkilemez.
+  //      Sadece aradaki "girilmemiş" boşluklar tahmini olarak doldurulur.
+
   const heroEl = document.getElementById('ozet-hero');
   if(heroEl) {
     heroEl.innerHTML = `
@@ -23357,6 +23417,7 @@ function entAbonelikYansit(abId, ayKey, durum, tutar) {
 
     /* ── Grafik kartları ── */
     #ozet-grafik-row { display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:16px;margin-bottom:18px; }
+    #ozet-grafik-row > div:first-child { grid-column: 1 / -1; }
     @media(max-width:1300px){ #ozet-grafik-row { grid-template-columns:1fr 1fr; } }
     @media(max-width:700px){ #ozet-grafik-row { grid-template-columns:1fr; } }
     .grafik-card { background:var(--card-bg,var(--surface));border:1px solid var(--border2);border-radius:16px;padding:18px 20px; transition: var(--transition, all .18s ease); }
@@ -23606,7 +23667,141 @@ function renderOzetGrafikler() {
   const toplamBorcGenel = toplamKrediBorc + toplamKartBorc;
   const krediBorcPct = toplamBorcGenel>0 ? Math.round(toplamKrediBorc/toplamBorcGenel*100) : 0;
 
-  container.innerHTML = `
+  // ── NET SERVET TRENDİ (snapshot verisi) ─────────────────────────────
+  const snapshotHtml = (function() {
+    const snaps = DB.snapshots || {};
+    const keys = Object.keys(snaps).sort();
+    if(keys.length < 2) {
+      return `<div class="grafik-card" style="grid-column:1/-1">
+        <div class="grafik-title"><span class="grafik-title-icon">📈</span>Net Servet Trendi</div>
+        <div class="grafik-empty">Grafik için en az 2 günlük veri gerekli.<br>Her gün dashboard açıldığında otomatik kaydedilir.</div>
+      </div>`;
+    }
+    // Son 90 günlük veri
+    const last90 = keys.slice(-90);
+    const vals = last90.map(k => ({
+      t: k,
+      v: snaps[k].v || 0,
+      b: snaps[k].b || 0,
+      n: (snaps[k].v || 0) - (snaps[k].b || 0),
+      s: !!snaps[k].s // s:true → o gün sisteme girilmedi, tahmini (interpolasyon) değer
+    }));
+    const allV = vals.map(d=>d.v), allB = vals.map(d=>d.b), allN = vals.map(d=>d.n);
+    const allVals = [...allV, ...allB, ...allN];
+    const minV = Math.min(...allVals);
+    const maxV = Math.max(...allVals);
+    const range = maxV - minV || 1;
+    const W = 600, H = 160, padL = 62, padR = 12, padT = 12, padB = 28;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const n = vals.length;
+    const xOf = i => padL + (n > 1 ? (i / (n-1)) * chartW : chartW/2);
+    const yOf = v => padT + chartH - ((v - minV) / range) * chartH;
+
+    // Y ekseni tick'leri
+    const ticks = 4;
+    const tickVals = Array.from({length: ticks+1}, (_,i) => minV + (range/ticks)*i);
+    const yTickHtml = tickVals.map(tv => {
+      const y = yOf(tv);
+      const label = Math.abs(tv) >= 1000000 ? (tv/1000000).toFixed(1)+'M' :
+                    Math.abs(tv) >= 1000 ? (tv/1000).toFixed(0)+'K' : tv.toFixed(0);
+      return `<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="rgba(255,255,255,.3)">${label}</text>
+              <line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+    }).join('');
+
+    // X ekseni — tarih etiketleri (max 8 adet)
+    const step = Math.ceil(n/8);
+    const xTickHtml = vals.filter((_,i)=>i===0||i===n-1||i%step===0).map(d => {
+      const i = vals.indexOf(d);
+      const x = xOf(i);
+      const lbl = d.t.slice(5); // MM-DD
+      return `<text x="${x}" y="${H-4}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.3)">${lbl}</text>`;
+    }).join('');
+
+    // Polygon fill için kapalı alan
+    function polyFill(points, color, opacity) {
+      if(points.length < 2) return '';
+      const first = points[0], last = points[points.length-1];
+      const bottom = padT + chartH;
+      const d = `M${first[0]},${bottom} L${points.map(p=>p[0]+','+p[1]).join(' L')} L${last[0]},${bottom} Z`;
+      return `<path d="${d}" fill="${color}" fill-opacity="${opacity}"/>`;
+    }
+    function polyLine(points, color, width) {
+      if(points.length < 2) return '';
+      const d = `M${points.map(p=>p[0]+','+p[1]).join(' L')}`;
+      return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+
+    const ptsV = vals.map((d,i) => [xOf(i), yOf(d.v)]);
+    const ptsB = vals.map((d,i) => [xOf(i), yOf(d.b)]);
+    const ptsN = vals.map((d,i) => [xOf(i), yOf(d.n)]);
+
+    // Bugünün değerleri
+    const latest = vals[vals.length-1];
+    const latestNetColor = latest.n >= 0 ? '#2dd4bf' : '#fb7185';
+
+    // Bugün ve en yüksek net servet noktasını işaretle
+    const maxNetIdx = vals.reduce((mi,d,i,a)=>d.n>a[mi].n?i:mi,0);
+    const dotHtml = [
+      `<circle cx="${xOf(n-1)}" cy="${yOf(latest.n)}" r="4" fill="${latestNetColor}" stroke="var(--surface)" stroke-width="2"/>`,
+      maxNetIdx !== n-1 ? `<circle cx="${xOf(maxNetIdx)}" cy="${yOf(vals[maxNetIdx].n)}" r="3" fill="rgba(45,212,191,.6)" stroke="var(--surface)" stroke-width="1.5"/>` : ''
+    ].join('');
+
+    // Tahmini (sisteme girilmemiş, interpolasyonla doldurulmuş) günler için küçük içi boş noktalar
+    const estCount = vals.filter(d=>d.s).length;
+    const estDotHtml = vals.map((d,i) => d.s
+      ? `<circle cx="${xOf(i)}" cy="${yOf(d.n)}" r="2" fill="var(--surface)" stroke="${latestNetColor}" stroke-opacity=".55" stroke-width="1.2"><title>${d.t}: tahmini (sisteme girilmedi)</title></circle>`
+      : ''
+    ).join('');
+
+    // Varlık & borç değişim yüzdesi
+    const firstV = vals[0].v, lastV = latest.v;
+    const firstB = vals[0].b, lastB = latest.b;
+    const dV = firstV > 0 ? ((lastV-firstV)/firstV*100).toFixed(1) : '—';
+    const dB = firstB > 0 ? ((lastB-firstB)/firstB*100).toFixed(1) : '—';
+    const dN = vals[0].n !== 0 ? ((latest.n - vals[0].n) / Math.abs(vals[0].n) * 100).toFixed(1) : '—';
+
+    return `<div class="grafik-card" style="grid-column:1/-1;margin-bottom:0">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <div class="grafik-title" style="margin-bottom:0"><span class="grafik-title-icon">📈</span>Net Servet Trendi <span style="font-size:9px;color:var(--text3);font-weight:400">(Son ${n} gün · her gün otomatik kaydedilir${estCount ? ` · ${estCount} gün tahmini (girilmedi)` : ''})</span></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="text-align:right">
+            <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Net Varlık</div>
+            <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${latestNetColor}">${latest.n>=0?'+':''}${Math.abs(latest.n)>=1000000?(latest.n/1000000).toFixed(2)+'M':Math.abs(latest.n)>=1000?(latest.n/1000).toFixed(1)+'K':latest.n.toLocaleString('tr-TR')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Değişim</div>
+            <div style="font-family:var(--mono);font-size:14px;font-weight:600;color:${dN!=='—'&&parseFloat(dN)>=0?'var(--teal)':'var(--rose)'}">${dN!=='—'?(parseFloat(dN)>=0?'+':'')+dN+'%':'—'}</div>
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" style="display:block;min-width:260px">
+          ${yTickHtml}
+          ${xTickHtml}
+          ${polyFill(ptsV, '#2dd4bf', 0.06)}
+          ${polyFill(ptsB, '#fb7185', 0.06)}
+          ${polyLine(ptsV, 'rgba(45,212,191,.5)', 1.5)}
+          ${polyLine(ptsB, 'rgba(251,113,133,.5)', 1.5)}
+          ${polyLine(ptsN, latestNetColor, 2.5)}
+          ${estDotHtml}
+          ${dotHtml}
+        </svg>
+      </div>
+      <div class="grafik-legend" style="margin-top:10px">
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:var(--teal)"></div>Toplam Varlık</div>
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:var(--rose)"></div>Toplam Borç</div>
+        <div class="grafik-legend-item"><div class="grafik-legend-dot" style="background:${latestNetColor}"></div>Net Servet</div>
+        ${estCount ? `<div class="grafik-legend-item" title="O gün sisteme girilmedi, son gerçek kayıt ile bugün arasında tahmin edildi"><span style="width:8px;height:8px;border-radius:50%;border:1.2px solid ${latestNetColor};background:var(--surface);display:inline-block"></span>Tahmini (girilmedi)</div>` : ''}
+        <div style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--text3)">Varlık: <span style="color:var(--teal);font-family:var(--mono)">${dV!=='—'?(parseFloat(dV)>=0?'+':'')+dV+'%':'—'}</span></div>
+          <div style="font-size:11px;color:var(--text3)">Borç: <span style="color:var(--rose);font-family:var(--mono)">${dB!=='—'?(parseFloat(dB)>=0?'+':'')+dB+'%':'—'}</span></div>
+        </div>
+      </div>
+    </div>`;
+  })();
+
+  container.innerHTML = `${snapshotHtml}
     <div class="grafik-card grafik-card-wide">
       <div class="grafik-title"><span class="grafik-title-icon">📊</span>6 Aylık Gelir / Gider</div>
       <div class="bar-chart-wrap">${barHtml}</div>
