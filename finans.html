@@ -13514,13 +13514,18 @@ function renderKira() {
 
   let aylikGelir=0, aylikGider=0;
   const thisMonthPayments = [];
+  const kiraAyKey = `${year}-${String(month+1).padStart(2,'0')}`;
 
   DB.kiralar.forEach(k=>{
     const payDt = kiraPayInMonth(k, year, month);
     if(payDt) {
-      if(k.tutar>0) aylikGelir+=k.tutar;
-      else aylikGider+=Math.abs(k.tutar);
       thisMonthPayments.push({...k, payDt});
+      const ov = odKiraMaasOverride(k, kiraAyKey);
+      const tutar = odFiilenGerceklesenTutar(ov, k.tutar);
+      if(tutar > 0) {
+        if(k.tutar>0) aylikGelir+=tutar;
+        else aylikGider+=tutar;
+      }
     }
   });
 
@@ -16424,6 +16429,57 @@ function odGetDurum(item, key) {
   return item.odDurum || null;
 }
 
+// ── MERKEZİ ÖDEME DURUMU YARDIMCILARI ──────────────────────────────────
+// Tüm "bu ay/dönem gelire-gidere fiilen yansıyan tutar nedir" hesaplamaları
+// BU fonksiyonlardan geçmelidir. Doğrudan item.odemeOverrides / item.taksitOverrides /
+// item.odDurum okuma KULLANMAYIN — yanlış alanı okuma riski (kira/maaş için odDurum
+// veya taksitOverrides YOKTUR, sadece odemeOverrides vardır) ve durum mantığının
+// (iptal/bekliyor hariç tutma, kismi'de fiilen ödenen tutarı kullanma) her yerde
+// tutarlı kalmasını sağlar.
+//
+// Kural: 'odendi' veya 'kismi' → fiilen ödenen tutar sayılır (override'da tutar
+// belirtilmemişse kontrat tutarı kadar tam ödendiği varsayılır).
+// 'iptal' / 'atlandi' → 0, hiçbir hesaba dahil edilmez.
+// 'bekliyor' / 'gecikti' / 'ertelendi' / durum yok → henüz fiilen gerçekleşmedi, 0 sayılır
+// (bu kalemler "planlanan/yaklaşan" listelerinde ayrıca gösterilebilir, ama gelir/gider
+// toplamlarına girmez).
+
+// Bir dönem (kira/maaş ay override'ı veya elden tek seferlik odDurum) için fiilen
+// gerçekleşmiş (ödenmiş ya da kısmi ödenmiş) tutarı döndürür. Gerçekleşmediyse 0.
+// varsayilanTutar: override'da tutar belirtilmemişse kullanılacak kontrat/asıl tutar (mutlak değer).
+function odFiilenGerceklesenTutar(ov, varsayilanTutar) {
+  const dur = ov?.durum;
+  if(dur === 'odendi' || dur === 'kismi') {
+    return ov.tutar !== undefined ? Math.abs(ov.tutar) : Math.abs(varsayilanTutar || 0);
+  }
+  return 0; // iptal/atlandi/bekliyor/gecikti/ertelendi/tanımsız → henüz gerçekleşmedi
+}
+
+// Bir dönemin "iptal edilmiş" olup olmadığını kontrol eder (iptal veya atlandi).
+function odIptalMi(ov) {
+  const dur = ov?.durum;
+  return dur === 'iptal' || dur === 'atlandi';
+}
+
+// Bir dönemin fiilen ödenmiş/kısmi ödenmiş olup olmadığını kontrol eder.
+function odOdendiMi(ov) {
+  const dur = ov?.durum;
+  return dur === 'odendi' || dur === 'kismi';
+}
+
+// Henüz fiilen ödenmemiş ama iptal de edilmemiş (yani hâlâ "beklemede" sayılan) mi?
+// 'bekliyor', 'gecikti', 'ertelendi' veya hiç override yok → beklemede.
+function odBeklemedeMi(ov) {
+  if(!ov || !ov.durum) return true;
+  return ov.durum === 'bekliyor' || ov.durum === 'gecikti' || ov.durum === 'ertelendi';
+}
+
+// Kira/Maaş için: belirli bir ay (YYYY-MM) override'ını doğru alandan (odemeOverrides) okur.
+// item.odDurum veya item.taksitOverrides YANLIŞTIR — kira/maaş bunları kullanmaz.
+function odKiraMaasOverride(item, ayKey) {
+  return (item?.odemeOverrides || {})[ayKey] || null;
+}
+
 function odSetDurum(item, key, data) {
   if(key !== undefined) {
     // key YYYY-MM formatındaysa (string, 7 karakter) → kira/maas odemeOverrides
@@ -17472,20 +17528,26 @@ function renderOzet() {
   let mevduatAktif=0;
   DB.mevduatlar.filter(m=>m.bitis && m.bitis>=todayStr).forEach(m=>mevduatAktif+=(m.nihai||0));
 
-  // Bu ay kira net - kiraPayInMonth kullan
+  // Bu ay kira net - kiraPayInMonth kullan (sadece fiilen ödenmiş/kısmi ödenmiş tutarlar sayılır)
+  const ayKey = `${year}-${String(month+1).padStart(2,'0')}`;
   let kiraNET=0;
   DB.kiralar.forEach(k=>{
     const payDt = kiraPayInMonth ? kiraPayInMonth(k, year, month) : null;
-    if(payDt) kiraNET+=k.tutar;
+    if(!payDt) return;
+    const ov = odKiraMaasOverride(k, ayKey);
+    const tutar = odFiilenGerceklesenTutar(ov, k.tutar);
+    kiraNET += k.tutar >= 0 ? tutar : -tutar;
   });
 
-  // Bu ay maaş
+  // Bu ay maaş (sadece fiilen ödenmiş/kısmi ödenmiş tutarlar sayılır)
   let maasTop=0;
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
     const payDt = new Date(year, month, m.gun);
     const payStr = localDateStr(payDt);
-    if(payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis)) maasTop+=m.tutar;
+    if(!(payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis))) return;
+    const ov = odKiraMaasOverride(m, ayKey);
+    maasTop += odFiilenGerceklesenTutar(ov, m.tutar);
   });
 
   // KMH Kredi kalan borç
@@ -17709,7 +17771,9 @@ function renderOzet() {
       const d = kiraPayInMonth(k, year, month+offset);
       if(!d) continue;
       const ds=localDateStr(d);
-      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:(k.tutar>=0?'Kira Geliri':'Kira Gideri'), tutar:k.tutar, tip:'kira', id:k.id, key:ds.slice(0,7)});
+      const ovKey = ds.slice(0,7);
+      if(odIptalMi(odKiraMaasOverride(k, ovKey))) continue;
+      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:k.aciklama||'Kira', tur:(k.tutar>=0?'Kira Geliri':'Kira Gideri'), tutar:k.tutar, tip:'kira', id:k.id, key:ovKey});
     }
   });
 
@@ -17719,7 +17783,10 @@ function renderOzet() {
     for(let offset=0;offset<=1;offset++){
       const d=new Date(year,month+offset,m.gun);
       const ds=localDateStr(d);
-      if(d>=today&&d<=end30&&ds>=m.baslangic&&(!m.bitis||ds<=m.bitis)) upcoming.push({tarih:d, aciklama:m.aciklama, tur:'Maaş', tutar:m.tutar, tip:'maas', id:m.id, key:ds.slice(0,7)});
+      if(!(ds>=m.baslangic&&(!m.bitis||ds<=m.bitis))) continue;
+      const ovKey = ds.slice(0,7);
+      if(odIptalMi(odKiraMaasOverride(m, ovKey))) continue;
+      if(d>=today&&d<=end30) upcoming.push({tarih:d, aciklama:m.aciklama, tur:'Maaş', tutar:m.tutar, tip:'maas', id:m.id, key:ovKey});
     }
   });
 
@@ -17789,20 +17856,29 @@ function renderOzet() {
     }).join('') :
     '<div class="ozet-od-empty">✓ Önümüzdeki 30 gün için planlı ödeme yok</div>';
 
-  // Nakit akış özeti bu ay
+  // Nakit akış özeti bu ay (sadece fiilen ödenmiş/kısmi ödenmiş kalemler gösterilir; iptal/bekliyor hariç)
   const cashItems = [];
+  const cashAyKey = `${year}-${String(month+1).padStart(2,'0')}`;
   DB.kiralar.forEach(k=>{
     if(k.pasif) return;
     const pd = kiraPayInMonth(k, year, month);
     if(!pd) return;
     const ps=localDateStr(pd);
-    if(ps>=k.baslangic&&ps<=k.bitis) cashItems.push({gun:pd.getDate(),aciklama:k.aciklama||'Kira',tutar:k.tutar});
+    if(!(ps>=k.baslangic&&ps<=k.bitis)) return;
+    const ov = odKiraMaasOverride(k, cashAyKey);
+    const fiilen = odFiilenGerceklesenTutar(ov, k.tutar);
+    if(fiilen <= 0) return;
+    cashItems.push({gun:pd.getDate(),aciklama:k.aciklama||'Kira',tutar: k.tutar>=0?fiilen:-fiilen});
   });
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
     const pd=new Date(year,month,m.gun);
     const ps=localDateStr(pd);
-    if(ps>=m.baslangic&&(!m.bitis||ps<=m.bitis)) cashItems.push({gun:m.gun,aciklama:m.aciklama,tutar:m.tutar});
+    if(!(ps>=m.baslangic&&(!m.bitis||ps<=m.bitis))) return;
+    const ov = odKiraMaasOverride(m, cashAyKey);
+    const fiilen = odFiilenGerceklesenTutar(ov, m.tutar);
+    if(fiilen <= 0) return;
+    cashItems.push({gun:m.gun,aciklama:m.aciklama,tutar:fiilen});
   });
   cashItems.sort((a,b)=>a.gun-b.gun);
 
@@ -21868,8 +21944,8 @@ function hesapYaklasanCikislar(gunSayisi) {
     const aylar = (typeof kontratAylariHesapla === 'function') ? kontratAylariHesapla(k, yil) : [];
     aylar.forEach(a => {
       if(a.tarih >= todayStr && a.tarih <= limitStr) {
-        const ov = (k.odemeOverrides||{})[a.ay];
-        if(!ov || ov.durum === 'bekliyor' || !ov.durum) {
+        const ov = odKiraMaasOverride(k, a.ay);
+        if(odBeklemedeMi(ov)) {
           if(k.tutar < 0) ekle(k.hesapId, k.tutar, '🏠 Kira: '+(k.aciklama||''), a.tarih, pb);
         }
       }
@@ -21878,8 +21954,8 @@ function hesapYaklasanCikislar(gunSayisi) {
     const aylarSonraki = (typeof kontratAylariHesapla === 'function') ? kontratAylariHesapla(k, yil+1) : [];
     aylarSonraki.forEach(a => {
       if(a.tarih >= todayStr && a.tarih <= limitStr) {
-        const ov = (k.odemeOverrides||{})[a.ay];
-        if(!ov || ov.durum === 'bekliyor' || !ov.durum) {
+        const ov = odKiraMaasOverride(k, a.ay);
+        if(odBeklemedeMi(ov)) {
           if(k.tutar < 0) ekle(k.hesapId, k.tutar, '🏠 Kira: '+(k.aciklama||''), a.tarih, pb);
         }
       }
@@ -21891,8 +21967,7 @@ function hesapYaklasanCikislar(gunSayisi) {
   (DB.eldenler||[]).forEach(e => {
     if(!e.hesapId || e.tur !== 'gider') return;
     if(e.tarih >= todayStr && e.tarih <= limitStr) {
-      const ov = e.odDurum;
-      if(!ov || ov.durum === 'bekliyor' || !ov.durum) {
+      if(odBeklemedeMi(e.odDurum)) {
         ekle(e.hesapId, Math.abs(e.tutar), '📉 Elden: '+(e.aciklama||''), e.tarih, e.paraBirimi||defaultCurrency);
       }
     }
@@ -21926,8 +22001,8 @@ function hesapYaklasanGelirler(gunSayisi) {
       const aylar = (typeof kontratAylariHesapla === 'function') ? kontratAylariHesapla(k, y) : [];
       aylar.forEach(a => {
         if(a.tarih >= todayStr && a.tarih <= limitStr) {
-          const ov = (k.odemeOverrides||{})[a.ay];
-          if(!ov || ov.durum === 'bekliyor' || !ov.durum) {
+          const ov = odKiraMaasOverride(k, a.ay);
+          if(odBeklemedeMi(ov)) {
             ekle(k.hesapId, k.tutar, '🏠 Kira Geliri: '+(k.aciklama||''), a.tarih, pb);
           }
         }
@@ -21945,6 +22020,8 @@ function hesapYaklasanGelirler(gunSayisi) {
       const tarih = localDateStr(d);
       if(tarih >= todayStr && tarih <= limitStr) {
         if(tarih >= m.baslangic && (!m.bitis || tarih <= m.bitis)) {
+          const ovKey = tarih.slice(0,7);
+          if(odIptalMi(odKiraMaasOverride(m, ovKey))) continue;
           ekle(m.hesapId, m.tutar, '💼 Maaş: '+(m.aciklama||''), tarih, pb);
         }
       }
@@ -22230,29 +22307,27 @@ function renderBakiyeIslemGecmisi(hesapId) {
   (DB.kiralar||[]).filter(k=>k.hesapId===hesapId).forEach(k=>{
     const aylar = kontratAylariHesapla(k, new Date().getFullYear());
     aylar.forEach(a=>{
-      const ov = (k.odemeOverrides||{})[a.ay];
+      const ov = odKiraMaasOverride(k, a.ay);
       const durum = ov?.durum;
       if(durum === 'odendi' || durum === 'kismi') {
-        const tutar = ov?.tutar !== undefined ? ov.tutar : Math.abs(a.tutar);
+        const tutar = ov?.tutar !== undefined ? Math.abs(ov.tutar) : Math.abs(a.tutar);
         const yon = k.tutar >= 0 ? 1 : -1;
         gecmis.push({tarih: ov?.tarih||a.tarih, aciklama: '🏠 Kira: '+(k.aciklama||''), tutar: tutar*yon, durum, pb: k.paraBirimi});
       }
     });
   });
 
-  // Maaş ödemeleri
+  // Maaş ödemeleri (her ay için odemeOverrides[ay] — kontratAylariHesapla maaş için de çalışır)
   (DB.maaslar||[]).filter(m=>m.hesapId===hesapId).forEach(m=>{
-    const ov = m.odDurum;
-    if(ov?.durum === 'odendi' || ov?.durum === 'kismi') {
-      gecmis.push({tarih: ov?.tarih||localDateStr(new Date()), aciklama: '💼 Maaş: '+(m.aciklama||''), tutar: ov?.tutar||Math.abs(m.tutar), durum:ov.durum, pb: m.paraBirimi});
-    }
-    if(m.taksitOverrides) {
-      Object.entries(m.taksitOverrides).forEach(([k,v])=>{
-        if(v?.durum === 'odendi' || v?.durum === 'kismi') {
-          gecmis.push({tarih: v?.tarih||localDateStr(new Date()), aciklama: '💼 Maaş taksit: '+(m.aciklama||''), tutar: v?.tutar||0, durum:v.durum, pb: m.paraBirimi});
-        }
-      });
-    }
+    const aylar = (typeof kontratAylariHesapla === 'function') ? kontratAylariHesapla(m, new Date().getFullYear()) : [];
+    aylar.forEach(a=>{
+      const ov = odKiraMaasOverride(m, a.ay);
+      const durum = ov?.durum;
+      if(durum === 'odendi' || durum === 'kismi') {
+        const tutar = ov?.tutar !== undefined ? Math.abs(ov.tutar) : Math.abs(m.tutar);
+        gecmis.push({tarih: ov?.tarih||a.tarih, aciklama: '💼 Maaş: '+(m.aciklama||''), tutar, durum, pb: m.paraBirimi});
+      }
+    });
   });
 
   // Elden ödemeler
@@ -22260,7 +22335,8 @@ function renderBakiyeIslemGecmisi(hesapId) {
     const ov = e.odDurum;
     const durum = ov?.durum;
     if(durum === 'odendi' || durum === 'kismi') {
-      gecmis.push({tarih: ov?.tarih||e.tarih, aciklama: (e.tur==='gelir'?'📈':'📉')+' Elden: '+(e.aciklama||''), tutar: ov?.tutar||Math.abs(e.tutar), durum, pb: e.paraBirimi});
+      const tutar = ov?.tutar !== undefined ? Math.abs(ov.tutar) : Math.abs(e.tutar);
+      gecmis.push({tarih: ov?.tarih||e.tarih, aciklama: (e.tur==='gelir'?'📈':'📉')+' Elden: '+(e.aciklama||''), tutar, durum, pb: e.paraBirimi});
     }
   });
 
@@ -22623,16 +22699,13 @@ function _updateBekleyenSayac() {
     const buAy  = bugün.slice(0, 7);
     let sayac = 0;
     (DB.kiralar || []).filter(k => !k.pasif).forEach(k => {
-      const ov = (k.odemeOverrides || {})[buAy];
-      if (!ov || ov.durum === 'bekliyor') sayac++;
+      if (odBeklemedeMi(odKiraMaasOverride(k, buAy))) sayac++;
     });
     (DB.maaslar || []).filter(m => !m.pasif).forEach(m => {
-      const ov = m.odDurum;
-      if (!ov || ov.durum === 'bekliyor') sayac++;
+      if (odBeklemedeMi(odKiraMaasOverride(m, buAy))) sayac++;
     });
     (DB.eldenler || []).forEach(e => {
-      const ov = e.odDurum;
-      if (!ov || ov.durum === 'bekliyor') sayac++;
+      if (odBeklemedeMi(e.odDurum)) sayac++;
     });
 
     // Nav badge güncelle (sidebar)
@@ -22669,12 +22742,10 @@ function _injectHesapOzetBadge() {
 
       let bekleyen = 0;
       (DB.kiralar || []).filter(k => k.hesapId === hesapId && !k.pasif).forEach(k => {
-        const ov = (k.odemeOverrides || {})[buAy];
-        if (!ov || ov.durum === 'bekliyor') bekleyen++;
+        if (odBeklemedeMi(odKiraMaasOverride(k, buAy))) bekleyen++;
       });
       (DB.maaslar || []).filter(m => m.hesapId === hesapId && !m.pasif).forEach(m => {
-        const ov = m.odDurum;
-        if (!ov || ov.durum === 'bekliyor') bekleyen++;
+        if (odBeklemedeMi(odKiraMaasOverride(m, buAy))) bekleyen++;
       });
 
       if (bekleyen > 0) {
@@ -23597,34 +23668,29 @@ function renderOzetGrafikler() {
   function ayGelirGider(y, m) {
     const mStr = `${y}-${String(m+1).padStart(2,'0')}`;
     let gelir = 0, gider = 0;
-    // Kira
+    // Kira (odemeOverrides kullanılır — taksitOverrides değil; sadece fiilen ödenen/kısmi ödenen sayılır)
     (DB.kiralar||[]).filter(k=>!k.pasif).forEach(k=>{
       const pd = kiraPayInMonth(k, y, m);
       if(!pd) return;
       const ps = localDateStr(pd).slice(0,7);
       if(ps !== mStr) return;
-      const ov = (k.taksitOverrides||{})[mStr];
-      const dur = ov?.durum;
-      if(dur === 'iptal') return;
-      const t = ov?.tutar !== undefined ? ov.tutar : Math.abs(k.tutar);
+      const t = odFiilenGerceklesenTutar(odKiraMaasOverride(k, mStr), k.tutar);
+      if(t<=0) return;
       if(k.tutar >= 0) gelir += t; else gider += t;
     });
-    // Maaş
+    // Maaş (odemeOverrides kullanılır — taksitOverrides değil; sadece fiilen ödenen/kısmi ödenen sayılır)
     (DB.maaslar||[]).filter(ms=>!ms.pasif).forEach(ms=>{
       const pd = new Date(y, m, ms.gun);
       const ps = localDateStr(pd).slice(0,7);
       if(ps !== mStr) return;
-      const ov = (ms.taksitOverrides||{})[mStr];
-      const dur = ov?.durum;
-      if(dur === 'iptal') return;
-      const t = ov?.tutar !== undefined ? ov.tutar : Math.abs(ms.tutar);
+      const t = odFiilenGerceklesenTutar(odKiraMaasOverride(ms, mStr), ms.tutar);
+      if(t<=0) return;
       if(ms.tutar >= 0) gelir += t; else gider += t;
     });
     // Elden
     (DB.eldenler||[]).forEach(e=>{
       if(e.tarih?.slice(0,7) !== mStr) return;
-      const ov = e.odDurum;
-      if(ov?.durum === 'iptal') return;
+      if(odIptalMi(e.odDurum)) return;
       if(e.tutar >= 0) gelir += Math.abs(e.tutar); else gider += Math.abs(e.tutar);
     });
     // Abonelik
@@ -24867,7 +24933,7 @@ function _collectBakiyeLog(opts) {
       const yon = k.tutar >= 0 ? 1 : -1;
       Object.entries(k.odemeOverrides || {}).forEach(([ay, ov]) => {
         if (ov && (ov.durum === 'odendi' || ov.durum === 'kismi') && ov.tutar) {
-          ekle(ov.tarih || ay + '-01', `Kira${k.aciklama ? ': ' + k.aciklama : ''}`, ov.tutar * yon, 'Kira', k.paraBirimi, `${k.id}_${ay}`);
+          ekle(ov.tarih || ay + '-01', `Kira${k.aciklama ? ': ' + k.aciklama : ''}`, Math.abs(ov.tutar) * yon, 'Kira', k.paraBirimi, `${k.id}_${ay}`);
         }
       });
     });
