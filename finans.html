@@ -7458,9 +7458,12 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
           <select id="para-birimi-select" onchange="setParaBirimi(this.value)" style="margin-top:4px"></select>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart bazlı para birimi kart ayarından gelir. Bu seçim genel gösterim ve para birimi tanımlı olmayan işlemler için geçerlidir. Yeni para birimi tanımlamak için <b>💱 Para Birimi Yönetimi</b> sekmesini kullanın.</div>
-        <div style="margin-top:12px;background:var(--surface3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
-          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Önizleme</span>
-          <div id="para-birimi-preview" style="font-size:22px;color:var(--accent2);margin-top:4px"></div>
+        <div style="margin-top:12px;background:var(--violet-glow);border:1px solid rgba(167,139,250,.3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono);display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Önizleme</span>
+            <div id="para-birimi-preview" style="font-size:22px;color:var(--violet);margin-top:4px"></div>
+          </div>
+          <span id="para-birimi-preview-chip" class="badge badge-purple" style="font-family:var(--sans)"></span>
         </div>
       </div>
 
@@ -9585,6 +9588,15 @@ var defaultCurrency = 'TRY'; // Drive'dan yüklenir, localStorage kullanılmaz
 // DEFAULT_CURRENCY_CONFIG ve DB tanımlandıktan sonra yükle
 loadCurrencyConfig();
 
+// Gösterim para birimi önizleme metnini ve kod chip'ini günceller
+function updateParaBirimiPreview(code) {
+  code = code || defaultCurrency;
+  const preview = document.getElementById('para-birimi-preview');
+  if(preview) preview.textContent = fmtCur(1234567.89, code);
+  const chip = document.getElementById('para-birimi-preview-chip');
+  if(chip) chip.textContent = code;
+}
+
 function setParaBirimi(code) {
   defaultCurrency = code;
   // DB'ye yaz ve Drive'a sync et
@@ -9592,8 +9604,7 @@ function setParaBirimi(code) {
     DB._currency = code;
     if(typeof saveData === 'function') saveData();
   }
-  const preview = document.getElementById('para-birimi-preview');
-  if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, code);
+  updateParaBirimiPreview(code);
   // money-wrap sembol ve kod güncelle
   updateMoneyWrapSymbols(code);
   const activePage = document.querySelector('.page.active');
@@ -10515,8 +10526,7 @@ function showTab(id, btn) {
   }
   if(id==='tab-goruntu-ayarlari') {
     populateCurrencySelects();
-    const preview = document.getElementById('para-birimi-preview');
-    if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
+    updateParaBirimiPreview();
     loadGoruntuAyarlariUI();
   }
   if(id==='tab-kisiler') {
@@ -19834,8 +19844,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     updateSidebarKartNav();
     document.getElementById('elden-tarih').value = localDateStr(new Date());
     document.getElementById('islem-tarih').value = localDateStr(new Date());
-    const preview = document.getElementById('para-birimi-preview');
-    if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
+    updateParaBirimiPreview();
     return; // gDriveInit'i overlay'den sonra çağır
   }
   gDriveInit();
@@ -19856,8 +19865,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('islem-tarih').value = localDateStr(new Date());
 
   // Para birimi önizleme
-  const preview = document.getElementById('para-birimi-preview');
-  if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
+  updateParaBirimiPreview();
 
   // ── Hash tabanlı sayfa yönlendirme ──────────────────────────
   const VALID_PAGES = ['ozet','kartlar','islemler','extreler','mevduat','hesaplar',
