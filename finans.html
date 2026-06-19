@@ -3432,27 +3432,70 @@ select option { background: #0d1120; color: #f0f4ff; }
   .modal {
     width: 100% !important;
     max-width: 100% !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 8px 18px 32px !important;
-    max-height: 88vh !important;
+    border-radius: 22px 22px 0 0 !important;
+    padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
+    max-height: 92vh !important;
+    min-height: 30vh !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     animation: mobileSheetIn .28s cubic-bezier(.34,1.1,.64,1) !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   @keyframes mobileSheetIn {
-    from { opacity: 0; transform: translateY(60px); }
+    from { opacity: 0; transform: translateY(80px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   /* Pull handle on modal */
   .modal::before {
     content: '';
     display: block;
-    width: 36px;
+    width: 40px;
     height: 4px;
-    background: rgba(255,255,255,.18);
+    background: rgba(255,255,255,.2);
     border-radius: 99px;
-    margin: 0 auto 18px;
+    margin: 10px auto 6px;
     flex-shrink: 0;
+  }
+  /* Modal header sticky */
+  .modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background: inherit !important;
+    backdrop-filter: blur(16px) !important;
+    margin: 0 !important;
+    padding: 14px 18px 14px !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    flex-shrink: 0 !important;
+  }
+  /* Modal body scrollable */
+  .modal-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 18px !important;
+    overscroll-behavior: contain !important;
+  }
+  /* Modal footer sticky bottom */
+  .modal-footer {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    background: inherit !important;
+    backdrop-filter: blur(16px) !important;
+    padding: 12px 18px !important;
+    border-top: 1px solid rgba(255,255,255,.07) !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .modal-footer .btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    min-height: 46px !important;
+    font-size: 14px !important;
   }
 
   /* ── Tab bar: yatay scroll ── */
@@ -4786,10 +4829,7 @@ html[data-theme="light"] .input-suffix { color: rgba(15,22,41,.35); }
   /* Compact table on mobile: allow 2-line wrap */
   .tbl-mobile-compact th, .tbl-mobile-compact td { white-space: normal !important; font-size: 11.5px !important; }
 
-  /* Better modal inner padding */
-  .modal-body { padding: 16px 18px !important; }
-  .modal-footer { padding: 12px 18px !important; }
-  .modal-header { padding: 18px 18px 14px !important; }
+  /* Better modal inner padding — handled by sticky sheet system above */
 
   /* Card stacks: no gap */
   .card-stack .card:not(:last-child) { margin-bottom: 6px !important; border-radius: 14px 14px 4px 4px !important; }
@@ -12397,17 +12437,38 @@ function gunlukVadeliyeKoy(hesapId) {
   // Tutar = hesabın tüm bakiyesi
   setMoneyInput('mev-tutar', hesap.bakiye);
 
-  // Faiz oranı: bu bankadan açılmış en güncel mevduat kaydının oranını öner
-  if(hesap.banka) {
-    const gecmis = (DB.mevduatlar||[])
-      .filter(m=>m.banka===hesap.banka && m.faizOran)
-      .sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''));
-    if(gecmis.length) document.getElementById('mev-faiz').value = gecmis[0].faizOran;
+  // ── Faiz & stopaj: önce bu bankadan en güncel GÜNLÜK vadeli kaydına bak,
+  //    yoksa bu bankadan herhangi bir mevduat, o da yoksa genel en güncel
+  const todayStr = localDateStr(new Date());
+  const tumMev = (DB.mevduatlar||[]).filter(m=>m.faizOran);
+  const bankaMev   = tumMev.filter(m=>m.banka===hesap.banka);
+  const gunlukMev  = bankaMev.filter(m=>m.gunluk);
+  const kaynak =
+    (gunlukMev.sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''))[0]) ||
+    (bankaMev .sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''))[0]) ||
+    (tumMev   .sort((a,b)=>(b.baslangic||'').localeCompare(a.baslangic||''))[0]);
+  if(kaynak) {
+    document.getElementById('mev-faiz').value = kaynak.faizOran;
+    if(kaynak.stopaj != null) document.getElementById('mev-stopaj').value = kaynak.stopaj;
+  } else {
+    // Stopaj oranını güncel tablodan doldur (faiz boş kalır)
+    document.getElementById('mev-stopaj').value = getStopajOrani(todayStr);
   }
 
-  // Günlük vadeli mevduat: vade sabit 1 gün, her gün ana para + faiz aynı vadesiz hesaba döner
+  // ── Vade: bugünden sonraki ilk iş gününe kaç takvim günü varsa
+  const tatilSet = getTatilSet();
+  const bugun = new Date();
+  // Bugünden bir gün sonrasından başlayarak ilk iş gününü bul
+  let kontrol = new Date(bugun);
+  kontrol.setDate(kontrol.getDate() + 1);
+  while(!isIsBgunu(kontrol, tatilSet)) {
+    kontrol.setDate(kontrol.getDate() + 1);
+  }
+  const vadeSonuMs = kontrol.getTime() - new Date(bugun.getFullYear(), bugun.getMonth(), bugun.getDate()).getTime();
+  const vadeGun = Math.round(vadeSonuMs / (1000*60*60*24));
   const vadeInp = document.getElementById('mev-vade');
-  if(vadeInp) vadeInp.value = 1;
+  if(vadeInp) vadeInp.value = vadeGun;
+
   const kumulatifInp = document.getElementById('mev-kumulatif');
   if(kumulatifInp) kumulatifInp.checked = true;
 
@@ -12418,7 +12479,8 @@ function gunlukVadeliyeKoy(hesapId) {
 
   calcMevduat();
 
-  showToast(`${hesap.ad} — ${fmtCur(hesap.bakiye, hesap.paraBirimi||'TRY')} günlük vadeliye hazır, faiz oranını kontrol edip kaydedin`, 'info');
+  const gunTip = vadeGun === 1 ? '1 gün' : `${vadeGun} gün (hafta sonu/tatil aşımı)`;
+  showToast(`${hesap.ad} — ${fmtCur(hesap.bakiye, hesap.paraBirimi||'TRY')} günlük vadeliye hazır · Vade: ${gunTip}`, 'info');
 }
 
 function _fillMevHesapSel(selectedId) {
@@ -16881,16 +16943,18 @@ function getKontrat() {
 }
 
 function kontratAylariHesapla(k, yil) {
-  // Kontrat başlangıç ve bitiş ayları
-  const baslangic = k.baslangic ? k.baslangic.slice(0,7) : null;
-  const bitis     = k.bitis     ? k.bitis.slice(0,7)     : null;
+  // Kontrat başlangıç ve bitiş — tam tarih (YYYY-MM-DD) ile karşılaştır
+  const baslangic    = k.baslangic || null;
+  const bitis        = k.bitis     || null;
+  const baslangicAy  = baslangic ? baslangic.slice(0,7) : null;
+  const bitisAy      = bitis     ? bitis.slice(0,7)     : null;
   const aylar = [];
   for(let ay=0; ay<12; ay++) {
     const mon = String(ay+1).padStart(2,'0');
     const ayStr = yil+'-'+mon;
-    // Kontrat aktif mi bu ayda?
-    if(baslangic && ayStr < baslangic) continue;
-    if(bitis && ayStr > bitis) continue;
+    // Ay bazlı hızlı eleme
+    if(baslangicAy && ayStr < baslangicAy) continue;
+    if(bitisAy     && ayStr > bitisAy)     continue;
     // Ödeme tarihi hesapla — kısa ay davranışı
     const gun = k.gun || 1;
     const lastDay = new Date(yil, ay+1, 0).getDate();
@@ -16916,6 +16980,9 @@ function kontratAylariHesapla(k, yil) {
     const payTarih = nextMon
       ? (yil+'-'+String(ay+2).padStart(2,'0')+'-01').replace(/(\d{4})-13-/, s => (yil+1)+'-01-')
       : ayStr+'-'+String(payGun).padStart(2,'0');
+    // Tam tarih kontrolü: başlangıç/bitiş ayında ödeme günü aralık içinde mi?
+    if(baslangic && ayStr === baslangicAy && payTarih < baslangic) continue;
+    if(bitis     && ayStr === bitisAy     && payTarih > bitis)     continue;
     aylar.push({ ay: ayStr, tarih: payTarih, tutar: k.tutar });
   }
   return aylar;
@@ -23964,6 +24031,16 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
 // ═══════════════════════════════════════════════════════════════
 
 function openTransferModal() {
+  // Kaynak olarak kullanılabilecek (bakiyesi > 0) hesap/nakit var mı kontrol et
+  const aktifHesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
+  const varKaynakHesap = aktifHesaplar.some(h => (h.bakiye || 0) + (h.kmhLimit || 0) > 0);
+  const nakitBakiyeler = DB._nakitBakiye || {};
+  const varKaynakNakit = Object.values(nakitBakiyeler).some(b => b > 0);
+  if (!varKaynakHesap && !varKaynakNakit) {
+    showToast('Transfer yapılabilecek bakiyesi olan hesap bulunamadı', 'error');
+    return;
+  }
+
   const inp = document.getElementById('transfer-tarih');
   if (inp) inp.value = localDateStr(new Date());
   document.getElementById('transfer-kaynak-bilgi').innerHTML = '';
@@ -24179,8 +24256,17 @@ function onTransferKaynakChange() {
     const hesap = (DB.hesaplar || []).find(h => h.id === info.id);
     if (hesap) {
       pb = hesap.paraBirimi || 'TRY';
-      const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
-      infoEl.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+      const bakiye = hesap.bakiye || 0;
+      const kmhLimit = hesap.kmhLimit || 0;
+      const kullanilab = bakiye + kmhLimit;
+      const bakiyeColor = bakiye >= 0 ? 'var(--teal)' : 'var(--danger)';
+      const kullanilabColor = kullanilab > 0 ? 'var(--gold)' : 'var(--danger)';
+      let html = `Bakiye: <span class="mono" style="color:${bakiyeColor};font-weight:700">${fmtCur(bakiye, pb)}</span>`;
+      if (kmhLimit > 0) {
+        html += ` &nbsp;·&nbsp; <span style="color:var(--text3)">KMH: <span class="mono" style="color:var(--violet);font-weight:700">${fmtCur(kmhLimit, pb)}</span></span>`;
+        html += ` &nbsp;·&nbsp; <span style="color:var(--text3)">Kullanılabilir: <span class="mono" style="color:${kullanilabColor};font-weight:700">${fmtCur(kullanilab, pb)}</span></span>`;
+      }
+      infoEl.innerHTML = html;
     } else {
       infoEl.innerHTML = '';
     }
@@ -24208,8 +24294,14 @@ function onTransferHedefChange() {
     const hesap = (DB.hesaplar || []).find(h => h.id === info.id);
     if (hesap) {
       const pb = hesap.paraBirimi || 'TRY';
-      const color = (hesap.bakiye || 0) >= 0 ? 'var(--teal)' : 'var(--danger)';
-      infoEl.innerHTML = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(hesap.bakiye || 0, pb)}</span>`;
+      const bakiye = hesap.bakiye || 0;
+      const kmhLimit = hesap.kmhLimit || 0;
+      const color = bakiye >= 0 ? 'var(--teal)' : 'var(--danger)';
+      let html = `Bakiye: <span class="mono" style="color:${color};font-weight:700">${fmtCur(bakiye, pb)}</span>`;
+      if (kmhLimit > 0) {
+        html += ` &nbsp;·&nbsp; <span style="color:var(--text3)">KMH: <span class="mono" style="color:var(--violet);font-weight:700">${fmtCur(kmhLimit, pb)}</span></span>`;
+      }
+      infoEl.innerHTML = html;
     } else {
       infoEl.innerHTML = '';
     }
