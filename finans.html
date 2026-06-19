@@ -7103,18 +7103,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   </div>
 
   <div id="tab-para-birimi-yonetim" style="display:none">
-    <div class="info-box">Gösterim para birimini seçin ve sisteme özel para birimleri ekleyip yönetin.</div>
-    <div class="card" style="max-width:520px;margin-bottom:16px">
-      <div class="card-header"><span class="card-title">💱 Gösterim Para Birimi</span></div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div style="flex:1;min-width:180px">
-          <label>Gösterim Birimi</label>
-          <select id="para-birimi-select" onchange="setParaBirimi(this.value)" style="margin-top:4px"></select>
-        </div>
-        <div id="para-birimi-preview" style="font-family:var(--mono);font-size:22px;color:var(--accent);padding:8px 0"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart bazlı para birimi kart ayarından gelir. Bu seçim genel gösterim ve para birimi tanımlı olmayan işlemler için geçerlidir.</div>
-    </div>
+    <div class="info-box">Sistemde kullanılabilecek para birimlerini buradan ekleyip yönetin. Genel gösterim para birimi seçimi artık <b>🎨 Görüntü Ayarları</b> sekmesinde yer alıyor.</div>
     <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openParaBirimiModal()">+ Para Birimi Ekle</button></div>
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>İkon</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
   </div>
@@ -7461,8 +7450,22 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
       </div>
 
+      <!-- GÖSTERİM PARA BİRİMİ -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><span class="card-title">💱 Gösterim Para Birimi</span></div>
+        <div>
+          <label>Gösterim Birimi</label>
+          <select id="para-birimi-select" onchange="setParaBirimi(this.value)" style="margin-top:4px"></select>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart bazlı para birimi kart ayarından gelir. Bu seçim genel gösterim ve para birimi tanımlı olmayan işlemler için geçerlidir. Yeni para birimi tanımlamak için <b>💱 Para Birimi Yönetimi</b> sekmesini kullanın.</div>
+        <div style="margin-top:12px;background:var(--surface3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
+          <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Önizleme</span>
+          <div id="para-birimi-preview" style="font-size:22px;color:var(--accent2);margin-top:4px"></div>
+        </div>
+      </div>
+
       <!-- PARA FORMATI -->
-      <div class="card" style="margin-bottom:0;grid-column:1/-1">
+      <div class="card" style="margin-bottom:0">
         <div class="card-header"><span class="card-title">💰 Para Birimi Gösterim Formatı</span></div>
         <div class="form-row cols-3" style="align-items:end">
           <div>
@@ -7495,10 +7498,10 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         <div style="margin-top:10px">
           <label>Hızlı Seçim</label>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',','.','2')">TR Stili — 1.234,56</button>
-            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat('.',',','2')">US Stili — 1,234.56</button>
-            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',',' ','2')">EU Stili — 1 234,56</button>
-            <button class="btn btn-ghost btn-sm btn-act" onclick="setMoneyFormat(',','.','0')">Tam — 1.235</button>
+            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',','.','2')">TR Stili — 1.234,56</button>
+            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat('.',',','2')">US Stili — 1,234.56</button>
+            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',',' ','2')">EU Stili — 1 234,56</button>
+            <button class="btn btn-ghost btn-sm" onclick="setMoneyFormat(',','.','0')">Tam — 1.235</button>
           </div>
         </div>
         <div style="margin-top:12px;background:var(--surface3);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--mono)">
@@ -7512,11 +7515,6 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
       <input type="checkbox" id="ga-tarih-giris-kolay" onchange="autoSaveGoruntuAyarlari()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
       <label for="ga-tarih-giris-kolay" style="cursor:pointer;margin:0;font-size:13px">Hızlı tarih girişi <span style="color:var(--text3);font-size:11px">— ayraç olmadan yaz: <span style="font-family:var(--mono);color:var(--accent2)">010125</span> veya <span style="font-family:var(--mono);color:var(--accent2)">01012025</span> otomatik <span id="ga-tarih-kolay-ornek" style="color:var(--teal);font-family:var(--mono)">01/01/2025</span> olur</span></label>
-    </div>
-
-    <div style="margin-top:8px;padding:10px 14px;background:var(--surface3);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
-      <input type="checkbox" id="ga-show-weekday" onchange="autoSaveGoruntuAyarlari()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
-      <label for="ga-show-weekday" style="cursor:pointer;margin:0;font-size:13px">Tarihlerde gün adını göster <span style="color:var(--text3);font-size:11px">(ör. Pazartesi, 01/01/2025)</span></label>
     </div>
 
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
@@ -9959,8 +9957,6 @@ function loadGoruntuAyarlariUI() {
   if(oa) oa.value = FORMAT_CONFIG.ondalikAyrac || ',';
   if(ba) ba.value = FORMAT_CONFIG.binlikAyrac !== undefined ? FORMAT_CONFIG.binlikAyrac : '.';
   if(ob) ob.value = FORMAT_CONFIG.ondalikBasamak || '2';
-  const gwEl = document.getElementById('ga-show-weekday');
-  if(gwEl) gwEl.checked = FORMAT_CONFIG.showWeekday !== false;
   const gkEl = document.getElementById('ga-tarih-giris-kolay');
   if(gkEl) gkEl.checked = FORMAT_CONFIG.tarihGirisKolay !== false;
   // Saat ayraç select'ini senkronize et
@@ -10062,8 +10058,6 @@ function saveGoruntuAyarlari(silent) {
   FORMAT_CONFIG.binlikAyrac  = (document.getElementById('ga-binlik-ayrac')||{}).value;
   if(FORMAT_CONFIG.binlikAyrac === undefined) FORMAT_CONFIG.binlikAyrac = '.';
   FORMAT_CONFIG.ondalikBasamak = (document.getElementById('ga-ondalik-basamak')||{}).value || '2';
-  const gwEl = document.getElementById('ga-show-weekday');
-  if(gwEl) FORMAT_CONFIG.showWeekday = gwEl.checked;
   const gkEl = document.getElementById('ga-tarih-giris-kolay');
   if(gkEl) FORMAT_CONFIG.tarihGirisKolay = gkEl.checked;
   saveFormatConfig();
@@ -10086,7 +10080,7 @@ function autoSaveGoruntuAyarlari() {
 }
 
 function resetGoruntuAyarlari() {
-  FORMAT_CONFIG = { tarihFormat:'dd/MM/yyyy', saatFormat:'HH:mm', ondalikAyrac:',', binlikAyrac:'.', ondalikBasamak:'2', showWeekday:true, tarihGirisKolay:true };
+  FORMAT_CONFIG = { tarihFormat:'dd/MM/yyyy', saatFormat:'HH:mm', ondalikAyrac:',', binlikAyrac:'.', ondalikBasamak:'2', tarihGirisKolay:true };
   saveFormatConfig();
   loadGoruntuAyarlariUI();
   updateFmtCurOverride();
@@ -10518,10 +10512,11 @@ function showTab(id, btn) {
   if(btn) btn.classList.add('active');
   if(id==='tab-para-birimi' || id==='tab-para-birimi-yonetim') {
     populateCurrencySelects();
-    const preview = document.getElementById('para-birimi-preview');
-    if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
   }
   if(id==='tab-goruntu-ayarlari') {
+    populateCurrencySelects();
+    const preview = document.getElementById('para-birimi-preview');
+    if(preview) preview.textContent = 'Örnek: ' + fmtCur(1234567.89, defaultCurrency);
     loadGoruntuAyarlariUI();
   }
   if(id==='tab-kisiler') {
