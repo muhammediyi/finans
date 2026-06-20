@@ -8700,6 +8700,24 @@ function localDateStr(d) {
 
 function uid() { return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 
+// Tarih input'larının üzerinde görsel bir "fake" text-input overlay'i var
+// (bkz. date-fake-input mekanizması). JS ile sadece el.value="..." atamak
+// gerçek <input type="date">'i günceller ama overlay'i güncellemez —
+// bu yüzden tarih inputlarına programatik değer atarken bu yardımcıyı kullan.
+function setDateInputValue(elOrId, value) {
+  const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+  if(!el) return;
+  el.value = value || '';
+  if(el._dateFake) {
+    if(!value) {
+      el._dateFake.value = '';
+    } else {
+      try { el._dateFake.value = fmtDate(value); } catch(e) { el._dateFake.value = value; }
+    }
+    el._dateFake.style.color = '';
+  }
+}
+
 // ── SELECT PLACEHOLDER YÖNETİMİ ──────────────────────────
 // Boş value="" option'ı disabled+hidden placeholder olarak işler,
 // seçime göre rengi günceller.
@@ -10014,6 +10032,20 @@ function editIslem(id) {
   }
 
   document.getElementById('modal-islem').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
+
+  // Tarih input'larının görsel overlay'i (date-fake-input), editIslem modalı
+  // openModal() üzerinden açmadığı için otomatik senkronize olmuyor — bu yüzden
+  // burada manuel senkronize ediyoruz. onchange tetiklemeden (calcTaksit'i
+  // tekrar çağırıp taksit planını sıfırlamasın diye) sadece overlay metnini güncelliyoruz.
+  setTimeout(() => {
+    if(typeof window._applyDateOverlays === 'function') window._applyDateOverlays();
+    const modalEl = document.getElementById('modal-islem');
+    if(modalEl) {
+      modalEl.querySelectorAll('input[type="date"]').forEach(inp => {
+        if(typeof setDateInputValue === 'function') setDateInputValue(inp, inp.value);
+      });
+    }
+  }, 90);
 }
 
 
@@ -21134,21 +21166,19 @@ function renderOzetProvizyonUyarilar() {
   // En yeni işlem en üstte
   eksikler.sort((a,b) => (b.tarih||'').localeCompare(a.tarih||''));
 
-  el.innerHTML = `<div class="card" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.04)">
-    <div class="card-header" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:18px">🧾</span>
-        <div>
-          <div class="card-title" style="color:var(--violet)">Provizyon Tarihi Girilmemiş İşlemler</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:1px">${eksikler.length} işlem için ekstreye yansıma tarihi eksik</div>
-        </div>
+  el.innerHTML = `<div class="card" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.04);padding:10px 12px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:14px">🧾</span>
+      <div style="flex:1;min-width:0">
+        <div class="card-title" style="color:var(--violet);font-size:12.5px;line-height:1.3;text-transform:none;letter-spacing:normal">Provizyon Tarihi Girilmemiş İşlemler</div>
+        <div style="font-size:10px;color:var(--text3)">${eksikler.length} işlem</div>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="provizyonUyariTumunuGizle()" style="font-size:11px">Tümünü Sonraya Bırak</button>
+      <button class="btn btn-ghost btn-sm" onclick="provizyonUyariTumunuGizle()" style="font-size:10px;padding:3px 8px;min-height:auto">Tümünü Sonraya Bırak</button>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px" id="provizyon-uyari-liste">
-      ${eksikler.slice(0,8).map(i => _provizyonUyariSatiri(i)).join('')}
+    <div style="display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto" id="provizyon-uyari-liste">
+      ${eksikler.slice(0,12).map(i => _provizyonUyariSatiri(i)).join('')}
     </div>
-    ${eksikler.length > 8 ? `<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px 4px 0">+${eksikler.length-8} işlem daha — tüm liste için İşlemler sayfasına gidin</div>` : ''}
+    ${eksikler.length > 12 ? `<div style="font-size:10px;color:var(--text3);text-align:center;padding:4px 0 0">+${eksikler.length-12} işlem daha — İşlemler sayfasından girebilirsiniz</div>` : ''}
   </div>`;
 }
 
@@ -21159,7 +21189,7 @@ function _provizyonUyariSatiri(i) {
   const tutarStr = (typeof fmtCur === 'function') ? fmtCur(i.tutar, i.paraBirimi || 'TRY') : i.tutar;
   const tarihStr = (typeof fmtDate === 'function') ? fmtDate(i.tarih) : i.tarih;
   const aciklamaSafe = (i.aciklama || '—').replace(/"/g,'&quot;');
-  const taksitBadge = (i.taksit||1) > 1 ? `<span class="badge badge-warn" style="font-size:9.5px;padding:1px 6px">${i.taksit} Taksit</span>` : '';
+  const taksitBadge = (i.taksit||1) > 1 ? ` · ${i.taksit} Taksit` : '';
 
   // Öngörülen provizyon tarihi (varsa)
   const gunFarki = (typeof tahminProvizyonGunFarki === 'function') ? tahminProvizyonGunFarki(i.kart) : null;
@@ -21170,19 +21200,17 @@ function _provizyonUyariSatiri(i) {
     onerilenTarih = localDateStr(dt);
   }
 
-  return `<div class="provizyon-uyari-row" id="prov-row-${i.id}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
-    <span style="width:7px;height:7px;border-radius:50%;background:${kartRenk};flex-shrink:0"></span>
-    <div style="flex:1;min-width:160px">
-      <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <b>${kartAd}</b><span style="color:var(--text3)">·</span>
-        <span title="${aciklamaSafe}" style="overflow:hidden;text-overflow:ellipsis;max-width:180px;white-space:nowrap">${aciklamaSafe}</span>
-        ${taksitBadge}
-      </div>
-      <div style="font-size:10.5px;color:var(--text3);margin-top:2px">İşlem: ${tarihStr} · ${tutarStr}</div>
+  return `<div class="provizyon-uyari-row" id="prov-row-${i.id}" style="display:flex;align-items:center;gap:6px;padding:4px 7px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.05)">
+    <span style="width:6px;height:6px;border-radius:50%;background:${kartRenk};flex-shrink:0"></span>
+    <div style="flex:1;min-width:0;overflow:hidden">
+      <span style="font-size:11px;color:var(--text);font-weight:600">${kartAd}</span>
+      <span style="font-size:10.5px;color:var(--text3)"> · ${tarihStr} · </span>
+      <span title="${aciklamaSafe}" style="font-size:10.5px;color:var(--text2)">${aciklamaSafe}</span>
+      <span style="font-size:10px;color:var(--text3)"> · ${tutarStr}${taksitBadge}</span>
     </div>
-    <input type="date" id="prov-input-${i.id}" value="${onerilenTarih}" style="font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;width:140px">
-    <button class="btn btn-primary btn-sm" style="font-size:11px;padding:5px 10px" onclick="provizyonUyariKaydet('${i.id}')">✓ Kaydet</button>
-    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:5px 8px" onclick="provizyonUyariGizle('${i.id}')" title="Sonra hatırlat">Sonra</button>
+    <input type="date" id="prov-input-${i.id}" value="${onerilenTarih}" style="font-size:11px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:3px 6px;width:118px;flex-shrink:0">
+    <button class="btn btn-primary btn-sm" style="font-size:10px;padding:3px 7px;min-height:auto;flex-shrink:0" onclick="provizyonUyariKaydet('${i.id}')">✓</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 6px;min-height:auto;flex-shrink:0" onclick="provizyonUyariGizle('${i.id}')" title="Sonra hatırlat">✕</button>
   </div>`;
 }
 
