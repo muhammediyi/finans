@@ -3807,6 +3807,14 @@ input.money-input:focus {
 }
 html[data-theme="light"] .money-wrap::before { color: var(--gold-dim); opacity: .8; }
 html[data-theme="light"] .money-wrap::after  { color: var(--text2); opacity: .6; }
+/* Nakit Avans tavan miktar inputları — daha ferah, sağ etiket yok (para birimi zaten kart başlığında) */
+input.money-input.na-tavan-input {
+  height: 44px;
+  font-size: 14.5px;
+  padding-left: 32px !important;
+  padding-right: 14px !important;
+  border-radius: 8px;
+}
 /* money-input data-decimals=0 → tam sayı, daha büyük font */
 input.money-input[data-decimals="0"] {
   font-size: 15px;
@@ -4715,8 +4723,8 @@ html[data-theme="light"] .mob-theme-toggle {
   border: 1px solid rgba(196,122,0,.25) !important;
   color: #b36800 !important;
 }
-/* ── Action buton ikonları ─────────────────────────────── */
-.btn-icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
+/* ── Action buton ikonları (metin önüne otomatik eklenen ikon span'i) ── */
+.btn-prefix-icon { display: inline-block; font-size: 14px; line-height: 1; flex-shrink: 0; width: auto; height: auto; padding: 0; border: none; background: none; border-radius: 0; }
 /* ═══════════════════════════════════════════════════════════
    MOBİL TABLO KARTI v37 — Yatay scroll yok, kart görünümü
    ═══════════════════════════════════════════════════════════ */
@@ -5804,7 +5812,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
           <span id="nakit-avans-tavan-status" style="font-size:11px;color:var(--teal)"></span>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Her para birimi için maksimum çekilebilir miktar belirleyin. Bu miktar, oranla hesaplanan limitin <b>altında</b> kalır — ikisinden küçük olan geçerlidir. Boş bırakılan para biriminde tavan uygulanmaz.</div>
-        <div id="nakit-avans-tavan-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
+        <div id="nakit-avans-tavan-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px"></div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center">
@@ -14368,10 +14376,13 @@ function renderNakitAvansTavanlar() {
   grid.innerHTML = naParaBirimleri.map(code => {
     const info = ALL_CURRENCIES.find(c=>c.code===code);
     const sym = (info && info.symbol) || code;
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
-      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px">${info?info.flag+' ':''}${code}</div>
-      <div class="money-wrap" data-symbol="${sym}" data-code="${code}" data-own-currency="1">
-        <input id="na-tavan-${code}" type="text" class="money-input" data-decimals="2" placeholder="Sınırsız"
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+        <span style="font-size:17px;line-height:1">${info?info.flag:'💱'}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text);letter-spacing:.02em">${code}</span>
+      </div>
+      <div class="money-wrap" data-symbol="${sym}" data-code="" data-own-currency="1">
+        <input id="na-tavan-${code}" type="text" class="money-input na-tavan-input" data-decimals="2" placeholder="Sınırsız"
           data-cur="${code}" oninput="autoSaveNakitAvansTavan(this)">
       </div>
     </div>`;
@@ -19914,7 +19925,7 @@ document.addEventListener('click', function(e) {
   function addBtnIcons() {
     document.querySelectorAll('.btn:not([data-icon-done])').forEach(btn => {
       // Zaten ikon varsa atla
-      if (btn.querySelector('.btn-icon') || btn.querySelector('svg') || btn.querySelector('.nav-icon')) return;
+      if (btn.querySelector('.btn-prefix-icon') || btn.querySelector('svg') || btn.querySelector('.nav-icon')) return;
       const text = btn.textContent.trim();
       // Metin zaten bir emoji/sembol ile başlıyorsa (elle eklenmiş ikon) tekrar ikon ekleme
       if (/^[\u{1F000}-\u{1FFFF}\u{2190}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u2700-\u27BF]/u.test(text)) {
@@ -19931,9 +19942,9 @@ document.addEventListener('click', function(e) {
       if (!icon) return;
       btn.dataset.iconDone = '1';
       const span = document.createElement('span');
-      span.className = 'btn-icon';
+      span.className = 'btn-prefix-icon';
       span.textContent = icon;
-      span.style.cssText = 'font-size:13px;line-height:1;flex-shrink:0;';
+      span.style.cssText = 'font-size:13px;line-height:1;flex-shrink:0;display:inline-block;width:auto;height:auto;padding:0;border:none;background:none;border-radius:0;';
       btn.prepend(span);
     });
   }
