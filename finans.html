@@ -295,6 +295,9 @@ html[data-theme="light"] .page-header h1 {
   background: linear-gradient(135deg, rgba(15,22,41,.92) 0%, rgba(15,22,41,.5) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
+html[data-theme="light"] .page-header h1 .ph-icon {
+  background: none; -webkit-background-clip: initial; -webkit-text-fill-color: initial; background-clip: initial;
+}
 html[data-theme="light"] .page-header p { color: rgba(15,22,41,.5); }
 /* Stat cards */
 html[data-theme="light"] .stat {
@@ -613,8 +616,6 @@ html[data-theme="light"] .mkp-name { color: rgba(15,22,41,.9); }
 html[data-theme="light"] .mkp-meta { color: rgba(15,22,41,.4); }
 html[data-theme="light"] .mkp-item-wrap:hover { border-color: rgba(0,0,0,.08); background: rgba(0,0,0,.02); }
 html[data-theme="light"] .mkp-item-wrap.selected { border-color: rgba(196,122,0,.3); background: rgba(196,122,0,.05); }
-/* OD popup */
-html[data-theme="light"] .od-popup { background: #ffffff; border-color: rgba(0,0,0,.1); box-shadow: 0 12px 40px rgba(0,0,0,.18); }
 /* Mobile bottom nav */
 html[data-theme="light"] .mobile-bottom-nav {
   background: rgba(255,255,255,.97) !important;
@@ -1331,13 +1332,6 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 /* ─── OD BADGE / STATUS ───────────────────────────────── */
 .od-badge { display: inline-flex; align-items: center; gap: 4px; outline: none; }
 .od-badge:hover { opacity:.8; }
-.od-popup { position: fixed; z-index: 9999; padding: 12px; min-width: 240px; max-width: calc(100vw - 16px); max-height: calc(100vh - 32px); overflow-y: auto; animation: modalBgIn .15s ease; }
-.od-popup-title { font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px; }
-.od-popup-row { display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;transition:background .12s;font-size:12.5px;font-weight:500; }
-.od-popup-row:hover { background:var(--surface2); }
-.od-popup-sep { height:1px;background:var(--border);margin:6px 0; }
-.od-popup-input { width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:6px 9px;font-size:12px;margin-top:4px;box-sizing:border-box; }
-.od-popup-label { font-size:11px;color:var(--text3);margin-top:8px;margin-bottom:2px;display:block; }
 /* ─── TOGGLE ──────────────────────────────────────────── */
 .toggle-wrap { gap: 10px; margin-bottom: 4px; }
 .toggle-switch { position:relative; width:36px; height:20px; flex-shrink:0; }
@@ -1515,6 +1509,12 @@ body::after {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+.page-header h1 .ph-icon {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
 }
 .page-header p {
   font-size: 12px;
@@ -2075,6 +2075,12 @@ html[data-theme="light"] .theme-toggle-btn:hover { background: rgba(0,0,0,.07); 
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+.page-header h1 .ph-icon {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
 }
 .page-header p { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 5px; font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 /* ─── STAT CARDS ─────────────────────────────────────────── */
@@ -2797,6 +2803,12 @@ body::before {
   letter-spacing: .07em;
   text-transform: uppercase;
 }
+.page-header h1 .ph-icon {
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+}
 /* ── STAT CARDS — Deep glow ──────────────────────────────── */
 /* (Ana tanım en üstte — hover glow ek efektleri) */
 .stat.s-blue:hover   { box-shadow: 0 12px 36px rgba(0,0,0,.4), 0 0 40px rgba(56,189,248,.07); }
@@ -2947,8 +2959,6 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .info-box { background: rgba(56,189,248,.04); border: 1px solid rgba(56,189,248,.12); border-radius: 10px; padding: 12px 15px; font-size: 12px; color: rgba(240,244,255,.48); line-height: 1.65; }
 .info-box.warn { background: rgba(251,146,60,.04); border-color: rgba(251,146,60,.14); }
 .info-box.success { background: rgba(45,212,191,.04); border-color: rgba(45,212,191,.14); }
-/* ── OD POPUP ────────────────────────────────────────────── */
-.od-popup { border-radius: 13px; border: 1px solid rgba(255,255,255,.1); background: rgba(11,14,26,.99); backdrop-filter: blur(32px); box-shadow: 0 22px 64px rgba(0,0,0,.65); }
 /* ── EXTRE CARD ──────────────────────────────────────────── */
 .extre-card { background: linear-gradient(148deg, rgba(15,19,34,.82) 0%, rgba(11,14,24,.88) 100%); border: 1px solid rgba(255,255,255,.052); border-radius: 12px; padding: 18px; }
 /* ── TAKSIT ──────────────────────────────────────────────── */
@@ -5503,7 +5513,12 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <button class="tab-btn" onclick="showTab('tab-nakit-avans',this)">💵 Nakit Avans</button>
   </div>
   <div id="tab-bankalar">
-    <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openBankaModal()">+ Banka Ekle</button></div>
+    <div class="action-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openBankaModal()">+ Banka Ekle</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportBankalarJSON()" title="Bankalar tablosunu JSON dosyası olarak indir">↗ JSON Dışa Aktar</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('banka-import-file').click()" title="JSON dosyasından banka içe aktar">↙ JSON İçe Aktar</button>
+      <input type="file" id="banka-import-file" accept=".json,application/json" style="display:none" onchange="importBankalarJSON(event)">
+    </div>
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Tam Ad</th><th>Kısa Ad</th><th>IBAN Kodu</th><th>Şubeler</th><th></th></tr></thead><tbody id="banka-tbody"></tbody></table></div></div>
   </div>
   <div id="tab-hesap-turleri" style="display:none">
@@ -8650,68 +8665,6 @@ function phSet(selOrId, label, currentVal, emptyLabel) {
   phUpdate(sel);
 }
 
-// DOM hazır olunca tüm static select'leri başlat
-function initAllSelectPlaceholders() {
-  const map = [
-    // [id, placeholder metni]
-    ['elden-tur',            null],   // değeri var, ph gerekmez
-    ['elden-yontem',         null],
-    ['elden-hesap',          'Hesap seçin…'],
-    ['elden-kisi',           'Kişi seçin…'],
-    ['elden-kategori',       'Kategori seçin…'],
-    ['islem-kategori',       'Kategori seçin…'],
-    ['islem-kart',           'Kart / Hesap seçin…'],
-    ['islem-para-birimi',    null],
-    ['maas-hesap',           'Hesap seçin…'],
-    ['maas-tur',             null],
-    ['kira-hesap',           'Hesap seçin…'],
-    ['kira-tur',             null],
-    ['mev-hesap-id',         'Hesap seçin…'],
-    ['mev-strateji',         'Strateji seçin…'],
-    ['hesap-banka',          'Banka seçin…'],    ['mev-para-birimi',      null],
-    ['kira-para-birimi-manual', null],
-    ['maas-para-birimi-manual', null],
-    ['hesap-banka',          'Banka seçin…'],
-    ['hesap-tur',            'Hesap türü…'],
-    ['hesap-para-birimi',    'Para birimi…'],
-    ['hesap-durum',          null],
-    ['kmhkredi-kmh',         'KMH hesabı seçin…'],
-    ['kredi-banka',          'Banka seçin…'],
-    ['kredi-tur',            'Kredi türü seçin…'],
-    ['kart-banka',           'Banka seçin…'],
-    ['kart-tip',             'Ürün tipi seçin…'],
-    ['filter-kart',          'Tüm kartlar'],
-    ['extre-kart-filter',    'Kart seçin…'],
-    ['kat-tur',              null],
-    ['kira-depozito-durum',  null],
-    ['kira-gun-kisa-ay-davranis', null],
-    ['maas-gun-kisa-ay-davranis', null],
-    ['kart-altyapi',             'Altyapı seçin…'],
-    ['kart-varsayilan-pb',       'Para birimi seçin…'],
-    ['kart-odeme-hesap',         'Hesap seçin…'],
-    ['kira-kisi',                'Kişi seçin…'],
-    ['kira-yontem',              null],
-    ['kira-depozito-pb',         null],
-    ['maas-kisi',                'Kişi seçin…'],
-    ['maas-yontem',              null],
-    ['elden-para-birimi',        null],
-    ['na-kart',                  'Kart seçin…'],
-    ['na-para-birimi',           null],
-    ['na-tavan-pb',              null],
-    ['mev-kaynak-hesap-id',      'Kaynak hesap seçin…'],
-    ['mev-vadesiz-hesap-id',     'Vadesiz hesap seçin…'],
-    ['ab-kategori',              'Kategori seçin…'],
-    ['ab-periyot',               'Periyot seçin…'],
-    ['ab-hesap',                 'Hesap seçin…'],
-  ];
-  map.forEach(([id, label]) => {
-    const sel = document.getElementById(id);
-    if(sel && label) phInit(sel, label);
-    else if(sel) phUpdate(sel); // sadece renk güncelle
-  });
-}
-
-
 function showConfirm(msg, onOk) {
   document.getElementById('confirm-msg').textContent = msg;
   const btn = document.getElementById('confirm-ok-btn');
@@ -8886,7 +8839,8 @@ const PAGE_TITLES = {
   ozet: 'Finansal Özet', kartlar: 'Kredi Kartları', islemler: 'İşlemler',
   extreler: 'Ekstre Görünümü', mevduat: 'Mevduat Takibi', kira: 'Kira Gelirleri & Giderleri',
   maas: 'Maaş Geliri', kmhkredi: 'KMH Taksitli Kredi', kredi: 'Bireysel Krediler',
-  elden: 'Elden Ödemeler', hesaplar: 'Banka Hesapları', tanimlamalar: 'Tanımlamalar'
+  elden: 'Elden Ödemeler', hesaplar: 'Banka Hesapları', tanimlamalar: 'Tanımlamalar',
+  abonelik: 'Abonelikler & Tekrarlayan Ödemeler'
 };
 function updateSidebarKartNav() {
   const hasKart = DB.kartlar && DB.kartlar.length > 0;
@@ -8910,7 +8864,7 @@ function showPage(id, btn) {
     if(navBtn) navBtn.classList.add('active');
   }
   // Topbar icon + label update
-  const _navIcons = {ozet:'⊹',kartlar:'💳',islemler:'⇄',extreler:'🧾',mevduat:'◆',hesaplar:'⊙',kira:'🏠',maas:'◑',elden:'◇',kmhkredi:'▸',kredi:'▪',tanimlamalar:'⚙'};
+  const _navIcons = {ozet:'⊹',kartlar:'💳',islemler:'⇄',extreler:'🧾',mevduat:'◆',hesaplar:'⊙',kira:'🏠',maas:'◑',elden:'◇',kmhkredi:'▸',kredi:'▪',tanimlamalar:'⚙',abonelik:'↻'};
   const iconEl = document.getElementById('topbar-icon');
   const labelEl = document.getElementById('topbar-label');
   if(iconEl && _navIcons[id]) iconEl.textContent = _navIcons[id];
@@ -12471,7 +12425,7 @@ function renderMaas() {
       <td class="mono">${fmtDate(m.baslangic)}</td>
       <td class="mono">${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : (m.bitis?fmtDate(m.bitis):'Süresiz')}</td>
       <td>${isTekSeferlik ? '<span class="badge badge-blue">Tek Seferlik</span>' : durumBadge}</td>
-      <td>${(()=>{ const today=new Date(); const payDt=new Date(today.getFullYear(),today.getMonth(),m.gun); const payStr=localDateStr(payDt); const aktifAy=!m.pasif&&payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis); const ay=payStr.slice(0,7); return aktifAy ? odToggleBtn('maas',m.id,ay,payStr,m.tutar,m.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
+      <td>${(()=>{ const today=new Date(); const og=getMaasOdemeGunu(m, today.getFullYear(), today.getMonth()); const payDt=og.sonraki ? new Date(today.getFullYear(), today.getMonth()+1, og.gun) : new Date(today.getFullYear(),today.getMonth(),og.gun); const payStr=localDateStr(payDt); const aktifAy=!m.pasif&&payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis); const ay=payStr.slice(0,7); return aktifAy ? odToggleBtn('maas',m.id,ay,payStr,m.tutar,m.aciklama) : '<span style="color:var(--text3);font-size:11px">—</span>'; })()}</td>
       <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm btn-act" onclick="openKontratPlan('maas','${m.id}')" style="margin-right:4px" title="Ödeme Planı"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12"/><path d="M5 10h1M8 10h1M11 10h1M5 12.5h1M8 12.5h1"/></svg></button><button class="btn btn-ghost btn-sm btn-act" onclick="editMaas('${m.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button><button class="btn btn-danger btn-sm btn-act" onclick="deleteMaas('${m.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Maaş tanımı yok</td></tr>';
@@ -12479,7 +12433,8 @@ function renderMaas() {
   // Bu ay ödemeler
   const thisMonth = [];
   DB.maaslar.forEach(m=>{
-    const payDt = new Date(year, month, m.gun);
+    const og = getMaasOdemeGunu(m, year, month);
+    const payDt = og.sonraki ? new Date(year, month+1, og.gun) : new Date(year, month, og.gun);
     const payStr = localDateStr(payDt);
     if(!m.pasif && payStr >= m.baslangic && (!m.bitis || payStr <= m.bitis)) {
       thisMonth.push({...m, payDt});
@@ -13010,8 +12965,6 @@ function _toggleKrediAccordion(header) {
   const body = header.nextElementSibling;
   body.classList.toggle('open');
 }
-
-function renderKmhKrediPlan() {} // artık kullanılmıyor
 
 // ========== BİREYSEL KREDİLER ==========
 function getBireyselKrediTaksitler(kr) {
@@ -13736,6 +13689,111 @@ function deleteBanka(id) {
   });
 }
 
+// ── Bankalar: JSON Dışa Aktar / İçe Aktar ──
+function exportBankalarJSON() {
+  const list = DB.bankalar || [];
+  if(!list.length) { showToast('Dışa aktarılacak banka kaydı yok', 'error'); return; }
+  // Şubeleri de IBAN koduna göre birlikte paketle, böylece içe aktarımda kaybolmasınlar
+  const payload = {
+    tip: 'finans-bankalar',
+    surum: 1,
+    tarih: new Date().toISOString(),
+    bankalar: list.map(b => ({ tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod || '' })),
+    subeler: list.reduce((acc, b) => {
+      if(b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length) {
+        acc[b.ibanKod] = DB.subeler[b.ibanKod];
+      }
+      return acc;
+    }, {})
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tarihStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `bankalar_${tarihStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast(`${list.length} banka JSON olarak dışa aktarıldı`, 'success');
+}
+
+function importBankalarJSON(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ''; // aynı dosyayı tekrar seçebilmek için sıfırla
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch(e) {
+      showToast('Geçersiz JSON dosyası', 'error');
+      return;
+    }
+
+    // Hem {bankalar:[...], subeler:{...}} paket formatını hem de düz [...] dizisini kabul et
+    const gelenBankalar = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.bankalar) ? parsed.bankalar : null);
+    if(!gelenBankalar) {
+      showToast('JSON içinde geçerli bir "bankalar" listesi bulunamadı', 'error');
+      return;
+    }
+    const gelenSubeler = (!Array.isArray(parsed) && parsed.subeler && typeof parsed.subeler === 'object') ? parsed.subeler : {};
+
+    const temizler = gelenBankalar
+      .filter(b => b && typeof b === 'object' && (b.tam || b.kisa))
+      .map(b => ({
+        tam: (b.tam || b.kisa || '').toString().trim(),
+        kisa: (b.kisa || b.tam || '').toString().trim(),
+        ibanKod: (b.ibanKod || b.kod || '').toString().trim()
+      }));
+
+    if(!temizler.length) {
+      showToast('İçe aktarılacak geçerli banka kaydı yok', 'error');
+      return;
+    }
+
+    showConfirm(`${temizler.length} banka içe aktarılacak. IBAN kodu mevcut bir bankayla eşleşenler güncellenecek, diğerleri yeni eklenecek. Devam edilsin mi?`, () => {
+      if(!DB.bankalar) DB.bankalar = [];
+      if(!DB.subeler) DB.subeler = {};
+      let eklenen = 0, guncellenen = 0;
+
+      temizler.forEach(b => {
+        const mevcut = b.ibanKod ? DB.bankalar.find(x => x.ibanKod === b.ibanKod) : null;
+        if(mevcut) {
+          mevcut.tam = b.tam || mevcut.tam;
+          mevcut.kisa = b.kisa || mevcut.kisa;
+          guncellenen++;
+        } else {
+          DB.bankalar.push({ id: uid(), tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod });
+          eklenen++;
+        }
+      });
+
+      // Şube listelerini birleştir (varsa, kod bazında tekilleştirerek)
+      Object.keys(gelenSubeler).forEach(ibanKod => {
+        const gelenList = Array.isArray(gelenSubeler[ibanKod]) ? gelenSubeler[ibanKod] : [];
+        if(!gelenList.length) return;
+        if(!DB.subeler[ibanKod]) DB.subeler[ibanKod] = [];
+        gelenList.forEach(s => {
+          if(s && s.k && !DB.subeler[ibanKod].find(x => x.k === s.k)) {
+            DB.subeler[ibanKod].push({ k: s.k, a: s.a || '' });
+          }
+        });
+        DB.subeler[ibanKod].sort((a,b) => a.k.localeCompare(b.k));
+      });
+
+      saveData();
+      renderTanimlamalar();
+      showToast(`${eklenen} yeni banka eklendi, ${guncellenen} banka güncellendi`, 'success');
+    });
+  };
+  reader.onerror = () => showToast('Dosya okunamadı', 'error');
+  reader.readAsText(file);
+}
+
 let editUrunTipId = null;
 function editUrunTip(id) {
   editUrunTipId = id;
@@ -13936,24 +13994,27 @@ async function resmiTatilleriGuncelle() {
 
     for (const yil of yillar) {
         // CORS proxy üzerinden dene, başarısız olursa diğerine geç
+        // Not: corsproxy.io artık sadece localhost'ta çalışıyor, cors-anywhere.herokuapp.com
+        // kapandı, proxy.cors.sh ve cors.x2u.in API key istiyor — bu dördü canlı sitede
+        // hep 403 döner, listeden çıkarıldı.
       const TARGET = `https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`;
       const endpoints = [
-        `https://corsproxy.io/?${encodeURIComponent(TARGET)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`,
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`,
+        `https://proxy.corsfix.com/?${TARGET}`,
+        `https://api.cors.lol/url=${TARGET}`,
         `https://thingproxy.freeboard.io/fetch/${TARGET}`,
-        `https://proxy.cors.sh/${TARGET}`,
-        `https://cors-anywhere.herokuapp.com/${TARGET}`,
       ];
       let data = null;
       for (const url of endpoints) {
         try {
-          const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
-          if (resp.ok) {
-            const text = await resp.text();
-            const parsed = JSON.parse(text);
-            if (Array.isArray(parsed) && parsed.length) { data = parsed; break; }
-          }
-        } catch(_) {}
+          const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+          if (!resp.ok) { console.warn('[tatil-api] proxy HTTP', resp.status, url); continue; }
+          const text = await resp.text();
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed) && parsed.length) { data = parsed; break; }
+          console.warn('[tatil-api] proxy boş/geçersiz veri döndü:', url);
+        } catch(err) { console.warn('[tatil-api] proxy hata:', url, err.message); }
       }
       if (!data) throw new Error('Tüm proxy\u2019ler başarısız — internet bağlantısını kontrol edin');
 
@@ -15939,7 +16000,8 @@ function renderOzet() {
   let maasTop=0;
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
-    const payDt = new Date(year, month, m.gun);
+    const og = getMaasOdemeGunu(m, year, month);
+    const payDt = og.sonraki ? new Date(year, month+1, og.gun) : new Date(year, month, og.gun);
     const payStr = localDateStr(payDt);
     if(!(payStr>=m.baslangic&&(!m.bitis||payStr<=m.bitis))) return;
     const ov = odKiraMaasOverride(m, ayKey);
@@ -16177,7 +16239,8 @@ function renderOzet() {
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
     for(let offset=0;offset<=1;offset++){
-      const d=new Date(year,month+offset,m.gun);
+      const og=getMaasOdemeGunu(m, year, month+offset);
+      const d=og.sonraki ? new Date(year,month+offset+1,og.gun) : new Date(year,month+offset,og.gun);
       const ds=localDateStr(d);
       if(!(ds>=m.baslangic&&(!m.bitis||ds<=m.bitis))) continue;
       const ovKey = ds.slice(0,7);
@@ -16268,13 +16331,14 @@ function renderOzet() {
   });
   DB.maaslar.forEach(m=>{
     if(m.pasif) return;
-    const pd=new Date(year,month,m.gun);
+    const og=getMaasOdemeGunu(m, year, month);
+    const pd=og.sonraki ? new Date(year,month+1,og.gun) : new Date(year,month,og.gun);
     const ps=localDateStr(pd);
     if(!(ps>=m.baslangic&&(!m.bitis||ps<=m.bitis))) return;
     const ov = odKiraMaasOverride(m, cashAyKey);
     const fiilen = odFiilenGerceklesenTutar(ov, m.tutar);
     if(fiilen <= 0) return;
-    cashItems.push({gun:m.gun,aciklama:m.aciklama,tutar:fiilen});
+    cashItems.push({gun:pd.getDate(),aciklama:m.aciklama,tutar:fiilen});
   });
   cashItems.sort((a,b)=>a.gun-b.gun);
 
@@ -16314,17 +16378,6 @@ function hesapOptionMetin(h) {
 function getAktifHesapOptions() {
   const aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli');
   return aktifler.map(h => `<option value="${h.id}" data-pb="${h.paraBirimi||'TRY'}">${hesapOptionMetin(h)}</option>`).join('');
-}
-
-function _setPbBadge(badgeId, selectId, code) {
-  const badge = document.getElementById(badgeId);
-  const sel   = document.getElementById(selectId);
-  const cfg   = CURRENCY_CONFIG[code] || { symbol: code };
-  if(badge) { badge.textContent = code + ' ' + cfg.symbol; }
-  if(badge && sel) {
-    if(code) { badge.style.display=''; sel.style.display='none'; }
-    else     { badge.style.display='none'; sel.style.display=''; }
-  }
 }
 
 function onMaasHesapChange() {
@@ -19334,6 +19387,7 @@ document.addEventListener('click', function(e) {
     'hesaplar':    { icon: '🏧', label: 'Banka Hesapları' },
     'elden':       { icon: '💵', label: 'Elden Ödemeler' },
     'tanimlamalar':{ icon: '⚙️', label: 'Tanımlamalar' },
+    'abonelik':    { icon: '🔄', label: 'Abonelikler' },
   };
 
   const origSP = window.showPage;
@@ -19466,7 +19520,8 @@ document.addEventListener('click', function(e) {
   const PAGE_ICONS = {
     'ozet': '📊', 'kartlar': '💳', 'islemler': '⇄', 'extreler': '🧾',
     'mevduat': '🏦', 'kira': '🏠', 'maas': '💰', 'kmhkredi': '🏦',
-    'kredi': '💳', 'hesaplar': '🏧', 'elden': '💵', 'tanimlamalar': '⚙️'
+    'kredi': '💳', 'hesaplar': '🏧', 'elden': '💵', 'tanimlamalar': '⚙️',
+    'abonelik': '🔄'
   };
   document.querySelectorAll('.page').forEach(page => {
     const id = page.id.replace('page-', '');
@@ -20255,12 +20310,6 @@ function _otoBakiyeUygula(tip, id, key, delta) {
   return true;
 }
 
-// Nakit bakiyeyi göster (hesaplar sayfasında kullanılabilir)
-function getNakitBakiye(pb) {
-  if(!DB._nakitBakiye) return 0;
-  return DB._nakitBakiye[pb || defaultCurrency] || 0;
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // OTOMATİK BAKİYE YÖNETİM SİSTEMİ v2 — Durum Tespiti & İzleme
 // ═══════════════════════════════════════════════════════════════════
@@ -20409,7 +20458,8 @@ function hesapYaklasanGelirler(gunSayisi) {
     const pb = m.paraBirimi || defaultCurrency;
     const yil = today.getFullYear();
     for(let ay = 0; ay < 3; ay++) {
-      const d = new Date(today.getFullYear(), today.getMonth() + ay, m.gun||1);
+      const og = getMaasOdemeGunu(m, today.getFullYear(), today.getMonth() + ay);
+      const d = og.sonraki ? new Date(today.getFullYear(), today.getMonth() + ay + 1, og.gun) : new Date(today.getFullYear(), today.getMonth() + ay, og.gun);
       const tarih = localDateStr(d);
       if(tarih >= todayStr && tarih <= limitStr) {
         if(tarih >= m.baslangic && (!m.bitis || tarih <= m.bitis)) {
@@ -21223,10 +21273,6 @@ window.entegre = {
     const v = inp.value; // yyyy-MM-dd
     if(!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return '';
     try { return fmtDate(v); } catch(e) { return v; }
-  }
-
-  function getPlaceholder(inp) {
-    return inp.placeholder || (FORMAT_CONFIG.tarihFormat || 'dd/MM/yyyy');
   }
 
   function updateFake(inp) {
@@ -22073,7 +22119,8 @@ function renderOzetGrafikler() {
     });
     // Maaş (odemeOverrides kullanılır — taksitOverrides değil; sadece fiilen ödenen/kısmi ödenen sayılır)
     (DB.maaslar||[]).filter(ms=>!ms.pasif).forEach(ms=>{
-      const pd = new Date(y, m, ms.gun);
+      const og = getMaasOdemeGunu(ms, y, m);
+      const pd = og.sonraki ? new Date(y, m+1, og.gun) : new Date(y, m, og.gun);
       const ps = localDateStr(pd).slice(0,7);
       if(ps !== mStr) return;
       const t = odFiilenGerceklesenTutar(odKiraMaasOverride(ms, mStr), ms.tutar);
@@ -22587,6 +22634,11 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
     const daysInMonth = new Date(y, m+1, 0).getDate();
     const pts = [];
     let running = 0;
+    const _maasPayDates = (DB.maaslar||[]).filter(ms=>!ms.pasif).map(ms=>{
+      const og = getMaasOdemeGunu(ms, y, m);
+      const pd = og.sonraki ? new Date(y, m+1, og.gun) : new Date(y, m, og.gun);
+      return { ms, dStr: localDateStr(pd) };
+    });
     for(let d=1; d<=daysInMonth; d++) {
       const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       // Kira + maaş
@@ -22594,9 +22646,8 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
         const pd = kiraPayInMonth(k, y, m);
         if(pd && localDateStr(pd)===dStr) running += k.tutar;
       });
-      (DB.maaslar||[]).filter(ms=>!ms.pasif).forEach(ms=>{
-        const pd = new Date(y,m,ms.gun);
-        if(localDateStr(pd)===dStr) running += ms.tutar;
+      _maasPayDates.forEach(({ms, dStr:msDStr})=>{
+        if(msDStr===dStr) running += ms.tutar;
       });
       if(d <= today.getDate()) pts.push(running);
     }
