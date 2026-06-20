@@ -14367,27 +14367,28 @@ function renderNakitAvansTavanlar() {
   const list = DB.nakitAvansTavanlar || [];
   grid.innerHTML = naParaBirimleri.map(code => {
     const info = ALL_CURRENCIES.find(c=>c.code===code);
-    const row = list.find(r=>r.paraBirimi===code);
-    const val = row ? row.tavanMiktar : '';
+    const sym = (info && info.symbol) || code;
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
       <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px">${info?info.flag+' ':''}${code}</div>
-      <input type="number" min="0" step="0.01" placeholder="Sınırsız" value="${val}"
-        data-cur="${code}" oninput="autoSaveNakitAvansTavan(this)"
-        style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 7px;font-size:12px">
+      <div class="money-wrap" data-symbol="${sym}" data-code="${code}" data-own-currency="1">
+        <input id="na-tavan-${code}" type="text" class="money-input" data-decimals="2" placeholder="Sınırsız"
+          data-cur="${code}" oninput="autoSaveNakitAvansTavan(this)">
+      </div>
     </div>`;
   }).join('');
+  bindMoneyInputs(grid);
+  naParaBirimleri.forEach(code => setMoneyInput('na-tavan-' + code, (list.find(r=>r.paraBirimi===code)||{}).tavanMiktar ?? ''));
 }
 
 function autoSaveNakitAvansTavan(el) {
   const pb = el.dataset.cur;
-  const raw = el.value.trim();
+  const miktar = getMoneyInput(el.id);
   if(!DB.nakitAvansTavanlar) DB.nakitAvansTavanlar = [];
   const idx = DB.nakitAvansTavanlar.findIndex(r=>r.paraBirimi===pb);
-  if(raw === '' || isNaN(parseFloat(raw)) || parseFloat(raw) <= 0) {
+  if(el.value.trim() === '' || isNaN(miktar) || miktar <= 0) {
     // Boşsa/geçersizse kaydı kaldır → tavan uygulanmaz
     if(idx>=0) DB.nakitAvansTavanlar.splice(idx,1);
   } else {
-    const miktar = parseFloat(raw);
     if(idx>=0) DB.nakitAvansTavanlar[idx].tavanMiktar = miktar;
     else DB.nakitAvansTavanlar.push({ paraBirimi: pb, tavanMiktar: miktar });
   }
@@ -19915,6 +19916,11 @@ document.addEventListener('click', function(e) {
       // Zaten ikon varsa atla
       if (btn.querySelector('.btn-icon') || btn.querySelector('svg') || btn.querySelector('.nav-icon')) return;
       const text = btn.textContent.trim();
+      // Metin zaten bir emoji/sembol ile başlıyorsa (elle eklenmiş ikon) tekrar ikon ekleme
+      if (/^[\u{1F000}-\u{1FFFF}\u{2190}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u2700-\u27BF]/u.test(text)) {
+        btn.dataset.iconDone = '1';
+        return;
+      }
       // Eşleşme ara — tam veya içerir
       let icon = BTN_ICONS[text];
       if (!icon) {
