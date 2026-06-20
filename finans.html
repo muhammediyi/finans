@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
-<style>
 /* ─── Başlangıç Client ID overlay ─── */
 #startup-overlay {
   position: fixed;
@@ -5297,7 +5296,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
 
 <!-- KARTLAR -->
 <div id="page-kartlar" class="page">
-  <div class="page-header"><div class="page-header-left"><h1>Kredi Kartları</h1><p>Kartlarınızı ve ek hesaplarınızı yönetin</p></div><button class="btn btn-primary" onclick="openModal('modal-kart')">+ Yeni Kart</button></div>
+  <div class="page-header"><div class="page-header-left"><h1>Kredi Kartları</h1><p>Kartlarınızı ve ek hesaplarınızı yönetin</p></div><button class="btn btn-primary" onclick="editKartId=null;openModal('modal-kart')">+ Yeni Kart</button></div>
   <div id="kartlar-list" class="grid-2"></div>
 </div>
 
@@ -5511,6 +5510,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <button class="tab-btn" onclick="showTab('tab-asgari-odeme',this)">💳 Asgari Ödeme Kuralları</button>
     <button class="tab-btn" onclick="showTab('tab-goruntu-ayarlari',this)">🎨 Görüntü Ayarları</button>
     <button class="tab-btn" onclick="showTab('tab-nakit-avans',this)">💵 Nakit Avans</button>
+    <button class="tab-btn" onclick="showTab('tab-veri-yonetimi',this)">💾 Veri Yönetimi</button>
   </div>
   <div id="tab-bankalar">
     <div class="action-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -5797,17 +5797,14 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
       </div>
 
-      <!-- Satır 2: Para birimine göre tavan miktar tablosu -->
+      <!-- Satır 2: Para birimine göre tavan miktar -->
       <div style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <label style="font-size:11px;font-weight:600;color:var(--text2)">📌 Para Birimine Göre Tavan Miktar</label>
-          <button class="btn btn-primary btn-sm" onclick="openNakitAvansTavanModal()">+ Ekle / Düzenle</button>
+          <span id="nakit-avans-tavan-status" style="font-size:11px;color:var(--teal)"></span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Her para birimi için maksimum çekilebilir miktar belirleyin. Bu miktar, oranla hesaplanan limitin <b>altında</b> kalır — ikisinden küçük olan geçerlidir.</div>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Para Birimi</th><th>Tavan Miktar</th><th></th></tr></thead>
-          <tbody id="nakit-avans-tavan-tbody"></tbody>
-        </table></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Her para birimi için maksimum çekilebilir miktar belirleyin. Bu miktar, oranla hesaplanan limitin <b>altında</b> kalır — ikisinden küçük olan geçerlidir. Boş bırakılan para biriminde tavan uygulanmaz.</div>
+        <div id="nakit-avans-tavan-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center">
@@ -5988,6 +5985,62 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     </div>
   </div>
 
+  <!-- VERİ YÖNETİMİ TAB -->
+  <div id="tab-veri-yonetimi" style="display:none">
+    <div class="info-box">Sistemdeki <b>tüm</b> veriyi (bankalar, kartlar, hesaplar, işlemler, krediler, ayarlar — her şey) tek bir JSON dosyası olarak yedekleyin veya bir yedekten tamamen geri yükleyin.</div>
+
+    <div class="grid-2" style="gap:16px">
+      <!-- YEDEK AL -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><span class="card-title">⬇️ Yedek Al (Backup)</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+          Sistemdeki tüm verinin anlık bir kopyasını <span class="mono">.json</span> dosyası olarak bilgisayarınıza indirir. Bu dosyayı güvenli bir yerde saklayın.
+        </div>
+        <div id="vy-ozet-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:16px"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="exportTumVeriJSON()">⬇️ Tüm Veriyi İndir (Yedek Al)</button>
+      </div>
+
+      <!-- GERİ YÜKLE -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><span class="card-title">⬆️ Yedekten Geri Yükle (Restore)</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+          Daha önce indirdiğiniz bir yedek dosyasını seçin. <b style="color:var(--danger)">Geri yükleme işlemi sistemdeki mevcut tüm veriyi siler ve yedekteki veriyle değiştirir.</b> Bu işlem geri alınamaz — önce güncel veriyi de yedeklemeniz önerilir.
+        </div>
+        <input type="file" id="vy-restore-file" accept=".json,application/json" style="display:none" onchange="importTumVeriJSON(event)">
+        <button class="btn" style="width:100%;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35);color:var(--danger)" onclick="document.getElementById('vy-restore-file').click()">⬆️ Yedek Dosyası Seç ve Geri Yükle</button>
+        <div style="margin-top:14px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;font-size:11.5px;color:var(--gold)">
+          ⚠️ Geri yükleme sonrası veri otomatik olarak Google Drive'a da kaydedilir.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Veri Yönetimi: Geri Yükleme Onay Modal -->
+<div class="modal-bg" id="modal-vy-restore-onay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.3)">⚠️</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Geri Yükleme Onayı</div>
+          <div class="modal-subtitle">Bu işlem geri alınamaz</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-vy-restore-onay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="vy-restore-onay-detay" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+      <div style="margin-top:12px;background:rgba(251,113,133,.08);border:1px solid rgba(251,113,133,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--danger)">
+        Sistemdeki mevcut <b>tüm veri silinecek</b> ve yukarıdaki yedek dosyasındaki veriyle <b>tamamen değiştirilecek</b>. Devam etmeden önce gerekiyorsa güncel veriyi de yedekleyin.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-vy-restore-onay')">İptal</button>
+      <button class="btn" style="background:var(--danger);color:#fff" onclick="confirmTumVeriRestore()">Evet, Tüm Veriyi Değiştir</button>
+    </div>
+  </div>
 </div>
 
 <!-- Kategori Modal -->
@@ -6271,12 +6324,27 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
         <div class="form-row cols-2">
           <div><label>Kart/Hesap Adı <span style="color:var(--danger)">*</span></label><input id="kart-ad" placeholder="örn. Garanti BBVA Bonus"></div>
-          <div><label>Toplam Limit</label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kart-limit" type="text" class="money-input" data-decimals="0" placeholder="50.000"></div></div>
+          <div><label>Son 4 Hane <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><input id="kart-no" placeholder="1234" maxlength="4"></div>
         </div>
         <div class="form-row cols-2" style="margin-bottom:0">
-          <div><label>Son 4 Hane <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><input id="kart-no" placeholder="1234" maxlength="4"></div>
           <div><label>Kart Altyapısı <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><select id="kart-altyapi"></select></div>
         </div>
+      </div>
+
+      <div class="msec">
+        <div class="msec-label sky">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Toplam Limit
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:12px">
+          <div><label>Güncel Toplam Limit (₺)</label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kart-limit" type="text" class="money-input" data-decimals="0" placeholder="50.000"></div></div>
+          <div><label>Limit Geçerlilik Tarihi</label><input id="kart-limit-tarih" type="date"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">Limit Geçmişi</span>
+          <span style="font-size:10px;color:var(--text3);font-style:italic">Sistem tarafından otomatik tutulur</span>
+        </div>
+        <div id="kart-limit-gecmis-liste" style="max-height:180px;overflow-y:auto"></div>
         <div class="form-row" style="margin-bottom:0">
           <div><label>Renk</label>
             <select id="kart-renk">
@@ -8971,6 +9039,9 @@ function showTab(id, btn) {
     renderNakitAvansTavanlar();
     renderNakitAvansLimitKural();
   }
+  if(id==='tab-veri-yonetimi') {
+    renderVeriYonetimiOzet();
+  }
 }
 
 // ========== MODAL ==========
@@ -9132,6 +9203,8 @@ function populateKartModal(kart=null) {
   if(kart) {
     document.getElementById('kart-ad').value = kart.ad||'';
     setMoneyInput('kart-limit', kart.limit||'');
+    document.getElementById('kart-limit-tarih').value = kart.limitTarih||localDateStr(new Date());
+    renderKartLimitGecmis(kart.limitGecmisi||[]);
     document.getElementById('kart-no').value = kart.no||'';
     document.getElementById('kart-extre-tip').value = kart.extraTip||'gun';
     document.getElementById('kart-extre-gun').value = kart.extraGun||25;
@@ -9150,6 +9223,8 @@ function populateKartModal(kart=null) {
   } else {
     document.getElementById('kart-extre-gecerlilik-ay').value = '';
     setMoneyInput('kart-limit', '');
+    document.getElementById('kart-limit-tarih').value = localDateStr(new Date());
+    renderKartLimitGecmis([]);
     document.getElementById('kart-ad').value = '';
     document.getElementById('kart-no').value = '';
     bankaEl.value = '';
@@ -9232,6 +9307,73 @@ function getKartCurGridValue() {
   return { paraBirimleri: selected, varsayilanParaBirimi: defVal };
 }
 
+// Kart limit geçmişini sadece görüntüleme amacıyla render eder (readonly)
+// Son kayıt silinebilir; silindiğinde bir önceki limit geri yüklenir
+function renderKartLimitGecmis(gecmis) {
+  const panel = document.getElementById('kart-limit-gecmis-liste');
+  if(!panel) return;
+  panel.innerHTML = '';
+  const sorted = (gecmis||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  sorted.forEach((g, idx) => {
+    const isLast = idx === 0; // en son kayıt (en yeni)
+    const satir = document.createElement('div');
+    satir.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px';
+    const labelStyle = 'flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 8px;font-size:12px;opacity:.8';
+    const deleteBtn = isLast
+      ? `<button class="btn btn-danger btn-sm" style="padding:3px 8px" title="Son limiti sil ve öncekine dön" onclick="kartLimitGecmisSonSil()">✕</button>`
+      : `<span style="width:30px"></span>`;
+    satir.innerHTML = `
+      <input type="date" value="${g.tarih}" readonly style="${labelStyle}" title="${g.bitisTarih ? 'Bitiş: ' + g.bitisTarih : 'Güncel'}">
+      <input type="number" value="${g.limit}" readonly style="${labelStyle}">
+      ${isLast ? '<span style="font-size:10px;color:var(--accent);font-weight:700;white-space:nowrap">▶ Güncel</span>' : `<span style="font-size:10px;color:var(--text3);white-space:nowrap">${g.bitisTarih||''}</span>`}
+      ${deleteBtn}`;
+    panel.appendChild(satir);
+  });
+}
+
+// readKartLimitGecmis — sadece mevcut geçmişi data'dan döndürür
+function readKartLimitGecmis() {
+  if(editKartId) {
+    const k = (DB.kartlar||[]).find(x=>x.id===editKartId);
+    return (k && k.limitGecmisi) ? k.limitGecmisi : [];
+  }
+  return [];
+}
+
+// Son kart limit kaydını sil ve bir önceki limite dön
+function kartLimitGecmisSonSil() {
+  if(!editKartId) return;
+  const idx = (DB.kartlar||[]).findIndex(k=>k.id===editKartId);
+  if(idx<0) return;
+  const k = DB.kartlar[idx];
+  const gecmis = (k.limitGecmisi||[]).slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  if(gecmis.length <= 1) {
+    showConfirm('Tek kayıt kaldı. Limit geçmişi tamamen silinsin mi?', ()=>{
+      k.limitGecmisi = [];
+      k.limit = 0;
+      k.limitTarih = '';
+      saveData();
+      renderKartLimitGecmis([]);
+      setMoneyInput('kart-limit', '');
+      document.getElementById('kart-limit-tarih').value = localDateStr(new Date());
+      renderKartlar();
+    });
+    return;
+  }
+  showConfirm('Son limit kaydı silinsin mi? Bir önceki limite dönülecek.', ()=>{
+    const yeniGecmis = gecmis.slice(1); // tarihe göre sıralı, 0.indeks en yeni
+    k.limitGecmisi = yeniGecmis;
+    const onceki = yeniGecmis[0];
+    k.limit = onceki ? onceki.limit : 0;
+    k.limitTarih = onceki ? onceki.tarih : '';
+    saveData();
+    renderKartLimitGecmis(yeniGecmis);
+    setMoneyInput('kart-limit', k.limit || '');
+    document.getElementById('kart-limit-tarih').value = k.limitTarih || '';
+    renderKartlar();
+  });
+}
+
 function extreTypeChange() {
   const v = document.getElementById('kart-extre-tip').value;
   document.getElementById('extre-gun-div').style.display = v==='gun' ? '' : 'none';
@@ -9249,7 +9391,6 @@ function saveKart() {
     banka: document.getElementById('kart-banka').value,
     tip: document.getElementById('kart-tip').value,
     ad: document.getElementById('kart-ad').value.trim(),
-    limit: getMoneyInput('kart-limit')||0,
     no: document.getElementById('kart-no').value.trim(),
     altyapiId: document.getElementById('kart-altyapi').value || '',
     renk: document.getElementById('kart-renk').value,
@@ -9282,6 +9423,27 @@ function saveKart() {
     odemeGunTip: document.getElementById('kart-odeme-gun-tip').value,
     ...getKartCurGridValue()
   };
+
+  // Limit verileri — KMH ile aynı mantık: tarihe göre geçmiş tutulur, en son eklenen geçerli olur
+  const yeniLimit = getMoneyInput('kart-limit')||0;
+  const yeniTarih = document.getElementById('kart-limit-tarih').value || localDateStr(new Date());
+  const mevcutGecmis = readKartLimitGecmis();
+  const sorted = mevcutGecmis.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  const guncelLimit = sorted.length > 0 ? sorted[0].limit : null;
+  let yeniGecmis = mevcutGecmis;
+  if(yeniLimit !== guncelLimit) {
+    // Önceki son kaydın bitiş tarihini güncelle
+    if(sorted.length > 0) {
+      const sonKayitIdx = mevcutGecmis.findIndex(g => g.tarih === sorted[0].tarih && g.limit === sorted[0].limit);
+      if(sonKayitIdx >= 0) mevcutGecmis[sonKayitIdx].bitisTarih = yeniTarih;
+    }
+    yeniGecmis = [...mevcutGecmis, {tarih: yeniTarih, limit: yeniLimit}];
+  }
+  const finalSorted = yeniGecmis.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+  kart.limit = finalSorted.length ? finalSorted[0].limit : yeniLimit;
+  kart.limitTarih = finalSorted.length ? finalSorted[0].tarih : yeniTarih;
+  kart.limitGecmisi = yeniGecmis;
+
   if(!validateRequiredFields([{id:'kart-ad',msg:'Kart adı zorunlu'},{id:'kart-banka',msg:'Banka seçimi zorunlu'},{id:'kart-tip',msg:'Ürün tipi seçimi zorunlu'}])) return;
   if(editKartId) {
     const idx = DB.kartlar.findIndex(k=>k.id===editKartId);
@@ -13794,6 +13956,122 @@ function importBankalarJSON(event) {
   reader.readAsText(file);
 }
 
+// ═══════════════════════════════════════════════════════
+// VERİ YÖNETİMİ — Tüm Sistem Yedekleme / Geri Yükleme
+// ═══════════════════════════════════════════════════════
+
+// Özet kartlarında gösterilecek kategori → etiket eşlemesi
+const VY_OZET_ALANLAR = [
+  {k:'hesaplar', ad:'Hesaplar'},
+  {k:'kartlar', ad:'Kartlar'},
+  {k:'islemler', ad:'İşlemler'},
+  {k:'mevduatlar', ad:'Mevduatlar'},
+  {k:'kiralar', ad:'Kiralar'},
+  {k:'maaslar', ad:'Maaşlar'},
+  {k:'eldenler', ad:'Elden İşlem'},
+  {k:'krediler', ad:'KMH Krediler'},
+  {k:'bireyselKrediler', ad:'Bireysel Krediler'},
+  {k:'abonelikler', ad:'Abonelikler'},
+  {k:'bankalar', ad:'Bankalar'},
+  {k:'kategoriler', ad:'Kategoriler'},
+  {k:'kisiler', ad:'Kişiler'},
+  {k:'kartOdemeleri', ad:'Kart Ödemeleri'},
+];
+
+function renderVeriYonetimiOzet() {
+  const grid = document.getElementById('vy-ozet-grid');
+  if(!grid) return;
+  grid.innerHTML = VY_OZET_ALANLAR.map(f => {
+    const list = DB[f.k];
+    const count = Array.isArray(list) ? list.length : (list && typeof list==='object' ? Object.keys(list).length : 0);
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:var(--accent)" class="mono">${count}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${f.ad}</div>
+    </div>`;
+  }).join('');
+}
+
+function exportTumVeriJSON() {
+  const payload = {
+    tip: 'finans-tam-yedek',
+    surum: 1,
+    tarih: new Date().toISOString(),
+    data: DB
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tarihStr = new Date().toISOString().slice(0,10);
+  const saatStr = new Date().toTimeString().slice(0,5).replace(':','');
+  a.href = url;
+  a.download = `finans_yedek_${tarihStr}_${saatStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Tüm veri yedeği indirildi ✓', 'success');
+}
+
+let _vyBekleyenRestoreData = null;
+
+function importTumVeriJSON(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = ''; // aynı dosyayı tekrar seçebilmek için sıfırla
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch(e) {
+      showToast('Geçersiz JSON dosyası', 'error');
+      return;
+    }
+
+    // Hem {tip:'finans-tam-yedek', data:{...}} paket formatını hem de düz DB objesini kabul et
+    const gelenData = (parsed && typeof parsed === 'object' && parsed.data && typeof parsed.data === 'object')
+      ? parsed.data
+      : (parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null);
+
+    if(!gelenData || typeof gelenData !== 'object' || Array.isArray(gelenData)) {
+      showToast('JSON içinde geçerli bir yedek verisi bulunamadı', 'error');
+      return;
+    }
+
+    _vyBekleyenRestoreData = gelenData;
+
+    // Onay modalını detaylarla doldur
+    const sayilar = VY_OZET_ALANLAR.map(f => {
+      const list = gelenData[f.k];
+      const count = Array.isArray(list) ? list.length : (list && typeof list==='object' ? Object.keys(list).length : 0);
+      return count > 0 ? `<span class="badge" style="margin:2px">${f.ad}: <b>${count}</b></span>` : '';
+    }).filter(Boolean).join(' ');
+    const tarihBilgi = parsed.tarih ? `<div style="margin-bottom:8px">Yedek tarihi: <b>${new Date(parsed.tarih).toLocaleString('tr-TR')}</b></div>` : '';
+
+    document.getElementById('vy-restore-onay-detay').innerHTML = `
+      ${tarihBilgi}
+      <div style="margin-bottom:10px">Bu yedek dosyasında aşağıdaki veriler bulundu:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${sayilar || '<span style="color:var(--text3)">Boş yedek</span>'}</div>
+    `;
+    openModal('modal-vy-restore-onay');
+  };
+  reader.onerror = () => showToast('Dosya okunamadı', 'error');
+  reader.readAsText(file);
+}
+
+function confirmTumVeriRestore() {
+  if(!_vyBekleyenRestoreData) { closeModal('modal-vy-restore-onay'); return; }
+  // Eksik alanları varsayılanlarla tamamla (applyMigrations ile aynı mantık)
+  DB = applyMigrations(_vyBekleyenRestoreData);
+  _vyBekleyenRestoreData = null;
+  saveData();
+  closeModal('modal-vy-restore-onay');
+  renderAll();
+  renderVeriYonetimiOzet();
+  showToast('Tüm veri geri yüklendi ✓ Google Drive\'a kaydediliyor...', 'success');
+}
+
 let editUrunTipId = null;
 function editUrunTip(id) {
   editUrunTipId = id;
@@ -14067,6 +14345,7 @@ function toggleNakitAvansCur(el) {
   saveData();
   const st = document.getElementById('nakit-avans-cur-status');
   if(st) { st.textContent = '✓'; setTimeout(()=>st.textContent='',1500); }
+  renderNakitAvansTavanlar();
 }
 
 function saveNakitAvansCur() {
@@ -14079,67 +14358,43 @@ function saveNakitAvansCur() {
 }
 
 function renderNakitAvansTavanlar() {
-  const tbody = document.getElementById('nakit-avans-tavan-tbody');
-  if(!tbody) return;
-  const list = DB.nakitAvansTavanlar || [];
-  if(!list.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px">Henüz tavan miktar tanımlanmamış</td></tr>';
-    return;
-  }
-  tbody.innerHTML = list.map((row,i) => `<tr>
-    <td><b>${row.paraBirimi}</b></td>
-    <td class="mono">${fmtCur(row.tavanMiktar, row.paraBirimi)}</td>
-    <td><button class="btn btn-danger btn-sm btn-act" onclick="deleteNakitAvansTavan(${i})">✕</button></td>
-  </tr>`).join('');
-}
-
-function openNakitAvansTavanModal() {
+  const grid = document.getElementById('nakit-avans-tavan-grid');
+  if(!grid) return;
   if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
   const naParaBirimleri = DB.nakitAvansCurlar && DB.nakitAvansCurlar.length
     ? DB.nakitAvansCurlar
     : ALL_CURRENCIES.map(c=>c.code);
-  const pbOpts = naParaBirimleri.map(c=>`<option value="${c}">${c}</option>`).join('');
-  const todayStr = localDateStr(new Date());
-  const kmhFaiz = getKmhFaizOrani(todayStr);
-  const body = `<div style="display:grid;gap:14px">
-    <div style="background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--teal)">
-      📌 KMH Faiz Oranı (bugün): <b>%${kmhFaiz} aylık</b> — tüm nakit avans işlemlerine uygulanır
-    </div>
-    <div><label>Para Birimi</label><select id="na-tavan-pb" style="margin-top:4px">${pbOpts}</select></div>
-    <div>
-      <label>Tavan Miktar</label>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-        <input id="na-tavan-miktar" type="number" min="0" step="0.01" placeholder="örn. 50000" style="flex:1">
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">Bu miktar, oranla hesaplanan limitin altında kalmalıdır — ikisinden küçük olan geçerli olur</div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeModal('modal-generic')">İptal</button>
-      <button class="btn btn-primary" onclick="saveNakitAvansTavan()">Kaydet</button>
-    </div>
-  </div>`;
-  openGenericModal('💵 Nakit Avans Tavan Miktar', body);
+  const list = DB.nakitAvansTavanlar || [];
+  grid.innerHTML = naParaBirimleri.map(code => {
+    const info = ALL_CURRENCIES.find(c=>c.code===code);
+    const row = list.find(r=>r.paraBirimi===code);
+    const val = row ? row.tavanMiktar : '';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px">${info?info.flag+' ':''}${code}</div>
+      <input type="number" min="0" step="0.01" placeholder="Sınırsız" value="${val}"
+        data-cur="${code}" oninput="autoSaveNakitAvansTavan(this)"
+        style="width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 7px;font-size:12px">
+    </div>`;
+  }).join('');
 }
 
-function saveNakitAvansTavan() {
-  const pb = document.getElementById('na-tavan-pb').value;
-  const miktar = parseFloat(document.getElementById('na-tavan-miktar').value);
-  if(!pb || isNaN(miktar) || miktar<=0) { showToast('Para birimi ve geçerli tavan miktar giriniz','warn'); return; }
+function autoSaveNakitAvansTavan(el) {
+  const pb = el.dataset.cur;
+  const raw = el.value.trim();
   if(!DB.nakitAvansTavanlar) DB.nakitAvansTavanlar = [];
   const idx = DB.nakitAvansTavanlar.findIndex(r=>r.paraBirimi===pb);
-  if(idx>=0) DB.nakitAvansTavanlar[idx].tavanMiktar = miktar;
-  else DB.nakitAvansTavanlar.push({ paraBirimi: pb, tavanMiktar: miktar });
+  if(raw === '' || isNaN(parseFloat(raw)) || parseFloat(raw) <= 0) {
+    // Boşsa/geçersizse kaydı kaldır → tavan uygulanmaz
+    if(idx>=0) DB.nakitAvansTavanlar.splice(idx,1);
+  } else {
+    const miktar = parseFloat(raw);
+    if(idx>=0) DB.nakitAvansTavanlar[idx].tavanMiktar = miktar;
+    else DB.nakitAvansTavanlar.push({ paraBirimi: pb, tavanMiktar: miktar });
+  }
   saveData();
-  closeModal('modal-generic');
-  renderNakitAvansTavanlar();
-}
-
-function deleteNakitAvansTavan(idx) {
-  showConfirm('Bu tavan miktar kaydını silmek istiyor musunuz?', () => {
-    DB.nakitAvansTavanlar.splice(idx, 1);
-    saveData();
-    renderNakitAvansTavanlar();
-  });
+  const st = document.getElementById('nakit-avans-tavan-status');
+  if(st) { st.textContent = '✓ Kaydedildi'; clearTimeout(st._t); st._t = setTimeout(()=>st.textContent='',1500); }
+  updateNakitAvansLimitPreview();
 }
 
 function renderNakitAvansLimitKural() {
@@ -17092,7 +17347,7 @@ function kmhLimitGecmisSonSil() {
       saveData();
       renderKmhLimitGecmis([]);
       setMoneyInput('hesap-kmh-limit', '');
-      document.getElementById('hesap-kmh-limit-tarih').value = '';
+      document.getElementById('hesap-kmh-limit-tarih').value = localDateStr(new Date());
     });
     return;
   }
@@ -17165,11 +17420,11 @@ function openHesapModal(id=null) {
       document.getElementById('hesap-kmh-panel').style.display = isKmh ? '' : 'none';
       if(isKmh) {
         setMoneyInput('hesap-kmh-limit', h.kmhLimit||'');
-        document.getElementById('hesap-kmh-limit-tarih').value = h.kmhLimitTarih||'';
+        document.getElementById('hesap-kmh-limit-tarih').value = h.kmhLimitTarih||localDateStr(new Date());
         renderKmhLimitGecmis(h.kmhLimitGecmisi||[]);
       } else {
         setMoneyInput('hesap-kmh-limit', '');
-        document.getElementById('hesap-kmh-limit-tarih').value = '';
+        document.getElementById('hesap-kmh-limit-tarih').value = localDateStr(new Date());
         renderKmhLimitGecmis([]);
       }
     }
@@ -17194,7 +17449,7 @@ function openHesapModal(id=null) {
     document.getElementById('hesap-kmh-toggle').checked = false;
     document.getElementById('hesap-kmh-panel').style.display = 'none';
     setMoneyInput('hesap-kmh-limit', '');
-    document.getElementById('hesap-kmh-limit-tarih').value = '';
+    document.getElementById('hesap-kmh-limit-tarih').value = localDateStr(new Date());
     renderKmhLimitGecmis([]);
   }
   bindMoneyInputs(document.getElementById('modal-hesap'));
