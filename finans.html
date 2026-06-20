@@ -5282,6 +5282,8 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   <div id="ozet-mev-aksiyonlar" style="display:none;margin-bottom:16px"></div>
   <!-- Bakiye uyarıları -->
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
+  <!-- Provizyon tarihi eksik işlem uyarısı -->
+  <div id="ozet-provizyon-uyarilar" style="display:none;margin-bottom:16px"></div>
 
   <div class="ozet-section-label">Genel Bakış</div>
   <div id="ozet-grafik-row" class="ozet-grafik-row"></div>
@@ -6473,8 +6475,10 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         </div>
         <div class="form-row cols-2">
           <div style="grid-column:1/-1"><label>Kart / Hesap</label><select id="islem-kart" onchange="onIslemKartChange()"></select></div>
-          <div><label>İşlem Tarihi</label><input id="islem-tarih" type="date" onchange="calcTaksit(false)"></div>
+          <div><label>İşlem Tarihi</label><input id="islem-tarih" type="date" onchange="calcTaksit(false);onIslemTarihiChange()"></div>
+          <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
         </div>
+        <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
         <div class="form-row">
           <div><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..."></div>
         </div>
@@ -9493,7 +9497,7 @@ function getKartKullanim(kartId) {
     getIslemTaksitliste(i).forEach(tak => {
       let odemeTarihStr = tak.tarih;
       if(kart) {
-        const donem = getExtreDonemi(kart, tak.tarih);
+        const donem = getExtreDonemi(kart, tak.ekstreTarih);
         if(donem) {
           const extreDt = calcExtreTarihiOdemeModuyla(kart, donem.year, donem.month, tatilSet);
           const odemeDt = extreDt ? calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet) : null;
@@ -9518,21 +9522,58 @@ function getKartKullanim(kartId) {
 // İşlem için taksit listesi — manuelTaksitler varsa onu kullan
 function getIslemTaksitliste(islem) {
   const taksit = islem.taksit || 1;
+
+  // İlk taksitin provizyon tarihinden gün farkını hesapla (varsa), diğer taksitlere de aynı farkı uygula
+  const ilkTarihStr = (islem.manuelTaksitler && islem.manuelTaksitler[0]) ? islem.manuelTaksitler[0].tarih : islem.tarih;
+  const ilkProvTarih = (islem.manuelTaksitler && islem.manuelTaksitler[0] && islem.manuelTaksitler[0].provizyonTarihi) || islem.provizyonTarihi || null;
+  let provGunFarki = null;
+  if(ilkProvTarih && ilkTarihStr) {
+    const farkMs = new Date(ilkProvTarih+'T00:00:00') - new Date(ilkTarihStr+'T00:00:00');
+    provGunFarki = Math.round(farkMs / 86400000);
+  }
+  const ekstreTarihHesapla = (tarihStr, idx) => {
+    if(idx === 0) return ilkProvTarih || tarihStr;
+    if(provGunFarki === null) return tarihStr;
+    const dt = new Date(tarihStr+'T00:00:00');
+    dt.setDate(dt.getDate() + provGunFarki);
+    return localDateStr(dt);
+  };
+
   if(islem.manuelTaksitler && islem.manuelTaksitler.length === taksit) {
-    return islem.manuelTaksitler.map((t,i) => ({
-      no: i+1,
-      tarih: t.tarih,
-      tutar: t.tutar
-    }));
+    return islem.manuelTaksitler.map((t,i) => {
+      const provTarih = i===0 ? ilkProvTarih : (t.provizyonTarihi || null);
+      return {
+        no: i+1,
+        tarih: t.tarih,
+        tutar: t.tutar,
+        provizyonTarihi: provTarih,
+        ekstreTarih: t.provizyonTarihi || (i===0 ? ilkProvTarih : null) || ekstreTarihHesapla(t.tarih, i)
+      };
+    });
   }
   const tutarlar = islem.taksitTutarlari || Array(taksit).fill(islem.aylik || (islem.tutar/taksit));
   const list = [];
   for(let t=0; t<taksit; t++) {
     const dt = new Date(islem.tarih+'T00:00:00');
     dt.setMonth(dt.getMonth()+t);
-    list.push({ no: t+1, tarih: localDateStr(dt), tutar: tutarlar[t] ?? islem.aylik ?? 0 });
+    const tarihStr = localDateStr(dt);
+    const provTarih = t===0 ? ilkProvTarih : null;
+    list.push({ no: t+1, tarih: tarihStr, tutar: tutarlar[t] ?? islem.aylik ?? 0, provizyonTarihi: provTarih, ekstreTarih: ekstreTarihHesapla(tarihStr, t) });
   }
   return list;
+}
+
+// Bir işlemin provizyon tarihi henüz girilmemiş mi? (peşin: islem.provizyonTarihi; taksitli: ilk taksitin provizyonTarihi)
+function islemProvizyonEksikMi(islem) {
+  const taksit = islem.taksit || 1;
+  if(islem.tip === 'nakitAvans') return false; // nakit avansta provizyon kavramı yok
+  if(taksit === 1) {
+    return !islem.provizyonTarihi;
+  }
+  if(islem.manuelTaksitler && islem.manuelTaksitler.length) {
+    return !islem.manuelTaksitler[0].provizyonTarihi;
+  }
+  return !islem.provizyonTarihi;
 }
 
 // KMH kredi ek limit kullanımı (tüm ödenmeyen taksitler toplamı)
@@ -9653,12 +9694,73 @@ function populateIslemModal() {
   populateKategoriSelects();
   document.getElementById('islem-kategori').value = '';
   document.getElementById('islem-taksit-alanlari').innerHTML = '';
+  document.getElementById('islem-provizyon-tarihi').value = '';
+  _islemProvizyonManuel = false;
+  document.getElementById('islem-provizyon-hint').style.display = 'none';
   editIslemId = null;
   document.getElementById('islem-modal-title').textContent = 'İşlem Ekle';
   // Para birimi seçeneklerini doldur
   populateCurrencySelects();
   // Seçili kartın para birimini set et
   onIslemKartChange();
+  onIslemTarihiChange();
+}
+
+// ── Provizyon tarihi öngörüsü ──────────────────────────────────
+// Aynı karttaki geçmiş işlemlerden (provizyon tarihi girilmiş olanlardan)
+// ortalama "provizyon - işlem tarihi" gün farkını hesaplar.
+let _islemProvizyonManuel = false; // kullanıcı provizyon tarihini elle değiştirdi mi?
+
+function tahminProvizyonGunFarki(kartId) {
+  if(!kartId) return null;
+  const farklar = [];
+  (DB.islemler||[]).filter(i=>i.kart===kartId && i.id!==editIslemId).forEach(i=>{
+    const ilkTarih = (i.manuelTaksitler && i.manuelTaksitler[0] && i.manuelTaksitler[0].tarih) || i.tarih;
+    const ilkProv = (i.manuelTaksitler && i.manuelTaksitler[0] && i.manuelTaksitler[0].provizyonTarihi) || i.provizyonTarihi;
+    if(ilkTarih && ilkProv) {
+      const farkMs = new Date(ilkProv+'T00:00:00') - new Date(ilkTarih+'T00:00:00');
+      farklar.push(Math.round(farkMs / 86400000));
+    }
+  });
+  if(!farklar.length) return null;
+  // Ortalama gün farkı (en yakın tam sayıya yuvarla)
+  const ortalama = farklar.reduce((s,f)=>s+f,0) / farklar.length;
+  return Math.round(ortalama);
+}
+
+function onIslemTarihiChange() {
+  if(_islemProvizyonManuel) return; // kullanıcı elle girdiyse otomatik öngörüyle ezme
+  const kartId = document.getElementById('islem-kart').value;
+  const islemTarihi = document.getElementById('islem-tarih').value;
+  const hint = document.getElementById('islem-provizyon-hint');
+  const provInput = document.getElementById('islem-provizyon-tarihi');
+  if(!kartId || !islemTarihi) { provInput.value=''; hint.style.display='none'; return; }
+  const gunFarki = tahminProvizyonGunFarki(kartId);
+  if(gunFarki === null) {
+    // Önceki işlem yok — boş bırak
+    provInput.value = '';
+    hint.style.display = 'block';
+    hint.textContent = 'ℹ️ Bu kart için önceki işlem bulunamadı, provizyon tarihi otomatik öngörülemedi — boş bırakıldı.';
+  } else {
+    const dt = new Date(islemTarihi+'T00:00:00');
+    dt.setDate(dt.getDate() + gunFarki);
+    provInput.value = localDateStr(dt);
+    hint.style.display = 'block';
+    hint.textContent = `✓ Önceki işlemlere göre öngörüldü (ortalama ${gunFarki} gün). Gerekirse değiştirebilirsiniz.`;
+  }
+}
+
+function onIslemProvizyonManuelDegisti() {
+  _islemProvizyonManuel = true;
+  const hint = document.getElementById('islem-provizyon-hint');
+  const val = document.getElementById('islem-provizyon-tarihi').value;
+  if(val) {
+    hint.style.display = 'block';
+    hint.textContent = '✓ Provizyon tarihi elle ayarlandı.';
+  } else {
+    hint.style.display = 'block';
+    hint.textContent = '⚠️ Provizyon tarihi boş — bu işlem dashboard\'da "eksik provizyon" listesinde görünecek.';
+  }
 }
 
 function onIslemKartChange() {
@@ -9681,6 +9783,7 @@ function onIslemKartChange() {
     }
   });
   if(!pb.value || !supported.includes(pb.value)) pb.value = defCur;
+  if(typeof onIslemTarihiChange === 'function') onIslemTarihiChange();
 }
 
 function calcTaksit(preserveManuel=false) {
@@ -9740,6 +9843,14 @@ function calcTaksit(preserveManuel=false) {
     </div>`;
   }).join('');
 
+  const provTarihiVal = document.getElementById('islem-provizyon-tarihi').value;
+  let provInfoHtml = '';
+  if(provTarihiVal && ilkTarih) {
+    const farkMs = new Date(provTarihiVal+'T00:00:00') - new Date(ilkTarih+'T00:00:00');
+    const gunFarki = Math.round(farkMs / 86400000);
+    provInfoHtml = `<div style="font-size:10.5px;color:var(--text3);padding:6px 2px 0">ℹ️ Provizyon farkı (${gunFarki} gün) tüm taksitlere otomatik uygulanır — her taksit kendi ayının ekstresine ${gunFarki} gün kaydırılarak yansır.</div>`;
+  }
+
   container.innerHTML = `<div class="tp-wrap">
     <div class="tp-header"><div></div><div>Tarih</div><div>Tutar</div><div></div></div>
     ${rows}
@@ -9750,6 +9861,7 @@ function calcTaksit(preserveManuel=false) {
       </div>
       <button class="tp-reset-all" onclick="calcTaksit(false)">↺ Sıfırla</button>
     </div>
+    ${provInfoHtml}
   </div>`;
 }
 
@@ -9810,8 +9922,10 @@ function saveIslem() {
   const toplamTutar = tutarlar.reduce((s,t)=>s+t,0) || (getMoneyInput('islem-tutar')||0);
   const aylik = tutarlar[0] || (toplamTutar/taksit);
 
-  // manuelTaksitler: tarih+tutar çiftleri
-  const manuelTaksitler = tutarlar.map((t,i) => ({ tarih: tarihler[i]||'', tutar: t }));
+  const provizyonTarihi = document.getElementById('islem-provizyon-tarihi').value || null;
+
+  // manuelTaksitler: tarih+tutar çiftleri (ilk taksite provizyon tarihi de eklenir)
+  const manuelTaksitler = tutarlar.map((t,i) => ({ tarih: tarihler[i]||'', tutar: t, provizyonTarihi: i===0 ? provizyonTarihi : null }));
 
   const islem = {
     id: editIslemId || uid(),
@@ -9824,6 +9938,7 @@ function saveIslem() {
     aylik,
     taksitTutarlari: tutarlar,
     manuelTaksitler,
+    provizyonTarihi,
     paraBirimi: (()=>{ const kartId=document.getElementById('islem-kart').value; const chosen=document.getElementById('islem-para-birimi').value; return getKartCurrency(kartId, chosen); })()
   };
   if(!validateRequiredFields([{id:'islem-kart',msg:'Kart seçiniz'},{id:'islem-tutar',msg:'Tutar giriniz'}])) return;
@@ -9848,6 +9963,7 @@ function editIslem(id) {
   const i0 = DB.islemler.find(x=>x.id===id);
   if(i0 && i0.tip === 'nakitAvans') { editNakitAvans(id); return; }
   editIslemId = id;
+  _islemProvizyonManuel = true; // mevcut işlemde kayıtlı provizyon tarihi varsa otomatik öngörüyle ezilmesin
   const i = DB.islemler.find(x=>x.id===id);
   if(!i) return;
   document.getElementById('islem-modal-title').textContent = 'İşlem Düzenle';
@@ -9855,6 +9971,8 @@ function editIslem(id) {
   el.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
   phSet(el, 'Kart / Hesap seçin…', i.kart, '— Kart bulunamadı —');
   document.getElementById('islem-tarih').value = i.tarih;
+  document.getElementById('islem-provizyon-tarihi').value = i.provizyonTarihi || (i.manuelTaksitler && i.manuelTaksitler[0] && i.manuelTaksitler[0].provizyonTarihi) || '';
+  document.getElementById('islem-provizyon-hint').style.display = 'none';
   document.getElementById('islem-aciklama').value = i.aciklama||'';
   document.getElementById('islem-kategori').value = i.kategori||'';
   setMoneyInput('islem-tutar', i.tutar);
@@ -10303,12 +10421,12 @@ function renderIslemler() {
       const taksitler = getIslemTaksitliste(i);
       const ilk = taksitler[0];
       const son = taksitler[taksitler.length-1];
-      const pd1 = getExtreDonemi(k, ilk.tarih);
+      const pd1 = getExtreDonemi(k, ilk.ekstreTarih);
       const extre1 = pd1 ? calcExtreTarihiOdemeModuyla(k, pd1.year, pd1.month, tatilSet) : null;
       const odeme1 = extre1 ? calcOdemeTarihi(extre1, k.odemeSure, k.odemeGunTip, tatilSet) : null;
       let sonOdemeStr = '';
       if(taksitler.length > 1) {
-        const pd2 = getExtreDonemi(k, son.tarih);
+        const pd2 = getExtreDonemi(k, son.ekstreTarih);
         const extre2 = pd2 ? calcExtreTarihiOdemeModuyla(k, pd2.year, pd2.month, tatilSet) : null;
         const odeme2 = extre2 ? calcOdemeTarihi(extre2, k.odemeSure, k.odemeGunTip, tatilSet) : null;
         sonOdemeStr = odeme2 ? fmtDate(odeme2) : '?';
@@ -10369,7 +10487,7 @@ function renderIslemStatsStrip(islemler, tatilSet) {
     const k = getKart(i.kart);
     if(!k) return;
     getIslemTaksitliste(i).forEach(t=>{
-      const pd = getExtreDonemi(k, t.tarih);
+      const pd = getExtreDonemi(k, t.ekstreTarih);
       if(!pd) return;
       const extreDt = calcExtreTarihiOdemeModuyla(k, pd.year, pd.month, tatilSet);
       const odemeDt = extreDt ? calcOdemeTarihi(extreDt, k.odemeSure, k.odemeGunTip, tatilSet) : null;
@@ -10472,7 +10590,7 @@ function renderExtreler() {
   DB.islemler.filter(i=>i.kart===kart.id).forEach(islem=>{
     const islemPb = getKartCurrency(kart.id, islem.paraBirimi);
     getIslemTaksitliste(islem).forEach(tak => {
-      const pd = getExtreDonemi(kart, tak.tarih);
+      const pd = getExtreDonemi(kart, tak.ekstreTarih);
       if(!pd) return;
       const key = ensurePeriod(pd.year, pd.month);
       if(!key) return;
@@ -16143,6 +16261,9 @@ function renderOzet() {
   // ── BAKİYE UYARILARI ────────────────────────────────────────────
   if(typeof renderOzetBakiyeUyarilar === 'function') renderOzetBakiyeUyarilar();
 
+  // ── PROVİZYON TARİHİ EKSİK İŞLEM UYARISI ────────────────────────
+  if(typeof renderOzetProvizyonUyarilar === 'function') renderOzetProvizyonUyarilar();
+
   // ── VADESİZ MEVDUAT KARTI ───────────────────────────────────────
 
   // ── MEVDUAT VADE AKSIYON KARTLARI ──────────────────────────────
@@ -16470,7 +16591,7 @@ function renderOzet() {
         let tot=0;
         DB.islemler.filter(i=>i.kart===k.id).forEach(islem=>{
           getIslemTaksitliste(islem).forEach(tak=>{
-            const pd=getExtreDonemi(k,tak.tarih);
+            const pd=getExtreDonemi(k,tak.ekstreTarih);
             if(pd&&pd.year===d.getFullYear()&&pd.month===d.getMonth()) tot+=tak.tutar;
           });
         });
@@ -20985,6 +21106,119 @@ function renderOzetBakiyeUyarilar() {
       ${uyarilar.length > 5 ? `<div style="font-size:11px;color:var(--text3);text-align:center;padding:4px">+${uyarilar.length-5} daha...</div>` : ''}
     </div>
   </div>`;
+}
+
+// ═══ PROVİZYON TARİHİ EKSİK İŞLEMLER (Dashboard) ═══════════════════
+// Provizyon tarihi girilmemiş kredi kartı işlemlerini bulur, dashboard'da
+// listeler ve tek tıkla (öngörülen tarihle) veya elle tarih girerek
+// hızlıca doldurmayı sağlar.
+
+let _provizyonGizliIslemler = new Set(); // "Sonra" denilip gizlenen işlemler (bu oturum için)
+
+function _provizyonEksikIslemleriBul() {
+  return (DB.islemler||[]).filter(i => typeof islemProvizyonEksikMi === 'function' && islemProvizyonEksikMi(i) && !_provizyonGizliIslemler.has(i.id));
+}
+
+function renderOzetProvizyonUyarilar() {
+  const el = document.getElementById('ozet-provizyon-uyarilar');
+  if(!el) return;
+
+  const eksikler = _provizyonEksikIslemleriBul();
+  if(!eksikler.length) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+
+  el.style.display = 'block';
+  // En yeni işlem en üstte
+  eksikler.sort((a,b) => (b.tarih||'').localeCompare(a.tarih||''));
+
+  el.innerHTML = `<div class="card" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.04)">
+    <div class="card-header" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">🧾</span>
+        <div>
+          <div class="card-title" style="color:var(--violet)">Provizyon Tarihi Girilmemiş İşlemler</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px">${eksikler.length} işlem için ekstreye yansıma tarihi eksik</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="provizyonUyariTumunuGizle()" style="font-size:11px">Tümünü Sonraya Bırak</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="provizyon-uyari-liste">
+      ${eksikler.slice(0,8).map(i => _provizyonUyariSatiri(i)).join('')}
+    </div>
+    ${eksikler.length > 8 ? `<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px 4px 0">+${eksikler.length-8} işlem daha — tüm liste için İşlemler sayfasına gidin</div>` : ''}
+  </div>`;
+}
+
+function _provizyonUyariSatiri(i) {
+  const k = (typeof getKart === 'function') ? getKart(i.kart) : null;
+  const kartAd = k ? k.ad : '—';
+  const kartRenk = (k && k.renk) || 'var(--violet)';
+  const tutarStr = (typeof fmtCur === 'function') ? fmtCur(i.tutar, i.paraBirimi || 'TRY') : i.tutar;
+  const tarihStr = (typeof fmtDate === 'function') ? fmtDate(i.tarih) : i.tarih;
+  const aciklamaSafe = (i.aciklama || '—').replace(/"/g,'&quot;');
+  const taksitBadge = (i.taksit||1) > 1 ? `<span class="badge badge-warn" style="font-size:9.5px;padding:1px 6px">${i.taksit} Taksit</span>` : '';
+
+  // Öngörülen provizyon tarihi (varsa)
+  const gunFarki = (typeof tahminProvizyonGunFarki === 'function') ? tahminProvizyonGunFarki(i.kart) : null;
+  let onerilenTarih = '';
+  if(gunFarki !== null) {
+    const dt = new Date(i.tarih+'T00:00:00');
+    dt.setDate(dt.getDate() + gunFarki);
+    onerilenTarih = localDateStr(dt);
+  }
+
+  return `<div class="provizyon-uyari-row" id="prov-row-${i.id}" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
+    <span style="width:7px;height:7px;border-radius:50%;background:${kartRenk};flex-shrink:0"></span>
+    <div style="flex:1;min-width:160px">
+      <div style="font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <b>${kartAd}</b><span style="color:var(--text3)">·</span>
+        <span title="${aciklamaSafe}" style="overflow:hidden;text-overflow:ellipsis;max-width:180px;white-space:nowrap">${aciklamaSafe}</span>
+        ${taksitBadge}
+      </div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:2px">İşlem: ${tarihStr} · ${tutarStr}</div>
+    </div>
+    <input type="date" id="prov-input-${i.id}" value="${onerilenTarih}" style="font-size:12px;background:var(--surface3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;width:140px">
+    <button class="btn btn-primary btn-sm" style="font-size:11px;padding:5px 10px" onclick="provizyonUyariKaydet('${i.id}')">✓ Kaydet</button>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:5px 8px" onclick="provizyonUyariGizle('${i.id}')" title="Sonra hatırlat">Sonra</button>
+  </div>`;
+}
+
+function provizyonUyariKaydet(islemId) {
+  const input = document.getElementById('prov-input-' + islemId);
+  if(!input) return;
+  const tarih = input.value;
+  if(!tarih) {
+    input.classList.add('error');
+    input.focus();
+    return;
+  }
+  const idx = (DB.islemler||[]).findIndex(x => x.id === islemId);
+  if(idx < 0) return;
+  const islem = DB.islemler[idx];
+  islem.provizyonTarihi = tarih;
+  if(islem.manuelTaksitler && islem.manuelTaksitler[0]) {
+    islem.manuelTaksitler[0].provizyonTarihi = tarih;
+  } else if(islem.taksit > 1) {
+    // manuelTaksitler henüz oluşturulmamışsa, taksit listesinden üret
+    const liste = getIslemTaksitliste(islem);
+    islem.manuelTaksitler = liste.map((t,idx2) => ({ tarih: t.tarih, tutar: t.tutar, provizyonTarihi: idx2===0 ? tarih : null }));
+  }
+  saveData();
+  renderOzetProvizyonUyarilar();
+  if(typeof renderIslemler === 'function' && document.getElementById('page-islemler')?.classList.contains('active')) renderIslemler();
+}
+
+function provizyonUyariGizle(islemId) {
+  _provizyonGizliIslemler.add(islemId);
+  renderOzetProvizyonUyarilar();
+}
+
+function provizyonUyariTumunuGizle() {
+  _provizyonEksikIslemleriBul().forEach(i => _provizyonGizliIslemler.add(i.id));
+  renderOzetProvizyonUyarilar();
 }
 
 
