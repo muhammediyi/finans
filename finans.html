@@ -2961,7 +2961,18 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   color: rgba(240,244,255,.9) !important;
   box-shadow: 0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1) !important;
 }
-/* ── TOGGLE ──────────────────────────────────────────────── */
+/* ── KART DETAY POPUP SEKMELERİ ──────────────────────────────── */
+.kd-tab-btn { border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--text2); transition: var(--transition); }
+.kd-tab-btn.active { background: var(--surface3); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.kd-extre-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; background: var(--surface2); }
+.kd-extre-row:last-child { margin-bottom: 0; }
+.kd-extre-meta { min-width: 0; overflow: hidden; }
+.kd-extre-period { font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kd-extre-dates { font-size: 10.5px; color: var(--text3); margin-top: 1px; }
+.kd-extre-amt { text-align: right; flex-shrink: 0; }
+.kd-extre-amt-val { font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--text); }
+.kd-extre-badge { display: inline-block; border-radius: 5px; padding: 1px 7px; font-size: 9.5px; font-weight: 700; margin-top: 2px; }
+
 .toggle-track { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); box-shadow: inset 0 1px 4px rgba(0,0,0,.3); }
 .toggle-track::after { background: rgba(255,255,255,.38); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
 .toggle-switch input:checked + .toggle-track {
@@ -6857,6 +6868,40 @@ window.addEventListener('load', placeMobProfilePanel);
   </div>
 </div>
 
+<!-- KART DETAY MODAL (kompakt — kart kartından popup: İşlemler + Ekstreler sekmeli) -->
+<div class="modal-bg" id="modal-kart-detay">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <div class="modal-header-icon" id="kd-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💳</div>
+        <div class="modal-header-text" style="min-width:0;overflow:hidden">
+          <div class="modal-title" id="kd-kart-adi" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Kart</div>
+          <div class="modal-subtitle" id="kd-kart-sub">İşlemler ve ekstreler</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-kart-detay')">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:0 24px;margin-top:-6px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;gap:4px;background:var(--surface2);border-radius:9px;padding:3px">
+        <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">İşlemler</button>
+        <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">Ekstreler</button>
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
+    </div>
+
+    <div class="modal-body" style="padding-top:0">
+      <div id="kd-tab-islem">
+        <div class="islem-stats" id="kd-islem-stats" style="margin-bottom:12px"></div>
+        <div class="islem-list" id="kd-islem-list"></div>
+      </div>
+      <div id="kd-tab-extre" style="display:none">
+        <div id="kd-extre-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- İşlem Modal -->
 <div class="modal-bg" id="modal-islem">
   <div class="modal">
@@ -9501,7 +9546,7 @@ function _sidebarDim(on) {
   }
 }
 
-function openModal(id) {
+function openModal(id, onceSecimKartId) {
   if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
 
   // ── Açılmadan önce modal içini temizle ──
@@ -9536,7 +9581,7 @@ function openModal(id) {
   document.body.classList.add('modal-open');
   _sidebarDim(true);
   if(id==='modal-kart') populateKartModal();
-  if(id==='modal-islem') populateIslemModal();
+  if(id==='modal-islem') populateIslemModal(onceSecimKartId);
   if(id==='modal-mevduat') populateMevduatModal();
   // Money input binding — yeni açılan modalda da çalışsın
   const modalEl = document.getElementById(id);
@@ -10178,26 +10223,196 @@ function renderKartlar() {
   }).join('');
 }
 
-// ── Kart kartından ilgili sayfalara, kart önceden seçili olacak şekilde git ──
+// ── Kart kartından popup: İşlemler + Ekstreler (kompakt, sekmeli) ──
+let _kdKartId = null;
+let _kdActiveTab = 'islem';
+
 function gotoKartIslemleri(kartId) {
-  showPage('islemler');
-  const fk = document.getElementById('filter-kart');
-  if (fk) fk.value = kartId;
-  renderIslemler();
+  openKartDetayModal(kartId, 'islem');
 }
 
 function gotoKartEkstre(kartId) {
-  showPage('extreler');
-  const kf = document.getElementById('extre-kart-filter');
-  if (kf) kf.value = kartId;
-  renderExtreler();
+  openKartDetayModal(kartId, 'extre');
+}
+
+function openKartDetayModal(kartId, tab) {
+  const k = getKart(kartId);
+  if (!k) return;
+  _kdKartId = kartId;
+  const banka = getBanka(k.banka);
+  document.getElementById('kd-kart-adi').textContent = k.ad;
+  document.getElementById('kd-kart-adi').title = k.ad;
+  document.getElementById('kd-kart-sub').textContent = `${banka}${k.no ? ' ·· ' + k.no : ''}`;
+  document.getElementById('kd-header-icon').style.borderColor = (k.renk || 'var(--accent)') + '33';
+  openModal('modal-kart-detay');
+  kdSwitchTab(tab || 'islem');
+}
+
+function kdSwitchTab(tab) {
+  _kdActiveTab = tab;
+  document.getElementById('kd-tab-btn-islem').classList.toggle('active', tab === 'islem');
+  document.getElementById('kd-tab-btn-extre').classList.toggle('active', tab === 'extre');
+  document.getElementById('kd-tab-islem').style.display = tab === 'islem' ? 'block' : 'none';
+  document.getElementById('kd-tab-extre').style.display = tab === 'extre' ? 'block' : 'none';
+  if (tab === 'islem') kdRenderIslemler();
+  else kdRenderExtreler();
+}
+
+// Bu karta ait işlemleri kompakt liste olarak render et (mevcut islemRowHtml ile aynı satır görünümü)
+function kdRenderIslemler() {
+  if (!_kdKartId) return;
+  const list = document.getElementById('kd-islem-list');
+  const statsWrap = document.getElementById('kd-islem-stats');
+  if (!list) return;
+
+  let islemler = DB.islemler.filter(i => i.kart === _kdKartId);
+  islemler.sort((a, b) => b.tarih.localeCompare(a.tarih));
+
+  if (statsWrap) kdRenderMiniStats(statsWrap, islemler);
+
+  if (!islemler.length) {
+    list.innerHTML = `<div class="islem-empty">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <div class="islem-empty-title">Bu kartta işlem yok</div>
+      <div class="islem-empty-sub">Yeni işlem ekleyebilirsiniz</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastTarih = null;
+  islemler.forEach(i => {
+    if (i.tarih !== lastTarih) {
+      html += `<div class="islem-day-head">${islemGunBasligi(i.tarih)}</div>`;
+      lastTarih = i.tarih;
+    }
+    html += islemRowHtml(i);
+  });
+  list.innerHTML = html;
+}
+
+// Bu karta ait ekstre dönemlerini kompakt liste olarak render et
+function kdRenderExtreler() {
+  if (!_kdKartId) return;
+  const wrap = document.getElementById('kd-extre-list');
+  if (!wrap) return;
+  const kart = DB.kartlar.find(k => k.id === _kdKartId);
+  if (!kart) { wrap.innerHTML = '<div class="info-box">Kart bulunamadı</div>'; return; }
+
+  const tatilSet = getTatilSet();
+  const today = new Date();
+  const todayStr = localDateStr(today);
+  const kartPbList = getKartCurrencies(kart.id);
+
+  const periodMap = new Map();
+  let minDate = today, maxDate = today;
+  DB.islemler.filter(i => i.kart === kart.id).forEach(i => {
+    const dt = new Date(i.tarih + 'T00:00:00');
+    if (dt < minDate) minDate = dt;
+    const lastTaksitDt = new Date(i.tarih + 'T00:00:00');
+    lastTaksitDt.setMonth(lastTaksitDt.getMonth() + (i.taksit || 1) - 1);
+    if (lastTaksitDt > maxDate) maxDate = lastTaksitDt;
+  });
+  const end6 = new Date(today); end6.setMonth(end6.getMonth() + 6);
+  if (maxDate < end6) maxDate = end6;
+
+  const startY = minDate.getFullYear(), startM = minDate.getMonth();
+  const endY = maxDate.getFullYear(), endM = maxDate.getMonth();
+
+  function ensurePeriod(y, m) {
+    const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+    if (periodMap.has(key)) return key;
+    const extreDt = calcExtreTarihiOdemeModuyla(kart, y, m, tatilSet);
+    if (!extreDt) return null;
+    const odemeDt = calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet);
+    const label = new Date(y, m, 1).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' });
+    periodMap.set(key, { key, label, extre: localDateStr(extreDt), odeme: localDateStr(odemeDt), totalByPb: {} });
+    return key;
+  }
+  for (let y = startY, m = startM; y < endY || (y === endY && m <= endM);) {
+    ensurePeriod(y, m);
+    m++; if (m > 11) { m = 0; y++; }
+  }
+
+  DB.islemler.filter(i => i.kart === kart.id).forEach(islem => {
+    const islemPb = getKartCurrency(kart.id, islem.paraBirimi);
+    getIslemTaksitliste(islem).forEach(tak => {
+      const pd = getExtreDonemi(kart, tak.ekstreTarih);
+      if (!pd) return;
+      const key = ensurePeriod(pd.year, pd.month);
+      if (!key) return;
+      const p = periodMap.get(key);
+      p.totalByPb[islemPb] = (p.totalByPb[islemPb] || 0) + tak.tutar;
+    });
+  });
+
+  const periods = Array.from(periodMap.values())
+    .filter(p => Object.keys(p.totalByPb).length > 0)
+    .sort((a, b) => b.key.localeCompare(a.key)); // en yeni dönem üstte
+
+  if (!periods.length) {
+    wrap.innerHTML = '<div class="islem-empty"><div class="islem-empty-title">Bu kart için henüz ekstre yok</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = periods.map(p => {
+    const isPast = p.odeme < todayStr;
+    const isThisMonth = p.key === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    let badge, badgeStyle;
+    if (isPast) { badge = 'GEÇMİŞ'; badgeStyle = 'background:rgba(251,113,133,.15);color:#fb7185'; }
+    else if (isThisMonth) { badge = 'GÜNCEL'; badgeStyle = 'background:rgba(251,191,36,.15);color:#fbbf24'; }
+    else { badge = 'GELECEK'; badgeStyle = 'background:rgba(45,212,191,.1);color:#2dd4bf'; }
+
+    const toplamHtml = kartPbList.map(pb => p.totalByPb[pb] ? fmtCur(p.totalByPb[pb], pb) : null)
+      .filter(Boolean).join(' · ') || fmtCur(0, kartPbList[0] || defaultCurrency);
+
+    return `<div class="kd-extre-row">
+      <div class="kd-extre-meta">
+        <div class="kd-extre-period">${p.label}</div>
+        <div class="kd-extre-dates">Kesim: ${fmtDate(p.extre)} · Ödeme: ${fmtDate(p.odeme)}</div>
+      </div>
+      <div class="kd-extre-amt">
+        <div class="kd-extre-amt-val">${toplamHtml}</div>
+        <div class="kd-extre-badge" style="${badgeStyle}">${badge}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Kart detay popup'ı için kompakt mini istatistik şeridi (sadece adet + toplam tutar)
+function kdRenderMiniStats(wrap, islemler) {
+  const count = islemler.length;
+  const totals = {};
+  islemler.forEach(i => {
+    const cur = i.paraBirimi || getKartCurrency(i.kart);
+    totals[cur] = (totals[cur] || 0) + (i.tutar || 0);
+  });
+  const totalStr = Object.keys(totals).length
+    ? Object.entries(totals).map(([c, v]) => fmtCur(v, c)).join(' + ')
+    : '—';
+  wrap.innerHTML = `
+    <div class="islem-chip c-gold">
+      <div class="islem-chip-body"><div class="islem-chip-label">Toplam İşlem</div><div class="islem-chip-val">${count}</div></div>
+    </div>
+    <div class="islem-chip c-teal">
+      <div class="islem-chip-body"><div class="islem-chip-label">Toplam Tutar</div><div class="islem-chip-val">${totalStr}</div></div>
+    </div>`;
+}
+
+// "+ Yeni İşlem" — kart detay popup'ından, kart önceden seçili şekilde işlem modalını aç
+function kdYeniIslemAc() {
+  if (!_kdKartId) return;
+  closeModal('modal-kart-detay');
+  setTimeout(() => {
+    openModal('modal-islem', _kdKartId);
+  }, 180);
 }
 
 // ========== İŞLEMLER ==========
-function populateIslemModal() {
+function populateIslemModal(onceSecimKartId) {
   const el = document.getElementById('islem-kart');
   el.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  phSet(el, 'Kart / Hesap seçin…', '', '— Kart bulunamadı —');
+  phSet(el, 'Kart / Hesap seçin…', onceSecimKartId || '', '— Kart bulunamadı —');
   document.getElementById('islem-tarih').value = localDateStr(new Date());
   document.getElementById('islem-taksit').value = 1;
   setMoneyInput('islem-tutar', '');
