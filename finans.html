@@ -9505,35 +9505,44 @@ function deleteKart(id) {
 }
 
 function getKartKullanim(kartId) {
-  const todayStr = localDateStr(new Date());
   const kart = DB.kartlar.find(k=>k.id===kartId);
-  const tatilSet = kart ? getTatilSet() : null;
   let total = 0;
-  // Henüz ödeme tarihi gelmemiş tüm taksitler/işlemler limiti kullanır
-  // (işlem tarihine değil, ait olduğu ekstrenin ödeme tarihine bakılır)
+
+  // Dönem bazlı (donemKey) borç toplamı — para birimi bazında.
+  // Kartın varsayılan para birimi dışındaki tutarlar varsa fmtCur/limit zaten tek para biriminde
+  // tutulduğundan burada da kart genel limiti tek para birimi varsayımıyla toplanır (mevcut davranışla tutarlı).
+  const donemToplam = {}; // donemKey -> tutar
+
   DB.islemler.filter(i=>i.kart===kartId).forEach(i=>{
     getIslemTaksitliste(i).forEach(tak => {
-      let odemeTarihStr = tak.tarih;
+      let donemKey = null;
       if(kart) {
         const donem = getExtreDonemi(kart, tak.ekstreTarih);
-        if(donem) {
-          const extreDt = calcExtreTarihiOdemeModuyla(kart, donem.year, donem.month, tatilSet);
-          const odemeDt = extreDt ? calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet) : null;
-          if(odemeDt) odemeTarihStr = localDateStr(odemeDt);
-        }
+        if(donem) donemKey = `${donem.year}-${String(donem.month+1).padStart(2,'0')}`;
       }
-      if(odemeTarihStr >= todayStr) total += tak.tutar;
+      // Dönemi çözümlenemeyen (kenar durum) taksitler eski mantıkla (kendi tarihi) ele alınır
+      if(!donemKey) donemKey = `__free_${tak.tarih}`;
+      donemToplam[donemKey] = (donemToplam[donemKey] || 0) + tak.tutar;
     });
   });
+
+  // Her dönem için: o döneme yapılan toplam ödeme, dönem borcuna ulaşmadıysa
+  // kalan kısım hâlâ limiti kullanıyor demektir — ödeme tarihinin geçip geçmediğine bakılmaksızın.
+  Object.keys(donemToplam).forEach(donemKey => {
+    const borc = donemToplam[donemKey];
+    if(borc <= 0) return; // sadece iade/eksi bakiyeli dönemler limiti artırmaz, olduğu gibi yoksayılır (aşağıda ayrıca ele alınmaz)
+    const odenenTop = (DB.kartOdemeleri||[])
+      .filter(o => o.kartId === kartId && o.donemKey === donemKey)
+      .reduce((s,o)=>s+(o.tutar||0), 0);
+    const kalan = Math.max(0, borc - odenenTop);
+    total += kalan;
+  });
+
   // KMH kredileri — kalan borç
   (DB.krediler||[]).filter(kr=>kr.kmhId===kartId).forEach(kr=>{
     total += getKrediKalanBorc(kr);
   });
-  // Yapılan ödemeler limiti geri serbest bırakır — ödenen tutarları düş
-  const odenenToplam = (DB.kartOdemeleri||[])
-    .filter(o => o.kartId === kartId)
-    .reduce((s, o) => s + (o.tutar || 0), 0);
-  total = Math.max(0, total - odenenToplam);
+
   return total;
 }
 
@@ -9696,8 +9705,34 @@ function renderKartlar() {
           </div>
         </div>
       </div>
+      <div class="kart-action-row" style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="gotoKartIslemleri('${k.id}')" title="Bu karta ait işlemleri görüntüle">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M2 8h8M7 4l4 4-4 4M14 3v10"/></svg>İşlemler
+        </button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="gotoKartEkstre('${k.id}')" title="Ekstreleri görüntüle">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M4 2h6l2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5.5 6.5h5M5.5 9h5M5.5 11.5h3"/></svg>Ekstre
+        </button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:var(--gold)" onclick="openNakitAvansModal('${k.id}')" title="Bu karttan nakit avans çek">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5c0-1 .9-1.5 2-1.5s2 .5 2 1.3c0 1.7-4 1-4 2.7 0 .8 1 1.3 2 1.3s2-.5 2-1.5"/></svg>Nakit Avans
+        </button>
+      </div>
     </div>`;
   }).join('');
+}
+
+// ── Kart kartından ilgili sayfalara, kart önceden seçili olacak şekilde git ──
+function gotoKartIslemleri(kartId) {
+  showPage('islemler');
+  const fk = document.getElementById('filter-kart');
+  if (fk) fk.value = kartId;
+  renderIslemler();
+}
+
+function gotoKartEkstre(kartId) {
+  showPage('extreler');
+  const kf = document.getElementById('extre-kart-filter');
+  if (kf) kf.value = kartId;
+  renderExtreler();
 }
 
 // ========== İŞLEMLER ==========
@@ -10053,7 +10088,7 @@ function editIslem(id) {
 // NAKİT AVANS MODAL FONKSİYONLARI
 // ═══════════════════════════════════════════════════════════
 
-function openNakitAvansModal() {
+function openNakitAvansModal(kartId) {
   editNaId = null;
   const titleEl = document.getElementById('na-modal-title');
   if(titleEl) titleEl.textContent = 'Nakit Avans';
@@ -10064,7 +10099,11 @@ function openNakitAvansModal() {
   // Kart listesi
   const kartSel = document.getElementById('na-kart');
   kartSel.innerHTML = DB.kartlar.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
-  phSet(kartSel, 'Kart seçin…', '', '— Kart bulunamadı —');
+  if (kartId && DB.kartlar.some(k=>k.id===kartId)) {
+    kartSel.value = kartId;
+  } else {
+    phSet(kartSel, 'Kart seçin…', '', '— Kart bulunamadı —');
+  }
 
   // Tarih
   document.getElementById('na-tarih').value = todayStr;
@@ -14429,28 +14468,38 @@ async function resmiTatilleriGuncelle() {
     const mevcutTarihler = new Set(DB.tatiller.map(t => t.tarih));
 
     for (const yil of yillar) {
-        // CORS proxy üzerinden dene, başarısız olursa diğerine geç
-        // Not: corsproxy.io artık sadece localhost'ta çalışıyor, cors-anywhere.herokuapp.com
-        // kapandı, proxy.cors.sh ve cors.x2u.in API key istiyor — bu dördü canlı sitede
-        // hep 403 döner, listeden çıkarıldı.
+      // CORS proxy üzerinden dene, başarısız olursa diğerine geç.
+      // Sıralama güvenilirliğe göre: Corsfix ve CodeTabs en stabil olanlar önce,
+      // AllOrigins ve thingproxy (sık kesinti / SLA yok) en sona bırakıldı.
+      // Not: corsproxy.io artık sadece localhost'ta çalışıyor, cors-anywhere.herokuapp.com
+      // kapandı — bu ikisi canlı sitede hep 403/engelli döner, listede yok.
       const TARGET = `https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`;
       const endpoints = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`,
-        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`,
-        `https://proxy.corsfix.com/?${TARGET}`,
-        `https://api.cors.lol/url=${TARGET}`,
-        `https://thingproxy.freeboard.io/fetch/${TARGET}`,
+        { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
+        { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
+        { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
+        // Düzeltme: cors.lol'da parametre öncesi '?' eksikti (api.cors.lol/url=...), bu yüzden hep hata veriyordu.
+        { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+        { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+        // AllOrigins'in /raw ucu bazen boş/ham olmayan içerik döndürebiliyor; JSON-sarmalı /get ucu yedek olarak denenir.
+        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
+        { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
       ];
       let data = null;
-      for (const url of endpoints) {
+      for (const ep of endpoints) {
         try {
-          const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
-          if (!resp.ok) { console.warn('[tatil-api] proxy HTTP', resp.status, url); continue; }
+          const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
+          if (!resp.ok) { console.warn('[tatil-api] proxy HTTP', resp.status, ep.url); continue; }
           const text = await resp.text();
-          const parsed = JSON.parse(text);
+          let parsed = JSON.parse(text);
+          if (ep.wrapped) {
+            // AllOrigins /get: { contents: "<hedef API'nin ham JSON metni>" }
+            if (!parsed || typeof parsed.contents !== 'string') { console.warn('[tatil-api] proxy sarmalı geçersiz:', ep.url); continue; }
+            parsed = JSON.parse(parsed.contents);
+          }
           if (Array.isArray(parsed) && parsed.length) { data = parsed; break; }
-          console.warn('[tatil-api] proxy boş/geçersiz veri döndü:', url);
-        } catch(err) { console.warn('[tatil-api] proxy hata:', url, err.message); }
+          console.warn('[tatil-api] proxy boş/geçersiz veri döndü:', ep.url);
+        } catch(err) { console.warn('[tatil-api] proxy hata:', ep.url, err.message); }
       }
       if (!data) throw new Error('Tüm proxy\u2019ler başarısız — internet bağlantısını kontrol edin');
 
@@ -17797,6 +17846,7 @@ function renderHesaplar() {
       <td><span class="badge ${durumBadge}">${h.durum||'aktif'}</span></td>
       <td style="white-space:nowrap">
         ${(h.tur !== 'vadeli' && h.durum==='aktif' && h.bakiye>0) ? `<button class="btn btn-ghost btn-sm btn-act" onclick="vadeliyeKoy('${h.id}')" style="margin-right:4px" title="Vadeliye Koy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>` : `<button class="btn btn-ghost btn-sm btn-act" style="margin-right:4px;visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" style="display:block"></svg></button>`}
+        ${(h.tur !== 'vadeli' && h.durum==='aktif' && ((h.bakiye||0)+(h.kmhLimit||0))>0) ? `<button class="btn btn-ghost btn-sm btn-act" onclick="openTransferModal('${h.id}')" style="margin-right:4px;color:#7c9aff" title="Bu hesaptan transfer yap"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M2 8h10M8.5 4.5L12 8l-3.5 3.5"/></svg></button>` : `<button class="btn btn-ghost btn-sm btn-act" style="margin-right:4px;visibility:hidden;pointer-events:none" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" style="display:block"></svg></button>`}
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapLogModal('${h.id}')" style="margin-right:4px" title="İşlem Logu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M2 4h12M2 8h8M2 12h5"/></svg></button>
         <button class="btn btn-ghost btn-sm btn-act" onclick="openHesapModal('${h.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
         <button class="btn btn-danger btn-sm btn-act" onclick="deleteHesap('${h.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
@@ -23324,7 +23374,7 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
 // TRANSFER MODAL JS
 // ═══════════════════════════════════════════════════════════════
 
-function openTransferModal() {
+function openTransferModal(kaynakHesapId) {
   // Kaynak olarak kullanılabilecek (bakiyesi > 0) hesap/nakit var mı kontrol et
   const aktifHesaplar = (DB.hesaplar || []).filter(h => h.durum === 'aktif' && h.tur !== 'vadeli');
   const varKaynakHesap = aktifHesaplar.some(h => (h.bakiye || 0) + (h.kmhLimit || 0) > 0);
@@ -23335,6 +23385,15 @@ function openTransferModal() {
     return;
   }
 
+  // Belirli bir hesaptan açıldıysa, o hesabın (KMH dahil) kullanılabilir bakiyesi var mı kontrol et
+  if (kaynakHesapId) {
+    const kh = aktifHesaplar.find(h => h.id === kaynakHesapId);
+    if (!kh || ((kh.bakiye || 0) + (kh.kmhLimit || 0)) <= 0) {
+      showToast('Bu hesabın gönderilebilecek (KMH dahil) bakiyesi yok', 'error');
+      return;
+    }
+  }
+
   const inp = document.getElementById('transfer-tarih');
   if (inp) inp.value = localDateStr(new Date());
   document.getElementById('transfer-kaynak-bilgi').innerHTML = '';
@@ -23342,6 +23401,14 @@ function openTransferModal() {
   document.getElementById('transfer-kaynak').innerHTML = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
   document.getElementById('transfer-hedef').innerHTML  = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
   _populateTransferHesaplar();
+  if (kaynakHesapId) {
+    const kSel = document.getElementById('transfer-kaynak');
+    if (kSel) {
+      kSel.value = kaynakHesapId;
+      _populateTransferHesaplar();
+      onTransferKaynakChange();
+    }
+  }
   _checkNakitNakit();
   renderTransferLog();
   openModal('modal-transfer');
