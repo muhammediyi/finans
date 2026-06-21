@@ -5298,7 +5298,7 @@ window.addEventListener('load', placeMobProfilePanel);
         <span class="nav-icon">🧾</span><span class="nav-label">Ekstreler</span>
       </button>
       <button id="nav-ekstreeslestir" class="nav-btn" onclick="showPage('ekstreeslestir',this)">
-        <span class="nav-icon">🔗</span><span class="nav-label">Ekstre Eşleştir</span>
+        <span class="nav-icon">🔗</span><span class="nav-label">İşlem Eşleştir</span>
       </button>
     </div>
     <div class="nav-section">
@@ -5542,14 +5542,14 @@ window.addEventListener('load', placeMobProfilePanel);
 
 <!-- ═══ EKSTRE EŞLEŞTİRME SAYFASI ═══ -->
 <div id="page-ekstreeslestir" class="page">
-  <div class="page-header"><h1>Ekstre Eşleştir</h1><p>PDF ekstrenizi yükleyin — kart otomatik tespit edilir, sistemdeki işlemlerle eşleştirilir</p></div>
+  <div class="page-header"><h1>İşlem Eşleştir</h1><p>PDF ekstre veya ekran görüntüsü yükleyin — kart otomatik tespit edilir, sistemdeki <b>tüm</b> işlemlerle (geçmiş, gelecek, tüm dönemler) tarih ve tutar baz alınarak eşleştirilir</p></div>
 
   <div id="ee-step-upload" class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
     <div id="ee-dropzone" style="border:2px dashed var(--border2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)" onclick="document.getElementById('ee-pdf-input').click()">
       <div style="font-size:34px;margin-bottom:8px">🧾</div>
-      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstreyi seçmek için tıklayın</div>
+      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstre veya ekran görüntüsü (fotoğraf) seçmek için tıklayın</div>
       <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın — kart otomatik tespit edilecek</div>
-      <input type="file" id="ee-pdf-input" accept="application/pdf" style="display:none" onchange="eeHandlePdfFile(event)">
+      <input type="file" id="ee-pdf-input" accept="application/pdf,image/*" style="display:none" onchange="eeHandlePdfFile(event)">
     </div>
     <div id="ee-upload-status" style="display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)"></div>
 
@@ -20128,7 +20128,7 @@ function mkpDeleteKisi(id) {
     <button class="mob-more-item" onclick="mobNavGo('hesaplar',this,'🏧','Hesaplar')">
       <span class="mob-more-item-icon">🏧</span>Hesaplar
     </button>
-    <button class="mob-more-item" onclick="mobNavGo('ekstreeslestir',this,'🔗','Eşleştir')">
+    <button class="mob-more-item" onclick="mobNavGo('ekstreeslestir',this,'🔗','İşlem Eşleştir')">
       <span class="mob-more-item-icon">🔗</span>Eşleştir
     </button>
     <button class="mob-more-item" onclick="closeMobMore();openTransferModal()">
@@ -20696,7 +20696,7 @@ document.addEventListener('click', function(e) {
     'kartlar':     { icon: '💳', label: 'Kredi Kartları' },
     'islemler':    { icon: '⇄',  label: 'İşlemler' },
     'extreler':    { icon: '🧾', label: 'Ekstreler' },
-    'ekstreeslestir': { icon: '🔗', label: 'Ekstre Eşleştir' },
+    'ekstreeslestir': { icon: '🔗', label: 'İşlem Eşleştir' },
     'mevduat':     { icon: '🏦', label: 'Mevduat Takibi' },
     'kira':        { icon: '🏠', label: 'Kira Gelirleri' },
     'maas':        { icon: '💰', label: 'Maaş Geliri' },
@@ -25005,40 +25005,77 @@ function eeSetStatus(msg, isError) {
 }
 
 let _eePendingParsed = null; // kart onaylanana kadar bekleyen parse sonucu
+let _eeTesseractLoading = null;
+
+function eeLoadTesseract() {
+  if (typeof Tesseract !== 'undefined') return Promise.resolve();
+  if (_eeTesseractLoading) return _eeTesseractLoading;
+  _eeTesseractLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Tesseract.js yüklenemedi'));
+    document.head.appendChild(s);
+  });
+  return _eeTesseractLoading;
+}
 
 async function eeProcessFile(file) {
-  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-    eeSetStatus('⚠️ Lütfen bir PDF dosyası seçin.', true);
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  const isImage = file.type.startsWith('image/');
+  if (!isPdf && !isImage) {
+    eeSetStatus('⚠️ Lütfen bir PDF dosyası veya ekran görüntüsü (resim) seçin.', true);
     return;
   }
   document.getElementById('ee-kart-confirm').style.display = 'none';
-  eeSetStatus('⏳ PDF okunuyor…', false);
 
   try {
-    const buf = await file.arrayBuffer();
-    if (typeof pdfjsLib === 'undefined') {
-      eeSetStatus('⚠️ PDF okuma kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.', true);
-      return;
-    }
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     let fullText = '';
-    for (let p = 1; p <= pdf.numPages; p++) {
-      const page = await pdf.getPage(p);
-      const content = await page.getTextContent();
-      // Satırları y-koordinatına göre grupla (aynı satırdaki parçaları birleştir)
-      const lines = {};
-      content.items.forEach(it => {
-        const y = Math.round(it.transform[5]);
-        if (!lines[y]) lines[y] = [];
-        lines[y].push({ x: it.transform[4], str: it.str });
+    if (isPdf) {
+      eeSetStatus('⏳ PDF okunuyor…', false);
+      const buf = await file.arrayBuffer();
+      if (typeof pdfjsLib === 'undefined') {
+        eeSetStatus('⚠️ PDF okuma kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.', true);
+        return;
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        // Satırları y-koordinatına göre grupla (aynı satırdaki parçaları birleştir)
+        const lines = {};
+        content.items.forEach(it => {
+          const y = Math.round(it.transform[5]);
+          if (!lines[y]) lines[y] = [];
+          lines[y].push({ x: it.transform[4], str: it.str });
+        });
+        const ys = Object.keys(lines).map(Number).sort((a, b) => b - a);
+        ys.forEach(y => {
+          const rowText = lines[y].sort((a, b) => a.x - b.x).map(o => o.str).join(' ');
+          fullText += rowText + '\n';
+        });
+      }
+    } else {
+      // Ekran görüntüsü → OCR
+      eeSetStatus('⏳ OCR motoru yükleniyor…', false);
+      try {
+        await eeLoadTesseract();
+      } catch (e) {
+        eeSetStatus('⚠️ OCR kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.', true);
+        return;
+      }
+      eeSetStatus('⏳ Ekran görüntüsü okunuyor (OCR)… bu biraz sürebilir', false);
+      const { data } = await Tesseract.recognize(file, 'tur+eng', {
+        logger: m => {
+          if (m.status === 'recognizing text' && m.progress != null) {
+            eeSetStatus(`⏳ Ekran görüntüsü okunuyor… %${Math.round(m.progress * 100)}`, false);
+          }
+        }
       });
-      const ys = Object.keys(lines).map(Number).sort((a, b) => b - a);
-      ys.forEach(y => {
-        const rowText = lines[y].sort((a, b) => a.x - b.x).map(o => o.str).join(' ');
-        fullText += rowText + '\n';
-      });
+      fullText = data.text || '';
     }
+
     eeSetStatus('⏳ Kart tespit ediliyor…', false);
 
     // ── Kart otomatik tespiti ──
@@ -25047,7 +25084,9 @@ async function eeProcessFile(file) {
     eeSetStatus('⏳ İşlemler ayrıştırılıyor…', false);
     const parsed = eeParsePdfText(fullText);
     if (!parsed.length) {
-      eeSetStatus('⚠️ PDF içinde tarih + tutar formatında işlem satırı bulunamadı. Farklı bir ekstre formatı olabilir.', true);
+      eeSetStatus(isImage
+        ? '⚠️ Görüntüde tarih + tutar formatında işlem satırı bulunamadı. Daha net/yüksek çözünürlüklü bir ekran görüntüsü deneyin.'
+        : '⚠️ PDF içinde tarih + tutar formatında işlem satırı bulunamadı. Farklı bir ekstre formatı olabilir.', true);
       return;
     }
     _eePendingParsed = parsed;
@@ -25069,7 +25108,7 @@ async function eeProcessFile(file) {
     }
   } catch (err) {
     console.error(err);
-    eeSetStatus('⚠️ PDF okunamadı: ' + (err.message || err), true);
+    eeSetStatus('⚠️ Dosya okunamadı: ' + (err.message || err), true);
   }
 }
 
@@ -25220,8 +25259,8 @@ function eeRunMatch() {
   const usedSistemIds = new Set();
   const usedPdfKeys = new Set();
 
-  const TOLERANS_GUN = 3;
-  const TOLERANS_TUTAR = 0.01;
+  const TOLERANS_GUN = 0;        // tarih birebir eşleşmeli
+  const TOLERANS_TUTAR = 0.01;   // sadece ondalık yuvarlama payı
 
   EE_STATE.pdfIslemler.forEach(p => {
     let best = null, bestScore = Infinity;
