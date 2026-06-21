@@ -25590,16 +25590,24 @@ function eeParseTekSatirFormati(text) {
   return out;
 }
 
-// ── Strateji 2: Mobil banka uygulaması ekran görüntüsü formatı ──────────────
-// Bu uygulamalarda (ör. VakıfBank, Ziraat Bankkart) bir işlem genelde şu şekilde
-// AYRI satırlara/bloklara dağılmış olarak görünür:
-//   21              <- gün (tek/iki haneli sayı, tek başına bir satırda)
-//   Haziran         <- ay adı (kısa "Haz" veya tam "Haziran"), bazen altında/yanında yıl
-//   TOKAT VERGİ DAİRESİ     <- açıklama satır(lar)ı (1-3 satır olabilir)
-//   (**8216) MUHAMMED İYİ
-//   3.750,00 TL     <- tutar, açıklamadan sonraki ilk satırda
-// Bu fonksiyon: "gün" + "ay adı" ardışık satır çiftini bulur, sonra bir sonraki
-// tutar satırına kadar olan satırları açıklama olarak toplar.
+// ── Strateji 2: Mobil banka uygulaması ekran görüntüsü formatı (OCR) ────────
+// Bu uygulamalarda (ör. VakıfBank, Ziraat Bankkart) işlemler görsel olarak
+// "gün/ay sütunu | açıklama sütunu | tutar sütunu" şeklinde yan yana durur.
+// OCR satır satır soldan sağa okuduğu için gün/ay/tutar parçaları açıklama
+// metniyle AYNI satıra karışmış halde çıkar, örn:
+//   "21 TOKAT VERGİ DAİRESİ TOKAT..."
+//   "Haziran (**8216) MUHAMMED IYI 3.750,00 TL"
+// veya:
+//   "16 | TURHAL 4. Taksit ... TL"
+//   "Haz"
+//   "(1.190,00 TL Islemin"
+//   "2026 | 4/4 Taksidi)"
+// Bu yüzden satırın TAMAMINI gün/ay/tutar kalıbına zorlamak yerine, her satırı
+// tarayıp İÇİNDE geçen gün/ay/tutar parçacıklarını bulur, geri kalanını
+// açıklamaya ekleriz. Parantez içindeki tutarlar ("X TL'nin taksidi" gibi referans
+// bilgisi) gerçek işlem tutarı SAYILMAZ. Bir sonraki "gün" görülene kadar (veya
+// metin bitene kadar) blok açık tutulur ki asıl tutar birkaç satır sonra gelse bile
+// yakalanabilsin; blok kapanırken son bulunan (parantez-dışı) tutar esas alınır.
 function eeParseCokSatirFormati(text) {
   const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const out = [];
@@ -25618,78 +25626,152 @@ function eeParseCokSatirFormati(text) {
     'kasım': '11', 'kasim': '11', 'kas': '11',
     'aralık': '12', 'aralik': '12', 'ara': '12'
   };
-  const gunRe = /^\d{1,2}$/;
-  const ayRe = /^([a-zçğıöşü]+)\.?$/i;
-  const yilRe = /^\d{4}$/;
-  // Bir satırın "sadece tutar" satırı olup olmadığını anlamak için: satırın TAMAMI tutar deseniyle eşleşmeli
-  const amountOnlyRe = /^(-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})|-?\d+[.,]\d{2})\s*(TL|TRY|₺|USD|EUR|\$|€)?\s*(DR|CR|D|K|-)?$/i;
+  // Satır BAŞINDA duran gün sayısı (1-31), ardından boşluk/| veya satır sonu
+  const gunBasRe = /^(\d{1,2})\s*[\|:.\-]?\s*/;
+  // Saat damgası deseni (örn. "14:56", "09.30") — bunu GÜN ile karıştırmamak için ayrı tespit ederiz
+  const saatBasRe = /^(\d{1,2})\s*[:.]\s*\d{2}\b/;
+  // Satırın TAMAMI zaten bir tutar mı? (örn. "160,00 TL", "1.500,00") — bu durumda baştaki
+  // rakam grubu GÜN değil, tutarın kendisidir; gün olarak yorumlanmamalı.
+  const satirSafTutarRe = /^-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\s*(TL|TRY|₺|USD|EUR|\$|€)?\s*$/i;
+  // Satır içinde herhangi bir yerde geçen ay adı (kelime sınırlarıyla)
+  const ayIcindeRe = /\b([a-zçğıöşü]{3,9})\b\.?/gi;
+  // Satır başında duran yıl (2000-2099)
+  const yilBasRe = /^(20\d{2})\s*[\|:.\-]?\s*/;
+  // Satır içinde geçen tutar (TL/TRY/₺ etiketli olması tercih edilir)
+  const amountInLineRe = /(-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))\s*(TL|TRY|₺|USD|EUR|\$|€)\b/i;
+  // Etiketsiz ama açıkça ondalıklı tutar (yedek desen — TL etiketi OCR'da kaybolmuşsa, satır sonunda)
+  const amountBareRe = /(-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*$/;
+  // Bir blok parantez kapanışı OCR'da kaybolduğunda sonsuza dek "parantez içi" sayılmasını
+  // önlemek için kaç satır boyunca açık kalmasına izin verildiğini sınırlarız. Gerçek
+  // parantez-içi referans metni (taksit bilgisi vb.) pratikte aynı satırda veya en fazla
+  // bir sonraki satırda kapanır; daha uzun süre kapanmıyorsa OCR kapanışı kaçırmış demektir.
+  const PARANTEZ_MAX_SATIR = 1;
 
   let currentYear = new Date().getFullYear();
+  let blok = null; // { gun, ay, yil, tutarAdaylari: [{tutar, parantezIci}], aciklamaParcalari: [] }
+  let parantezDerinligi = 0; // satırlar arası taşan parantezleri takip etmek için
+  let parantezSatirSayisi = 0; // parantez kaç satırdır açık — OCR'da kapanış kaybolduysa sonsuza dek "içeride" saymamak için
+
+  function bloguKapat() {
+    if (!blok) return;
+    if (blok.gun && blok.ay && blok.tutarAdaylari.length) {
+      // Parantez-dışı adaylar varsa onları tercih et (gerçek işlem tutarı genelde
+      // parantez dışındaki sütunda yer alır). Hiç parantez-dışı aday yoksa, elimizde
+      // sadece parantez-içi (referans/taksit bilgisi olma ihtimali yüksek) bir tutar
+      // kalmış demektir — bunu son çare olarak kullanırız ama "belirsiz" işaretleriz,
+      // ki kullanıcı eşleştirme ekranında bu işlemi özellikle gözden geçirebilsin.
+      const disAdaylar = blok.tutarAdaylari.filter(a => !a.parantezIci);
+      const belirsiz = !disAdaylar.length;
+      const secilen = (disAdaylar.length ? disAdaylar : blok.tutarAdaylari)[0];
+      const dd = String(blok.gun).padStart(2, '0');
+      const tarih = `${blok.yil}-${blok.ay}-${dd}`;
+      let aciklama = blok.aciklamaParcalari.join(' ').replace(/\s{2,}/g, ' ').trim();
+      if (!aciklama) aciklama = 'İşlem';
+      if (belirsiz) aciklama += ' ⚠️ (tutar OCR\'da net okunamadı, kontrol edin)';
+      out.push({
+        tarih,
+        aciklama,
+        tutar: secilen.tutar,
+        belirsizTutar: belirsiz,
+        _key: tarih + '_' + Math.abs(secilen.tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
+      });
+    }
+    blok = null;
+    parantezDerinligi = 0;
+    parantezSatirSayisi = 0;
+  }
 
   for (let i = 0; i < rawLines.length; i++) {
-    const line = rawLines[i];
-    if (!gunRe.test(line)) continue;
-    const gun = line;
-    if (+gun < 1 || +gun > 31) continue;
+    let line = rawLines[i];
 
-    // Bir sonraki dolu satır ay adı olmalı
-    const ayLine = rawLines[i + 1];
-    if (!ayLine) continue;
-    const ayMatch = ayLine.match(ayRe);
-    if (!ayMatch) continue;
-    const ayKodu = ayAdlari[ayMatch[1].toLowerCase()];
-    if (!ayKodu) continue;
+    // 0) Bu satır saat damgası mı (örn. "14:56") veya zaten kendi başına bir TUTAR mı
+    //    (örn. "160,00 TL")? Öyleyse satır başındaki rakam grubu GÜN değildir — bu
+    //    durumlarda gün tespitini tamamen atlarız (mevcut blok varsa açık kalır,
+    //    tutar ise adım 5'te zaten yakalanacaktır).
+    const saatMi = saatBasRe.test(line);
+    const sirfTutarMi = satirSafTutarRe.test(line);
 
-    // Ay satırından sonra yıl satırı olabilir (opsiyonel)
-    let cursor = i + 2;
-    let yil = currentYear;
-    if (rawLines[cursor] && yilRe.test(rawLines[cursor])) {
-      yil = parseInt(rawLines[cursor], 10);
-      cursor++;
+    // 1) Satır başında gün var mı? (yeni işlem bloğu başlangıcı)
+    const gunM = (!saatMi && !sirfTutarMi) ? line.match(gunBasRe) : null;
+    if (gunM) {
+      const gunVal = parseInt(gunM[1], 10);
+      // Saf tutar satırlarıyla çakışmayı önlemek için ek güvenlik: gün eşleşmesinden
+      // sonra kalan satır parçası HEMEN bir ondalıklı sayı ile başlıyorsa (örn. "16" + "0,00 TL"
+      // ayrışması gibi durumlar) bunu gün değil, tutarın parçası olarak değerlendiririz.
+      const kalanParca = line.slice(gunM[0].length);
+      const tutarinPasrasiGibiMi = /^\d{0,1}[.,]\d{2}\b/.test(kalanParca) && !/[a-zçğıöşü]/i.test(gunM[0]);
+      if (gunVal >= 1 && gunVal <= 31 && !tutarinPasrasiGibiMi) {
+        bloguKapat(); // önceki blok varsa kapat (tamamlanmışsa eklenir, değilse atılır)
+        blok = { gun: gunVal, ay: null, yil: currentYear, tutarAdaylari: [], aciklamaParcalari: [] };
+        line = line.slice(gunM[0].length);
+      }
     }
 
-    // cursor'dan başlayarak ilk "sadece tutar" satırına kadar olan satırları açıklama say
-    const aciklamaParcalari = [];
-    let tutarSatiri = null;
-    let tarandi = 0;
-    while (cursor < rawLines.length && tarandi < 6) { // makul bir satır penceresi (açıklama genelde 1-3 satır)
-      const l = rawLines[cursor];
-      // Bir sonraki "gün" bloğuna denk geldiysek (yeni işlem başlıyor demek) dur, bu işlemi tutarsız bırak
-      if (gunRe.test(l) && rawLines[cursor + 1] && ayRe.test(rawLines[cursor + 1]) && ayAdlari[(rawLines[cursor + 1].match(ayRe) || [, ''])[1].toLowerCase()]) {
-        break;
-      }
-      if (amountOnlyRe.test(l)) {
-        tutarSatiri = l;
-        cursor++;
-        break;
-      }
-      aciklamaParcalari.push(l);
-      cursor++;
-      tarandi++;
+    if (!blok) continue; // henüz bir gün görülmedi, bu satırı atla (başlık/özet satırları)
+
+    // 2) Satır başında yıl var mı?
+    const yilM = line.match(yilBasRe);
+    if (yilM) {
+      blok.yil = parseInt(yilM[1], 10);
+      line = line.slice(yilM[0].length);
     }
 
-    if (!tutarSatiri) continue; // tutar bulunamadıysa bu bloğu işlem olarak sayma
+    // 3) Satır içinde ay adı var mı? (henüz bulunmadıysa ara)
+    if (!blok.ay) {
+      ayIcindeRe.lastIndex = 0;
+      let am;
+      while ((am = ayIcindeRe.exec(line)) !== null) {
+        const kod = ayAdlari[am[1].toLowerCase()];
+        if (kod) {
+          blok.ay = kod;
+          line = (line.slice(0, am.index) + ' ' + line.slice(am.index + am[0].length)).trim();
+          break;
+        }
+      }
+    }
 
-    const am = tutarSatiri.match(amountOnlyRe);
-    const tutar = eeNormalizeTutar(am[1], am[3]);
-    if (tutar === null) continue;
+    // 4) Satırın parantez içinde başlayıp başlamadığını / parantezle bitip bitmediğini takip et.
+    //    OCR kapanış parantezini kaçırırsa parantezDerinligi sonsuza dek 1'de kalıp sonraki
+    //    TÜM tutarları haksız yere "parantez içi" işaretleyebilir; bunu önlemek için kaç
+    //    satırdır açık kaldığını sayıp belli bir sınırdan sonra zorla sıfırlıyoruz.
+    let satirBasiParantezIci = parantezDerinligi > 0;
+    if (satirBasiParantezIci) {
+      parantezSatirSayisi++;
+      if (parantezSatirSayisi >= PARANTEZ_MAX_SATIR) {
+        // OCR kapanışı muhtemelen kaçırmış: bu satırı parantez-dışı kabul et ki
+        // tek geçerli tutar adayı haksız yere "belirsiz" işaretlenmesin.
+        parantezDerinligi = 0;
+        parantezSatirSayisi = 0;
+        satirBasiParantezIci = false;
+      }
+    } else {
+      parantezSatirSayisi = 0;
+    }
+    for (const ch of line) {
+      if (ch === '(') parantezDerinligi++;
+      else if (ch === ')') parantezDerinligi = Math.max(0, parantezDerinligi - 1);
+    }
 
-    const dd = String(gun).padStart(2, '0');
-    const mm = ayKodu;
-    const tarih = `${yil}-${mm}-${dd}`;
+    // 5) Satır içinde tutar var mı? (TL etiketli + etiketsiz, her ikisini de aday olarak topla)
+    let am = line.match(amountInLineRe);
+    if (am) {
+      blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(am[1], null), parantezIci: satirBasiParantezIci || line.slice(0, am.index).includes('(') });
+      line = (line.slice(0, am.index) + ' ' + line.slice(am.index + am[0].length)).trim();
+    } else {
+      const bareM = line.match(amountBareRe);
+      if (bareM) {
+        blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(bareM[1], null), parantezIci: satirBasiParantezIci || line.slice(0, bareM.index).includes('(') });
+        line = line.slice(0, bareM.index).trim();
+      }
+    }
+    // Geçersiz (null) tutar adaylarını hemen ele
+    blok.tutarAdaylari = blok.tutarAdaylari.filter(a => a.tutar !== null);
 
-    let aciklama = aciklamaParcalari.join(' ').replace(/\s{2,}/g, ' ').trim();
-    if (!aciklama) aciklama = 'İşlem';
-
-    out.push({
-      tarih,
-      aciklama,
-      tutar,
-      _key: tarih + '_' + Math.abs(tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
-    });
-
-    i = cursor - 1; // dış for döngüsü i++ yapacak, cursor'dan devam et
+    // 6) Satırdan geri kalan metni açıklamaya ekle
+    const kalan = line.replace(/[\|]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    if (kalan && kalan.length > 1) blok.aciklamaParcalari.push(kalan);
   }
+  bloguKapat(); // dosya sonunda açık kalan blok varsa kapat
 
   return out;
 }
