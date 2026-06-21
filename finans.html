@@ -6151,9 +6151,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-ghost" onclick="resetGoruntuAyarlari()">↺ Varsayılana Dön</button>
     </div>
-  </div>
 
-  <!-- VERİ YÖNETİMİ TAB -->
   <div id="tab-veri-yonetimi" style="display:none">
     <div class="info-box">Sistemdeki <b>tüm</b> veriyi (bankalar, kartlar, hesaplar, işlemler, krediler, ayarlar — her şey) tek bir JSON dosyası olarak yedekleyin veya bir yedekten tamamen geri yükleyin.</div>
 
@@ -6179,6 +6177,18 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
         <div style="margin-top:14px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 12px;font-size:11.5px;color:var(--gold)">
           ⚠️ Geri yükleme sonrası veri otomatik olarak Google Drive'a da kaydedilir.
         </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;margin-bottom:0">
+      <div class="card-header"><span class="card-title">🕓 Google Drive Sürüm Geçmişinden Kurtar</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+        Drive her kayıtta önceki sürümü saklar. Veri yanlışlıkla silindiyse veya senkronizasyon sırasında üzerine yazıldıysa, geçmiş sürümlerden birini görüntüleyip geri yükleyebilirsiniz.
+      </div>
+      <button class="btn" style="width:100%;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:var(--sky)" onclick="gDriveAcRevizyonModal()">🕓 Eski Sürümleri Göster</button>
+      <div id="vy-local-backup-row" style="display:none;margin-top:10px;background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:8px 12px;font-size:11.5px;color:var(--teal);align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <span id="vy-local-backup-info"></span>
+        <button class="btn btn-ghost btn-sm" style="min-width:auto" onclick="gDriveGeriYukleYerelYedek()">Bu yedeği görüntüle</button>
       </div>
     </div>
   </div>
@@ -6207,6 +6217,27 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-vy-restore-onay')">İptal</button>
       <button class="btn" style="background:var(--danger);color:#fff" onclick="confirmTumVeriRestore()">Evet, Tüm Veriyi Değiştir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google Drive Sürüm Geçmişi Modal -->
+<div class="modal-bg" id="modal-drive-revizyon">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2)">🕓</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Sürüm Geçmişi</div>
+          <div class="modal-subtitle">Drive'da saklanan geçmiş kayıtlar — en yeni üstte</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-drive-revizyon')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="drive-revizyon-list" style="display:flex;flex-direction:column;gap:8px">
+        <div class="info-box" style="margin:0">Yükleniyor…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -8225,6 +8256,7 @@ function defaultKartAltyapilari() {
 
 function saveData() {
   // Tüm kayıt Drive'a gider — localStorage kullanılmaz
+  gDirty = true;
   if (typeof gDriveReady === 'function' && gDriveReady()) {
     clearTimeout(gSaveTimer);
     gSaveTimer = setTimeout(gDriveSaveNow, 1500);
@@ -9236,6 +9268,7 @@ function showTab(id, btn) {
   }
   if(id==='tab-veri-yonetimi') {
     renderVeriYonetimiOzet();
+    renderYerelYedekDurumu();
   }
 }
 
@@ -14693,6 +14726,106 @@ function confirmTumVeriRestore() {
   showToast('Tüm veri geri yüklendi ✓ Google Drive\'a kaydediliyor...', 'success');
 }
 
+// ── Tarayıcıdaki son yerel güvenlik yedeği (her başarılı Drive kaydında otomatik alınır) ──
+function renderYerelYedekDurumu() {
+  const row = document.getElementById('vy-local-backup-row');
+  const info = document.getElementById('vy-local-backup-info');
+  if(!row || !info) return;
+  let raw = null;
+  try { raw = localStorage.getItem('finans_local_backup'); } catch(e) {}
+  if(!raw) { row.style.display = 'none'; return; }
+  try {
+    const parsed = JSON.parse(raw);
+    info.innerHTML = `💾 Bu tarayıcıda yerel yedek bulundu: <b>${new Date(parsed.tarih).toLocaleString('tr-TR')}</b>`;
+    row.style.display = 'flex';
+  } catch(e) { row.style.display = 'none'; }
+}
+
+function gDriveGeriYukleYerelYedek() {
+  let raw = null;
+  try { raw = localStorage.getItem('finans_local_backup'); } catch(e) {}
+  if(!raw) { showToast('Yerel yedek bulunamadı', 'error'); return; }
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) { showToast('Yerel yedek okunamadı', 'error'); return; }
+  _vyBekleyenRestoreData = parsed.data;
+  const sayilar = VY_OZET_ALANLAR.map(f => {
+    const list = parsed.data[f.k];
+    const count = Array.isArray(list) ? list.length : (list && typeof list==='object' ? Object.keys(list).length : 0);
+    return count > 0 ? `<span class="badge" style="margin:2px">${f.ad}: <b>${count}</b></span>` : '';
+  }).filter(Boolean).join(' ');
+  document.getElementById('vy-restore-onay-detay').innerHTML = `
+    <div style="margin-bottom:8px">Yerel yedek tarihi: <b>${new Date(parsed.tarih).toLocaleString('tr-TR')}</b></div>
+    <div style="margin-bottom:10px">Bu yedekte aşağıdaki veriler bulundu:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${sayilar || '<span style="color:var(--text3)">Boş yedek</span>'}</div>
+  `;
+  openModal('modal-vy-restore-onay');
+}
+
+// ── Google Drive sürüm geçmişi (revisions) — yanlışlıkla silinen/üzerine yazılan veriyi kurtarmak için ──
+async function gDriveAcRevizyonModal() {
+  openModal('modal-drive-revizyon');
+  const list = document.getElementById('drive-revizyon-list');
+  list.innerHTML = '<div class="info-box" style="margin:0">Yükleniyor…</div>';
+  if (!gDriveReady() || !gDriveFileId) {
+    list.innerHTML = '<div class="info-box" style="margin:0">Google Drive\'a bağlı değilsiniz veya henüz bir dosya bulunamadı.</div>';
+    return;
+  }
+  try {
+    const res = await gApiFetch(
+      'https://www.googleapis.com/drive/v3/files/' + gDriveFileId + '/revisions?fields=revisions(id,modifiedTime,size)&pageSize=200'
+    );
+    if (!res || !res.ok) throw new Error(res ? ('HTTP ' + res.status) : 'Yetkilendirme hatası');
+    const data = await res.json();
+    let revisions = (data.revisions || []).slice().sort((a,b)=> new Date(b.modifiedTime) - new Date(a.modifiedTime));
+    if (!revisions.length) {
+      list.innerHTML = '<div class="info-box" style="margin:0">Henüz geçmiş sürüm yok. Drive, dosya birkaç kez kaydedildikten sonra sürüm tutmaya başlar.</div>';
+      return;
+    }
+    list.innerHTML = revisions.map((r,i) => {
+      const tarih = new Date(r.modifiedTime).toLocaleString('tr-TR', {dateStyle:'medium', timeStyle:'short'});
+      const kb = r.size ? Math.round(r.size/1024) + ' KB' : '';
+      const guncelMi = i === 0;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${tarih} ${guncelMi ? '<span style="color:var(--teal);font-size:10.5px;font-weight:700;margin-left:4px">EN GÜNCEL</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${kb}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="min-width:auto" onclick="gDriveOnizleRevizyon('${r.id}')">Görüntüle / Geri Yükle</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('Drive revizyon listesi hatası:', e);
+    list.innerHTML = '<div class="info-box" style="margin:0">Sürüm geçmişi alınamadı: ' + (e.message||e) + '</div>';
+  }
+}
+
+async function gDriveOnizleRevizyon(revisionId) {
+  if (!gDriveReady() || !gDriveFileId) return;
+  try {
+    const res = await gApiFetch(
+      'https://www.googleapis.com/drive/v3/files/' + gDriveFileId + '/revisions/' + revisionId + '?alt=media'
+    );
+    if (!res || !res.ok) throw new Error(res ? ('HTTP ' + res.status) : 'Yetkilendirme hatası');
+    const remoteDB = await res.json();
+    _vyBekleyenRestoreData = remoteDB;
+    const sayilar = VY_OZET_ALANLAR.map(f => {
+      const list = remoteDB[f.k];
+      const count = Array.isArray(list) ? list.length : (list && typeof list==='object' ? Object.keys(list).length : 0);
+      return count > 0 ? `<span class="badge" style="margin:2px">${f.ad}: <b>${count}</b></span>` : '';
+    }).filter(Boolean).join(' ');
+    document.getElementById('vy-restore-onay-detay').innerHTML = `
+      <div style="margin-bottom:8px">Bu sürüm Drive geçmişinden alındı.</div>
+      <div style="margin-bottom:10px">Bu sürümde aşağıdaki veriler bulundu:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${sayilar || '<span style="color:var(--text3)">Boş</span>'}</div>
+    `;
+    closeModal('modal-drive-revizyon');
+    openModal('modal-vy-restore-onay');
+  } catch(e) {
+    console.error('Drive revizyon önizleme hatası:', e);
+    showToast('Sürüm yüklenemedi: ' + (e.message||e), 'error');
+  }
+}
+
 let editUrunTipId = null;
 function editUrunTip(id) {
   editUrunTipId = id;
@@ -18858,6 +18991,7 @@ let gTokenClient = null;
 let gAccessToken  = null;
 let gDriveFileId  = null;
 let gSaveTimer    = null;
+let gDirty        = false; // Drive'a yazılmamış yerel değişiklik var mı?
 
 function gDriveReady() {
   return !!gAccessToken;
@@ -19073,6 +19207,7 @@ async function gDriveLoadFromDrive() {
     const remoteDB = await res.json();
     // applyMigrations içinde FORMAT_CONFIG ve currency da uygulanır
     DB = applyMigrations(remoteDB);
+    gDirty = false; // taze veri geldi, yereldeki "kaydedilmemiş değişiklik" durumu artık geçersiz
     // Drive'dan taze veri geldi — sayfa filtrelerini de güncel DB'ye göre yeniden uygula
     _islemFiltreRestored = false;
     _extreFiltreRestored = false;
@@ -19089,8 +19224,13 @@ async function gDriveLoadFromDrive() {
   }
 }
 
+let gSaving = false; // bir kayıt isteği şu an sürüyor mu?
+let gSaveRetryTimer = null;
+
 async function gDriveSaveNow() {
   if (!gDriveReady()) return;
+  if (gSaving) return; // aynı anda iki kayıt göndermeyelim, bir sonrakini bekleyelim
+  gSaving = true;
   gDriveSetStatus('Kaydediliyor...', 'var(--accent)');
   try {
     const body = JSON.stringify(DB);
@@ -19120,16 +19260,48 @@ async function gDriveSaveNow() {
         gDriveFileId = d.id;
       }
     }
+    if (!res || !res.ok) throw new Error(res ? ('HTTP ' + res.status) : 'Yetkilendirme hatası');
+    // Başarılı kayıt — yerel güvenlik yedeğini de güncelle ve dirty bayrağını temizle
+    gDirty = false;
+    clearTimeout(gSaveRetryTimer);
+    try { localStorage.setItem('finans_local_backup', JSON.stringify({ tarih: new Date().toISOString(), data: DB })); } catch(e) {}
     gDriveSetStatus('Kaydedildi ✓', 'var(--success, #4ade80)');
     setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 2500);
   } catch(e) {
     console.error('Drive save error:', e);
-    gDriveSetStatus('Kayıt hatası', 'var(--danger)');
-    if(typeof showToast==='function') showToast('Google Drive kayıt hatası: ' + (e.message||e), 'error');
+    gDriveSetStatus('Kayıt hatası — tekrar denenecek', 'var(--danger)');
+    if(typeof showToast==='function') showToast('Google Drive kayıt hatası: ' + (e.message||e) + ' — tekrar denenecek', 'error');
+    // Kayıt başarısız oldu — veri hâlâ "dirty" (kaydedilmemiş), birkaç saniye sonra otomatik tekrar dene
+    gDirty = true;
+    clearTimeout(gSaveRetryTimer);
+    gSaveRetryTimer = setTimeout(gDriveSaveNow, 6000);
+  } finally {
+    gSaving = false;
   }
 }
 
-function gDriveSyncNow() { gDriveLoadFromDrive(); }
+// "Sync" butonu: kaydedilmemiş yerel değişiklik varsa önce ONU Drive'a gönderir
+// (eskiden doğrudan Drive'dan indirip yerel değişiklikleri sessizce SİLİYORDU — bu veri kaybının
+// asıl sebebiydi). Yerel değişiklik yoksa normal şekilde Drive'dan güncel veriyi çeker.
+async function gDriveSyncNow() {
+  if (gDirty) {
+    if(typeof showToast==='function') showToast("Kaydedilmemiş değişiklikleriniz Drive'a gönderiliyor...", 'success');
+    await gDriveSaveNow();
+  } else {
+    await gDriveLoadFromDrive();
+  }
+}
+
+// Sayfa kapatılırken/yenilenirken bekleyen kaydı kaybetmemek için son bir kayıt denemesi yap
+window.addEventListener('beforeunload', function(e) {
+  if (gDirty && gDriveReady()) {
+    // Senkron olmayan fetch tamamlanamayabilir ama denenir; ayrıca kullanıcıyı uyar
+    gDriveSaveNow();
+    e.preventDefault();
+    e.returnValue = 'Kaydedilmemiş değişiklikler olabilir.';
+    return e.returnValue;
+  }
+});
 
 // applyMigrations ve saveData yukarıda (loadData yakınında) tanımlıdır.
 
