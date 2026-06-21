@@ -396,22 +396,38 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 .islem-empty svg { opacity: .3; margin-bottom: 10px; }
 .islem-empty-title { font-size: 13px; color: var(--text2); }
 .islem-empty-sub { font-size: 11px; margin-top: 4px; }
+/* ─── Dönem sekmeleri (Bu Dönem / Önceki Dönem / Tümü) ─── */
+.islem-donem-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.islem-donem-tab {
+  flex: 1; text-align: center; padding: 8px 4px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface2);
+  transition: background .15s, border-color .15s, color .15s; user-select: none;
+}
+.islem-donem-tab:hover { background: var(--surface3); }
+.islem-donem-tab.active { border-color: var(--border-active); background: var(--accent-glow); color: var(--accent); font-weight: 700; }
+/* ─── Gün başlığı ─── */
+.islem-day-head {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text3); padding: 16px 6px 6px;
+}
+.islem-day-head:first-child { padding-top: 2px; }
+/* ─── Mobil bankacılık tarzı işlem satırı ─── */
+.islem-row2 { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--radius-xs); transition: background .15s; }
+.islem-row2:hover { background: var(--surface2); }
+.islem-row2:hover .islem-row2-actions { opacity: 1; }
+.islem-row2-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--surface3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.islem-row2-body { flex: 1 1 auto; min-width: 0; }
+.islem-row2-title { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.islem-row2-sub { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.islem-row2-amount { text-align: right; flex-shrink: 0; }
+.islem-row2-amount-val { font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.islem-row2-amount-sub { font-size: 10px; color: var(--text3); margin-top: 1px; white-space: nowrap; }
+.islem-row2-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; flex-shrink: 0; margin-left: 2px; }
+@media (hover: none) { .islem-row2-actions { opacity: 1; } }
 @media (max-width: 768px) {
   .islem-stats { grid-template-columns: repeat(2,1fr); }
-  .islem-list-head { display: none; }
-  .islem-row {
-    flex-wrap: wrap; border: 1px solid var(--border); border-radius: var(--radius-sm);
-    margin-bottom: 6px; background: var(--surface);
-  }
-  .islem-row:hover { background: var(--surface2); }
-  .islem-date { order: 1; flex: 0 0 auto; display: flex; align-items: baseline; gap: 4px; text-align: left; }
-  .islem-main { order: 2; flex: 1 1 auto; }
-  .islem-amount { order: 3; flex: 0 0 auto; margin-left: auto; }
-  .islem-taksit { order: 4; flex: 0 0 auto; }
-  .islem-actions { order: 5; flex: 0 0 auto; opacity: 1; }
-  .islem-pay { order: 6; flex: 1 1 100%; display: flex; gap: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-  .islem-pay-row { flex-direction: row; gap: 4px; }
-  .islem-list { gap: 8px; max-height: none; }
+  .islem-donem-tab { font-size: 11px; padding: 7px 2px; }
 }
 /* Cards */
 html[data-theme="light"] .card {
@@ -5374,6 +5390,12 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     </div>
   </div>
 
+  <div class="islem-donem-tabs" id="islem-donem-tabs">
+    <button type="button" class="islem-donem-tab" data-donem="guncel" onclick="setIslemDonemTab('guncel')">Bu Dönem</button>
+    <button type="button" class="islem-donem-tab" data-donem="onceki" onclick="setIslemDonemTab('onceki')">Önceki Dönem</button>
+    <button type="button" class="islem-donem-tab" data-donem="tum" onclick="setIslemDonemTab('tum')">Tümü</button>
+  </div>
+
   <div class="islem-stats" id="islem-stats"></div>
 
   <div class="card islem-card">
@@ -5396,9 +5418,6 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
       </button>
     </div>
     <div class="active-filtre-row" id="islem-active-filtre-row" style="display:none"></div>
-    <div class="islem-list-head">
-      <span>Tarih</span><span>Kart / Açıklama</span><span>Taksit</span><span>Tutar</span><span>Ekstre / Ödeme</span><span></span>
-    </div>
     <div class="islem-list" id="islemler-list"></div>
   </div>
 </div>
@@ -10626,6 +10645,56 @@ function deleteIslem(id) {
 }
 
 const AY_KISA_TR = ['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
+const AY_UZUN_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const GUN_UZUN_TR = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+
+// "Bugün" / "Dün" / "18 Haziran Perşembe" şeklinde gün başlığı üretir
+function islemGunBasligi(tarihStr) {
+  const d = new Date(tarihStr+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((today - d) / 86400000);
+  if(diff === 0) return 'Bugün';
+  if(diff === 1) return 'Dün';
+  const yilStr = d.getFullYear() !== today.getFullYear() ? ' '+d.getFullYear() : '';
+  return `${d.getDate()} ${AY_UZUN_TR[d.getMonth()]} ${GUN_UZUN_TR[d.getDay()]}${yilStr}`;
+}
+
+// ── Dönem sekmeleri (Bu Dönem / Önceki Dönem / Tümü) ────────────────
+let _islemDonemTab = 'guncel';
+function setIslemDonemTab(tab) {
+  _islemDonemTab = tab;
+  renderIslemler();
+}
+
+// Bir işlemin (taksitleri üzerinden) hangi dönem(ler)e düştüğünü bulur.
+// Birden fazla taksiti olan bir işlem, aynı anda "güncel" ve "önceki" gibi
+// birden fazla döneme yayılabilir — bu yüzden Set döner.
+function getIslemDonemDurumlari(islem, donemCache) {
+  const k = getKart(islem.kart);
+  const set = new Set();
+  if(!k) return set;
+  if(!donemCache[k.id]) {
+    const todayStr = localDateStr(new Date());
+    const guncel = getExtreDonemi(k, todayStr);
+    let onceki = null;
+    if(guncel) {
+      let py = guncel.year, pm = guncel.month - 1;
+      if(pm < 0) { pm = 11; py -= 1; }
+      onceki = {year:py, month:pm};
+    }
+    donemCache[k.id] = {guncel, onceki};
+  }
+  const {guncel, onceki} = donemCache[k.id];
+  if(!guncel) return set;
+  getIslemTaksitliste(islem).forEach(t=>{
+    const d = getExtreDonemi(k, t.ekstreTarih);
+    if(!d) return;
+    if(d.year===guncel.year && d.month===guncel.month) set.add('guncel');
+    else if(onceki && d.year===onceki.year && d.month===onceki.month) set.add('onceki');
+    else set.add('eski');
+  });
+  return set;
+}
 
 function renderIslemler() {
   // ── Kayıtlı filtre tercihlerini (Drive'dan gelen DB) ilk girişte select'lere uygula ──
@@ -10660,12 +10729,21 @@ function renderIslemler() {
   renderIslemFiltreBadge();
   renderIslemFiltreGrids();
 
+  // ── Dönem sekmesi durumunu görsel olarak güncelle ──
+  document.querySelectorAll('.islem-donem-tab').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.donem === _islemDonemTab);
+  });
+
   let islemler = [...DB.islemler];
   if(fk.value) islemler = islemler.filter(i=>i.kart===fk.value);
   if(fa.value) islemler = islemler.filter(i=>i.tarih.startsWith(fa.value));
   if(tVal === 'pesin') islemler = islemler.filter(i=>(i.taksit||1) <= 1);
   if(tVal === 'taksitli') islemler = islemler.filter(i=>(i.taksit||1) > 1);
   if(qVal) islemler = islemler.filter(i=>(i.aciklama||'').toLocaleLowerCase('tr-TR').includes(qVal));
+  if(_islemDonemTab !== 'tum') {
+    const donemCache = {};
+    islemler = islemler.filter(i => getIslemDonemDurumlari(i, donemCache).has(_islemDonemTab));
+  }
   islemler.sort((a,b)=>b.tarih.localeCompare(a.tarih));
 
   const tatilSet = getTatilSet();
@@ -10676,69 +10754,68 @@ function renderIslemler() {
   if(!list) return;
 
   if(!islemler.length) {
+    const emptyMsg = _islemDonemTab === 'guncel' ? 'Bu dönemde işlem yok'
+      : _islemDonemTab === 'onceki' ? 'Önceki dönemde işlem yok'
+      : 'İşlem bulunamadı';
+    const emptySub = _islemDonemTab === 'tum' ? 'Filtreleri temizleyin veya yeni bir işlem ekleyin' : 'Diğer dönemlere göz atabilir veya yeni işlem ekleyebilirsiniz';
     list.innerHTML = `<div class="islem-empty">
       <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      <div class="islem-empty-title">İşlem bulunamadı</div>
-      <div class="islem-empty-sub">Filtreleri temizleyin veya yeni bir işlem ekleyin</div>
+      <div class="islem-empty-title">${emptyMsg}</div>
+      <div class="islem-empty-sub">${emptySub}</div>
     </div>`;
     return;
   }
 
-  list.innerHTML = islemler.map(i=>{
-    const k = getKart(i.kart);
-    const tutarlar = i.taksitTutarlari || Array(i.taksit||1).fill(i.aylik||0);
-    const iCur = i.paraBirimi || getKartCurrency(i.kart);
-    const isTaksitli = (i.taksit||1) > 1;
-    const dt = new Date(i.tarih+'T00:00:00');
-    const dateD = String(dt.getDate()).padStart(2,'0');
-    const dateM = AY_KISA_TR[dt.getMonth()];
-    const kat = (DB.kategoriler||[]).find(x=>x.id===i.kategori);
-
-    // Ekstre/ödeme bilgisi (kompakt)
-    let payHtml = '<span style="color:var(--text3);font-size:11px">—</span>';
-    if(k) {
-      const taksitler = getIslemTaksitliste(i);
-      const ilk = taksitler[0];
-      const son = taksitler[taksitler.length-1];
-      const pd1 = getExtreDonemi(k, ilk.ekstreTarih);
-      const extre1 = pd1 ? calcExtreTarihiOdemeModuyla(k, pd1.year, pd1.month, tatilSet) : null;
-      const odeme1 = extre1 ? calcOdemeTarihi(extre1, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-      let sonOdemeStr = '';
-      if(taksitler.length > 1) {
-        const pd2 = getExtreDonemi(k, son.ekstreTarih);
-        const extre2 = pd2 ? calcExtreTarihiOdemeModuyla(k, pd2.year, pd2.month, tatilSet) : null;
-        const odeme2 = extre2 ? calcOdemeTarihi(extre2, k.odemeSure, k.odemeGunTip, tatilSet) : null;
-        sonOdemeStr = odeme2 ? fmtDate(odeme2) : '?';
-      }
-      payHtml = `<div class="islem-pay-row"><span class="islem-pay-label">Ekstre</span><span class="islem-pay-val">${extre1?fmtDate(extre1):'?'}</span></div>
-        <div class="islem-pay-row"><span class="islem-pay-label">Ödeme</span><span class="islem-pay-val next">${odeme1?fmtDate(odeme1):'?'}</span></div>
-        ${sonOdemeStr ? `<div class="islem-pay-row"><span class="islem-pay-label">Son</span><span class="islem-pay-val">${sonOdemeStr}</span></div>` : ''}`;
+  // ── Gün başlıklarıyla gruplandırılmış mobil bankacılık tarzı liste ──
+  let html = '';
+  let lastTarih = null;
+  islemler.forEach(i=>{
+    if(i.tarih !== lastTarih) {
+      html += `<div class="islem-day-head">${islemGunBasligi(i.tarih)}</div>`;
+      lastTarih = i.tarih;
     }
+    html += islemRowHtml(i);
+  });
+  list.innerHTML = html;
+}
 
-    const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
+// Tek bir işlem satırının HTML'i (mobil bankacılık tarzı kompakt satır)
+function islemRowHtml(i) {
+  const k = getKart(i.kart);
+  const tutarlar = i.taksitTutarlari || Array(i.taksit||1).fill(i.aylik||0);
+  const iCur = i.paraBirimi || getKartCurrency(i.kart);
+  const isTaksitli = (i.taksit||1) > 1;
+  const kat = (DB.kategoriler||[]).find(x=>x.id===i.kategori);
+  const ikon = kat && kat.ikon ? kat.ikon : '💳';
+  const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
 
-    return `<div class="islem-row">
-      <div class="islem-date"><div class="islem-date-d">${dateD}</div><div class="islem-date-m">${dateM}</div></div>
-      <div class="islem-main">
-        <div class="islem-main-top">
-          <span class="islem-kart-dot" style="background:${(k&&k.renk)||'var(--accent)'}"></span>
-          <span class="islem-kart-name">${k?k.ad:'-'}</span>
-          ${kat?`<span class="islem-cat">${kat.ikon||''} ${kat.ad}</span>`:''}
-        </div>
-        <div class="islem-desc" title="${aciklamaSafe}">${aciklamaSafe}</div>
+  let taksitSub = '';
+  if(isTaksitli) {
+    const todayStr = localDateStr(new Date());
+    const taksitler = getIslemTaksitliste(i);
+    let mevcutNo = taksitler.filter(t=>t.tarih <= todayStr).length;
+    if(mevcutNo < 1) mevcutNo = 1;
+    if(mevcutNo > i.taksit) mevcutNo = i.taksit;
+    taksitSub = `<div class="islem-row2-amount-sub">${mevcutNo}/${i.taksit} taksit · ${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`;
+  }
+
+  return `<div class="islem-row2">
+    <div class="islem-row2-icon">${ikon}</div>
+    <div class="islem-row2-body">
+      <div class="islem-row2-title" title="${aciklamaSafe}">${aciklamaSafe}</div>
+      <div class="islem-row2-sub">
+        <span class="islem-kart-dot" style="background:${(k&&k.renk)||'var(--accent)'}"></span>${k?k.ad:'-'}${kat?` · ${kat.ad}`:''}
       </div>
-      <div class="islem-taksit"><span class="badge ${isTaksitli?'badge-warn':'badge-blue'}">${isTaksitli?i.taksit+' Taksit':'Peşin'}</span></div>
-      <div class="islem-amount">
-        <div class="islem-amount-val">${fmtCur(i.tutar, iCur)}</div>
-        ${isTaksitli?`<div class="islem-amount-sub">${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`:''}
-      </div>
-      <div class="islem-pay">${payHtml}</div>
-      <div class="islem-actions">
-        <button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
-        <button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
-      </div>
-    </div>`;
-  }).join('');
+    </div>
+    <div class="islem-row2-amount">
+      <div class="islem-row2-amount-val">${fmtCur(i.tutar, iCur)}</div>
+      ${taksitSub}
+    </div>
+    <div class="islem-row2-actions">
+      <button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+      <button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
+    </div>
+  </div>`;
 }
 
 // ── İşlemler Filtre Modalı ───────────────────────────────────────
