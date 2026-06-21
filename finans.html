@@ -21052,6 +21052,8 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('select:not([data-sel-wrapped])').forEach(sel => {
       // Inline style'lı çok küçük select'leri ve script içindekini atla
       if (sel.closest('script')) return;
+      // Gizli "değer tutucu" select'ler (buton+modal ile yönetilenler) — sarmalama
+      if (sel.style.display === 'none') { sel.dataset.selWrapped = '1'; return; }
       // İkonsuz mini-select'leri atla (örn. inline para birimi seçiciler)
       if (sel.classList.contains('mini-select')) { sel.dataset.selWrapped = '1'; return; }
       // zaten wrap edilmiş mi?
