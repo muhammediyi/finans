@@ -6,6 +6,7 @@
 <title>Finans Yöneticisi v38</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 /* ─── Başlangıç Client ID overlay ─── */
 #startup-overlay {
@@ -5217,6 +5218,9 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
       <button id="nav-extreler" class="nav-btn" onclick="showPage('extreler',this)">
         <span class="nav-icon">🧾</span><span class="nav-label">Ekstreler</span>
       </button>
+      <button id="nav-ekstreeslestir" class="nav-btn" onclick="showPage('ekstreeslestir',this)">
+        <span class="nav-icon">🔗</span><span class="nav-label">Ekstre Eşleştir</span>
+      </button>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Varlıklar</div>
@@ -5448,6 +5452,55 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   </div>
   <div id="extre-content"></div>
 </div>
+
+<!-- ═══ EKSTRE EŞLEŞTİRME SAYFASI ═══ -->
+<div id="page-ekstreeslestir" class="page">
+  <div class="page-header"><h1>Ekstre Eşleştir</h1><p>PDF ekstrenizi yükleyin, sistemdeki işlemlerle otomatik eşleştirelim</p></div>
+
+  <div id="ee-step-upload" class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
+    <div class="msec">
+      <div class="msec-label">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+        Hangi karta ait?
+      </div>
+      <select id="ee-kart-select" style="width:100%;max-width:420px"></select>
+    </div>
+
+    <div id="ee-dropzone" style="border:2px dashed var(--border2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)" onclick="document.getElementById('ee-pdf-input').click()">
+      <div style="font-size:34px;margin-bottom:8px">🧾</div>
+      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstreyi seçmek için tıklayın</div>
+      <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın</div>
+      <input type="file" id="ee-pdf-input" accept="application/pdf" style="display:none" onchange="eeHandlePdfFile(event)">
+    </div>
+    <div id="ee-upload-status" style="display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)"></div>
+  </div>
+
+  <div id="ee-step-results" style="display:none"></div>
+</div>
+
+<style>
+#ee-dropzone.dragover { border-color: var(--accent) !important; background: var(--accent-glow2) !important; }
+.ee-section { margin-bottom: 22px; }
+.ee-section-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.ee-section-title { font-size:13px; font-weight:700; color:var(--text); }
+.ee-section-count { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:700; }
+.ee-row { display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; font-size:12.5px; flex-wrap:wrap; }
+.ee-row-main { flex:1; min-width:180px; display:flex; flex-direction:column; gap:2px; }
+.ee-row-date { color:var(--text3); font-size:10.5px; }
+.ee-row-desc { color:var(--text); font-weight:500; }
+.ee-row-amt { font-family:var(--mono); font-weight:700; flex-shrink:0; }
+.ee-badge { font-size:10px; padding:2px 7px; border-radius:6px; font-weight:700; flex-shrink:0; }
+.ee-inline-field { padding:6px 9px; font-size:12px; border-radius:7px; border:1px solid var(--border2); background:var(--surface3); color:var(--text); min-width:130px; }
+.ee-actions { display:flex; gap:6px; flex-shrink:0; }
+.ee-btn-mini { padding:6px 12px; font-size:11.5px; font-weight:600; border-radius:7px; border:1px solid var(--border2); background:var(--surface3); color:var(--text2); cursor:pointer; transition:.15s; white-space:nowrap; }
+.ee-btn-mini:hover { background:var(--surface4); color:var(--text); }
+.ee-btn-mini.primary { background:var(--accent); color:#1a1206; border-color:var(--accent); }
+.ee-btn-mini.primary:hover { filter:brightness(1.08); }
+.ee-btn-mini.danger { background:rgba(251,113,133,.12); color:var(--rose); border-color:rgba(251,113,133,.3); }
+.ee-btn-mini.danger:hover { background:rgba(251,113,133,.2); }
+.ee-btn-mini:disabled { opacity:.45; cursor:not-allowed; }
+.ee-empty { color:var(--text3); font-size:12px; padding:18px; text-align:center; background:var(--surface2); border-radius:10px; border:1px dashed var(--border2); }
+</style>
 
 <!-- İŞLEMLER FİLTRE MODAL -->
 <div class="modal-bg" id="modal-islem-filtre">
@@ -9240,6 +9293,7 @@ function renderPage(id) {
   else if(id==='kartlar') renderKartlar();
   else if(id==='islemler') renderIslemler();
   else if(id==='extreler') renderExtreler();
+  else if(id==='ekstreeslestir') renderEkstreEslestir();
   else if(id==='mevduat') renderMevduat();
   else if(id==='kira') renderKira();
   else if(id==='maas') renderMaas();
@@ -19459,7 +19513,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   updateParaBirimiPreview();
 
   // ── Hash tabanlı sayfa yönlendirme ──────────────────────────
-  const VALID_PAGES = ['ozet','kartlar','islemler','extreler','mevduat','hesaplar',
+  const VALID_PAGES = ['ozet','kartlar','islemler','extreler','ekstreeslestir','mevduat','hesaplar',
                        'kira','maas','elden','kmhkredi','kredi','tanimlamalar'];
 
   function navigateToHash() {
@@ -20526,6 +20580,7 @@ document.addEventListener('click', function(e) {
     'kartlar':     { icon: '💳', label: 'Kredi Kartları' },
     'islemler':    { icon: '⇄',  label: 'İşlemler' },
     'extreler':    { icon: '🧾', label: 'Ekstreler' },
+    'ekstreeslestir': { icon: '🔗', label: 'Ekstre Eşleştir' },
     'mevduat':     { icon: '🏦', label: 'Mevduat Takibi' },
     'kira':        { icon: '🏠', label: 'Kira Gelirleri' },
     'maas':        { icon: '💰', label: 'Maaş Geliri' },
@@ -20665,7 +20720,7 @@ document.addEventListener('click', function(e) {
 // ── Sayfa başlığına emoji ikon ekle ──
 (function() {
   const PAGE_ICONS = {
-    'ozet': '📊', 'kartlar': '💳', 'islemler': '⇄', 'extreler': '🧾',
+    'ozet': '📊', 'kartlar': '💳', 'islemler': '⇄', 'extreler': '🧾', 'ekstreeslestir': '🔗',
     'mevduat': '🏦', 'kira': '🏠', 'maas': '💰', 'kmhkredi': '🏦',
     'kredi': '💳', 'hesaplar': '🏧', 'elden': '💵', 'tanimlamalar': '⚙️',
     'abonelik': '🔄'
@@ -24769,6 +24824,432 @@ function _renderHesapLog(liste) {
     <span style="color:var(--teal)">↑ Giriş: <b class="mono">${fmtCur(topGelir,ozetPb)}</b></span>
     <span style="color:var(--danger)">↓ Çıkış: <b class="mono">${fmtCur(topGider,ozetPb)}</b></span>
     <span style="color:var(--text2)">Net: <b class="mono">${fmtCur(topGelir-topGider,ozetPb)}</b></span>`;
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ═══ EKSTRE EŞLEŞTİRME (PDF → Sistem işlem karşılaştırma) ═══════
+// ═══════════════════════════════════════════════════════════════
+
+let EE_STATE = {
+  kartId: null,
+  pdfIslemler: [],   // PDF'den çıkarılan: {tarih, aciklama, tutar, _key}
+  eslesen: [],       // {pdf, sistem, kategoriSecim, aciklamaSecim}
+  sadecePdf: [],      // pdf'de var, sistemde yok
+  sadeceSistem: []     // sistemde var, pdf'de yok
+};
+
+function renderEkstreEslestir() {
+  const sel = document.getElementById('ee-kart-select');
+  if (!sel) return;
+  const kartlar = DB.kartlar || [];
+  sel.innerHTML = '<option value="">— Kart seçin —</option>' +
+    kartlar.map(k => {
+      const banka = ((DB.bankalar || []).find(b => b.id === k.banka) || {}).kisa || '';
+      return `<option value="${k.id}">${k.ad}${banka ? ' — ' + banka : ''}</option>`;
+    }).join('');
+  if (EE_STATE.kartId) sel.value = EE_STATE.kartId;
+
+  // Sonuç adımı henüz yoksa upload adımını göster
+  document.getElementById('ee-step-upload').style.display = 'flex';
+  if (!EE_STATE.pdfIslemler.length) {
+    document.getElementById('ee-step-results').style.display = 'none';
+  }
+
+  // Drag & drop bağla (her render'da tekrar bağlamayı önlemek için flag)
+  const dz = document.getElementById('ee-dropzone');
+  if (dz && !dz._eeBound) {
+    dz._eeBound = true;
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        eeProcessFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+}
+
+function eeHandlePdfFile(evt) {
+  const f = evt.target.files && evt.target.files[0];
+  if (f) eeProcessFile(f);
+}
+
+function eeSetStatus(msg, isError) {
+  const el = document.getElementById('ee-upload-status');
+  el.style.display = 'flex';
+  el.style.color = isError ? 'var(--rose)' : 'var(--text2)';
+  el.innerHTML = msg;
+}
+
+async function eeProcessFile(file) {
+  const kartId = document.getElementById('ee-kart-select').value;
+  if (!kartId) {
+    showToast('Lütfen önce kart seçin', 'error');
+    return;
+  }
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    eeSetStatus('⚠️ Lütfen bir PDF dosyası seçin.', true);
+    return;
+  }
+  EE_STATE.kartId = kartId;
+  eeSetStatus('⏳ PDF okunuyor…', false);
+
+  try {
+    const buf = await file.arrayBuffer();
+    if (typeof pdfjsLib === 'undefined') {
+      eeSetStatus('⚠️ PDF okuma kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.', true);
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let fullText = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      // Satırları y-koordinatına göre grupla (aynı satırdaki parçaları birleştir)
+      const lines = {};
+      content.items.forEach(it => {
+        const y = Math.round(it.transform[5]);
+        if (!lines[y]) lines[y] = [];
+        lines[y].push({ x: it.transform[4], str: it.str });
+      });
+      const ys = Object.keys(lines).map(Number).sort((a, b) => b - a);
+      ys.forEach(y => {
+        const rowText = lines[y].sort((a, b) => a.x - b.x).map(o => o.str).join(' ');
+        fullText += rowText + '\n';
+      });
+    }
+    eeSetStatus('⏳ İşlemler ayrıştırılıyor…', false);
+    const parsed = eeParsePdfText(fullText);
+    if (!parsed.length) {
+      eeSetStatus('⚠️ PDF içinde tarih + tutar formatında işlem satırı bulunamadı. Farklı bir ekstre formatı olabilir.', true);
+      return;
+    }
+    EE_STATE.pdfIslemler = parsed;
+    eeSetStatus(`✅ ${parsed.length} işlem satırı bulundu. Eşleştiriliyor…`, false);
+    eeRunMatch();
+  } catch (err) {
+    console.error(err);
+    eeSetStatus('⚠️ PDF okunamadı: ' + (err.message || err), true);
+  }
+}
+
+// ── PDF metninden işlem satırlarını çıkar ──────────────────────
+// Beklenen desen: bir satırda TARİH ... AÇIKLAMA ... TUTAR
+function eeParsePdfText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const out = [];
+
+  // Tarih desenleri: 12.05.2026 / 12/05/2026 / 12-05-2026 / 12 Mayıs 2026
+  const dateRe = /\b(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{2,4})\b/;
+  // Tutar deseni: 1.234,56 / 1,234.56 / 1234.56 / 1234,56  (sonunda opsiyonel TL/TRY/₺/USD/EUR ya da +/-)
+  const amountRe = /(-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})|-?\d+[.,]\d{2})\s*(TL|TRY|₺|USD|EUR|\$|€)?\s*(DR|CR|D|K|-)?\s*$/i;
+
+  lines.forEach(line => {
+    if (line.length < 8) return;
+    const dm = line.match(dateRe);
+    if (!dm) return;
+    const am = line.match(amountRe);
+    if (!am) return;
+
+    // Tarihi normalize et (YYYY-MM-DD)
+    let [, dd, mm, yy] = dm;
+    if (yy.length === 2) yy = '20' + yy;
+    dd = dd.padStart(2, '0'); mm = mm.padStart(2, '0');
+    if (+dd > 31 || +mm > 12) return;
+    const tarih = `${yy}-${mm}-${dd}`;
+
+    // Tutarı normalize et
+    let amtStr = am[1];
+    const lastDot = amtStr.lastIndexOf('.');
+    const lastComma = amtStr.lastIndexOf(',');
+    let normalized;
+    if (lastComma > lastDot) {
+      // virgül ondalık ayracı: binlik nokta, ondalık virgül
+      normalized = amtStr.replace(/\./g, '').replace(',', '.');
+    } else if (lastDot > lastComma) {
+      // nokta ondalık ayracı: binlik virgül, ondalık nokta
+      normalized = amtStr.replace(/,/g, '');
+    } else {
+      normalized = amtStr.replace(',', '.');
+    }
+    let tutar = parseFloat(normalized);
+    if (isNaN(tutar) || tutar === 0) return;
+
+    // DR/D = borç (gider, negatif); CR/K = alacak (gelir, pozitif) — kart ekstrelerinde genelde harcama pozitif yazılır
+    const flag = (am[3] || '').toUpperCase();
+    if (flag === 'CR' || flag === 'K') tutar = Math.abs(tutar);
+    else if (flag === 'DR' || flag === 'D' || flag === '-') tutar = -Math.abs(tutar);
+
+    // Açıklama: tarih ile tutar arasındaki metin
+    let aciklama = line
+      .replace(dm[0], '')
+      .replace(am[0], '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (!aciklama) aciklama = 'İşlem';
+
+    out.push({
+      tarih,
+      aciklama,
+      tutar,
+      _key: tarih + '_' + Math.abs(tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
+    });
+  });
+
+  return out;
+}
+
+// ── Eşleştirme algoritması: kart bazında tarih + tutar ─────────
+function eeRunMatch() {
+  const kartId = EE_STATE.kartId;
+  const sistemIslemler = (DB.islemler || []).filter(i => i.kart === kartId);
+
+  const eslesen = [];
+  const usedSistemIds = new Set();
+  const usedPdfKeys = new Set();
+
+  const TOLERANS_GUN = 3;
+  const TOLERANS_TUTAR = 0.01;
+
+  EE_STATE.pdfIslemler.forEach(p => {
+    let best = null, bestScore = Infinity;
+    sistemIslemler.forEach(s => {
+      if (usedSistemIds.has(s.id)) return;
+      const sTutar = (s.taksit > 1 ? (s.aylik != null ? s.aylik : s.tutar) : s.tutar);
+      if (Math.abs(Math.abs(sTutar) - Math.abs(p.tutar)) > TOLERANS_TUTAR) return;
+      const sTarih = s.taksit > 1 ? ((s.manuelTaksitler && s.manuelTaksitler[0] && s.manuelTaksitler[0].tarih) || s.tarih) : s.tarih;
+      const gunFarki = Math.abs((new Date(p.tarih) - new Date(sTarih)) / 86400000);
+      if (gunFarki > TOLERANS_GUN) return;
+      const score = gunFarki + Math.abs(Math.abs(sTutar) - Math.abs(p.tutar));
+      if (score < bestScore) { bestScore = score; best = s; }
+    });
+    if (best) {
+      usedSistemIds.add(best.id);
+      usedPdfKeys.add(p._key);
+      eslesen.push({ pdf: p, sistem: best });
+    }
+  });
+
+  const sadecePdf = EE_STATE.pdfIslemler.filter(p => !usedPdfKeys.has(p._key));
+  const sadeceSistem = sistemIslemler.filter(s => !usedSistemIds.has(s.id));
+
+  EE_STATE.eslesen = eslesen;
+  EE_STATE.sadecePdf = sadecePdf;
+  EE_STATE.sadeceSistem = sadeceSistem;
+
+  eeRenderResults();
+}
+
+// ── Sonuç ekranı ────────────────────────────────────────────────
+function eeRenderResults() {
+  document.getElementById('ee-upload-status').style.display = 'none';
+  const wrap = document.getElementById('ee-step-results');
+  wrap.style.display = 'block';
+
+  const kart = (DB.kartlar || []).find(k => k.id === EE_STATE.kartId);
+  const pb = kart ? getKartCurrency(kart.id) : (defaultCurrency || 'TRY');
+
+  const eEslesen = EE_STATE.eslesen.filter(e => !e.sistem.kategori || !e.sistem.aciklama);
+  const eTamam = EE_STATE.eslesen.filter(e => e.sistem.kategori && e.sistem.aciklama);
+
+  let html = '';
+
+  // ── Özet şeridi ──
+  html += `<div class="islem-stats" style="margin-bottom:18px">
+    <div class="stat s-green"><div class="stat-label">✅ Eşleşen</div><div class="stat-val green">${EE_STATE.eslesen.length}</div></div>
+    <div class="stat s-warn"><div class="stat-label">📥 PDF'de var, sistemde yok</div><div class="stat-val" style="color:var(--warn)">${EE_STATE.sadecePdf.length}</div></div>
+    <div class="stat s-red"><div class="stat-label">📤 Sistemde var, PDF'de yok</div><div class="stat-val red">${EE_STATE.sadeceSistem.length}</div></div>
+  </div>
+  <div style="margin-bottom:16px"><button class="btn btn-ghost btn-sm" onclick="eeReset()">↺ Yeni ekstre yükle</button></div>`;
+
+  // ── 1) Eşleşen ama tamamlanması gereken (kategori/açıklama boş) ──
+  html += `<div class="ee-section">
+    <div class="ee-section-head">
+      <span class="ee-section-title">🧩 Eşleşti — Eksik Bilgi Tamamlanacak</span>
+      <span class="ee-section-count" style="background:var(--accent-glow);color:var(--accent)">${eEslesen.length}</span>
+    </div>`;
+  if (!eEslesen.length) {
+    html += `<div class="ee-empty">Tamamlanması gereken eşleşme yok 👍</div>`;
+  } else {
+    eEslesen.forEach((e, idx) => {
+      const i = EE_STATE.eslesen.indexOf(e);
+      const sign = e.sistem.tutar >= 0 ? '+' : '';
+      html += `<div class="ee-row" id="ee-eslesen-${i}">
+        <div class="ee-row-main">
+          <div class="ee-row-desc">${e.pdf.aciklama}</div>
+          <div class="ee-row-date">${fmtDate ? fmtDate(e.pdf.tarih) : e.pdf.tarih} · sistemdeki tarih: ${fmtDate ? fmtDate(e.sistem.tarih) : e.sistem.tarih}</div>
+        </div>
+        <input type="text" class="ee-inline-field" id="ee-ac-${i}" placeholder="Açıklama girin" value="${(e.sistem.aciklama || e.pdf.aciklama || '').replace(/"/g, '&quot;')}">
+        <select class="ee-inline-field" id="ee-kat-${i}">
+          <option value="">Kategori seçin…</option>
+          ${getKategoriOpts('')}
+        </select>
+        <div class="ee-row-amt" style="color:${e.sistem.tutar >= 0 ? 'var(--teal)' : 'var(--text)'}">${sign}${fmtCur(Math.abs(e.sistem.tutar), pb)}</div>
+        <div class="ee-actions">
+          <button class="ee-btn-mini primary" onclick="eeOnaylaTamamla(${i})">✓ Onayla</button>
+        </div>
+      </div>`;
+    });
+    // Kategorileri seçili olanlara önceden ata
+    setTimeout(() => {
+      eEslesen.forEach(e => {
+        const i = EE_STATE.eslesen.indexOf(e);
+        const sel = document.getElementById('ee-kat-' + i);
+        if (sel && e.sistem.kategori) sel.value = e.sistem.kategori;
+      });
+    }, 0);
+  }
+  html += `</div>`;
+
+  // ── 2) Tamamen eşleşmiş, sorun yok (bilgi amaçlı, katlanır) ──
+  if (eTamam.length) {
+    html += `<div class="ee-section">
+      <div class="ee-section-head">
+        <span class="ee-section-title">✅ Tam Eşleşen (bilgisi tam)</span>
+        <span class="ee-section-count" style="background:var(--teal-glow);color:var(--teal)">${eTamam.length}</span>
+      </div>
+      <div style="color:var(--text3);font-size:11.5px">Bu işlemler PDF ile birebir uyuştu ve sistemde kategori/açıklama bilgisi zaten tam — ek aksiyon gerekmiyor.</div>
+    </div>`;
+  }
+
+  // ── 3) PDF'de var, sistemde yok ──
+  html += `<div class="ee-section">
+    <div class="ee-section-head">
+      <span class="ee-section-title">📥 PDF'de Var, Sistemde Yok</span>
+      <span class="ee-section-count" style="background:var(--warn-glow);color:var(--warn)">${EE_STATE.sadecePdf.length}</span>
+    </div>`;
+  if (!EE_STATE.sadecePdf.length) {
+    html += `<div class="ee-empty">Hepsi sistemde mevcut 👍</div>`;
+  } else {
+    EE_STATE.sadecePdf.forEach((p, idx) => {
+      const j = EE_STATE.sadecePdf.indexOf(p);
+      const sign = p.tutar >= 0 ? '+' : '';
+      html += `<div class="ee-row" id="ee-sadecepdf-${j}">
+        <div class="ee-row-main">
+          <div class="ee-row-desc">${p.aciklama}</div>
+          <div class="ee-row-date">${fmtDate ? fmtDate(p.tarih) : p.tarih}</div>
+        </div>
+        <select class="ee-inline-field" id="ee-pdf-kat-${j}" style="min-width:130px">
+          <option value="">Kategori (ops.)</option>
+          ${getKategoriOpts('')}
+        </select>
+        <div class="ee-row-amt" style="color:${p.tutar >= 0 ? 'var(--teal)' : 'var(--text)'}">${sign}${fmtCur(Math.abs(p.tutar), pb)}</div>
+        <div class="ee-actions">
+          <button class="ee-btn-mini primary" onclick="eeSistemeEkle(${j})">+ Sisteme Ekle</button>
+          <button class="ee-btn-mini" onclick="eeYokSay('sadecePdf', ${j})">Yok say</button>
+        </div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // ── 4) Sistemde var, PDF'de yok ──
+  html += `<div class="ee-section">
+    <div class="ee-section-head">
+      <span class="ee-section-title">📤 Sistemde Var, PDF'de Yok</span>
+      <span class="ee-section-count" style="background:var(--danger-glow);color:var(--rose)">${EE_STATE.sadeceSistem.length}</span>
+    </div>`;
+  if (!EE_STATE.sadeceSistem.length) {
+    html += `<div class="ee-empty">Hepsi PDF ile uyuşuyor 👍</div>`;
+  } else {
+    EE_STATE.sadeceSistem.forEach((s, idx) => {
+      const j = EE_STATE.sadeceSistem.indexOf(s);
+      const sign = s.tutar >= 0 ? '+' : '';
+      html += `<div class="ee-row" id="ee-sadecesistem-${j}">
+        <div class="ee-row-main">
+          <div class="ee-row-desc">${s.aciklama || '(açıklama yok)'}</div>
+          <div class="ee-row-date">${fmtDate ? fmtDate(s.tarih) : s.tarih}</div>
+        </div>
+        <div class="ee-row-amt" style="color:${s.tutar >= 0 ? 'var(--teal)' : 'var(--text)'}">${sign}${fmtCur(Math.abs(s.tutar), pb)}</div>
+        <div class="ee-actions">
+          <button class="ee-btn-mini" onclick="editIslem('${s.id}');showPage('islemler', document.getElementById('nav-islemler'))">İncele</button>
+          <button class="ee-btn-mini danger" onclick="eeSilSistemden(${j})">🗑 Sil</button>
+        </div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  wrap.innerHTML = html;
+  bindMoneyInputs(wrap);
+}
+
+// ── Aksiyon: eşleşen işlemi tamamla (kategori/açıklama yaz) ─────
+function eeOnaylaTamamla(i) {
+  const e = EE_STATE.eslesen[i];
+  if (!e) return;
+  const ac = (document.getElementById('ee-ac-' + i).value || '').trim();
+  const kat = document.getElementById('ee-kat-' + i).value || null;
+  const idx = DB.islemler.findIndex(x => x.id === e.sistem.id);
+  if (idx >= 0) {
+    if (ac) DB.islemler[idx].aciklama = ac;
+    if (kat) DB.islemler[idx].kategori = kat;
+    saveData();
+    showToast('İşlem güncellendi');
+  }
+  const row = document.getElementById('ee-eslesen-' + i);
+  if (row) { row.style.opacity = '0.4'; row.querySelectorAll('button,input,select').forEach(el => el.disabled = true); }
+  if (typeof renderIslemler === 'function') renderIslemler();
+}
+
+// ── Aksiyon: PDF'de olan işlemi sisteme ekle ─────────────────────
+function eeSistemeEkle(j) {
+  const p = EE_STATE.sadecePdf[j];
+  if (!p) return;
+  const kat = (document.getElementById('ee-pdf-kat-' + j) || {}).value || null;
+  const yeniIslem = {
+    id: uid(),
+    kart: EE_STATE.kartId,
+    tarih: p.tarih,
+    aciklama: p.aciklama,
+    kategori: kat,
+    tutar: p.tutar,
+    taksit: 1,
+    aylik: p.tutar,
+    taksitTutarlari: [p.tutar],
+    manuelTaksitler: [{ tarih: p.tarih, tutar: p.tutar, provizyonTarihi: null }],
+    provizyonTarihi: null,
+    paraBirimi: getKartCurrency(EE_STATE.kartId)
+  };
+  DB.islemler.push(yeniIslem);
+  saveData();
+  showToast('İşlem sisteme eklendi');
+  const row = document.getElementById('ee-sadecepdf-' + j);
+  if (row) { row.style.opacity = '0.4'; row.querySelectorAll('button,input,select').forEach(el => el.disabled = true); }
+  if (typeof renderIslemler === 'function') renderIslemler();
+}
+
+// ── Aksiyon: sistemden sil ───────────────────────────────────────
+function eeSilSistemden(j) {
+  const s = EE_STATE.sadeceSistem[j];
+  if (!s) return;
+  showConfirm('Bu işlem PDF ekstrede bulunamadı. Sistemden silinsin mi?', () => {
+    DB.islemler = DB.islemler.filter(x => x.id !== s.id);
+    saveData();
+    showToast('İşlem silindi');
+    const row = document.getElementById('ee-sadecesistem-' + j);
+    if (row) row.remove();
+    if (typeof renderIslemler === 'function') renderIslemler();
+  });
+}
+
+// ── Aksiyon: bir satırı yok say (sadece görsel olarak kaldır) ────
+function eeYokSay(grup, j) {
+  const row = document.getElementById('ee-' + (grup === 'sadecePdf' ? 'sadecepdf' : 'sadecesistem') + '-' + j);
+  if (row) { row.style.opacity = '0.3'; row.querySelectorAll('button,input,select').forEach(el => el.disabled = true); }
+}
+
+function eeReset() {
+  EE_STATE = { kartId: document.getElementById('ee-kart-select').value, pdfIslemler: [], eslesen: [], sadecePdf: [], sadeceSistem: [] };
+  document.getElementById('ee-pdf-input').value = '';
+  document.getElementById('ee-upload-status').style.display = 'none';
+  document.getElementById('ee-step-results').style.display = 'none';
+  document.getElementById('ee-step-results').innerHTML = '';
 }
 </script>
 </body>
