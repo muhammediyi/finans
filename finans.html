@@ -5155,7 +5155,87 @@ html[data-theme="light"] .mob-theme-toggle {
 html[data-theme="light"] .kredi-kart { border-color: rgba(0,0,0,.1); }
 html[data-theme="light"] .kredi-progress-bar-bg { background: rgba(0,0,0,.07); }
 html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.06); }
+
+/* ─── Mobil: sidebar tamamen kapalı, profil topbar sağ üstte ─── */
+.topbar-profile-slot { display: none; }
+@media (max-width: 768px) {
+  .topbar-hamburger { display: none !important; }
+  .mobile-sidebar-backdrop { display: none !important; }
+  .topbar-profile-slot {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .topbar-profile-trigger {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0; overflow: hidden;
+    font-size: 15px; line-height: 1;
+  }
+  .topbar-profile-trigger img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .topbar-profile-content { display: none; }
+  .topbar-profile-slot.open .topbar-profile-content {
+    display: block;
+    position: absolute;
+    top: 40px; right: 0;
+    width: 230px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.45);
+    z-index: 700;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+  .topbar-profile-content #gdrive-user-panel,
+  .topbar-profile-content #gdrive-signin-panel {
+    margin-bottom: 0 !important;
+  }
+}
 </style>
+
+<script>
+/* ─── Mobil profil paneli: gdrive panelini topbar'a taşı/geri al ─── */
+function placeMobProfilePanel() {
+  const isMobile = window.innerWidth <= 768;
+  const content = document.getElementById('topbar-profile-content');
+  const anchor = document.getElementById('sidebar-footer-anchor');
+  const userPanel = document.getElementById('gdrive-user-panel');
+  const signinPanel = document.getElementById('gdrive-signin-panel');
+  if (!content || !anchor || !userPanel || !signinPanel) return;
+  if (isMobile) {
+    if (content.contains(userPanel)) return;
+    content.append(userPanel, signinPanel);
+  } else {
+    if (anchor.nextElementSibling === userPanel) return;
+    anchor.after(userPanel, signinPanel);
+    document.getElementById('topbar-profile-slot')?.classList.remove('open');
+  }
+}
+function toggleMobProfile(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('topbar-profile-slot')?.classList.toggle('open');
+}
+document.addEventListener('click', function (e) {
+  const slot = document.getElementById('topbar-profile-slot');
+  if (slot && slot.classList.contains('open') && !slot.contains(e.target)) {
+    slot.classList.remove('open');
+  }
+});
+let _mobProfileResizeT;
+window.addEventListener('resize', function () {
+  clearTimeout(_mobProfileResizeT);
+  _mobProfileResizeT = setTimeout(placeMobProfilePanel, 150);
+});
+document.addEventListener('DOMContentLoaded', placeMobProfilePanel);
+window.addEventListener('load', placeMobProfilePanel);
+</script>
+<style>
 </head>
 <body>
 <!-- ═══ BAŞLANGIÇ CLIENT ID ZORUNLU OVERLAY ═══ -->
@@ -5266,6 +5346,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     </div>
   </nav>
   <div class="sidebar-footer">
+    <div id="sidebar-footer-anchor" style="display:none"></div>
     <div id="gdrive-user-panel" class="gdrive-user-panel" style="display:none;padding:10px 10px 6px;margin-bottom:4px">
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
         <img id="gdrive-avatar" class="gdrive-avatar" src="" style="width:30px;height:30px;border-radius:50%;display:none">
@@ -5330,6 +5411,13 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <div class="topbar-sep"></div>
     <div class="topbar-dot"></div>
     <span class="topbar-date" id="topbar-date"></span>
+    <div class="topbar-profile-slot" id="topbar-profile-slot">
+      <button class="topbar-profile-trigger" id="topbar-profile-trigger" onclick="toggleMobProfile(event)" aria-label="Profil">
+        <img id="topbar-profile-avatar" src="" alt="" style="display:none">
+        <span id="topbar-profile-fallback">👤</span>
+      </button>
+      <div class="topbar-profile-content" id="topbar-profile-content"></div>
+    </div>
   </div>
 
   <!-- Scroll to top button -->
@@ -19275,6 +19363,9 @@ function gDriveShowUserInfo(name, avatar) {
   if (nameEl)   nameEl.textContent = name;
   if (avatarEl && avatar) { avatarEl.src = avatar; avatarEl.style.display = ''; }
   gDriveSetStatus('Bağlı', 'var(--success, #4ade80)');
+  const tbAvatar = document.getElementById('topbar-profile-avatar');
+  const tbFallback = document.getElementById('topbar-profile-fallback');
+  if (tbAvatar && avatar) { tbAvatar.src = avatar; tbAvatar.style.display = ''; if (tbFallback) tbFallback.style.display = 'none'; }
 }
 
 function gDriveSignIn() {
@@ -19311,6 +19402,10 @@ function gDriveSignOut() {
   localStorage.removeItem('gdrive_token');
   document.getElementById('gdrive-user-panel').style.display   = 'none';
   document.getElementById('gdrive-signin-panel').style.display = '';
+  const tbAvatar = document.getElementById('topbar-profile-avatar');
+  const tbFallback = document.getElementById('topbar-profile-fallback');
+  if (tbAvatar) { tbAvatar.removeAttribute('src'); tbAvatar.style.display = 'none'; }
+  if (tbFallback) tbFallback.style.display = '';
 }
 
 // ---- Drive API helpers ----
@@ -20033,6 +20128,15 @@ function mkpDeleteKisi(id) {
     </button>
     <button class="mob-more-item" onclick="mobNavGo('hesaplar',this,'🏧','Hesaplar')">
       <span class="mob-more-item-icon">🏧</span>Hesaplar
+    </button>
+    <button class="mob-more-item" onclick="mobNavGo('ekstreeslestir',this,'🔗','Eşleştir')">
+      <span class="mob-more-item-icon">🔗</span>Eşleştir
+    </button>
+    <button class="mob-more-item" onclick="closeMobMore();openTransferModal()">
+      <span class="mob-more-item-icon">💸</span>Transfer
+    </button>
+    <button class="mob-more-item" onclick="mobNavGo('abonelik',this,'🔄','Abonelik')">
+      <span class="mob-more-item-icon">🔄</span>Abonelik
     </button>
     <button class="mob-more-item" onclick="mobNavGo('tanimlamalar',this,'⚙️','Ayarlar')">
       <span class="mob-more-item-icon">⚙️</span>Ayarlar
