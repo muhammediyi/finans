@@ -25812,6 +25812,55 @@ function eeBilgilendirmeMetniMi(aciklama) {
   return false;
 }
 
+// ── Bu satır bir kart borç ÖDEMESİ mi? ("Ödemeniz İçin Teşekkürler", "Kart Ödemesi",
+// "CEPTETEB ÖDEME TEŞEKKÜR EDERİZ" gibi) — gerçek bir harcama değil, kart borcuna yapılan
+// ödemedir. Normal işlem gibi kaydedilir (tutar pozitif) ama tip:'odeme' ile işaretlenir,
+// böylece kullanıcı sonradan bunları harcamalardan ayırt edebilir.
+function eeOdemeSatiriMi(aciklama) {
+  if (!aciklama) return false;
+  const lower = aciklama.toLocaleLowerCase('tr-TR');
+  const odemeKaliplari = [
+    'ödemeniz için teşekkür', 'ödeme için teşekkür', 'kart ödemesi',
+    'şube ödeme', 'cep şube ödeme', 'teşekkür ederiz', 'hesabınıza yapılan ödeme',
+    'borcunuza yapılan ödeme', 'havale ile ödeme', 'eft ile ödeme'
+  ];
+  return odemeKaliplari.some(kw => lower.includes(kw));
+}
+
+// ── Bu satır bir ALACAK mı (iade, indirim kazanımı, bonus geri alımı)? ──
+// Ekranda renkle (yeşil/kırmızı) ayırt edilen yön bilgisi OCR'da kaybolur ve bankaya göre
+// işaret konvansiyonu tutarsızdır (bazı uygulamalarda harcamalar "-" ile, bazılarında "+"
+// ile gösterilir). Bu yüzden yönü ham eksi işaretinden değil, anahtar kelimeden çıkarırız:
+// iade / geri alım / kazanılan indirim gibi ifadeler geçen satırlar gerçek bir harcama değil,
+// kart borcunu AZALTAN bir kayıttır — negatif tutarla kaydedilir.
+function eeAlacakMi(aciklama) {
+  if (!aciklama) return false;
+  const lower = aciklama.toLocaleLowerCase('tr-TR');
+  const alacakKaliplari = [
+    'iade', 'geri alım', 'geri alim', 'geri ödeme', 'geri odeme',
+    'kazanılan indirim', 'kazanilan indirim', 'indirim kazan', 'bonus geri',
+    'puan iadesi', 'itiraz', 'ters ibraz'
+  ];
+  return alacakKaliplari.some(kw => lower.includes(kw));
+}
+
+// ── Açıklamadan, parser sonucuna eklenecek 'tip' alanını belirler ──
+// 'odeme'  : kart borç ödemesi (tutar pozitif kaydedilir)
+// 'alacak' : iade / indirim kazanımı (tutar NEGATİF kaydedilir, borcu azaltır)
+// 'islem'  : normal harcama (varsayılan)
+function eeIslemTipiVeTutarBelirle(aciklama, hamTutar) {
+  if (eeOdemeSatiriMi(aciklama)) {
+    return { tip: 'odeme', tutar: Math.abs(hamTutar) };
+  }
+  if (eeAlacakMi(aciklama)) {
+    return { tip: 'alacak', tutar: -Math.abs(hamTutar) };
+  }
+  // 'islem' (normal harcama) durumunda ham tutarın işaretine dokunmuyoruz: tek-satır
+  // stratejisinde DR/CR/+/- bayrağından zaten doğru işaret hesaplanmış olabilir, bunu
+  // burada zorla pozitife çevirip mevcut (çalışan) davranışı bozmak istemiyoruz.
+  return { tip: 'islem', tutar: hamTutar };
+}
+
 // ── Strateji 1: Klasik ekstre/PDF formatı — tarih + açıklama + tutar AYNI satırda ──
 function eeParseTekSatirFormati(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -25836,8 +25885,8 @@ function eeParseTekSatirFormati(text) {
     if (+dd > 31 || +mm > 12) return;
     const tarih = `${yy}-${mm}-${dd}`;
 
-    const tutar = eeNormalizeTutar(am[1], am[3]);
-    if (tutar === null) return;
+    const hamTutar = eeNormalizeTutar(am[1], am[3]);
+    if (hamTutar === null) return;
 
     // Açıklama: tarih ile tutar arasındaki metin
     let aciklama = line
@@ -25847,10 +25896,13 @@ function eeParseTekSatirFormati(text) {
       .trim();
     if (!aciklama) aciklama = 'İşlem';
 
+    const { tip, tutar } = eeIslemTipiVeTutarBelirle(aciklama, hamTutar);
+
     out.push({
       tarih,
       aciklama,
       tutar,
+      tip,
       _key: tarih + '_' + Math.abs(tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
     });
   });
@@ -25895,7 +25947,12 @@ function eeParseCokSatirFormati(text) {
     'aralık': '12', 'aralik': '12', 'ara': '12'
   };
   // Satır BAŞINDA duran gün sayısı (1-31), ardından boşluk/| veya satır sonu
-  const gunBasRe = /^(\d{1,2})\s*[\|:.\-]?\s*/;
+  // Negatif lookahead (?!\d) kritik: bu olmadan "2026" gibi tek başına bir satıra düşen
+  // 4 haneli bir yıl, baştaki "20"yi geçerli bir GÜN (1-31 aralığında) sanıp yanlışlıkla
+  // yeni bir işlem bloğu başlatır ve o ana kadar biriken (henüz tutarı gelmemiş) bloğu
+  // sessizce siler. Lookahead, gün hanesinin hemen ardından başka bir rakam gelmemesini
+  // şart koşarak bunu engeller.
+  const gunBasRe = /^(\d{1,2})(?!\d)\s*[\|:.\-]?\s*/;
   // Saat damgası deseni (örn. "14:56", "09.30") — bunu GÜN ile karıştırmamak için ayrı tespit ederiz
   const saatBasRe = /^(\d{1,2})\s*[:.]\s*\d{2}\b/;
   // Satırın TAMAMI zaten bir tutar mı? (örn. "160,00 TL", "1.500,00") — bu durumda baştaki
@@ -25936,12 +25993,18 @@ function eeParseCokSatirFormati(text) {
       let aciklama = blok.aciklamaParcalari.join(' ').replace(/\s{2,}/g, ' ').trim();
       if (!aciklama) aciklama = 'İşlem';
       if (belirsiz) aciklama += ' ⚠️ (tutar OCR\'da net okunamadı, kontrol edin)';
+      // Mobil uygulama ekran görüntülerinde işaret (renk) konvansiyonu bankaya göre
+      // tutarsızdır (bkz. eeIslemTipiVeTutarBelirle yorumu), bu yüzden ham OCR işaretini
+      // değil, sadece anahtar kelimeyi esas alırız: 'islem' (varsayılan) için mutlak değer,
+      // 'odeme'/'alacak' için ise anahtar kelimeye göre zorlanan işaret kullanılır.
+      const { tip, tutar } = eeIslemTipiVeTutarBelirle(aciklama, Math.abs(secilen.tutar));
       out.push({
         tarih,
         aciklama,
-        tutar: secilen.tutar,
+        tutar,
+        tip,
         belirsizTutar: belirsiz,
-        _key: tarih + '_' + Math.abs(secilen.tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
+        _key: tarih + '_' + Math.abs(tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
       });
     }
     blok = null;
@@ -26193,9 +26256,14 @@ function eeRenderResults() {
     EE_STATE.sadecePdf.forEach((p, idx) => {
       const j = EE_STATE.sadecePdf.indexOf(p);
       const sign = p.tutar >= 0 ? '+' : '';
+      const tipRozet = p.tip === 'odeme'
+        ? '<span class="ee-tip-badge" style="background:var(--sky-glow,rgba(56,189,248,.15));color:var(--sky,#38bdf8);font-size:10px;padding:2px 7px;border-radius:20px;margin-left:6px;white-space:nowrap">💳 Kart Ödemesi</span>'
+        : p.tip === 'alacak'
+          ? '<span class="ee-tip-badge" style="background:var(--teal-glow);color:var(--teal);font-size:10px;padding:2px 7px;border-radius:20px;margin-left:6px;white-space:nowrap">↩️ Alacak/İade</span>'
+          : '';
       html += `<div class="ee-row" id="ee-sadecepdf-${j}">
         <div class="ee-row-main">
-          <div class="ee-row-desc">${p.aciklama}</div>
+          <div class="ee-row-desc">${p.aciklama}${tipRozet}</div>
           <div class="ee-row-date">${fmtDate ? fmtDate(p.tarih) : p.tarih}</div>
         </div>
         <select class="ee-inline-field" id="ee-pdf-kat-${j}" style="min-width:130px">
@@ -26273,6 +26341,7 @@ function eeSistemeEkle(j) {
     aciklama: p.aciklama,
     kategori: kat,
     tutar: p.tutar,
+    tip: p.tip || 'islem',
     taksit: 1,
     aylik: p.tutar,
     taksitTutarlari: [p.tutar],
