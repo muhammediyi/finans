@@ -5441,7 +5441,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
       <option value="gelecek">Gelecek</option>
     </select>
     <button class="btn btn-ghost btn-sm filtre-toggle-btn" id="extre-kart-btn" onclick="openExtreKartModal()">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       <span id="extre-kart-btn-label">Kart Seçin</span>
     </button>
     <button class="btn btn-ghost btn-sm filtre-toggle-btn" id="extre-durum-btn" onclick="openExtreDurumModal()">
@@ -5455,24 +5455,37 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
 
 <!-- ═══ EKSTRE EŞLEŞTİRME SAYFASI ═══ -->
 <div id="page-ekstreeslestir" class="page">
-  <div class="page-header"><h1>Ekstre Eşleştir</h1><p>PDF ekstrenizi yükleyin, sistemdeki işlemlerle otomatik eşleştirelim</p></div>
+  <div class="page-header"><h1>Ekstre Eşleştir</h1><p>PDF ekstrenizi yükleyin — kart otomatik tespit edilir, sistemdeki işlemlerle eşleştirilir</p></div>
 
   <div id="ee-step-upload" class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
-    <div class="msec">
-      <div class="msec-label">
-        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
-        Hangi karta ait?
-      </div>
-      <select id="ee-kart-select" style="width:100%;max-width:420px"></select>
-    </div>
-
     <div id="ee-dropzone" style="border:2px dashed var(--border2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)" onclick="document.getElementById('ee-pdf-input').click()">
       <div style="font-size:34px;margin-bottom:8px">🧾</div>
       <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstreyi seçmek için tıklayın</div>
-      <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın</div>
+      <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın — kart otomatik tespit edilecek</div>
       <input type="file" id="ee-pdf-input" accept="application/pdf" style="display:none" onchange="eeHandlePdfFile(event)">
     </div>
     <div id="ee-upload-status" style="display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)"></div>
+
+    <div id="ee-kart-confirm" style="display:none;padding:14px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px">
+      <div id="ee-kart-confirm-detected" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:18px">✅</span>
+        <div style="flex:1">
+          <div style="font-size:12px;color:var(--text3)">Otomatik tespit edilen kart</div>
+          <div id="ee-kart-confirm-name" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+        </div>
+        <button class="ee-btn-mini" onclick="eeShowKartPicker()">Yanlış, değiştir</button>
+      </div>
+      <div id="ee-kart-confirm-picker" style="display:none">
+        <div class="msec-label" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          Kart otomatik tespit edilemedi — lütfen seçin
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="ee-kart-select" style="flex:1;min-width:220px"></select>
+          <button class="ee-btn-mini primary" onclick="eeConfirmManualKart()">Onayla ve Eşleştir</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="ee-step-results" style="display:none"></div>
@@ -5518,7 +5531,7 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
       <div class="msec">
         <div class="msec-label">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
           Kart
         </div>
         <div class="chip-select-grid" id="islem-filtre-kart-grid"></div>
@@ -20906,7 +20919,7 @@ document.addEventListener('click', function(e) {
     money:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
     category: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h8M4 18h6"/></svg>`,
     person:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    account:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>`,
+    account:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`,
     type:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>`,
     color:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/></svg>`,
     settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
@@ -24847,7 +24860,7 @@ function renderEkstreEslestir() {
   sel.innerHTML = '<option value="">— Kart seçin —</option>' +
     kartlar.map(k => {
       const banka = ((DB.bankalar || []).find(b => b.id === k.banka) || {}).kisa || '';
-      return `<option value="${k.id}">${k.ad}${banka ? ' — ' + banka : ''}</option>`;
+      return `<option value="${k.id}">${k.ad}${banka ? ' — ' + banka : ''}${k.no ? ' (•••• ' + k.no + ')' : ''}</option>`;
     }).join('');
   if (EE_STATE.kartId) sel.value = EE_STATE.kartId;
 
@@ -24855,6 +24868,7 @@ function renderEkstreEslestir() {
   document.getElementById('ee-step-upload').style.display = 'flex';
   if (!EE_STATE.pdfIslemler.length) {
     document.getElementById('ee-step-results').style.display = 'none';
+    document.getElementById('ee-kart-confirm').style.display = 'none';
   }
 
   // Drag & drop bağla (her render'da tekrar bağlamayı önlemek için flag)
@@ -24885,17 +24899,14 @@ function eeSetStatus(msg, isError) {
   el.innerHTML = msg;
 }
 
+let _eePendingParsed = null; // kart onaylanana kadar bekleyen parse sonucu
+
 async function eeProcessFile(file) {
-  const kartId = document.getElementById('ee-kart-select').value;
-  if (!kartId) {
-    showToast('Lütfen önce kart seçin', 'error');
-    return;
-  }
   if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
     eeSetStatus('⚠️ Lütfen bir PDF dosyası seçin.', true);
     return;
   }
-  EE_STATE.kartId = kartId;
+  document.getElementById('ee-kart-confirm').style.display = 'none';
   eeSetStatus('⏳ PDF okunuyor…', false);
 
   try {
@@ -24923,19 +24934,110 @@ async function eeProcessFile(file) {
         fullText += rowText + '\n';
       });
     }
+    eeSetStatus('⏳ Kart tespit ediliyor…', false);
+
+    // ── Kart otomatik tespiti ──
+    const detected = eeDetectKart(fullText);
+
     eeSetStatus('⏳ İşlemler ayrıştırılıyor…', false);
     const parsed = eeParsePdfText(fullText);
     if (!parsed.length) {
       eeSetStatus('⚠️ PDF içinde tarih + tutar formatında işlem satırı bulunamadı. Farklı bir ekstre formatı olabilir.', true);
       return;
     }
-    EE_STATE.pdfIslemler = parsed;
-    eeSetStatus(`✅ ${parsed.length} işlem satırı bulundu. Eşleştiriliyor…`, false);
-    eeRunMatch();
+    _eePendingParsed = parsed;
+
+    if (detected) {
+      EE_STATE.kartId = detected.id;
+      const banka = ((DB.bankalar || []).find(b => b.id === detected.banka) || {}).kisa || '';
+      document.getElementById('ee-kart-confirm').style.display = 'block';
+      document.getElementById('ee-kart-confirm-detected').style.display = 'flex';
+      document.getElementById('ee-kart-confirm-picker').style.display = 'none';
+      document.getElementById('ee-kart-confirm-name').textContent = detected.ad + (banka ? ' — ' + banka : '') + (detected.no ? ' (•••• ' + detected.no + ')' : '');
+      eeSetStatus(`✅ ${parsed.length} işlem satırı bulundu.`, false);
+      EE_STATE.pdfIslemler = parsed;
+      eeRunMatch();
+    } else {
+      // Tespit edilemedi → manuel seçim göster
+      eeSetStatus(`✅ ${parsed.length} işlem satırı bulundu, ancak kart otomatik tespit edilemedi.`, false);
+      eeShowKartPicker();
+    }
   } catch (err) {
     console.error(err);
     eeSetStatus('⚠️ PDF okunamadı: ' + (err.message || err), true);
   }
+}
+
+// ── Kart tespiti: PDF metninde son-4-hane ve/veya banka adı ara ──
+function eeDetectKart(text) {
+  const kartlar = DB.kartlar || [];
+  if (!kartlar.length) return null;
+
+  // 1) Maskeli kart numarası kalıplarından son 4 haneyi çek
+  //    Örn: **** **** **** 1234 / 1234 56** **** 7890 / XXXX XXXX XXXX 1234 / 1234-XXXX-XXXX-5678
+  const maskRe = /(?:[*Xx•]{2,4}[\s\-]*){2,3}(\d{4})\b|\b\d{4}[\s\-]+\d{2}[*Xx•]{2}[\s\-]+[*Xx•]{4}[\s\-]+(\d{4})\b/g;
+  const foundLast4 = new Set();
+  let m;
+  while ((m = maskRe.exec(text)) !== null) {
+    const v = m[1] || m[2];
+    if (v) foundLast4.add(v);
+  }
+  // Ayrıca "kart no" / "kart numarası" geçen satırlardaki son 4 haneyi de dene
+  text.split('\n').forEach(line => {
+    if (/kart\s*no|kart\s*numaras/i.test(line)) {
+      const nums = line.match(/\d{4}/g);
+      if (nums && nums.length) foundLast4.add(nums[nums.length - 1]);
+    }
+  });
+
+  // 2) Banka adı geçiyor mu?
+  const lowerText = text.toLowerCase();
+  const matchedBankaIds = new Set();
+  (DB.bankalar || []).forEach(b => {
+    const names = [b.tam, b.kisa].filter(Boolean).map(s => s.toLowerCase());
+    if (names.some(n => n.length >= 3 && lowerText.includes(n))) matchedBankaIds.add(b.id);
+  });
+
+  // 3) Skorla: son4 + banka eşleşeni en yüksek puan
+  let best = null, bestScore = 0;
+  kartlar.forEach(k => {
+    if (!k.no) return;
+    if (!foundLast4.has(k.no)) return;
+    let score = 1;
+    if (matchedBankaIds.has(k.banka)) score += 2;
+    if (score > bestScore) { bestScore = score; best = k; }
+  });
+  if (best) return best;
+
+  // Son 4 hane bulunamadıysa ama tek bir banka eşleşmesi + tek kart varsa onu öner
+  if (matchedBankaIds.size === 1) {
+    const bankaId = [...matchedBankaIds][0];
+    const adaylar = kartlar.filter(k => k.banka === bankaId);
+    if (adaylar.length === 1) return adaylar[0];
+  }
+
+  return null;
+}
+
+function eeShowKartPicker() {
+  document.getElementById('ee-kart-confirm').style.display = 'block';
+  document.getElementById('ee-kart-confirm-detected').style.display = 'none';
+  document.getElementById('ee-kart-confirm-picker').style.display = 'block';
+}
+
+function eeConfirmManualKart() {
+  const kartId = document.getElementById('ee-kart-select').value;
+  if (!kartId) {
+    showToast('Lütfen bir kart seçin', 'error');
+    return;
+  }
+  EE_STATE.kartId = kartId;
+  if (!_eePendingParsed || !_eePendingParsed.length) {
+    showToast('PDF verisi bulunamadı, lütfen yeniden yükleyin', 'error');
+    return;
+  }
+  EE_STATE.pdfIslemler = _eePendingParsed;
+  eeRunMatch();
 }
 
 // ── PDF metninden işlem satırlarını çıkar ──────────────────────
@@ -25245,9 +25347,11 @@ function eeYokSay(grup, j) {
 }
 
 function eeReset() {
-  EE_STATE = { kartId: document.getElementById('ee-kart-select').value, pdfIslemler: [], eslesen: [], sadecePdf: [], sadeceSistem: [] };
+  EE_STATE = { kartId: null, pdfIslemler: [], eslesen: [], sadecePdf: [], sadeceSistem: [] };
+  _eePendingParsed = null;
   document.getElementById('ee-pdf-input').value = '';
   document.getElementById('ee-upload-status').style.display = 'none';
+  document.getElementById('ee-kart-confirm').style.display = 'none';
   document.getElementById('ee-step-results').style.display = 'none';
   document.getElementById('ee-step-results').innerHTML = '';
 }
