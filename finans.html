@@ -25757,12 +25757,20 @@ function eeConfirmManualKart() {
 function eeParsePdfText(text) {
   const tekSatir = eeParseTekSatirFormati(text);
   const cokSatir = eeParseCokSatirFormati(text);
-  // İkisini birleştir, aynı tarih+tutar+benzer açıklamayla tekrar edenleri ele
+  const tarihAltSatir = eeParseTarihAltSatirFormati(text);
+  // Üçünü birleştir, aynı işlemi farklı stratejilerin tekrar yakalamasını ele. Anahtara
+  // açıklamanın ilk birkaç karakterini de katmak kritik: aynı gün + aynı tutarlı ama
+  // GERÇEKTEN FARKLI iki işlem (örn. aynı gün hem "PAYNKO 160,00 TL" hem "İndir kampanyası
+  // -160,00 TL" gibi) sırf tarih+tutar aynı diye birbirini silmemeli — sadece aynı stratejinin
+  // ya da farklı stratejilerin GERÇEKTEN AYNI işlemi (tarih+tutar+benzer açıklama) tekrar
+  // yakaladığı durumları eleriz.
+  const dedupAnahtari = p => p.tarih + '_' + Math.abs(p.tutar).toFixed(2) + '_' +
+    eeAsciiSadelestir((p.aciklama || '').toLocaleLowerCase('tr-TR')).replace(/[^a-z0-9]/g, '').slice(0, 12);
   const out = [...tekSatir];
-  const mevcutAnahtarlar = new Set(tekSatir.map(p => p.tarih + '_' + Math.abs(p.tutar).toFixed(2)));
-  cokSatir.forEach(p => {
-    const k = p.tarih + '_' + Math.abs(p.tutar).toFixed(2);
-    if (mevcutAnahtarlar.has(k)) return; // tek-satır stratejisi zaten bu işlemi yakalamış
+  const mevcutAnahtarlar = new Set(tekSatir.map(dedupAnahtari));
+  [...cokSatir, ...tarihAltSatir].forEach(p => {
+    const k = dedupAnahtari(p);
+    if (mevcutAnahtarlar.has(k)) return; // başka bir strateji zaten bu işlemi yakalamış
     mevcutAnahtarlar.add(k);
     out.push(p);
   });
@@ -25824,7 +25832,7 @@ function eeOdemeSatiriMi(aciklama) {
     'şube ödeme', 'cep şube ödeme', 'teşekkür ederiz', 'hesabınıza yapılan ödeme',
     'borcunuza yapılan ödeme', 'havale ile ödeme', 'eft ile ödeme'
   ];
-  return odemeKaliplari.some(kw => lower.includes(kw));
+  return odemeKaliplari.some(kw => eeAsciiSadelestir(lower).includes(eeAsciiSadelestir(kw)));
 }
 
 // ── Bu satır bir ALACAK mı (iade, indirim kazanımı, bonus geri alımı)? ──
@@ -25833,6 +25841,45 @@ function eeOdemeSatiriMi(aciklama) {
 // ile gösterilir). Bu yüzden yönü ham eksi işaretinden değil, anahtar kelimeden çıkarırız:
 // iade / geri alım / kazanılan indirim gibi ifadeler geçen satırlar gerçek bir harcama değil,
 // kart borcunu AZALTAN bir kayıttır — negatif tutarla kaydedilir.
+// ── Bu satır bir EKSTRE ÖZETİ / SEKME BAŞLIĞI satırı mı (gerçek bir işlem DEĞİL)? ──
+// Gerçek ekran görüntülerinde ("Dönem İçi Hareketler", "Provizyonda Bekleyen", "Hesap Kesim
+// Tarihi 28/05/2026", "İşlem Ara" gibi) bu tür satırlar bazen rakam/tarih/tutar içerir ve
+// satır-bazlı OCR ayrıştırmasında yanlışlıkla bir işlemin açıklamasına karışabilir ya da
+// (tarih-ayrı-satır stratejisinde) sahte bir işlem olarak algılanabilir. Tek bir anahtar
+// kelime eşleşmesi burada yeterlidir çünkü gerçek bir işlem açıklamasının bu spesifik etiket
+// metinlerini içermesi pratikte neredeyse imkânsızdır (mağaza/işlem adları farklı yapıdadır).
+// ── Türkçe özel karakterleri ASCII karşılıklarına çevirir ──
+// OCR motoru (kullanılan dil paketine/görüntü kalitesine göre) bazen ş/ç/ğ/ı/ö/ü gibi
+// harfleri düz s/c/g/i/o/u olarak okuyabilir. Anahtar kelime eşleşmesini bu duruma karşı
+// dayanıklı kılmak için hem aranan metni hem de anahtar kelimeleri bu fonksiyondan geçirip
+// karşılaştırıyoruz — böylece "TESEKKUR EDERIZ" da "TEŞEKKÜR EDERİZ" de aynı şekilde eşleşir.
+function eeAsciiSadelestir(s) {
+  return s
+    .replace(/[şŞ]/g, 's').replace(/[çÇ]/g, 'c').replace(/[ğĞ]/g, 'g')
+    .replace(/[ıİ]/g, 'i').replace(/[öÖ]/g, 'o').replace(/[üÜ]/g, 'u');
+}
+
+function eeOzetVeyaBaslikSatiriMi(line) {
+  if (!line) return true;
+  const lower = line.toLocaleLowerCase('tr-TR').trim();
+  if (!lower) return true;
+  const kaliplar = [
+    'provizyonda bekleyen', 'dönem içi hareketler', 'donem ici hareketler',
+    'bekleyen taksitler', 'provizyondaki işlemler', 'provizyondaki islemler',
+    'gerçekleşen', 'gerceklesen', 'gelecek dönem', 'gelecek donem',
+    'hesap özeti', 'hesap ozeti', 'hesap kesim tarihi', 'son ödeme tarihi',
+    'son odeme tarihi', 'sonraki hesap kesim', 'sonraki son ödeme',
+    'sonraki son odeme', 'harcama tutarı', 'harcama tutari', 'toplam tl',
+    'toplam usd', 'toplam worldpuan', 'işlem ara', 'islem ara',
+    'ekstre böldür', 'ekstre boldur', 'hemen ekstre böldür', 'hemen ekstre boldur',
+    'kredi kartı borcunu', 'kredi karti borcunu', 'harcama kategorilerinizi',
+    'gelecek ekstre kesim', 'kullanılabilir limit', 'kullanilabilir limit',
+    'önceki dönem', 'onceki donem', 'kart hareketleri', 'ekstre/borç bilgileri',
+    'ekstre/borc bilgileri', 'döviz işlem', 'doviz islem', 'tl işlem', 'tl islem'
+  ];
+  return kaliplar.some(kw => eeAsciiSadelestir(lower).includes(eeAsciiSadelestir(kw)));
+}
+
 function eeAlacakMi(aciklama) {
   if (!aciklama) return false;
   const lower = aciklama.toLocaleLowerCase('tr-TR');
@@ -25841,7 +25888,7 @@ function eeAlacakMi(aciklama) {
     'kazanılan indirim', 'kazanilan indirim', 'indirim kazan', 'bonus geri',
     'puan iadesi', 'itiraz', 'ters ibraz'
   ];
-  return alacakKaliplari.some(kw => lower.includes(kw));
+  return alacakKaliplari.some(kw => eeAsciiSadelestir(lower).includes(eeAsciiSadelestir(kw)));
 }
 
 // ── Açıklamadan, parser sonucuna eklenecek 'tip' alanını belirler ──
@@ -25987,7 +26034,12 @@ function eeParseCokSatirFormati(text) {
       // ki kullanıcı eşleştirme ekranında bu işlemi özellikle gözden geçirebilsin.
       const disAdaylar = blok.tutarAdaylari.filter(a => !a.parantezIci);
       const belirsiz = !disAdaylar.length;
-      const secilen = (disAdaylar.length ? disAdaylar : blok.tutarAdaylari)[0];
+      const adaySecimHavuzu = disAdaylar.length ? disAdaylar : blok.tutarAdaylari;
+      // Birden fazla parantez-dışı aday varsa SONUNCUSUNU seçiyoruz: açıklama metni
+      // içinde geçen bir referans/orijinal fiyat (örn. "Trendyol.Com Ist(6/6 TK) 15.230,04 TL")
+      // genelde işlemin BAŞINDA, asıl o dönem tahsil edilen tutar ise satırın/bloğun SONUNDA
+      // (sağ sütun) yer alır.
+      const secilen = adaySecimHavuzu[adaySecimHavuzu.length - 1];
       const dd = String(blok.gun).padStart(2, '0');
       const tarih = `${blok.yil}-${blok.ay}-${dd}`;
       let aciklama = blok.aciklamaParcalari.join(' ').replace(/\s{2,}/g, ' ').trim();
@@ -26014,6 +26066,11 @@ function eeParseCokSatirFormati(text) {
 
   for (let i = 0; i < rawLines.length; i++) {
     let line = rawLines[i];
+
+    // -1) Ekstre özeti / sekme başlığı satırı mı (örn. "Dönem İçi Hareketler",
+    //     "Provizyonda Bekleyen")? Bunlar gerçek bir işlem değildir; tamamen atla ki ne
+    //     yanlışlıkla bir işlemin açıklamasına karışsın ne de gün/ay/tutar tespitini bozsun.
+    if (eeOzetVeyaBaslikSatiriMi(line)) continue;
 
     // 0) Bu satır saat damgası mı (örn. "14:56") veya zaten kendi başına bir TUTAR mı
     //    (örn. "160,00 TL")? Öyleyse satır başındaki rakam grubu GÜN değildir — bu
@@ -26083,15 +26140,30 @@ function eeParseCokSatirFormati(text) {
       else if (ch === ')') parantezDerinligi = Math.max(0, parantezDerinligi - 1);
     }
 
+    // Bir tutarın "parantez içi" sayılıp sayılmayacağını, satırın o ana kadarki kısmındaki
+    // NET açık parantez sayısına bakarak belirler (sadece '(' karakterinin VAR OLUP
+    // olmadığına değil!). Örn. "(**8216) MUHAMMED İYİ 160,00 TL" satırında parantez tutardan
+    // ÖNCE zaten kapanmıştır — bu yüzden tutar parantez-içi DEĞİLDİR; eski kontrol
+    // (`.includes('(')`) bunu ayırt edemiyor, satırda HERHANGİ bir '(' geçmesi yeterli
+    // sayılıp gerçek tutarı haksız yere "belirsiz" işaretleyebiliyordu.
+    function tutarParantezIciMi(satirBaslangici) {
+      let derinlik = satirBasiParantezIci ? 1 : 0;
+      for (const ch of satirBaslangici) {
+        if (ch === '(') derinlik++;
+        else if (ch === ')') derinlik = Math.max(0, derinlik - 1);
+      }
+      return derinlik > 0;
+    }
+
     // 5) Satır içinde tutar var mı? (TL etiketli + etiketsiz, her ikisini de aday olarak topla)
     let am = line.match(amountInLineRe);
     if (am) {
-      blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(am[1], null), parantezIci: satirBasiParantezIci || line.slice(0, am.index).includes('(') });
+      blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(am[1], null), parantezIci: tutarParantezIciMi(line.slice(0, am.index)) });
       line = (line.slice(0, am.index) + ' ' + line.slice(am.index + am[0].length)).trim();
     } else {
       const bareM = line.match(amountBareRe);
       if (bareM) {
-        blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(bareM[1], null), parantezIci: satirBasiParantezIci || line.slice(0, bareM.index).includes('(') });
+        blok.tutarAdaylari.push({ tutar: eeNormalizeTutar(bareM[1], null), parantezIci: tutarParantezIciMi(line.slice(0, bareM.index)) });
         line = line.slice(0, bareM.index).trim();
       }
     }
@@ -26103,6 +26175,79 @@ function eeParseCokSatirFormati(text) {
     if (kalan && kalan.length > 1) blok.aciklamaParcalari.push(kalan);
   }
   bloguKapat(); // dosya sonunda açık kalan blok varsa kapat
+
+  return out;
+}
+
+// ── Strateji 3: Tarih AYRI satırda (CepteTeb, Garanti BBVA tarzı liste görünümü) ──
+// Bu formatta her işlem iki satıra yayılır ve Strateji 1 (tarih+açıklama+tutar AYNI satırda)
+// ile Strateji 2'nin (gün/ay-adı/yıl parçaları farklı satırlara dağılmış, ay İSİM olarak
+// geçer) hiçbiri bunu yakalayamaz:
+//   Satır N:   "BAŞLIK ... TUTAR TL"              (açıklama ve tutar aynı satırda)
+//   Satır N+1: "GG.AA.YYYY - SS:DD" / "GG/AA/YYYY - SS:DD" (+ "- Taksit: X/Y" / "X/Y Taksit")
+// Tarih satırının GÜN ile BAŞLAMASI değil, satırın TAMAMEN bir tarihle başlaması (önünde
+// başka metin olmaması) kritik bir güvenlik önlemidir: "Hesap Kesim Tarihi 28/05/2026" gibi
+// özet satırlarında tarih satırın ORTASINDA geçer, bu yüzden hiçbir zaman yanlışlıkla işlem
+// tarihi sanılmaz.
+function eeParseTarihAltSatirFormati(text) {
+  const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const out = [];
+
+  const tarihSatirRe = /^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})\b/;
+  const amountInLineRe = /(-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))\s*(TL|TRY|₺|USD|EUR|\$|€)\b/i;
+
+  let buffer = []; // bu tarih satırından önce biriken açıklama/tutar satırları
+
+  function bufferiIsle(dm) {
+    if (!buffer.length) return;
+    const birlesik = buffer.join(' ').replace(/\s{2,}/g, ' ').trim();
+    const adaylar = [];
+    const re = new RegExp(amountInLineRe.source, 'gi');
+    let m;
+    while ((m = re.exec(birlesik)) !== null) {
+      const oncesi = birlesik.slice(0, m.index);
+      const acikParantez = (oncesi.match(/\(/g) || []).length > (oncesi.match(/\)/g) || []).length;
+      adaylar.push({ tutar: eeNormalizeTutar(m[1], null), parantezIci: acikParantez, index: m.index, raw: m[0] });
+    }
+    buffer = [];
+    if (!adaylar.length) return;
+    const disAdaylar = adaylar.filter(a => !a.parantezIci);
+    const havuz = disAdaylar.length ? disAdaylar : adaylar;
+    // Strateji 2'deki aynı mantık: birden fazla aday varsa SONUNCUSU (açıklamadaki olası
+    // bir referans/orijinal fiyat genelde başta, gerçek tahsil tutarı sonda yer alır).
+    const secilen = havuz[havuz.length - 1];
+    let aciklama = (birlesik.slice(0, secilen.index) + ' ' + birlesik.slice(secilen.index + secilen.raw.length))
+      .replace(/\s{2,}/g, ' ').trim();
+    if (!aciklama) aciklama = 'İşlem';
+
+    const gg = dm[1].padStart(2, '0');
+    const aa = dm[2].padStart(2, '0');
+    const tarih = `${dm[3]}-${aa}-${gg}`;
+
+    const { tip, tutar } = eeIslemTipiVeTutarBelirle(aciklama, Math.abs(secilen.tutar));
+    out.push({
+      tarih,
+      aciklama,
+      tutar,
+      tip,
+      _key: tarih + '_' + Math.abs(tutar).toFixed(2) + '_' + Math.random().toString(36).slice(2, 7)
+    });
+  }
+
+  for (const line of rawLines) {
+    if (eeOzetVeyaBaslikSatiriMi(line)) continue; // ekstre özeti/sekme başlığı, atla
+    const dm = line.match(tarihSatirRe);
+    if (dm) {
+      bufferiIsle(dm);
+    } else {
+      buffer.push(line);
+      // Tarihsiz bir bilgilendirme bloğunun sonsuza dek büyümesini önlemek için makul
+      // bir pencereyle sınırlıyoruz — gerçek bir işlemin başlığı pratikte 1-2 satırdır.
+      if (buffer.length > 4) buffer.shift();
+    }
+  }
+  // Metin sonunda tarihi hiç gelmemiş asılı bir buffer varsa atılır (gerçek bir işlemse
+  // tarihi ekstrede mutlaka bir yerde görünür, varsayım yapmıyoruz).
 
   return out;
 }
