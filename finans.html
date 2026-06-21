@@ -5890,8 +5890,12 @@ window.addEventListener('load', placeMobProfilePanel);
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Tarih</th><th>Açıklama</th><th></th></tr></thead><tbody id="tatil-tbody"></tbody></table></div></div>
   </div>
   <div id="tab-kategoriler" style="display:none">
-    <div class="action-row">
+    <div class="action-row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-primary btn-sm" onclick="openKategoriModal()">+ Kategori Ekle</button>
+      <button class="btn btn-ghost btn-sm" onclick="openKategoriOneriModal()">✨ Önerilen Kategoriler</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportKategorilerJSON()">📤 Dışa Aktar (JSON)</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('kategori-import-input').click()">📥 İçe Aktar (JSON)</button>
+      <input type="file" id="kategori-import-input" accept="application/json,.json" style="display:none" onchange="importKategorilerJSON(event)">
     </div>
     <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="filterKategoriTur('')"  id="kfil-hepsi"  style="opacity:1">Tümü</button>
@@ -5899,6 +5903,33 @@ window.addEventListener('load', placeMobProfilePanel);
       <button class="btn btn-ghost btn-sm" onclick="filterKategoriTur('gelir')" id="kfil-gelir">💹 Gelirler</button>
     </div>
     <div id="kategori-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+  </div>
+
+  <!-- KATEGORİ ÖNERİ MODAL -->
+  <div class="modal-bg" id="modal-kategori-oneri">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">✨</div>
+          <div class="modal-header-text">
+            <div class="modal-title">Önerilen Kategoriler</div>
+            <div class="modal-subtitle">Sık kullanılan kategorilerden seçip toplu ekleyin</div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeModal('modal-kategori-oneri')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(true)">Tümünü Seç</button>
+          <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(false)">Seçimi Kaldır</button>
+        </div>
+        <div id="kategori-oneri-list" style="display:flex;flex-direction:column;gap:14px;max-height:50vh;overflow-y:auto;padding-right:4px"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-kategori-oneri')">İptal</button>
+        <button class="btn btn-primary" onclick="katOneriEkleSecili()">Seçilenleri Ekle</button>
+      </div>
+    </div>
   </div>
 
   <!-- KİŞİLER / KARŞI TARAFLAR SEKMESİ -->
@@ -6447,6 +6478,10 @@ window.addEventListener('load', placeMobProfilePanel);
         <div class="form-row" style="margin-bottom:0">
           <div><label>Kategori Adı <span style="color:var(--danger)">*</span></label><input id="kat-ad" placeholder="örn. Market & Gıda"></div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px">
+          <input type="checkbox" id="kat-abonelik" checked style="width:16px;height:16px;flex-shrink:0">
+          <span style="font-size:12.5px;color:var(--text2)">🔄 Abonelik eklerken bu kategori seçilebilsin</span>
+        </label>
       </div>
     </div>
     <div class="modal-footer">
@@ -16083,10 +16118,26 @@ function deleteParaBirimi(kod) {
 var _katFilter = '';
 var editKategoriId = null;
 
-function getKategoriOpts(tur) {
+function getKategoriOpts(tur, sadeceAbonelik) {
   // tur: 'gider' | 'gelir' | '' (hepsi)
-  const cats = (DB.kategoriler||[]).filter(k => !tur || k.tur === tur || k.tur === 'diger');
+  // sadeceAbonelik: true ise sadece aboneligeUygun !== false olan kategoriler listelenir
+  let cats = (DB.kategoriler||[]).filter(k => !tur || k.tur === tur || k.tur === 'diger');
+  if (sadeceAbonelik) cats = cats.filter(k => k.aboneligeUygun !== false);
   return cats.map(k => `<option value="${k.id}">${k.ikon||''} ${k.ad}</option>`).join('');
+}
+
+function getKategoriOptsAbonelik(seciliId) {
+  // Abonelik formunda kullanılacak gider kategorileri: aboneligeUygun !== false olanlar.
+  // Eğer düzenlenen kaydın mevcut kategorisi artık abonelik-dışı işaretlenmişse, listeden
+  // kaybolmasın diye yine de eklenir (kapatılmasın diye).
+  const cats = (DB.kategoriler||[]).filter(k => k.tur === 'gider' || k.tur === 'diger');
+  const uygun = cats.filter(k => k.aboneligeUygun !== false);
+  let list = uygun;
+  if (seciliId && !uygun.some(k => k.id === seciliId)) {
+    const secili = cats.find(k => k.id === seciliId);
+    if (secili) list = [...uygun, secili];
+  }
+  return list.map(k => `<option value="${k.id}">${k.ikon||''} ${k.ad}</option>`).join('');
 }
 
 function populateKategoriSelects() {
@@ -16094,11 +16145,11 @@ function populateKategoriSelects() {
   if(islemEl) { islemEl.innerHTML = getKategoriOpts(''); phSet(islemEl, 'Kategori seçin…', islemEl.value||'', '— Kategori bulunamadı —'); }
   // elden-kategori tür bazlı doldurulur (onEldenTurChange ile)
   onEldenTurChange();
-  // ab-kategori: sadece gider kategorileri
+  // ab-kategori: sadece abonelige uygun işaretli gider/diğer kategorileri
   const abKatEl = document.getElementById('ab-kategori');
   if(abKatEl) {
     const prev = abKatEl.value;
-    abKatEl.innerHTML = getKategoriOpts('gider');
+    abKatEl.innerHTML = getKategoriOptsAbonelik(prev);
     phSet(abKatEl, 'Kategori seçin…', prev || '', '— Kategori bulunamadı —');
   }
 }
@@ -16125,11 +16176,12 @@ function renderKategoriGrid() {
   grid.innerHTML = cats.map(k => {
     const turRenk = k.tur==='gelir' ? 'var(--accent2)' : k.tur==='gider' ? 'var(--danger)' : 'var(--text3)';
     const isDefault = k.id.startsWith('kg');
+    const abUygun = k.aboneligeUygun !== false;
     return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative">
       <span style="font-size:22px;flex-shrink:0">${k.ikon||'📦'}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k.ad}</div>
-        <div style="font-size:10px;color:${turRenk};margin-top:2px">${k.tur==='gelir'?'💹 Gelir':k.tur==='gider'?'💸 Gider':'📦 Diğer'}</div>
+        <div style="font-size:10px;color:${turRenk};margin-top:2px">${k.tur==='gelir'?'💹 Gelir':k.tur==='gider'?'💸 Gider':'📦 Diğer'}${abUygun ? ' · <span style="color:var(--text2)">🔄 Abonelik</span>' : ''}</div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button class="btn btn-ghost btn-sm" style="padding:3px 6px" onclick="editKategori('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
@@ -16153,11 +16205,13 @@ function openKategoriModal(id) {
     document.getElementById('kat-ikon').value = k.ikon||'';
     document.getElementById('kat-ad').value   = k.ad;
     document.getElementById('kat-tur').value  = k.tur;
+    document.getElementById('kat-abonelik').checked = k.aboneligeUygun !== false; // eski kayıtlarda alan yoksa varsayılan: uygun
   } else {
     document.getElementById('kategori-modal-title').textContent = 'Kategori Ekle';
     document.getElementById('kat-ikon').value = '';
     document.getElementById('kat-ad').value   = '';
     document.getElementById('kat-tur').value  = 'gider';
+    document.getElementById('kat-abonelik').checked = true;
   }
   openModal('modal-kategori');
 }
@@ -16168,13 +16222,14 @@ function saveKategori() {
   const ad   = document.getElementById('kat-ad').value.trim();
   const ikon = document.getElementById('kat-ikon').value.trim();
   const tur  = document.getElementById('kat-tur').value;
+  const aboneligeUygun = document.getElementById('kat-abonelik').checked;
   if(!ad) { showToast('Kategori adı zorunlu', 'error'); return; }
   if(!DB.kategoriler) DB.kategoriler = [];
   if(editKategoriId) {
     const idx = DB.kategoriler.findIndex(k=>k.id===editKategoriId);
-    if(idx>=0) DB.kategoriler[idx] = {...DB.kategoriler[idx], ad, ikon, tur};
+    if(idx>=0) DB.kategoriler[idx] = {...DB.kategoriler[idx], ad, ikon, tur, aboneligeUygun};
   } else {
-    DB.kategoriler.push({id: uid(), ad, ikon, tur});
+    DB.kategoriler.push({id: uid(), ad, ikon, tur, aboneligeUygun});
   }
   editKategoriId = null;
   saveData();
@@ -16191,6 +16246,180 @@ function deleteKategori(id) {
     renderKategoriGrid();
     populateKategoriSelects();
   });
+}
+
+// ========== KATEGORİ ÖNERİLERİ / JSON İÇE-DIŞA AKTARMA ==========
+// Sık kullanılan, hazır kategori önerileri (JSON). Sadece {ad, ikon, tur} alanları
+// gerekli — id eklenirken otomatik üretilir. tur: 'gider' | 'gelir' | 'diger'
+const KAT_ONERILER = [
+  { ad: "Market", ikon: "🛒", tur: "gider" },
+  { ad: "Kira", ikon: "🏠", tur: "gider" },
+  { ad: "Faturalar", ikon: "🧾", tur: "gider" },
+  { ad: "Elektrik", ikon: "💡", tur: "gider" },
+  { ad: "Su", ikon: "🚿", tur: "gider" },
+  { ad: "Doğalgaz", ikon: "🔥", tur: "gider" },
+  { ad: "İnternet", ikon: "🌐", tur: "gider" },
+  { ad: "Telefon", ikon: "📱", tur: "gider" },
+  { ad: "Ulaşım", ikon: "🚌", tur: "gider" },
+  { ad: "Akaryakıt", ikon: "⛽", tur: "gider" },
+  { ad: "Araç Bakım", ikon: "🔧", tur: "gider" },
+  { ad: "Restoran / Dışarıda Yemek", ikon: "🍽️", tur: "gider" },
+  { ad: "Kafe / Kahve", ikon: "☕", tur: "gider" },
+  { ad: "Eğlence", ikon: "🎮", tur: "gider" },
+  { ad: "Abonelikler", ikon: "🔄", tur: "gider" },
+  { ad: "Sağlık", ikon: "💊", tur: "gider" },
+  { ad: "Eczane", ikon: "💉", tur: "gider" },
+  { ad: "Spor / Fitness", ikon: "🏋️", tur: "gider" },
+  { ad: "Giyim", ikon: "👕", tur: "gider" },
+  { ad: "Kişisel Bakım", ikon: "💇", tur: "gider" },
+  { ad: "Eğitim", ikon: "🎓", tur: "gider" },
+  { ad: "Kitap / Kırtasiye", ikon: "📚", tur: "gider" },
+  { ad: "Çocuk Giderleri", ikon: "🧸", tur: "gider" },
+  { ad: "Evcil Hayvan", ikon: "🐾", tur: "gider" },
+  { ad: "Ev Eşyası", ikon: "🛋️", tur: "gider" },
+  { ad: "Tatil / Seyahat", ikon: "✈️", tur: "gider" },
+  { ad: "Hediye", ikon: "🎁", tur: "gider" },
+  { ad: "Bağış", ikon: "🤝", tur: "gider" },
+  { ad: "Sigorta", ikon: "🛡️", tur: "gider" },
+  { ad: "Vergi", ikon: "📋", tur: "gider" },
+  { ad: "Banka / İşlem Ücreti", ikon: "🏦", tur: "gider" },
+  { ad: "Kredi Ödemesi", ikon: "💳", tur: "gider" },
+  { ad: "Kira Geliri", ikon: "🏘️", tur: "gelir" },
+  { ad: "Maaş", ikon: "💰", tur: "gelir" },
+  { ad: "Ek Gelir / Yan İş", ikon: "🧑‍💻", tur: "gelir" },
+  { ad: "Serbest Çalışma", ikon: "🧑‍🎨", tur: "gelir" },
+  { ad: "Yatırım Geliri", ikon: "📈", tur: "gelir" },
+  { ad: "Temettü", ikon: "💹", tur: "gelir" },
+  { ad: "Faiz Geliri", ikon: "🏛️", tur: "gelir" },
+  { ad: "Satış Geliri", ikon: "🏷️", tur: "gelir" },
+  { ad: "İade / Geri Ödeme", ikon: "↩️", tur: "gelir" },
+  { ad: "Hediye / Bahşiş Geliri", ikon: "🎉", tur: "gelir" },
+  { ad: "Diğer", ikon: "📦", tur: "diger" }
+];
+
+function _katKey(k) { return (k.ad||'').trim().toLocaleLowerCase('tr') + '|' + (k.tur||''); }
+
+function openKategoriOneriModal() {
+  const mevcut = new Set((DB.kategoriler||[]).map(_katKey));
+  const eksikler = KAT_ONERILER.filter(o => !mevcut.has(_katKey(o)));
+  const list = document.getElementById('kategori-oneri-list');
+  if (!list) return;
+
+  if (!eksikler.length) {
+    list.innerHTML = '<div class="ee-empty">Tüm önerilen kategoriler zaten sisteminizde mevcut 👍</div>';
+  } else {
+    const gruplar = [
+      { tur: 'gider', baslik: '💸 Gider Kategorileri' },
+      { tur: 'gelir', baslik: '💹 Gelir Kategorileri' },
+      { tur: 'diger', baslik: '📦 Diğer' }
+    ];
+    list.innerHTML = gruplar.map(g => {
+      const items = eksikler.filter(o => o.tur === g.tur);
+      if (!items.length) return '';
+      return `<div>
+        <div class="msec-label" style="margin-bottom:8px">${g.baslik}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px">
+          ${items.map((o, idx) => {
+            const dataIdx = KAT_ONERILER.indexOf(o);
+            return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;cursor:pointer;font-size:12.5px">
+              <input type="checkbox" class="kat-oneri-check" data-idx="${dataIdx}" checked style="flex-shrink:0">
+              <span>${o.ikon}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.ad}</span>
+            </label>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  openModal('modal-kategori-oneri');
+}
+
+function katOneriSelectAll(val) {
+  document.querySelectorAll('.kat-oneri-check').forEach(cb => cb.checked = val);
+}
+
+function katOneriEkleSecili() {
+  const checks = document.querySelectorAll('.kat-oneri-check:checked');
+  if (!checks.length) { showToast('Lütfen en az bir kategori seçin', 'error'); return; }
+  if (!DB.kategoriler) DB.kategoriler = [];
+  let eklenen = 0;
+  checks.forEach(cb => {
+    const o = KAT_ONERILER[+cb.dataset.idx];
+    if (!o) return;
+    const mevcut = new Set(DB.kategoriler.map(_katKey));
+    if (mevcut.has(_katKey(o))) return;
+    DB.kategoriler.push({ id: uid(), ad: o.ad, ikon: o.ikon, tur: o.tur });
+    eklenen++;
+  });
+  saveData();
+  closeModal('modal-kategori-oneri');
+  renderKategoriGrid();
+  populateKategoriSelects();
+  showToast(eklenen ? `${eklenen} kategori eklendi` : 'Yeni kategori eklenmedi (zaten mevcuttu)');
+}
+
+// ── Kategorileri JSON olarak dışa aktar ──────────────────────────
+function exportKategorilerJSON() {
+  const data = (DB.kategoriler || []).map(k => ({ ad: k.ad, ikon: k.ikon || '', tur: k.tur || 'gider' }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tarih = localDateStr ? localDateStr(new Date()) : new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `kategoriler_${tarih}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Kategoriler JSON olarak indirildi');
+}
+
+// ── JSON dosyasından kategori içe aktar ──────────────────────────
+// Beklenen format: [{ "ad": "Market", "ikon": "🛒", "tur": "gider" }, ...]
+function importKategorilerJSON(evt) {
+  const file = evt.target.files && evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let arr;
+    try {
+      arr = JSON.parse(reader.result);
+      if (!Array.isArray(arr)) throw new Error('JSON bir dizi (array) olmalı');
+    } catch (err) {
+      showToast('Geçersiz JSON dosyası: ' + (err.message || err), 'error');
+      evt.target.value = '';
+      return;
+    }
+    const temiz = arr
+      .filter(x => x && typeof x === 'object' && x.ad)
+      .map(x => ({
+        ad: String(x.ad).trim(),
+        ikon: x.ikon ? String(x.ikon).trim() : '📦',
+        tur: ['gider', 'gelir', 'diger'].includes(x.tur) ? x.tur : 'gider'
+      }))
+      .filter(x => x.ad);
+    if (!temiz.length) {
+      showToast('Dosyada içe aktarılabilir kategori bulunamadı', 'error');
+      evt.target.value = '';
+      return;
+    }
+    showConfirm(`${temiz.length} kategori bulundu. Mevcut listeyle birleştirilsin mi? (Aynı isim + tür eşleşenler atlanır, yenileri eklenir)`, () => {
+      if (!DB.kategoriler) DB.kategoriler = [];
+      let eklenen = 0, atlanan = 0;
+      temiz.forEach(o => {
+        const mevcut = new Set(DB.kategoriler.map(_katKey));
+        if (mevcut.has(_katKey(o))) { atlanan++; return; }
+        DB.kategoriler.push({ id: uid(), ad: o.ad, ikon: o.ikon, tur: o.tur });
+        eklenen++;
+      });
+      saveData();
+      renderKategoriGrid();
+      populateKategoriSelects();
+      showToast(`${eklenen} kategori eklendi${atlanan ? `, ${atlanan} tanesi zaten vardı` : ''}`);
+    });
+    evt.target.value = '';
+  };
+  reader.onerror = () => { showToast('Dosya okunamadı', 'error'); evt.target.value = ''; };
+  reader.readAsText(file, 'utf-8');
 }
 
 // ========== ÖDEME DURUMU SİSTEMİ ==========
@@ -23116,9 +23345,9 @@ function openAbonelikModal(id=null) {
   const ab = id ? (DB.abonelikler||[]).find(x=>x.id===id) : null;
   document.getElementById('ab-ad').value = ab?.ad || '';
   document.getElementById('ab-ikon').value = ab?.ikon || '';
-  // Gider kategorilerini dinamik doldur
+  // Abonelige uygun işaretli kategorileri dinamik doldur (mevcut seçili kategori abonelik-dışı bırakılmışsa yine listede kalır)
   const abKatEl = document.getElementById('ab-kategori');
-  abKatEl.innerHTML = getKategoriOpts('gider');
+  abKatEl.innerHTML = getKategoriOptsAbonelik(ab?.kategori || '');
   phSet(abKatEl, 'Kategori seçin…', ab?.kategori || '', '— Kategori bulunamadı —');
   phSet('ab-periyot', 'Periyot seçin…', ab?.periyot || '');
   document.getElementById('ab-not').value = ab?.not || '';
@@ -25413,7 +25642,7 @@ function eeRenderResults() {
         </div>
         <div class="ee-row-amt" style="color:${s.tutar >= 0 ? 'var(--teal)' : 'var(--text)'}">${sign}${fmtCur(Math.abs(s.tutar), pb)}</div>
         <div class="ee-actions">
-          <button class="ee-btn-mini" onclick="editIslem('${s.id}');showPage('islemler', document.getElementById('nav-islemler'))">İncele</button>
+          <button class="ee-btn-mini" onclick="editIslem('${s.id}')">İncele</button>
           <button class="ee-btn-mini danger" onclick="eeSilSistemden(${j})">🗑 Sil</button>
         </div>
       </div>`;
