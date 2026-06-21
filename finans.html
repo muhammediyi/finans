@@ -5598,11 +5598,12 @@ window.addEventListener('load', placeMobProfilePanel);
 .ee-section-count { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:700; }
 .ee-row { display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; font-size:12.5px; flex-wrap:wrap; }
 .ee-row-main { flex:1; min-width:180px; display:flex; flex-direction:column; gap:2px; }
+.ee-row .ee-inline-field { flex: 1 1 130px; max-width: 200px; }
 .ee-row-date { color:var(--text3); font-size:10.5px; }
 .ee-row-desc { color:var(--text); font-weight:500; }
 .ee-row-amt { font-family:var(--mono); font-weight:700; flex-shrink:0; }
 .ee-badge { font-size:10px; padding:2px 7px; border-radius:6px; font-weight:700; flex-shrink:0; }
-.ee-inline-field { padding:6px 9px; font-size:12px; border-radius:7px; border:1px solid var(--border2); background:var(--surface3); color:var(--text); min-width:130px; }
+.ee-inline-field { padding:6px 9px; font-size:12px; border-radius:7px; border:1px solid var(--border2); background:var(--surface3); color:var(--text); min-width:130px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; }
 .ee-actions { display:flex; gap:6px; flex-shrink:0; }
 .ee-btn-mini { padding:6px 12px; font-size:11.5px; font-weight:600; border-radius:7px; border:1px solid var(--border2); background:var(--surface3); color:var(--text2); cursor:pointer; transition:.15s; white-space:nowrap; }
 .ee-btn-mini:hover { background:var(--surface4); color:var(--text); }
@@ -16440,19 +16441,28 @@ function renderKategoriGrid() {
   if(aktifEl) aktifEl.style.opacity = '1';
 
   grid.innerHTML = cats.map(k => {
-    const turRenk = k.tur==='gelir' ? 'var(--accent2)' : k.tur==='gider' ? 'var(--danger)' : 'var(--text3)';
+    const isGelir = k.tur === 'gelir';
+    const isGider = k.tur === 'gider';
+    // Gider = kırmızı (danger), Gelir = yeşil (accent2/teal), tanımsız = nötr gri
+    const turRenk = isGelir ? 'var(--accent2)' : isGider ? 'var(--danger)' : 'var(--text3)';
+    const turBg   = isGelir ? 'var(--accent2-glow)' : isGider ? 'var(--danger-glow)' : 'rgba(125,142,170,.12)';
+    const turEtiket = isGelir ? '💹 Gelir' : isGider ? '💸 Gider' : '📦 Diğer';
     const isDefault = k.id.startsWith('kg');
     const abUygun = k.aboneligeUygun !== false;
-    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative">
-      <span style="font-size:22px;flex-shrink:0">${k.ikon||'📦'}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k.ad}</div>
-        <div style="font-size:10px;color:${turRenk};margin-top:2px">${k.tur==='gelir'?'💹 Gelir':k.tur==='gider'?'💸 Gider':'📦 Diğer'}${abUygun ? ' · <span style="color:var(--text2)">🔄 Abonelik</span>' : ''}</div>
+    const adSafe = (k.ad || '').replace(/"/g, '&quot;');
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:22px;flex-shrink:0;line-height:1.2">${k.ikon||'📦'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${adSafe}">${k.ad}</div>
+          <span style="display:inline-block;margin-top:3px;font-size:9.5px;font-weight:700;color:${turRenk};background:${turBg};border-radius:5px;padding:1px 7px">${turEtiket}</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm btn-act" onclick="editKategori('${k.id}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+          ${!isDefault ? `<button class="btn btn-danger btn-sm btn-act" onclick="deleteKategori('${k.id}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>` : ''}
+        </div>
       </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn btn-ghost btn-sm" style="padding:3px 6px" onclick="editKategori('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
-        ${!isDefault ? `<button class="btn btn-danger btn-sm" style="padding:3px 6px" onclick="deleteKategori('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>` : ''}
-      </div>
+      ${abUygun ? `<div style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px;padding-top:6px;border-top:1px solid var(--border)">🔄 Abonelige uygun</div>` : ''}
     </div>`;
   }).join('') || '<div style="color:var(--text3);padding:20px;grid-column:1/-1;text-align:center">Kategori bulunamadı</div>';
 }
@@ -25756,7 +25766,50 @@ function eeParsePdfText(text) {
     mevcutAnahtarlar.add(k);
     out.push(p);
   });
-  return out;
+  // Ekstrenin sabit bilgilendirme / kampanya / yasal uyarı bloklarını (gerçek işlem
+  // OLMAYAN ama içinde tarih+tutar deseni geçtiği için yanlışlıkla yakalanmış satırları) ele.
+  return out.filter(p => !eeBilgilendirmeMetniMi(p.aciklama));
+}
+
+// ── Ekstrenin alt kısmındaki sabit bilgilendirme / kampanya / faiz oranı bloğu mu? ──
+// Bu metinler gerçek bir işlem değildir ama OCR/metin çıkarımı sırasında satır kırılımları
+// kaybolduğunda içinde tarih ve tutar benzeri sayılar geçtiği için yanlışlıkla "işlem satırı"
+// gibi yakalanabilir. İki bağımsız sinyalle tespit ederiz: (1) anormal uzunluk — gerçek bir
+// işlem açıklaması bu kadar uzun olmaz, (2) ekstre bilgilendirme metinlerinde sık geçen
+// anahtar kelimelerden en az ikisinin birden bulunması (yanlış pozitifi azaltmak için tek
+// kelime yeterli sayılmaz — örn. "Limit" gerçek bir işlem açıklamasında da geçebilir).
+function eeBilgilendirmeMetniMi(aciklama) {
+  if (!aciklama) return false;
+  // 1) Anormal uzunluk: gerçek işlem açıklamaları (mağaza adı, taksit bilgisi vb.)
+  //    pratikte 80-90 karakteri aşmaz; ekstre bilgilendirme metinleri yüzlerce karakterdir.
+  if (aciklama.length > 180) return true;
+
+  // 2) Anahtar kelime yoğunluğu
+  const anahtarKelimeler = [
+    'asgari ödeme', 'hesap özeti', 'hesap kesim tarihi', 'son ödeme tarihi',
+    'worldpuan', 'cepte kazan', 'kampanya', 'faiz oranı', 'faiz oranlari',
+    'alışveriş faiz', 'nakit çekim faiz', 'gecikme faiz', 'müşteri hizmetleri',
+    'müşteri iletişim merkezi', 'internet bankacılığı', 'mobil bankacılık',
+    'şube adı', 'şube kodu', 'limitiniz', 'detaylı bilgi', 'www.',
+    'kredi kartı limitiniz', 'dönem içi hareketler', 'önceki dönem hesap özeti',
+    'bir sonraki hesap kesim', 'bir sonraki son ödeme', 'kart no', 'puan karşılığı',
+    'üye işyerlerinden', 'aylık yıllık', 'işlem tarihi açıklama tutar'
+  ];
+  const lower = aciklama.toLocaleLowerCase('tr-TR');
+  let isaretSayisi = 0;
+  for (const kw of anahtarKelimeler) {
+    if (lower.includes(kw)) {
+      isaretSayisi++;
+      if (isaretSayisi >= 2) return true;
+    }
+  }
+  // 3) Tek satırda birden fazla tarih deseni geçmesi de güçlü bir sinyaldir
+  //    (gerçek bir işlem satırında yalnızca 1 tarih olur; ekstre özet bloklarında
+  //    "Hesap Kesim Tarihi", "Son Ödeme Tarihi" gibi birden çok tarih art arda gelir).
+  const tarihSayisi = (aciklama.match(/\b\d{1,2}[.\/\-]\d{1,2}[.\/\-]\d{2,4}\b/g) || []).length;
+  if (tarihSayisi >= 2 && isaretSayisi >= 1) return true;
+
+  return false;
 }
 
 // ── Strateji 1: Klasik ekstre/PDF formatı — tarih + açıklama + tutar AYNI satırda ──
