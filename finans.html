@@ -1233,7 +1233,7 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 /* ─── BADGES ──────────────────────────────────────────── */
 /* ─── MODAL ───────────────────────────────────────────── */
 .modal-bg { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
-.modal-bg.open { display: flex; animation: modalBgIn .2s ease; }
+.modal-bg.open { display: flex; animation: modalBgIn .1s ease; }
 /* Sidebar modal arkasında kalır */
 .sidebar-modal-overlay {
   display: none;
@@ -1242,13 +1242,13 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
   background: rgba(0,0,0,.6);
   backdrop-filter: blur(2px);
   z-index: 9999;
-  animation: modalBgIn .2s ease;
+  animation: modalBgIn .1s ease;
   pointer-events: none;
 }
 .sidebar-modal-overlay.active { display: block; }
 @keyframes modalBgIn { from { opacity: 0; } to { opacity: 1; } }
-.modal { width: 100%; max-width: 680px; max-height: 92vh; display: flex; flex-direction: column; animation: modalIn .22s cubic-bezier(.34,1.2,.64,1); overflow: hidden; }
-@keyframes modalIn { from { opacity: 0; transform: scale(.94) translateY(20px); } to { opacity: 1; transform: none; } }
+.modal { width: 100%; max-width: 680px; max-height: 92vh; display: flex; flex-direction: column; animation: modalIn .12s cubic-bezier(.34,1.2,.64,1); overflow: hidden; }
+@keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(12px); } to { opacity: 1; transform: none; } }
 /* ── Modal iç yapı ── */
 .modal-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; }
 .modal-header-icon {
@@ -2428,7 +2428,7 @@ select option { background: #0d1120; color: #f0f4ff; }
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    animation: mobileSheetIn .28s cubic-bezier(.34,1.1,.64,1) !important;
+    animation: mobileSheetIn .15s cubic-bezier(.34,1.1,.64,1) !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -2682,14 +2682,14 @@ select option { background: #0d1120; color: #f0f4ff; }
     max-height: 85vh !important;
     border-radius: 20px 20px 0 0 !important;
     z-index: 3000 !important;
-    animation: mkpSheetIn .25s cubic-bezier(.34,1.1,.64,1) !important;
+    animation: mkpSheetIn .13s cubic-bezier(.34,1.1,.64,1) !important;
   }
   @keyframes mkpSheetIn {
     from { opacity: 0; transform: translateY(100%); }
     to   { opacity: 1; transform: translateY(0); }
   }
   #mini-kisi-popup.closing {
-    animation: mkpSheetOut .18s ease forwards !important;
+    animation: mkpSheetOut .09s ease forwards !important;
   }
   @keyframes mkpSheetOut {
     to { opacity: 0; transform: translateY(60px); }
@@ -2963,31 +2963,115 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   box-shadow: 0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1) !important;
 }
 /* ── KART DETAY POPUP SEKMELERİ ──────────────────────────────── */
-.kd-tab-btn { border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--text2); transition: var(--transition); }
-.kd-tab-btn.active { background: var(--surface3); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-.kd-extre-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; background: var(--surface2); overflow: hidden; }
+/* Tab bar */
+.kd-tab-bar { display: flex; gap: 2px; background: var(--surface2); border-radius: 9px; padding: 3px; border: 1px solid var(--border); }
+.kd-tab-btn { border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 6px 16px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--text2); transition: var(--transition); display: flex; align-items: center; gap: 6px; }
+.kd-tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.kd-tab-btn.active { background: var(--surface3); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06); }
+.kd-tab-badge { background: var(--surface4); color: var(--text2); border-radius: 20px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; line-height: 1.5; }
+.kd-tab-btn.active .kd-tab-badge { background: rgba(255,255,255,.12); color: var(--text); }
+@keyframes kdTabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Header banner şeridi */
+.kd-header-banner { height: 4px; margin: -1px -1px 0; border-radius: 18px 18px 0 0; background: linear-gradient(90deg, var(--kd-renk, var(--gold)), transparent); opacity: .7; }
+
+/* Mini stats — daha zengin */
+.kd-mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.kd-mini-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+.kd-mini-stat-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+.kd-mini-stat-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kd-mini-stat-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.kd-mini-stat.accent { border-color: rgba(251,191,36,.2); background: rgba(251,191,36,.05); }
+.kd-mini-stat.accent .kd-mini-stat-val { color: var(--gold); }
+.kd-mini-stat.danger { border-color: rgba(251,113,133,.2); background: rgba(251,113,133,.05); }
+.kd-mini-stat.danger .kd-mini-stat-val { color: var(--rose); }
+.kd-mini-stat.teal { border-color: rgba(45,212,191,.2); background: rgba(45,212,191,.05); }
+.kd-mini-stat.teal .kd-mini-stat-val { color: var(--teal); }
+
+/* Kategori barı — kalın + daha belirgin */
+.kd-kat-bar { margin-bottom: 16px; }
+.kd-kat-bar-track { display: flex; width: 100%; height: 10px; border-radius: 6px; overflow: hidden; background: var(--surface3); gap: 1px; }
+.kd-kat-bar-seg { height: 100%; cursor: pointer; transition: opacity .15s, filter .15s, transform .15s; flex-shrink: 0; }
+.kd-kat-bar-seg:hover { filter: brightness(1.25); }
+.kd-kat-bar-seg.dim { opacity: .22; }
+.kd-kat-bar-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 10px; }
+.kd-kat-leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); cursor: pointer; padding: 3px 7px; border-radius: 20px; border: 1px solid transparent; transition: var(--transition); user-select: none; }
+.kd-kat-leg-item:hover { background: var(--surface2); color: var(--text); border-color: var(--border); }
+.kd-kat-leg-item.dim { opacity: .35; }
+.kd-kat-leg-item.active-filter { border-color: var(--border-active); background: var(--gold-glow2); color: var(--text); }
+.kd-kat-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kd-kat-leg-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.kd-kat-leg-pct { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--text3); flex-shrink: 0; }
+.kd-kat-leg-clear { font-size: 10.5px; color: var(--accent); cursor: pointer; padding: 3px 8px; border-radius: 20px; font-weight: 600; border: 1px solid rgba(251,191,36,.25); background: var(--gold-glow2); margin-left: 4px; }
+.kd-kat-leg-clear:hover { background: var(--gold-glow); }
+
+/* Toolbar */
+.kd-islem-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.kd-islem-search { flex: 1 1 180px; min-width: 140px; display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 8px 10px; transition: var(--transition); }
+.kd-islem-search:focus-within { border-color: var(--border-active); background: var(--surface3); box-shadow: 0 0 0 3px var(--gold-glow2); }
+.kd-islem-search svg { flex-shrink: 0; color: var(--text3); }
+.kd-islem-search input { flex: 1; min-width: 0; background: none; border: none; outline: none; font-family: var(--sans); font-size: 12.5px; color: var(--text); }
+.kd-islem-search input::placeholder { color: var(--text3); }
+.kd-islem-search-clear { flex-shrink: 0; border: none; background: var(--surface3); color: var(--text2); width: 16px; height: 16px; border-radius: 50%; font-size: 9.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.kd-islem-search-clear:hover { background: var(--surface4); color: var(--text); }
+.kd-islem-sort { flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 8px 10px; font-family: var(--sans); font-size: 12px; color: var(--text2); cursor: pointer; outline: none; transition: var(--transition); }
+.kd-islem-sort:hover, .kd-islem-sort:focus { border-color: var(--border-active); color: var(--text); }
+
+/* Ay akordeon kartları */
+.kd-islem-month-card { border: 1px solid var(--border); border-radius: 11px; margin-bottom: 7px; background: var(--surface2); overflow: hidden; transition: border-color .15s; }
+.kd-islem-month-card:last-child { margin-bottom: 0; }
+.kd-islem-month-card:hover { border-color: var(--border2); }
+.kd-islem-month-card.open { border-color: rgba(255,255,255,.14); }
+.kd-islem-month-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; cursor: pointer; user-select: none; transition: var(--transition); }
+.kd-islem-month-row:hover { background: var(--surface3); }
+.kd-islem-month-meta { min-width: 0; overflow: hidden; }
+.kd-islem-month-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: capitalize; }
+.kd-islem-month-sub { font-size: 10.5px; color: var(--text3); margin-top: 2px; }
+.kd-islem-month-amt { text-align: right; flex-shrink: 0; font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--text); }
+.kd-islem-month-chevron { flex-shrink: 0; color: var(--text3); transition: transform .15s ease; }
+.kd-islem-month-card.open .kd-islem-month-chevron { transform: rotate(180deg); color: var(--text2); }
+.kd-islem-month-body { max-height: 0; overflow: hidden; transition: max-height .2s ease; }
+.kd-islem-month-card.open .kd-islem-month-body { border-top: 1px solid var(--border); }
+.kd-islem-month-list { padding: 4px 6px 6px; }
+.kd-islem-day-head { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text3); padding: 9px 8px 4px; text-transform: uppercase; }
+.kd-islem-day-head:first-child { padding-top: 5px; }
+.kd-islem-empty-filtered { text-align: center; padding: 32px 16px; color: var(--text3); font-size: 12.5px; }
+.kd-islem-empty-filtered svg { margin-bottom: 10px; opacity: .4; }
+
+/* Ekstre kartları */
+.kd-extre-card { border: 1px solid var(--border); border-radius: 11px; margin-bottom: 7px; background: var(--surface2); overflow: hidden; transition: border-color .15s; }
 .kd-extre-card:last-child { margin-bottom: 0; }
-.kd-extre-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 0; margin-bottom: 0; background: none; border: none; cursor: pointer; user-select: none; transition: var(--transition); }
+.kd-extre-card:hover { border-color: var(--border2); }
+.kd-extre-card.open { border-color: rgba(255,255,255,.14); }
+.kd-extre-card.status-past { border-left: 3px solid rgba(251,113,133,.4); }
+.kd-extre-card.status-current { border-left: 3px solid rgba(251,191,36,.4); }
+.kd-extre-card.status-future { border-left: 3px solid rgba(45,212,191,.25); }
+.kd-extre-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; border-radius: 0; margin-bottom: 0; background: none; border: none; cursor: pointer; user-select: none; transition: var(--transition); }
 .kd-extre-row:hover { background: var(--surface3); }
-.kd-extre-chevron { flex-shrink: 0; color: var(--text3); transition: transform .2s ease; }
+.kd-extre-progress { height: 3px; background: var(--surface3); overflow: hidden; }
+.kd-extre-progress-fill { height: 100%; border-radius: 0; transition: width .4s cubic-bezier(.4,0,.2,1); }
+.kd-extre-chevron { flex-shrink: 0; color: var(--text3); transition: transform .15s ease; }
 .kd-extre-card.open .kd-extre-chevron { transform: rotate(180deg); color: var(--text2); }
-.kd-extre-body { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.kd-extre-body { max-height: 0; overflow: hidden; transition: max-height .2s ease; }
 .kd-extre-card.open .kd-extre-body { border-top: 1px solid var(--border); }
-.kd-extre-detail-list { padding: 4px 12px 8px; }
-.kd-extre-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--border); cursor: pointer; transition: var(--transition); }
-.kd-extre-detail-row:last-child { border-bottom: none; }
+.kd-extre-detail-list { padding: 4px 12px 10px; }
+.kd-extre-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 6px; border-radius: 7px; cursor: pointer; transition: var(--transition); }
+.kd-extre-detail-row:hover { background: var(--surface3); }
 .kd-extre-detail-row:hover .kd-extre-detail-title { color: var(--accent); }
-.kd-extre-detail-info { min-width: 0; overflow: hidden; }
-.kd-extre-detail-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: var(--transition); }
+.kd-extre-detail-info { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 8px; }
+.kd-extre-detail-ikon { font-size: 16px; flex-shrink: 0; width: 28px; height: 28px; background: var(--surface3); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+.kd-extre-detail-text { min-width: 0; }
+.kd-extre-detail-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: var(--transition); font-weight: 500; }
 .kd-extre-detail-sub { font-size: 10px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kd-extre-detail-amt { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); flex-shrink: 0; white-space: nowrap; padding-left: 8px; }
-.kd-extre-detail-empty { padding: 10px 0; font-size: 11.5px; color: var(--text3); text-align: center; }
+.kd-extre-detail-amt { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--text); flex-shrink: 0; white-space: nowrap; padding-left: 8px; }
+.kd-extre-detail-empty { padding: 16px 0; font-size: 11.5px; color: var(--text3); text-align: center; }
 .kd-extre-meta { min-width: 0; overflow: hidden; }
-.kd-extre-period { font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kd-extre-dates { font-size: 10.5px; color: var(--text3); margin-top: 1px; }
+.kd-extre-period { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kd-extre-dates { font-size: 10.5px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.kd-extre-date-chip { display: inline-flex; align-items: center; gap: 3px; }
 .kd-extre-amt { text-align: right; flex-shrink: 0; }
-.kd-extre-amt-val { font-family: var(--mono); font-size: 13.5px; font-weight: 700; color: var(--text); }
-.kd-extre-badge { display: inline-block; border-radius: 5px; padding: 1px 7px; font-size: 9.5px; font-weight: 700; margin-top: 2px; }
+.kd-extre-amt-val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+.kd-extre-badge { display: inline-flex; align-items: center; gap: 3px; border-radius: 20px; padding: 2px 8px; font-size: 9.5px; font-weight: 700; margin-top: 3px; letter-spacing: .03em; }
 
 /* ── KART DETAY: İŞLEMLER SEKMESİ (kategori barı + arama/sıralama + ay akordeonu) ── */
 .kd-kat-bar { margin-bottom: 14px; }
@@ -3306,7 +3390,7 @@ html[data-theme="light"] .ortak-limit-hint { background: rgba(124,58,237,.05); b
     max-height: 90vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    animation: mobileSheetIn .3s cubic-bezier(.34,1.1,.64,1) !important;
+    animation: mobileSheetIn .15s cubic-bezier(.34,1.1,.64,1) !important;
   }
   .modal::before {
     content: '';
@@ -3531,7 +3615,7 @@ html[data-theme="light"] .ortak-limit-hint { background: rgba(124,58,237,.05); b
     max-height: 85vh !important;
     border-radius: 22px 22px 0 0 !important;
     z-index: 3000 !important;
-    animation: mkpSheetIn .28s cubic-bezier(.34,1.1,.64,1) !important;
+    animation: mkpSheetIn .13s cubic-bezier(.34,1.1,.64,1) !important;
   }
   #mini-kisi-popup::before {
     content: '';
@@ -3546,7 +3630,7 @@ html[data-theme="light"] .ortak-limit-hint { background: rgba(124,58,237,.05); b
     to   { opacity: 1; transform: translateY(0); }
   }
   #mini-kisi-popup.closing {
-    animation: mkpSheetOut .2s ease forwards !important;
+    animation: mkpSheetOut .09s ease forwards !important;
   }
   @keyframes mkpSheetOut {
     to { opacity: 0; transform: translateY(60px); }
@@ -7090,10 +7174,11 @@ window.addEventListener('load', placeMobProfilePanel);
 
 <!-- KART DETAY MODAL (kompakt — kart kartından popup: İşlemler + Ekstreler sekmeli) -->
 <div class="modal-bg" id="modal-kart-detay">
-  <div class="modal" style="max-width:560px">
+  <div class="modal" style="max-width:580px">
+    <div class="kd-header-banner" id="kd-header-banner"></div>
     <div class="modal-header">
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
-        <div class="modal-header-icon" id="kd-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">💳</div>
+        <div class="modal-header-icon" id="kd-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);font-size:20px">💳</div>
         <div class="modal-header-text" style="min-width:0;overflow:hidden">
           <div class="modal-title" id="kd-kart-adi" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Kart</div>
           <div class="modal-subtitle" id="kd-kart-sub">İşlemler ve ekstreler</div>
@@ -7102,17 +7187,17 @@ window.addEventListener('load', placeMobProfilePanel);
       <button class="close-btn" onclick="closeModal('modal-kart-detay')">✕</button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;padding:0 24px;margin-top:-6px;margin-bottom:14px;flex-wrap:wrap">
-      <div style="display:flex;gap:4px;background:var(--surface2);border-radius:9px;padding:3px">
-        <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">İşlemler</button>
-        <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">Ekstreler</button>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 24px;margin-top:-4px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="kd-tab-bar">
+        <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">İşlemler <span class="kd-tab-badge" id="kd-tab-badge-islem">0</span></button>
+        <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">Ekstreler <span class="kd-tab-badge" id="kd-tab-badge-extre">0</span></button>
       </div>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
     </div>
 
     <div class="modal-body" style="padding-top:0">
       <div id="kd-tab-islem">
-        <div class="islem-stats kd-islem-stats" id="kd-islem-stats" style="margin-bottom:12px"></div>
+        <div id="kd-mini-stats" style="margin-bottom:14px"></div>
         <div class="kd-kat-bar" id="kd-kat-bar"></div>
         <div class="kd-islem-toolbar">
           <div class="kd-islem-search">
@@ -10748,7 +10833,12 @@ function openKartDetayModal(kartId, tab) {
   document.getElementById('kd-kart-adi').textContent = k.ad;
   document.getElementById('kd-kart-adi').title = k.ad;
   document.getElementById('kd-kart-sub').textContent = `${banka}${k.no ? ' ·· ' + k.no : ''}`;
-  document.getElementById('kd-header-icon').style.borderColor = (k.renk || 'var(--accent)') + '33';
+  // Kart rengi ile header icon ve banner'ı renklendir
+  const renk = k.renk || 'var(--gold)';
+  const iconEl = document.getElementById('kd-header-icon');
+  if (iconEl) { iconEl.style.background = renk + '1a'; iconEl.style.borderColor = renk + '40'; }
+  const bannerEl = document.getElementById('kd-header-banner');
+  if (bannerEl) bannerEl.style.background = `linear-gradient(90deg, ${renk}, transparent)`;
   openModal('modal-kart-detay');
   kdSwitchTab(tab || 'islem');
 }
@@ -10757,8 +10847,13 @@ function kdSwitchTab(tab) {
   _kdActiveTab = tab;
   document.getElementById('kd-tab-btn-islem').classList.toggle('active', tab === 'islem');
   document.getElementById('kd-tab-btn-extre').classList.toggle('active', tab === 'extre');
-  document.getElementById('kd-tab-islem').style.display = tab === 'islem' ? 'block' : 'none';
-  document.getElementById('kd-tab-extre').style.display = tab === 'extre' ? 'block' : 'none';
+  const tabIslem = document.getElementById('kd-tab-islem');
+  const tabExtre = document.getElementById('kd-tab-extre');
+  const activeEl = tab === 'islem' ? tabIslem : tabExtre;
+  const hiddenEl = tab === 'islem' ? tabExtre : tabIslem;
+  hiddenEl.style.display = 'none';
+  activeEl.style.display = 'block';
+  activeEl.style.animation = 'kdTabFadeIn .1s ease';
   if (tab === 'islem') kdRenderIslemler();
   else kdRenderExtreler();
 }
@@ -10768,11 +10863,15 @@ function kdSwitchTab(tab) {
 function kdRenderIslemler() {
   if (!_kdKartId) return;
   const list = document.getElementById('kd-islem-list');
-  const statsWrap = document.getElementById('kd-islem-stats');
+  const statsWrap = document.getElementById('kd-mini-stats');
   const katBarWrap = document.getElementById('kd-kat-bar');
   if (!list) return;
 
   const tumIslemler = DB.islemler.filter(i => i.kart === _kdKartId);
+
+  // Sekme badge sayısını güncelle
+  const islemBadgeEl = document.getElementById('kd-tab-badge-islem');
+  if (islemBadgeEl) islemBadgeEl.textContent = tumIslemler.length;
 
   // Üstteki mini istatistik şeridi ve kategori dağılım barı HER ZAMAN tüm kart işlemlerine göre
   // hesaplanır (arama/filtre uygulansa bile genel tabloyu göstermeye devam eder) — sadece kategori
@@ -10967,8 +11066,9 @@ function kdRenderKatBar(wrap, islemler) {
 
   const legendHtml = segments.map(s => {
     const dim = aktifFiltre && aktifFiltre !== s.katId ? ' dim' : '';
+    const isActive = aktifFiltre && aktifFiltre === s.katId ? ' active-filter' : '';
     const clickAttr = s.filtrelenebilir ? `onclick="kdKatFiltreToggle('${s.katId}')"` : '';
-    return `<div class="kd-kat-leg-item${dim}" ${clickAttr}>
+    return `<div class="kd-kat-leg-item${dim}${isActive}" ${clickAttr}>
       <span class="kd-kat-leg-dot" style="background:${s.renk}"></span>
       <span class="kd-kat-leg-name">${s.ikon} ${s.ad}</span>
       <span class="kd-kat-leg-pct">%${s.pct.toFixed(0)}</span>
@@ -11079,13 +11179,26 @@ function kdRenderExtreler() {
 
   _kdAcikExtreDonem = null; // her render'da temiz başla — DOM yeniden kurulduğu için eski açık durum geçersiz
 
+  // Sekme badge sayısını güncelle
+  const badgeEl = document.getElementById('kd-tab-badge-extre');
+  if (badgeEl) badgeEl.textContent = periods.length;
+
   wrap.innerHTML = periods.map(p => {
     const isPast = p.odeme < todayStr;
     const isThisMonth = p.key === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    let badge, badgeStyle;
-    if (isPast) { badge = 'GEÇMİŞ'; badgeStyle = 'background:rgba(251,113,133,.15);color:#fb7185'; }
-    else if (isThisMonth) { badge = 'GÜNCEL'; badgeStyle = 'background:rgba(251,191,36,.15);color:#fbbf24'; }
-    else { badge = 'GELECEK'; badgeStyle = 'background:rgba(45,212,191,.1);color:#2dd4bf'; }
+    let badge, badgeStyle, statusClass, progressColor, progressPct;
+    if (isPast) {
+      badge = '✓ Geçmiş'; badgeStyle = 'background:rgba(251,113,133,.18);color:#fb7185';
+      statusClass = 'status-past'; progressColor = '#fb7185'; progressPct = 100;
+    } else if (isThisMonth) {
+      badge = '● Güncel'; badgeStyle = 'background:rgba(251,191,36,.18);color:#fbbf24';
+      statusClass = 'status-current'; progressColor = '#fbbf24';
+      const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+      progressPct = Math.round((today.getDate() / daysInMonth) * 100);
+    } else {
+      badge = '◌ Gelecek'; badgeStyle = 'background:rgba(45,212,191,.12);color:#2dd4bf';
+      statusClass = 'status-future'; progressColor = '#2dd4bf'; progressPct = 0;
+    }
 
     const toplamHtml = kartPbList.map(pb => p.totalByPb[pb] ? fmtCur(p.totalByPb[pb], pb) : null)
       .filter(Boolean).join(' · ') || fmtCur(0, kartPbList[0] || defaultCurrency);
@@ -11099,18 +11212,26 @@ function kdRenderExtreler() {
       const taksitTxt = (islem.taksit || 1) > 1 ? `${tak.no}/${islem.taksit} taksit · ` : '';
       return `<div class="kd-extre-detail-row" onclick="event.stopPropagation();editIslem('${islem.id}')" title="Düzenlemek için tıklayın">
         <div class="kd-extre-detail-info">
-          <div class="kd-extre-detail-title">${ikon} ${aciklamaSafe}</div>
-          <div class="kd-extre-detail-sub">${taksitTxt}${fmtDate(tak.tarih)}${kat ? ' · ' + kat.ad : ''}</div>
+          <div class="kd-extre-detail-ikon">${ikon}</div>
+          <div class="kd-extre-detail-text">
+            <div class="kd-extre-detail-title">${aciklamaSafe}</div>
+            <div class="kd-extre-detail-sub">${taksitTxt}${fmtDate(tak.tarih)}${kat ? ' · ' + kat.ad : ''}</div>
+          </div>
         </div>
-        <div class="kd-extre-detail-amt">${fmtCur(tak.tutar, pb)}</div>
+        <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(tak.tutar, pb)}</div>
       </div>`;
     }).join('') : `<div class="kd-extre-detail-empty">Bu döneme ait işlem bulunamadı</div>`;
 
-    return `<div class="kd-extre-card" id="kd-extre-card-${p.key}">
+    return `<div class="kd-extre-card ${statusClass}" id="kd-extre-card-${p.key}">
+      <div class="kd-extre-progress"><div class="kd-extre-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div></div>
       <div class="kd-extre-row" onclick="kdToggleExtreDonem('${p.key}')">
         <div class="kd-extre-meta">
           <div class="kd-extre-period">${p.label}</div>
-          <div class="kd-extre-dates">Kesim: ${fmtDate(p.extre)} · Ödeme: ${fmtDate(p.odeme)}</div>
+          <div class="kd-extre-dates">
+            <span class="kd-extre-date-chip">✂ ${fmtDate(p.extre)}</span>
+            <span style="color:var(--border2)">·</span>
+            <span class="kd-extre-date-chip">💳 ${fmtDate(p.odeme)}</span>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <div class="kd-extre-amt">
@@ -11156,20 +11277,35 @@ function kdToggleExtreDonem(key) {
 // Kart detay popup'ı için kompakt mini istatistik şeridi (sadece adet + toplam tutar)
 function kdRenderMiniStats(wrap, islemler) {
   const count = islemler.length;
-  const totals = {};
+  if (!count) { wrap.innerHTML = ''; return; }
+
+  // Para birimi başına toplam, gider, gelir
+  const pb = getKartCurrency(_kdKartId);
+  let harcama = 0, gelir = 0;
   islemler.forEach(i => {
-    const cur = i.paraBirimi || getKartCurrency(i.kart);
-    totals[cur] = (totals[cur] || 0) + (i.tutar || 0);
+    const v = i.tutar || 0;
+    if (v < 0) harcama += Math.abs(v);
+    else gelir += v;
   });
-  const totalStr = Object.keys(totals).length
-    ? Object.entries(totals).map(([c, v]) => fmtCur(v, c)).join(' + ')
-    : '—';
+  const ort = (harcama + gelir) / count;
+
   wrap.innerHTML = `
-    <div class="islem-chip c-gold">
-      <div class="islem-chip-body"><div class="islem-chip-label">Toplam İşlem</div><div class="islem-chip-val">${count}</div></div>
-    </div>
-    <div class="islem-chip c-teal">
-      <div class="islem-chip-body"><div class="islem-chip-label">Toplam Tutar</div><div class="islem-chip-val">${totalStr}</div></div>
+    <div class="kd-mini-stats">
+      <div class="kd-mini-stat accent">
+        <div class="kd-mini-stat-label">İşlem</div>
+        <div class="kd-mini-stat-val">${count} adet</div>
+        <div class="kd-mini-stat-sub">Ort. ${fmtCur(ort, pb)}</div>
+      </div>
+      <div class="kd-mini-stat danger">
+        <div class="kd-mini-stat-label">Harcama</div>
+        <div class="kd-mini-stat-val">${fmtCur(harcama, pb)}</div>
+        <div class="kd-mini-stat-sub">Gider işlemleri</div>
+      </div>
+      <div class="kd-mini-stat teal">
+        <div class="kd-mini-stat-label">Gelir / İade</div>
+        <div class="kd-mini-stat-val">${gelir > 0 ? fmtCur(gelir, pb) : '—'}</div>
+        <div class="kd-mini-stat-sub">Pozitif işlemler</div>
+      </div>
     </div>`;
 }
 
@@ -17707,7 +17843,7 @@ function _odLogRender(tip, id, key) {
       display:none;position:fixed;inset:0;z-index:10000;
       background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
       align-items:center;justify-content:center;padding:16px;
-      animation:modalBgIn .18s ease;
+      animation:modalBgIn .09s ease;
     }
     #od-modal-bg.open { display:flex; }
     #od-modal-box {
