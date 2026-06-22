@@ -10026,10 +10026,12 @@ function saveKart() {
       if(tip === 'hafta') {
         const hafta = parseInt(document.getElementById('kart-extre-hafta').value)||1;
         const haftaGun = parseInt(document.getElementById('kart-extre-haftagun').value)||5;
-        yeniKayit = {baslangic: ay||'2000-01', tip:'hafta', hafta, haftaGun, odemeSure: odemeSureVal, odemeGunTip: odemeGunTipVal};
+        const _aktifAyH = ay || (function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}());
+        yeniKayit = {baslangic: _aktifAyH, tip:'hafta', hafta, haftaGun, odemeSure: odemeSureVal, odemeGunTip: odemeGunTipVal};
       } else {
         const gun = parseInt(document.getElementById('kart-extre-gun').value)||25;
-        yeniKayit = {baslangic: ay||'2000-01', tip:'gun', gun, odemeSure: odemeSureVal, odemeGunTip: odemeGunTipVal};
+        const _aktifAyG = ay || (function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');}());
+        yeniKayit = {baslangic: _aktifAyG, tip:'gun', gun, odemeSure: odemeSureVal, odemeGunTip: odemeGunTipVal};
       }
       // Aynı ay varsa üzerine yaz (değişiklikler de güncellenmiş olur), yoksa ekle
       const filtreli = eskiGecmis.filter(r=>r.baslangic !== yeniKayit.baslangic);
