@@ -9943,6 +9943,7 @@ function populateKartModal(kart=null) {
     renderKartAyarGecmis(gecmis);
     extreTypeChange();
     populateOrtakGrupSelect(kart.ortakLimitGrupId||'');
+    _syncKartLimitAlaninaGrupLimit(kart.ortakLimitGrupId||'');
     renderOrtakGrupYonetimSatiri();
   } else {
     document.getElementById('kart-extre-gecerlilik-ay').value = '';
@@ -9957,6 +9958,7 @@ function populateKartModal(kart=null) {
     phUpdate(bankaEl);
     phUpdate(tipEl);
     populateOrtakGrupSelect('');
+    _syncKartLimitAlaninaGrupLimit('');
     renderOrtakGrupYonetimSatiri();
   }
 }
@@ -10056,6 +10058,7 @@ function renderKartLimitGecmis(gecmis) {
       <input type="date" value="${g.tarih}" readonly style="${labelStyle}" title="${g.bitisTarih ? 'Bitiş: ' + g.bitisTarih : 'Güncel'}">
       <div class="money-wrap" data-symbol="₺" data-code="TRY" style="${moneyWrapStyle}"><input type="text" value="${limitFmt}" readonly style="${moneyInputStyle}"></div>
       ${isLast ? '<span style="font-size:10px;color:var(--accent);font-weight:700;white-space:nowrap">▶ Güncel</span>' : `<span style="font-size:10px;color:var(--text3);white-space:nowrap">${g.bitisTarih||''}</span>`}
+      ${g.kaynak==='grup' ? '<span style="font-size:9px;background:rgba(167,139,250,.15);color:var(--violet);border-radius:4px;padding:1px 5px;white-space:nowrap;font-weight:600">🔗 grup</span>' : '<span style="width:30px"></span>'}
       ${deleteBtn}`;
     panel.appendChild(satir);
   });
@@ -10200,6 +10203,7 @@ function saveKart() {
   // Limit verileri — KMH ile aynı mantık: tarihe göre geçmiş tutulur, en son eklenen geçerli olur
   const yeniLimit = getMoneyInput('kart-limit')||0;
   const yeniTarih = document.getElementById('kart-limit-tarih').value || localDateStr(new Date());
+  const grupSecili = document.getElementById('kart-ortak-grup')?.value || '';
   const mevcutGecmis = readKartLimitGecmis();
   const sorted = mevcutGecmis.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
   const guncelLimit = sorted.length > 0 ? sorted[0].limit : null;
@@ -10210,7 +10214,9 @@ function saveKart() {
       const sonKayitIdx = mevcutGecmis.findIndex(g => g.tarih === sorted[0].tarih && g.limit === sorted[0].limit);
       if(sonKayitIdx >= 0) mevcutGecmis[sonKayitIdx].bitisTarih = yeniTarih;
     }
-    yeniGecmis = [...mevcutGecmis, {tarih: yeniTarih, limit: yeniLimit}];
+    const yeniKayit = {tarih: yeniTarih, limit: yeniLimit};
+    if (grupSecili) yeniKayit.kaynak = 'grup';
+    yeniGecmis = [...mevcutGecmis, yeniKayit];
   }
   const finalSorted = yeniGecmis.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
   kart.limit = finalSorted.length ? finalSorted[0].limit : yeniLimit;
@@ -10351,7 +10357,33 @@ function populateOrtakGrupSelect(seciliGrupId) {
 // Dropdown değiştiğinde canlı önizlemeyi güncelle
 function onKartOrtakGrupChange() {
   const el = document.getElementById('kart-ortak-grup');
-  renderKartOrtakGrupOnizleme(el ? el.value : '');
+  const grupId = el ? el.value : '';
+  renderKartOrtakGrupOnizleme(grupId);
+  _syncKartLimitAlaninaGrupLimit(grupId);
+}
+
+function _syncKartLimitAlaninaGrupLimit(grupId) {
+  const limitInput = document.getElementById('kart-limit');
+  const limitWrap  = limitInput ? limitInput.closest('.money-wrap') : null;
+  const limitLabel = limitInput ? limitInput.closest('div')?.querySelector('label') : null;
+  if (!limitInput) return;
+  if (grupId) {
+    const grup = (DB.ortakLimitGruplari||[]).find(g => g.id === grupId);
+    if (grup) {
+      setMoneyInput('kart-limit', grup.limit || 0);
+      limitInput.readOnly = true;
+      limitInput.style.opacity = '0.5';
+      limitInput.style.cursor  = 'not-allowed';
+      if (limitWrap) limitWrap.title = 'Limit grup tarafından belirleniyor — grubu düzenleyerek değiştirebilirsiniz';
+      if (limitLabel) limitLabel.innerHTML = 'Toplam Limit <span style="font-size:10px;color:var(--violet);font-weight:500">(grup limiti)</span>';
+    }
+  } else {
+    limitInput.readOnly = false;
+    limitInput.style.opacity = '';
+    limitInput.style.cursor  = '';
+    if (limitWrap) limitWrap.title = '';
+    if (limitLabel) limitLabel.innerHTML = 'Güncel Toplam Limit (₺)';
+  }
 }
 
 // Kart modalında seçili gruba ait canlı özet kartı: limit, doluluk çubuğu, üye kartlar
@@ -10419,13 +10451,45 @@ function saveOrtakGrupModal() {
   if (!ad) { showToast('Grup adı zorunlu', 'warn'); return; }
   if (!limit) { showToast('Limit giriniz', 'warn'); return; }
   const yeniGrupId = _editGrupId || uid();
+
+  // Eğer düzenleme modundaysa eski limiti al, değiştiyse üye kartları güncelle
+  const eskiGrup = _editGrupId ? (DB.ortakLimitGruplari||[]).find(g=>g.id===_editGrupId) : null;
+  const eskiLimit = eskiGrup ? eskiGrup.limit : null;
+  const limitDegisti = eskiLimit !== null && eskiLimit !== limit;
+
   saveOrtakLimitGrubu(yeniGrupId, ad, limit);
+
+  // Grup limiti değiştiyse üye kartların k.limit ve limitGecmisi'ni güncelle
+  if (limitDegisti) {
+    const bugun = localDateStr(new Date());
+    (DB.kartlar||[]).forEach(k => {
+      if (k.ortakLimitGrupId !== yeniGrupId) return;
+      // Limit geçmişine yeni kayıt ekle (aynı mantık saveKart'taki ile aynı)
+      if (!k.limitGecmisi) k.limitGecmisi = [];
+      const sorted = k.limitGecmisi.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+      const guncelLimit = sorted.length > 0 ? sorted[0].limit : null;
+      if (guncelLimit !== limit) {
+        if (sorted.length > 0) {
+          const sonIdx = k.limitGecmisi.findIndex(g=>g.tarih===sorted[0].tarih&&g.limit===sorted[0].limit);
+          if (sonIdx >= 0) k.limitGecmisi[sonIdx].bitisTarih = bugun;
+        }
+        k.limitGecmisi.push({ tarih: bugun, limit, kaynak: 'grup' });
+        const finalSorted = k.limitGecmisi.slice().sort((a,b)=>b.tarih.localeCompare(a.tarih));
+        k.limit = finalSorted[0].limit;
+        k.limitTarih = finalSorted[0].tarih;
+      }
+    });
+    saveData();
+    showToast(`Grup güncellendi — ${(DB.kartlar||[]).filter(k=>k.ortakLimitGrupId===yeniGrupId).length} kartın limiti güncellendi`, 'success');
+  }
   closeModal('modal-ortak-grup');
   renderKartlar();
   // Kart modalı açıksa dropdown'u güncelle ve az önce kaydedilen/oluşturulan grubu seçili getir
   populateOrtakGrupSelect(yeniGrupId);
+  // Kart modal açıksa limit alanını da sync et (grup limiti değişmiş olabilir)
+  _syncKartLimitAlaninaGrupLimit(document.getElementById('kart-ortak-grup')?.value || '');
   renderOrtakGrupYonetimSatiri();
-  showToast(_editGrupId ? 'Grup güncellendi' : 'Grup oluşturuldu');
+  if (!limitDegisti) showToast(_editGrupId ? 'Grup güncellendi' : 'Grup oluşturuldu');
   _editGrupId = null;
 }
 
@@ -18698,13 +18762,15 @@ function renderOzet() {
   // Kart limit bars
   document.getElementById('ozet-kartlar').innerHTML = DB.kartlar.length ?
     DB.kartlar.map(k=>{
-      const kull=getKartKullanim(k.id);
-      const pct=k.limit>0?Math.min(100,(kull/k.limit)*100):0;
-      const color=pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--accent2)';
+      const limit = getKartToplamLimit(k.id);
+      const kull  = k.ortakLimitGrupId ? getOrtakGrupKullanim(k.ortakLimitGrupId) : getKartKullanim(k.id);
+      const pct   = limit>0 ? Math.min(100,(kull/limit)*100) : 0;
+      const color = pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--accent2)';
+      const grupRozet = k.ortakLimitGrupId ? ' <span style="font-size:9px;color:var(--violet)">🔗</span>' : '';
       return `<div style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span>${k.ad}</span>
-          <span class="mono">${fmtCur(kull, k.paraBirimi)} / ${fmtCur(k.limit, k.paraBirimi)}</span>
+          <span>${k.ad}${grupRozet}</span>
+          <span class="mono">${fmtCur(kull, k.paraBirimi)} / ${fmtCur(limit, k.paraBirimi)}</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
       </div>`;
