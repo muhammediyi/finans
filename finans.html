@@ -26252,6 +26252,7 @@ async function eeProcessFiles(files) {
   document.getElementById('ee-kart-confirm').style.display = 'none';
   EE_STATE.kartOnayGosteriliyor = false;
   EE_STATE.sonuclarGosteriliyor = false;
+  EE_STATE.dosyalar = Array.from(files).map(f => ({ ad: f.name, durum: 'bekliyor', sayi: 0, hata: null }));
   eeRenderFileList();
 
   let combinedText = '';
