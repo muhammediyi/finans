@@ -3046,6 +3046,79 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 /* ── PROGRESS ────────────────────────────────────────────── */
 .progress-bar { height: 3px; border-radius: 99px; background: rgba(255,255,255,.055); overflow: hidden; margin-top: 8px; }
 .progress-fill { height: 100%; border-radius: 99px; transition: width .55s cubic-bezier(.4,0,.2,1); }
+/* ── ORTAK LİMİT GRUBU CHIP (kart kartı üstü) ──────────────── */
+.ortak-grup-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(167,139,250,.12);
+  color: var(--violet);
+  border: 1px solid rgba(167,139,250,.22);
+  border-radius: 20px;
+  padding: 2px 9px 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+  white-space: nowrap;
+}
+.ortak-grup-chip:hover {
+  background: rgba(167,139,250,.2);
+  border-color: rgba(167,139,250,.4);
+  transform: translateY(-1px);
+}
+.ortak-grup-chip-icon { font-size: 10px; line-height: 1; }
+.ortak-grup-chip-count {
+  background: rgba(167,139,250,.25);
+  color: var(--violet);
+  border-radius: 99px;
+  min-width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+html[data-theme="light"] .ortak-grup-chip { background: rgba(124,58,237,.08); border-color: rgba(124,58,237,.22); color: #7c3aed; }
+html[data-theme="light"] .ortak-grup-chip:hover { background: rgba(124,58,237,.14); border-color: rgba(124,58,237,.4); }
+html[data-theme="light"] .ortak-grup-chip-count { background: rgba(124,58,237,.18); color: #7c3aed; }
+/* ── ORTAK LİMİT GRUBU PANELİ (kart modalı) ────────────────── */
+.ortak-limit-panel { display: flex; flex-direction: column; gap: 12px; }
+.ortak-limit-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: rgba(167,139,250,.06);
+  border: 1px solid rgba(167,139,250,.15);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.55;
+}
+.ortak-limit-hint svg { color: var(--violet); }
+html[data-theme="light"] .ortak-limit-hint { background: rgba(124,58,237,.05); border-color: rgba(124,58,237,.16); }
+.ortak-limit-actions { display: flex; align-items: center; gap: 10px; }
+.ortak-grup-onizleme {
+  background: linear-gradient(158deg, rgba(167,139,250,.1) 0%, rgba(167,139,250,.03) 100%);
+  border: 1px solid rgba(167,139,250,.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  animation: ortakOnizlemeIn .2s ease;
+}
+@keyframes ortakOnizlemeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+.ortak-grup-onizleme-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.ortak-grup-onizleme-ad { font-size: 12.5px; font-weight: 700; color: var(--violet); display: flex; align-items: center; gap: 6px; }
+.ortak-grup-onizleme-limit { font-size: 13px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+.ortak-grup-onizleme-bar { height: 4px; border-radius: 99px; background: rgba(167,139,250,.12); overflow: hidden; margin-bottom: 8px; }
+.ortak-grup-onizleme-bar-fill { height: 100%; border-radius: 99px; background: var(--violet); transition: width .4s ease; }
+.ortak-grup-onizleme-kartlar { display: flex; flex-direction: column; gap: 4px; }
+.ortak-grup-onizleme-kart-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 4px 2px; }
+.ortak-grup-onizleme-kart-row.aktif { font-weight: 700; color: var(--text); }
+.ortak-grup-onizleme-kart-row:not(.aktif) { color: var(--text2); }
+.ortak-grup-onizleme-empty { font-size: 11.5px; color: var(--text3); }
 /* ── INFO BOX ────────────────────────────────────────────── */
 .info-box { background: rgba(56,189,248,.04); border: 1px solid rgba(56,189,248,.12); border-radius: 10px; padding: 12px 15px; font-size: 12px; color: rgba(240,244,255,.48); line-height: 1.65; }
 .info-box.warn { background: rgba(251,146,60,.04); border-color: rgba(251,146,60,.14); }
@@ -6852,6 +6925,32 @@ window.addEventListener('load', placeMobProfilePanel);
         </div>
       </div>
 
+      <div class="msec" id="msec-ortak-limit">
+        <div class="msec-label violet">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Ortak Limit Grubu
+        </div>
+        <div class="ortak-limit-panel">
+          <div class="form-row" style="margin-bottom:0">
+            <div>
+              <label>Grup Seçin <span style="color:var(--text3);font-size:10px">(opsiyonel — aynı limiti paylaşan kartlar için)</span></label>
+              <select id="kart-ortak-grup" onchange="onKartOrtakGrupChange()"></select>
+            </div>
+          </div>
+          <div id="kart-ortak-grup-onizleme"></div>
+          <div class="ortak-limit-hint">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Bir gruba dahil olan kartlar <b>grubun toplam limitini ortak kullanır</b>. Herhangi birine işlem girilince tüm grup üyelerinin kullanılabilir limiti aynı anda güncellenir.</span>
+          </div>
+          <div class="ortak-limit-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openOrtakGrupModal(null)">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>Yeni Grup Oluştur
+            </button>
+          </div>
+          <div id="ortak-grup-yonetim-satiri"></div>
+        </div>
+      </div>
+
       <div class="msec">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/></svg>
@@ -6936,6 +7035,55 @@ window.addEventListener('load', placeMobProfilePanel);
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-kart')">İptal</button>
       <button class="btn btn-primary" onclick="saveKart()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORTAK LİMİT GRUBU MODAL -->
+<div class="modal-bg" id="modal-ortak-grup">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2)">🔗</div>
+        <div class="modal-header-text">
+          <div class="modal-title" id="ortak-grup-modal-title">Yeni Ortak Limit Grubu</div>
+          <div class="modal-subtitle">Aynı limiti paylaşan kartları grupla</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-ortak-grup')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="msec">
+        <div class="msec-label violet">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.01 12V2h10l8.58 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1"/></svg>
+          Grup Bilgileri
+        </div>
+        <div class="form-row cols-2">
+          <div><label>Grup Adı <span style="color:var(--danger)">*</span></label>
+            <input id="ortak-grup-ad" placeholder="örn. Garanti Ortak Limit">
+          </div>
+          <div><label>Toplam Ortak Limit (₺) <span style="color:var(--danger)">*</span></label>
+            <div class="money-wrap" data-symbol="₺" data-code="TRY">
+              <input id="ortak-grup-limit" type="text" class="money-input" data-decimals="0" placeholder="100.000">
+            </div>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--text3);line-height:1.6;margin-top:4px">
+          Bu gruba dahil tüm kartlar bu limiti <b>birlikte</b> kullanır. Herhangi bir karta işlem girildiğinde, tüm grup kartlarının kullanılabilir limiti otomatik düşer. Gruptaki kartların aynı para biriminde olması önerilir.
+        </div>
+      </div>
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label violet">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Gruptaki Kartlar
+        </div>
+        <div id="ortak-grup-kartlar"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">Kart eklemek veya çıkarmak için ilgili kartı düzenleyin ve "Ortak Limit Grubu" alanını güncelleyin.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ortak-grup')">İptal</button>
+      <button class="btn btn-primary" onclick="saveOrtakGrupModal()">Kaydet</button>
     </div>
   </div>
 </div>
@@ -8621,6 +8769,7 @@ function defaultData() {
     hesaplar: [], subeler: {}, kisiler: [],
     asgariOdemeKurallari: [],
     kartOdemeleri: [],
+    ortakLimitGruplari: [],
     nakitAvansCurlar: [],
     nakitAvansTavanlar: [],
     nakitAvansLimitTip: 'kullanilabilir',
@@ -9793,6 +9942,8 @@ function populateKartModal(kart=null) {
     document.getElementById('kart-extre-gecerlilik-ay').value = sonKayit ? sonKayit.baslangic : '';
     renderKartAyarGecmis(gecmis);
     extreTypeChange();
+    populateOrtakGrupSelect(kart.ortakLimitGrupId||'');
+    renderOrtakGrupYonetimSatiri();
   } else {
     document.getElementById('kart-extre-gecerlilik-ay').value = '';
     setMoneyInput('kart-limit', '');
@@ -9805,6 +9956,8 @@ function populateKartModal(kart=null) {
     tipEl.value = '';
     phUpdate(bankaEl);
     phUpdate(tipEl);
+    populateOrtakGrupSelect('');
+    renderOrtakGrupYonetimSatiri();
   }
 }
 
@@ -10040,6 +10193,7 @@ function saveKart() {
     })(),
     odemeSure: parseInt(document.getElementById('kart-odeme-sure').value)||10,
     odemeGunTip: document.getElementById('kart-odeme-gun-tip').value,
+    ortakLimitGrupId: document.getElementById('kart-ortak-grup').value || '',
     ...getKartCurGridValue()
   };
 
@@ -10133,6 +10287,182 @@ function getKartKullanim(kartId) {
   });
 
   return total;
+}
+
+// ── Ortak Limit Grubu yardımcı fonksiyonları ─────────────────────
+// Belirli bir grubun toplam kullanımını döndürür (tüm üye kartların kullanım toplamı)
+function getOrtakGrupKullanim(grupId) {
+  return (DB.kartlar||[])
+    .filter(k => k.ortakLimitGrupId === grupId)
+    .reduce((s, k) => s + getKartKullanim(k.id), 0);
+}
+
+// Bir kartın kullanılabilir limitini döndürür (ortak grup varsa grup tabanlı, yoksa bireysel)
+function getKartKullanilabilirLimit(kartId) {
+  const k = DB.kartlar.find(x => x.id === kartId);
+  if (!k) return 0;
+  const grupId = k.ortakLimitGrupId;
+  if (grupId) {
+    const grup = (DB.ortakLimitGruplari||[]).find(g => g.id === grupId);
+    if (grup) {
+      const grupKullanim = getOrtakGrupKullanim(grupId);
+      return Math.max(0, (grup.limit||0) - grupKullanim);
+    }
+  }
+  return Math.max(0, (k.limit||0) - getKartKullanim(kartId));
+}
+
+// Ortak limit grubunun toplam limitini döndürür
+function getKartToplamLimit(kartId) {
+  const k = DB.kartlar.find(x => x.id === kartId);
+  if (!k) return 0;
+  const grupId = k.ortakLimitGrupId;
+  if (grupId) {
+    const grup = (DB.ortakLimitGruplari||[]).find(g => g.id === grupId);
+    if (grup) return grup.limit || 0;
+  }
+  return k.limit || 0;
+}
+
+// ── Ortak Limit Grubu CRUD ────────────────────────────────────────
+function saveOrtakLimitGrubu(id, ad, limit) {
+  if (!DB.ortakLimitGruplari) DB.ortakLimitGruplari = [];
+  if (id) {
+    const idx = DB.ortakLimitGruplari.findIndex(g => g.id === id);
+    if (idx >= 0) DB.ortakLimitGruplari[idx] = { id, ad, limit };
+    else DB.ortakLimitGruplari.push({ id, ad, limit });
+  } else {
+    DB.ortakLimitGruplari.push({ id: uid(), ad, limit });
+  }
+  saveData();
+}
+
+// ── Kart modalı: Ortak Limit Grubu dropdown populate ─────────────
+function populateOrtakGrupSelect(seciliGrupId) {
+  const el = document.getElementById('kart-ortak-grup');
+  if (!el) return;
+  const gruplar = DB.ortakLimitGruplari || [];
+  el.innerHTML = '<option value="">— Bireysel limit (grup yok) —</option>'
+    + gruplar.map(g => `<option value="${g.id}"${g.id===seciliGrupId?' selected':''}>${g.ad} (${fmtCur(g.limit, 'TRY')})</option>`).join('');
+  el.value = seciliGrupId || '';
+  renderKartOrtakGrupOnizleme(seciliGrupId || '');
+}
+
+// Dropdown değiştiğinde canlı önizlemeyi güncelle
+function onKartOrtakGrupChange() {
+  const el = document.getElementById('kart-ortak-grup');
+  renderKartOrtakGrupOnizleme(el ? el.value : '');
+}
+
+// Kart modalında seçili gruba ait canlı özet kartı: limit, doluluk çubuğu, üye kartlar
+function renderKartOrtakGrupOnizleme(grupId) {
+  const el = document.getElementById('kart-ortak-grup-onizleme');
+  if (!el) return;
+  if (!grupId) { el.innerHTML = ''; return; }
+  const grup = (DB.ortakLimitGruplari||[]).find(g => g.id === grupId);
+  if (!grup) { el.innerHTML = ''; return; }
+  const uyeler = (DB.kartlar||[]).filter(k => k.ortakLimitGrupId === grupId);
+  const grupKullanim = getOrtakGrupKullanim(grupId);
+  const pct = grup.limit > 0 ? Math.min(100, grupKullanim / grup.limit * 100) : 0;
+  const duzenlenenIcerideMi = editKartId && uyeler.some(k => k.id === editKartId);
+  const satirlar = uyeler.length
+    ? uyeler.map(k => {
+        const aktif = k.id === editKartId;
+        return `<div class="ortak-grup-onizleme-kart-row${aktif?' aktif':''}">
+          <span>${aktif ? '→ ' : ''}${k.ad}</span>
+          <span class="mono">${fmtCur(getKartKullanim(k.id), k.paraBirimi||'TRY')}</span>
+        </div>`;
+      }).join('')
+    : '';
+  const buKartYeniMi = !duzenlenenIcerideMi; // bu kart henüz gruba kayıtlı değil (yeni seçim veya yeni kart)
+  el.innerHTML = `<div class="ortak-grup-onizleme">
+    <div class="ortak-grup-onizleme-head">
+      <span class="ortak-grup-onizleme-ad">🔗 ${grup.ad}</span>
+      <span class="ortak-grup-onizleme-limit">${fmtCur(grup.limit, 'TRY')}</span>
+    </div>
+    <div class="ortak-grup-onizleme-bar"><div class="ortak-grup-onizleme-bar-fill" style="width:${pct}%"></div></div>
+    <div class="ortak-grup-onizleme-kartlar">
+      ${satirlar}
+      ${buKartYeniMi ? `<div class="ortak-grup-onizleme-kart-row aktif"><span>→ Bu kart (kaydedince eklenecek)</span><span class="mono">—</span></div>` : ''}
+      ${!uyeler.length && !buKartYeniMi ? `<div class="ortak-grup-onizleme-empty">Bu gruba henüz başka kart eklenmedi.</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── Ortak Limit Grubu yönetim modalı ──────────────────────────────
+let _editGrupId = null;
+function openOrtakGrupModal(grupId) {
+  _editGrupId = grupId || null;
+  const grup = grupId ? (DB.ortakLimitGruplari||[]).find(g=>g.id===grupId) : null;
+  document.getElementById('ortak-grup-modal-title').textContent = grup ? 'Grubu Düzenle' : 'Yeni Ortak Limit Grubu';
+  document.getElementById('ortak-grup-ad').value = grup ? grup.ad : '';
+  setMoneyInput('ortak-grup-limit', grup ? grup.limit : '');
+  renderOrtakGrupKartlar(grupId);
+  openModal('modal-ortak-grup');
+}
+
+function renderOrtakGrupKartlar(grupId) {
+  const el = document.getElementById('ortak-grup-kartlar');
+  if (!el) return;
+  if (!grupId) { el.innerHTML = '<div style="font-size:12px;color:var(--text3)">Grup oluşturulduktan sonra kartlar buradan görülebilir.</div>'; return; }
+  const kartlar = (DB.kartlar||[]).filter(k=>k.ortakLimitGrupId===grupId);
+  if (!kartlar.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text3)">Bu gruba henüz kart eklenmedi.</div>'; return; }
+  el.innerHTML = kartlar.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface3);border-radius:8px;margin-bottom:4px">
+    <span style="font-size:13px;font-weight:600">${k.ad}</span>
+    <span class="mono" style="font-size:12px;color:var(--warn)">${fmtCur(getKartKullanim(k.id), k.paraBirimi||'TRY')} kullanımda</span>
+  </div>`).join('');
+}
+
+function saveOrtakGrupModal() {
+  const ad = document.getElementById('ortak-grup-ad').value.trim();
+  const limit = getMoneyInput('ortak-grup-limit') || 0;
+  if (!ad) { showToast('Grup adı zorunlu', 'warn'); return; }
+  if (!limit) { showToast('Limit giriniz', 'warn'); return; }
+  const yeniGrupId = _editGrupId || uid();
+  saveOrtakLimitGrubu(yeniGrupId, ad, limit);
+  closeModal('modal-ortak-grup');
+  renderKartlar();
+  // Kart modalı açıksa dropdown'u güncelle ve az önce kaydedilen/oluşturulan grubu seçili getir
+  populateOrtakGrupSelect(yeniGrupId);
+  renderOrtakGrupYonetimSatiri();
+  showToast(_editGrupId ? 'Grup güncellendi' : 'Grup oluşturuldu');
+  _editGrupId = null;
+}
+
+function deleteOrtakGrup(grupId) {
+  showConfirm('Bu grubu silmek istiyor musunuz? Kartların bireysel limitlerine dönecek.', () => {
+    DB.ortakLimitGruplari = (DB.ortakLimitGruplari||[]).filter(g=>g.id!==grupId);
+    // Kartlardan grubu temizle
+    (DB.kartlar||[]).forEach(k=>{ if(k.ortakLimitGrupId===grupId) k.ortakLimitGrupId=''; });
+    saveData();
+    renderKartlar();
+    // Kart modalı açıksa dropdown'u ve yönetim satırını güncelle
+    const grupSelect = document.getElementById('kart-ortak-grup');
+    if (grupSelect && grupSelect.value === grupId) {
+      populateOrtakGrupSelect('');
+    } else {
+      populateOrtakGrupSelect(grupSelect ? grupSelect.value : '');
+    }
+    renderOrtakGrupYonetimSatiri();
+    showToast('Grup silindi');
+  });
+}
+
+// ── Ortak Limit Grubunu kart modalında göster/yönet ──────────────
+function renderOrtakGrupYonetimSatiri() {
+  const el = document.getElementById('ortak-grup-yonetim-satiri');
+  if (!el) return;
+  const gruplar = DB.ortakLimitGruplari || [];
+  if (!gruplar.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+    ${gruplar.map(g=>`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface3);border-radius:8px;padding:5px 10px">
+      <span style="font-size:12px;color:var(--text2)">${g.ad} · <span class="mono">${fmtCur(g.limit,'TRY')}</span></span>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="openOrtakGrupModal('${g.id}')">Düzenle</button>
+        <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px" onclick="deleteOrtakGrup('${g.id}')">Sil</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
 }
 
 // İşlem için taksit listesi — manuelTaksitler varsa onu kullan
@@ -10229,8 +10559,10 @@ function renderKartlar() {
   const kmhTip = DB.urunTipler.find(t=>t.kod==='KMH');
   el.innerHTML = DB.kartlar.map(k=>{
     const kullanim = getKartKullanim(k.id);
-    const musait = k.limit - kullanim;
-    const pct = k.limit > 0 ? Math.min(100, (kullanim/k.limit)*100) : 0;
+    const musait = getKartKullanilabilirLimit(k.id);
+    const toplamLimit = getKartToplamLimit(k.id);
+    const grupKullanimGosterim = k.ortakLimitGrupId ? getOrtakGrupKullanim(k.ortakLimitGrupId) : kullanim;
+    const pct = toplamLimit > 0 ? Math.min(100, grupKullanimGosterim / toplamLimit * 100) : 0;
     const banka = getBanka(k.banka);
     const tip = DB.urunTipler.find(t=>t.id===k.tip);
     const extreDt = calcExtreTarihiOdemeModuyla(k, today.getFullYear(), today.getMonth(), tatilSet);
@@ -10266,13 +10598,23 @@ function renderKartlar() {
       <div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap;min-height:22px">
         ${(()=>{ const curs = (k.paraBirimleri&&k.paraBirimleri.length)?k.paraBirimleri:(k.paraBirimi?[k.paraBirimi]:[defaultCurrency]); return curs.map(c=>`<span style="background:${c===(k.varsayilanParaBirimi||curs[0])?'rgba(16,185,129,.15)':'rgba(59,130,246,.12)'};color:${c===(k.varsayilanParaBirimi||curs[0])?'var(--accent2)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${CURRENCY_CONFIG[c]?.symbol||''} ${c}${curs.length>1&&c===(k.varsayilanParaBirimi||curs[0])?' ⭐':''}</span>`).join(''); })()}
         ${altyapi ? `<span style="background:rgba(167,139,250,.12);color:var(--purple);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600">${altyapi.ad}</span>` : ''}
+        ${(()=>{
+          const g = k.ortakLimitGrupId && (DB.ortakLimitGruplari||[]).find(x=>x.id===k.ortakLimitGrupId);
+          if(!g) return '';
+          const uyeSayisi = (DB.kartlar||[]).filter(x=>x.ortakLimitGrupId===g.id).length;
+          return `<span class="ortak-grup-chip" onclick="openOrtakGrupModal('${g.id}')" title="${g.ad} grubunu düzenle"><span class="ortak-grup-chip-icon">🔗</span>${g.ad}<span class="ortak-grup-chip-count">${uyeSayisi}</span></span>`;
+        })()}
       </div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px">
-        <div style="min-width:0;overflow:hidden"><div style="font-size:10px;color:var(--text3)">KULLANIMDA</div><div class="mono" style="font-size:16px;color:var(--warn);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(kullanim, k.paraBirimi)}</div></div>
+        <div style="min-width:0;overflow:hidden">
+          <div style="font-size:10px;color:var(--text3)">${k.ortakLimitGrupId ? 'GRUP KULLANIMI' : 'KULLANIMDA'}</div>
+          <div class="mono" style="font-size:16px;color:var(--warn);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(grupKullanimGosterim, k.paraBirimi)}</div>
+          ${k.ortakLimitGrupId ? `<div style="font-size:9.5px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">bu kart: ${fmtCur(kullanim, k.paraBirimi)}</div>` : ''}
+        </div>
         <div style="text-align:right;min-width:0;overflow:hidden"><div style="font-size:10px;color:var(--text3)">KULLANILABİLİR LİMİT</div><div class="mono" style="font-size:16px;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(musait, k.paraBirimi)}</div></div>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor}"></div></div>
-      <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:2px">Toplam Limit: ${fmtCur(k.limit, k.paraBirimi)}</div>
+      <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:2px">${k.ortakLimitGrupId ? 'Grup Limiti' : 'Toplam Limit'}: ${fmtCur(toplamLimit, k.paraBirimi)}</div>
       ${isKmh && krediSayisi > 0 ? `<div style="margin-top:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:7px 10px;font-size:11px;display:flex;justify-content:space-between">
         <span style="color:var(--text3)">🏦 ${krediSayisi} aktif kredi borcu</span>
         <span class="mono" style="color:var(--danger)">${fmtCur(krediKalan, k.paraBirimi)}</span>
@@ -18144,10 +18486,20 @@ function renderOzet() {
     }
   }
 
-  // Kart stats
+  // Kart stats — ortak limit grubuna dahil kartlarda grup limiti kart sayısı kadar tekrar tekrar
+  // sayılmasın diye her grup sadece bir kez (kendi limitiyle) toplama eklenir.
   let toplamLimit=0, toplamKullanim=0;
+  const _sayilanOrtakGruplar = new Set();
   DB.kartlar.forEach(k=>{
-    toplamLimit+=k.limit;
+    if (k.ortakLimitGrupId) {
+      if (!_sayilanOrtakGruplar.has(k.ortakLimitGrupId)) {
+        _sayilanOrtakGruplar.add(k.ortakLimitGrupId);
+        const grup = (DB.ortakLimitGruplari||[]).find(g=>g.id===k.ortakLimitGrupId);
+        toplamLimit += grup ? (grup.limit||0) : (k.limit||0);
+      }
+    } else {
+      toplamLimit += k.limit||0;
+    }
     toplamKullanim+=getKartKullanim(k.id);
   });
 
