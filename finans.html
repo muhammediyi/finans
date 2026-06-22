@@ -26072,29 +26072,80 @@ function _renderHesapLog(liste) {
 
 let EE_STATE = {
   kartId: null,
+  _pendingKartId: null, // kullanıcı dropdown'dan seçti ama henüz onaylamadı — Drive sync'ten korunur
   pdfIslemler: [],   // PDF'den çıkarılan: {tarih, aciklama, tutar, _key, _kaynak}
   eslesen: [],       // {pdf, sistem, kategoriSecim, aciklamaSecim}
   sadecePdf: [],      // pdf'de var, sistemde yok
   sadeceSistem: [],   // sistemde var, pdf'de yok
-  dosyalar: []        // [{ad, durum: 'ok'|'hata'|'isleniyor', sayi, hata}]
+  dosyalar: [],       // [{ad, durum: 'ok'|'hata'|'isleniyor', sayi, hata}]
+  kartOnayGosteriliyor: false,       // kart onay kutusu görünür mü
+  kartAutoDetectGosteriliyor: false, // otomatik tespit satırı görünür mü (detected alt-panel)
+  kartPickerGosteriliyor: false,     // manuel kart seçici görünür mü (picker alt-panel)
+  sonuclarGosteriliyor: false,       // eşleştirme sonuçları açık mı
 };
 
 function renderEkstreEslestir() {
   const sel = document.getElementById('ee-kart-select');
   if (!sel) return;
   const kartlar = DB.kartlar || [];
+
+  // Dropdown'u güncelle ama seçili değeri koru.
+  // Öncelik sırası: (1) onaylanmış kartId, (2) kullanıcının seçtiği ama henüz onaylamadığı
+  // _pendingKartId, (3) DOM'dan okunan anlık değer (Drive sync öncesi son durum).
+  // ÖNEMLI: sel.value innerHTML sıfırlanmadan ÖNCE okunmalı.
+  const prevDomValue = sel.value;
+  const restoreId = EE_STATE.kartId || EE_STATE._pendingKartId || prevDomValue || null;
+
   sel.innerHTML = '<option value="">— Kart seçin —</option>' +
     kartlar.map(k => {
       const banka = ((DB.bankalar || []).find(b => b.id === k.banka) || {}).kisa || '';
       return `<option value="${k.id}">${k.ad}${banka ? ' — ' + banka : ''}${k.no ? ' (•••• ' + k.no + ')' : ''}</option>`;
     }).join('');
-  if (EE_STATE.kartId) sel.value = EE_STATE.kartId;
 
-  // Sonuç adımı henüz yoksa upload adımını göster
+  // Seçimi geri yükle: value set ettikten sonra DOM gerçekten güncellendiğini kontrol et
+  if (restoreId) {
+    sel.value = restoreId;
+    // display:none container içinde set çalışmayabilir — en az bir option eşleşiyorsa zorla
+    if (!sel.value && restoreId) {
+      const opt = sel.querySelector(`option[value="${CSS.escape(restoreId)}"]`);
+      if (opt) opt.selected = true;
+    }
+    // _pendingKartId'yi güncel tut
+    if (!EE_STATE.kartId) EE_STATE._pendingKartId = sel.value || restoreId;
+  }
+
+  // Her değişimde _pendingKartId'yi anında kaydet (Drive sync'ten önce seçim korunur)
+  if (!sel._eePendingBound) {
+    sel._eePendingBound = true;
+    sel.addEventListener('change', () => {
+      EE_STATE._pendingKartId = sel.value || null;
+    });
+  }
+
+  // Upload adımını her zaman göster
   document.getElementById('ee-step-upload').style.display = 'flex';
-  if (!EE_STATE.pdfIslemler.length) {
+
+  // Drive sync veya başka bir renderAll tetiklemesi sırasında kullanıcının
+  // mevcut adımı kaybolmamalı — EE_STATE flag'lerine göre UI'yi koru.
+  if (!EE_STATE.pdfIslemler.length && !EE_STATE.kartOnayGosteriliyor) {
+    // Hiç dosya yüklenmemiş, başlangıç durumu
     document.getElementById('ee-step-results').style.display = 'none';
     document.getElementById('ee-kart-confirm').style.display = 'none';
+    document.getElementById('ee-kart-confirm-detected').style.display = 'none';
+    document.getElementById('ee-kart-confirm-picker').style.display = 'none';
+  } else {
+    // Dosya yüklendi veya kart onay adımı açık — mevcut görünürlüğü tam olarak restore et
+    if (EE_STATE.kartOnayGosteriliyor) {
+      document.getElementById('ee-kart-confirm').style.display = 'block';
+      // Alt panel: otomatik tespit mi, manuel seçici mi açık?
+      document.getElementById('ee-kart-confirm-detected').style.display =
+        EE_STATE.kartAutoDetectGosteriliyor ? 'flex' : 'none';
+      document.getElementById('ee-kart-confirm-picker').style.display =
+        EE_STATE.kartPickerGosteriliyor ? 'block' : 'none';
+    }
+    if (EE_STATE.sonuclarGosteriliyor) {
+      document.getElementById('ee-step-results').style.display = 'block';
+    }
   }
 
   // Drag & drop bağla (her render'da tekrar bağlamayı önlemek için flag)
@@ -26199,8 +26250,8 @@ async function eeExtractTextFromFile(file, onProgress) {
 async function eeProcessFiles(files) {
   if (!files || !files.length) return;
   document.getElementById('ee-kart-confirm').style.display = 'none';
-
-  EE_STATE.dosyalar = files.map(f => ({ ad: f.name, durum: 'bekliyor', sayi: 0, hata: null }));
+  EE_STATE.kartOnayGosteriliyor = false;
+  EE_STATE.sonuclarGosteriliyor = false;
   eeRenderFileList();
 
   let combinedText = '';
@@ -26257,11 +26308,15 @@ async function eeProcessFiles(files) {
 
   if (detected) {
     EE_STATE.kartId = detected.id;
+    EE_STATE._pendingKartId = null; // onaylandı, pending'e gerek kalmadı
     const banka = ((DB.bankalar || []).find(b => b.id === detected.banka) || {}).kisa || '';
     document.getElementById('ee-kart-confirm').style.display = 'block';
     document.getElementById('ee-kart-confirm-detected').style.display = 'flex';
     document.getElementById('ee-kart-confirm-picker').style.display = 'none';
     document.getElementById('ee-kart-confirm-name').textContent = detected.ad + (banka ? ' — ' + banka : '') + (detected.no ? ' (•••• ' + detected.no + ')' : '');
+    EE_STATE.kartOnayGosteriliyor = true;
+    EE_STATE.kartAutoDetectGosteriliyor = true;
+    EE_STATE.kartPickerGosteriliyor = false;
     eeSetStatus(`✅ ${combinedParsed.length} işlem satırı bulundu${dosyaSayisiMetni}.`, false);
     EE_STATE.pdfIslemler = combinedParsed;
     eeRunMatch();
@@ -26350,6 +26405,9 @@ function eeShowKartPicker() {
   document.getElementById('ee-kart-confirm').style.display = 'block';
   document.getElementById('ee-kart-confirm-detected').style.display = 'none';
   document.getElementById('ee-kart-confirm-picker').style.display = 'block';
+  EE_STATE.kartOnayGosteriliyor = true;
+  EE_STATE.kartAutoDetectGosteriliyor = false;
+  EE_STATE.kartPickerGosteriliyor = true;
 }
 
 function eeConfirmManualKart() {
@@ -26359,6 +26417,7 @@ function eeConfirmManualKart() {
     return;
   }
   EE_STATE.kartId = kartId;
+  EE_STATE._pendingKartId = null; // manuel onay tamamlandı
   if (!_eePendingParsed || !_eePendingParsed.length) {
     showToast('PDF verisi bulunamadı, lütfen yeniden yükleyin', 'error');
     return;
@@ -26946,6 +27005,8 @@ function eeRenderResults() {
   document.getElementById('ee-upload-status').style.display = 'none';
   const wrap = document.getElementById('ee-step-results');
   wrap.style.display = 'block';
+  EE_STATE.sonuclarGosteriliyor = true;
+  EE_STATE.kartOnayGosteriliyor = false; // kart onayı tamamlandı, artık sonuçlar var
 
   const kart = (DB.kartlar || []).find(k => k.id === EE_STATE.kartId);
   const pb = kart ? getKartCurrency(kart.id) : (defaultCurrency || 'TRY');
@@ -27147,7 +27208,9 @@ function eeYokSay(grup, j) {
 }
 
 function eeReset() {
-  EE_STATE = { kartId: null, pdfIslemler: [], eslesen: [], sadecePdf: [], sadeceSistem: [], dosyalar: [] };
+  EE_STATE = { kartId: null, pdfIslemler: [], eslesen: [], sadecePdf: [], sadeceSistem: [], dosyalar: [],
+    kartOnayGosteriliyor: false, kartAutoDetectGosteriliyor: false, kartPickerGosteriliyor: false,
+    sonuclarGosteriliyor: false };
   _eePendingParsed = null;
   document.getElementById('ee-pdf-input').value = '';
   document.getElementById('ee-upload-status').style.display = 'none';
