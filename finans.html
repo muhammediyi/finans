@@ -3368,6 +3368,17 @@ select option { background: #0b0e1e; color: #f0f4ff; }
     transition: color .18s;
   }
 
+  /* Dinamik footer slot — sayfa değişince label/icon kayarak güncellenir */
+  .mob-nav-btn.dyn-slot .mob-nav-icon,
+  .mob-nav-btn.dyn-slot .mob-nav-label {
+    transition: opacity .15s, transform .15s;
+  }
+  .mob-nav-btn.dyn-slot.swapping .mob-nav-icon,
+  .mob-nav-btn.dyn-slot.swapping .mob-nav-label {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
   /* ════ MORE MENU — Refined grid ════ */
   .mob-more-backdrop {
     display: none;
@@ -8575,6 +8586,9 @@ function applyMigrations(d) {
     extreler: { kart:'', durum:'', ...(d.uiFiltreler && d.uiFiltreler.extreler) }
   };
 
+  // ── Sayfa ziyaret sayaçları: Drive'dan geldiyse koru, yoksa boş obje ──────
+  if(!d.navStats || typeof d.navStats !== 'object') d.navStats = {};
+
   return d;
 }
 
@@ -8611,7 +8625,8 @@ function defaultData() {
     nakitAvansLimitTip: 'kullanilabilir',
     nakitAvansMaxOran: 50,
     snapshots: {},
-    uiFiltreler: { islemler: { kart:'', ay:'', taksit:'', q:'' }, extreler: { kart:'', durum:'' } }
+    uiFiltreler: { islemler: { kart:'', ay:'', taksit:'', q:'' }, extreler: { kart:'', durum:'' } },
+    navStats: {}  // sayfa ziyaret sayaçları (Drive'a kaydedilir, mobil footer dinamik slotlar için)
   };
 }
 
@@ -9508,17 +9523,8 @@ function showPage(id, btn) {
     const _mobMain = ['ozet','kartlar','islemler','extreler'];
     document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.mob-more-item').forEach(b=>b.classList.remove('active'));
-    if(_mobMain.includes(id)) {
-      const mn = document.getElementById('mobnav-'+id);
-      if(mn) mn.classList.add('active');
-    } else {
-      const more = document.getElementById('mobnav-more');
-      if(more) more.classList.add('active');
-      // more menüdeki ilgili itemi aktif yap
-      document.querySelectorAll('.mob-more-item').forEach(b => {
-        if((b.getAttribute('onclick')||'').includes("'"+id+"'")) b.classList.add('active');
-      });
-    }
+    // Mobil footer active durumunu güncelle (dinamik slotlar dahil)
+    if(typeof mobNavSyncActive === 'function') mobNavSyncActive(id);
   }
   renderPage(id);
 }
@@ -9532,6 +9538,9 @@ function renderAll() {
   populateEldenKisiSelect();
   renderHesapTurFiltreler();
   updateSidebarKartNav();
+
+  // Drive'dan navStats geldikten sonra footer dinamik slotları yeniden hesapla
+  if(typeof mobNavRenderDynSlots === 'function') mobNavRenderDynSlots(false);
 
   // Aktif sayfayı render et
   const activePage = document.querySelector('.page.active');
@@ -21050,17 +21059,20 @@ function mkpDeleteKisi(id) {
     <span class="mob-nav-icon">📊</span>
     <span class="mob-nav-label">Özet</span>
   </button>
-  <button class="mob-nav-btn" id="mobnav-kartlar" onclick="mobNavGo('kartlar',this,'💳','Kartlar')">
+  <!-- Dinamik slot 0 — en çok kullanılan sayfa -->
+  <button class="mob-nav-btn dyn-slot" id="mobnav-dyn-0" data-page="kartlar">
     <span class="mob-nav-icon">💳</span>
     <span class="mob-nav-label">Kartlar</span>
   </button>
-  <button class="mob-nav-btn" id="mobnav-islemler" onclick="mobNavGo('islemler',this,'⇄','İşlemler')">
+  <!-- Dinamik slot 1 -->
+  <button class="mob-nav-btn dyn-slot" id="mobnav-dyn-1" data-page="islemler">
     <span class="mob-nav-icon">⇄</span>
     <span class="mob-nav-label">İşlemler</span>
   </button>
-  <button class="mob-nav-btn" id="mobnav-extreler" onclick="mobNavGo('extreler',this,'🧾','Ekstreler')">
-    <span class="mob-nav-icon">🧾</span>
-    <span class="mob-nav-label">Ekstreler</span>
+  <!-- Dinamik slot 2 -->
+  <button class="mob-nav-btn dyn-slot" id="mobnav-dyn-2" data-page="hesaplar">
+    <span class="mob-nav-icon">🏧</span>
+    <span class="mob-nav-label">Hesaplar</span>
   </button>
   <button class="mob-nav-btn" id="mobnav-more" onclick="toggleMobMore()">
     <span class="mob-nav-icon" style="font-size:22px;letter-spacing:-1px">···</span>
@@ -21070,7 +21082,122 @@ function mkpDeleteKisi(id) {
 
 <script>
 /* ─── MOBİL NAVİGASYON ─────────────────────────────────── */
-const MOB_MAIN_PAGES = ['ozet','kartlar','islemler','extreler'];
+
+// Tüm sayfalar ve meta bilgileri (ikon, başlık)
+const MOB_ALL_PAGES = {
+  ozet:         { icon:'📊', label:'Özet' },
+  kartlar:      { icon:'💳', label:'Kartlar' },
+  islemler:     { icon:'⇄',  label:'İşlemler' },
+  extreler:     { icon:'🧾', label:'Ekstreler' },
+  hesaplar:     { icon:'🏧', label:'Hesaplar' },
+  mevduat:      { icon:'💎', label:'Mevduat' },
+  kira:         { icon:'🏠', label:'Kira' },
+  maas:         { icon:'💰', label:'Maaş' },
+  elden:        { icon:'💵', label:'Elden' },
+  kmhkredi:     { icon:'🏦', label:'KMH' },
+  kredi:        { icon:'📋', label:'Kredi' },
+  abonelik:     { icon:'🔄', label:'Abonelik' },
+  ekstreeslestir: { icon:'🔗', label:'Eşleştir' },
+  tanimlamalar: { icon:'⚙️', label:'Ayarlar' },
+};
+
+// Dinamik slotlarda gösterilebilecek sayfalar (özet hariç — o zaten sabit solda)
+const MOB_DYNAMIC_ELIGIBLE = ['kartlar','islemler','extreler','hesaplar','mevduat',
+  'kira','maas','elden','kmhkredi','kredi','abonelik','ekstreeslestir','tanimlamalar'];
+
+// Hiç kullanım verisi yoksa gösterilecek varsayılan sıralama
+const MOB_DYN_DEFAULTS = ['kartlar','islemler','hesaplar'];
+
+// Şu an dinamik slotlarda hangi sayfalar var (sayfa id dizisi, 3 eleman)
+let _mobDynPages = [...MOB_DYN_DEFAULTS];
+
+// Aktif slot active sınıfını izlemek için
+let _mobActivePage = 'ozet';
+
+/* ── Dinamik slotları en çok kullanılan 3 sayfaya göre güncelle ── */
+function mobNavRenderDynSlots(animate) {
+  if(!DB || !DB.navStats) DB.navStats = {};
+
+  // navStats'tan en çok kullanılan 3 eligible sayfayı al.
+  // Hiç kullanım verisi yoksa (tüm sayaçlar 0 veya yok) varsayılan sıralamayı kullan.
+  const hasAnyData = MOB_DYNAMIC_ELIGIBLE.some(p => (DB.navStats[p]||0) > 0);
+  let top3;
+  if(!hasAnyData) {
+    top3 = [...MOB_DYN_DEFAULTS];
+  } else {
+    const sorted = MOB_DYNAMIC_ELIGIBLE
+      .slice()
+      .sort((a, b) => (DB.navStats[b]||0) - (DB.navStats[a]||0));
+    top3 = sorted.slice(0, 3);
+  }
+
+  // Eğer top 3 tamamen aynıysa ve animasyon istenmediyse işlem yapma
+  if(!animate && top3.every((p,i)=>p===_mobDynPages[i])) return;
+
+  _mobDynPages = top3;
+
+  top3.forEach((pageId, i) => {
+    const btn = document.getElementById('mobnav-dyn-' + i);
+    if(!btn) return;
+    const meta = MOB_ALL_PAGES[pageId] || { icon:'📄', label: pageId };
+
+    const doUpdate = () => {
+      btn.setAttribute('data-page', pageId);
+      btn.onclick = () => mobNavGo(pageId, btn, meta.icon, meta.label);
+      btn.querySelector('.mob-nav-icon').textContent = meta.icon;
+      btn.querySelector('.mob-nav-label').textContent = meta.label;
+      // active sınıfını güncelle
+      btn.classList.toggle('active', pageId === _mobActivePage);
+      if(animate) btn.classList.remove('swapping');
+    };
+
+    if(animate) {
+      btn.classList.add('swapping');
+      // swapping sınıfı CSS geçişini tetikler (opacity/transform), ardından içerik güncellenir
+      const delay = typeof requestAnimationFrame !== 'undefined' ? 160 : 0;
+      if(delay) setTimeout(doUpdate, delay);
+      else doUpdate();
+    } else {
+      doUpdate();
+    }
+  });
+}
+
+/* ── Sayfa ziyaretini kaydet ve slotları gerekirse güncelle ── */
+function mobNavTrack(pageId) {
+  if(pageId === 'ozet') return; // sabit slot, sayılmasın
+  if(!DB.navStats) DB.navStats = {};
+
+  const prev = DB.navStats[pageId] || 0;
+  DB.navStats[pageId] = prev + 1;
+
+  // Drive'a kaydet (debounce zaten saveData içinde var)
+  saveData();
+
+  // Top 3 değiştiyse slotları animasyonlu güncelle
+  const sorted = MOB_DYNAMIC_ELIGIBLE
+    .slice()
+    .sort((a,b) => (DB.navStats[b]||0) - (DB.navStats[a]||0));
+  const newTop3 = sorted.slice(0,3);
+  const changed = newTop3.some((p,i) => p !== _mobDynPages[i]);
+  if(changed) mobNavRenderDynSlots(true);
+}
+
+/* ── Active durumunu senkronize et ── */
+function mobNavSyncActive(pageId) {
+  _mobActivePage = pageId;
+  // Özet butonu
+  document.getElementById('mobnav-ozet').classList.toggle('active', pageId === 'ozet');
+  // Dinamik slotlar
+  document.querySelectorAll('.mob-nav-btn.dyn-slot').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-page') === pageId);
+  });
+  // ··· butonu
+  const moreBtn = document.getElementById('mobnav-more');
+  const dynPages = _mobDynPages;
+  const isInDyn = dynPages.includes(pageId) || pageId === 'ozet';
+  if(moreBtn) moreBtn.classList.toggle('active', !isInDyn && pageId !== null);
+}
 
 function toggleMobileSidebar() {
   const sidebar = document.getElementById('main-sidebar');
@@ -21119,7 +21246,7 @@ function mobNavGo(pageId, btn, icon, label) {
   closeMobMore();
   closeMobileSidebar();
 
-  // Find the corresponding sidebar nav-btn and call showPage
+  // Sidebar nav butonunu bul ve showPage'i tetikle
   const sidebarBtns = document.querySelectorAll('.nav-btn');
   let targetBtn = null;
   sidebarBtns.forEach(b => {
@@ -21128,45 +21255,31 @@ function mobNavGo(pageId, btn, icon, label) {
   });
   if (targetBtn) {
     showPage(pageId, targetBtn);
-  }
-
-  // Update bottom nav active state
-  const bottomBtns = document.querySelectorAll('.mob-nav-btn');
-  bottomBtns.forEach(b => b.classList.remove('active'));
-
-  if (MOB_MAIN_PAGES.includes(pageId)) {
-    const navBtn = document.getElementById('mobnav-' + pageId);
-    if (navBtn) navBtn.classList.add('active');
   } else {
-    // Keep "more" highlighted
-    const moreBtn = document.getElementById('mobnav-more');
-    if (moreBtn) moreBtn.classList.add('active');
-    // Update more menu items
-    document.querySelectorAll('.mob-more-item').forEach(item => item.classList.remove('active'));
-    if (btn && btn.classList.contains('mob-more-item')) btn.classList.add('active');
+    showPage(pageId, null);
   }
+
+  // Ziyareti kaydet → Drive'a gider, slot gerekirse güncellenir
+  mobNavTrack(pageId);
+  mobNavSyncActive(pageId);
 }
 
 // Sync sidebar nav clicks with bottom nav
-const _origShowPage = window.showPage;
 if (typeof showPage === 'function') {
-  // Wrap existing showPage to sync mobile nav
   const __sp = showPage;
   window.showPage = function(pageId, btn) {
     __sp(pageId, btn);
-    // sync bottom nav
-    const bottomBtns = document.querySelectorAll('.mob-nav-btn');
-    bottomBtns.forEach(b => b.classList.remove('active'));
-    if (MOB_MAIN_PAGES.includes(pageId)) {
-      const navBtn = document.getElementById('mobnav-' + pageId);
-      if (navBtn) navBtn.classList.add('active');
-    } else {
-      const moreBtn = document.getElementById('mobnav-more');
-      if (moreBtn) moreBtn.classList.add('active');
-    }
+    mobNavSyncActive(pageId);
+    mobNavTrack(pageId);
     if (window.innerWidth <= 768) closeMobileSidebar();
   };
 }
+
+// Sayfa yüklendiğinde dinamik slotları hemen kur (Drive verisi hazır olunca applyMigrations
+// zaten DB.navStats'ı geri yükleyecek, ardından renderAll → mobNavRenderDynSlots çağrılır)
+document.addEventListener('DOMContentLoaded', function() {
+  mobNavRenderDynSlots(false);
+});
 
 
 /* ═══ TEMA SİSTEMİ ═══════════════════════════════════════ */
