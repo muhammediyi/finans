@@ -26550,7 +26550,11 @@ function eeOzetVeyaBaslikSatiriMi(line) {
     'kredi kartı borcunu', 'kredi karti borcunu', 'harcama kategorilerinizi',
     'gelecek ekstre kesim', 'kullanılabilir limit', 'kullanilabilir limit',
     'önceki dönem', 'onceki donem', 'kart hareketleri', 'ekstre/borç bilgileri',
-    'ekstre/borc bilgileri', 'döviz işlem', 'doviz islem'
+    'ekstre/borc bilgileri', 'döviz işlem', 'doviz islem',
+    // Mobil uygulama alt gezinme çubuğu etiketleri — ekranın en altına denk geldiği için
+    // OCR bazen bunları son işlem bloğunun açıklamasına ekleyebilir (blok hâlâ açıkken
+    // ekran sonuna ulaşıldığında). Gerçek bir işlem açıklaması bu etiketleri içermez.
+    'ana sayfa', 'hesap ve kart', 'başvurular', 'basvurular', 'durumum'
   ];
   return kaliplar.some(kw => eeAsciiSadelestir(lower).includes(eeAsciiSadelestir(kw)));
 }
@@ -26684,6 +26688,13 @@ function eeParseCokSatirFormati(text) {
   const ayIcindeRe = /\b([a-zçğıöşü]{3,9})\b\.?/gi;
   // Satır başında duran yıl (2000-2099)
   const yilBasRe = /^(20\d{2})\s*[\|:.\-]?\s*/;
+  // Satırın TAMAMI (OCR gürültüsü hariç, en fazla 1-2 tek karakter/ikon kalıntısı dışında)
+  // sadece bir yıldan ibaret mi? (örn. "2026", "2026 W", "2026 WN"). Bu mobil ekstre
+  // formatında her işlem bloğu "gün → ay → yıl" sırasıyla 3 satıra yayılır ve blok
+  // KESİN olarak yıl satırıyla kapanır. Gün rakamı OCR'da bozulup (§, harfle karışma vb.)
+  // kaybolsa bile, bağımsız bir yıl satırı gördüğümüzde bloğu zorla kapatırız — aksi halde
+  // bir sonraki işlemin (gün tespiti başarısız olursa) açıklaması öncekine yapışıp kalır.
+  const sirfYilSatirRe = /^(20\d{2})\b[\sA-Za-zÇĞİÖŞÜçğıöşü©]{0,4}$/;
   // Satır içinde geçen tutar (TL/TRY/₺ etiketli olması tercih edilir)
   const amountInLineRe = /(-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))\s*(TL|TRY|₺|USD|EUR|\$|€)\b/i;
   // Etiketsiz ama açıkça ondalıklı tutar (yedek desen — TL etiketi OCR'da kaybolmuşsa, satır sonunda)
@@ -26749,7 +26760,11 @@ function eeParseCokSatirFormati(text) {
   }
 
   for (let i = 0; i < rawLines.length; i++) {
-    let line = rawLines[i];
+    // OCR bazen tablo çizgilerini/ayraçlarını satıra sızdırır (örn. "__11__ Market ...").
+    // Bunlar gün/tutar tespitini bozmasın diye bu süsleme karakterlerini satırın
+    // HERHANGİ bir yerinden temizleriz (gerçek bir işlem açıklamasında bu karakterler
+    // anlamlı şekilde geçmez); ardışık boşlukları teke indirip baş/son boşluğu kırparız.
+    let line = rawLines[i].replace(/[_*~`]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 
     // -1) Ekstre özeti / sekme başlığı satırı mı (örn. "Dönem İçi Hareketler",
     //     "Provizyonda Bekleyen")? Bunlar gerçek bir işlem değildir; tamamen atla ki ne
@@ -26780,6 +26795,18 @@ function eeParseCokSatirFormati(text) {
     }
 
     if (!blok) continue; // henüz bir gün görülmedi, bu satırı atla (başlık/özet satırları)
+
+    // 1.5) Bu satır TEK BAŞINA bir yıl mı (örn. "2026", "2026 W")? Bu format her bloğu
+    //      kesin olarak bir yıl satırıyla kapatır. Bu sinyali gördüğümüzde yılı bloğa
+    //      yazıp bloğu HEMEN kapatıyoruz — bir sonraki satırda gün rakamı OCR'da
+    //      bozulmuş olsa bile (örn. tekrarlanan "11" yanlış okunduğunda) yeni işlemin
+    //      açıklaması artık kapanmış bu bloğa sessizce eklenemez.
+    const sirfYilM = line.match(sirfYilSatirRe);
+    if (sirfYilM && !gunM) {
+      blok.yil = parseInt(sirfYilM[1], 10);
+      bloguKapat();
+      continue;
+    }
 
     // 2) Satır başında yıl var mı?
     const yilM = line.match(yilBasRe);
