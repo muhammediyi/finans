@@ -327,6 +327,7 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
    İŞLEMLER — kompakt modüler tasarım
    ════════════════════════════════════════════════════════ */
 .islem-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.kd-islem-stats { grid-template-columns: repeat(2,1fr) !important; }
 .islem-chip {
   display: flex; align-items: center; gap: 10px;
   background: var(--surface); border: 1px solid var(--border);
@@ -348,7 +349,7 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 .islem-chip.c-rose .islem-chip-icon svg { color: var(--danger); }
 .islem-chip-body { min-width: 0; }
 .islem-chip-label { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
-.islem-chip-val { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.islem-chip-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); white-space: normal; word-break: break-word; overflow-wrap: anywhere; line-height: 1.3; }
 .islem-chip-sub { font-size: 10px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .islem-card { padding: 14px 16px 6px; }
 .islem-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
