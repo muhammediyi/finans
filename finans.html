@@ -996,10 +996,21 @@ input::placeholder { color: var(--text2); opacity: .7; }
   box-shadow: none;
 }
 .kat-chip-search:hover, .kat-chip-search:focus { border-color: var(--border); background: transparent; box-shadow: none; }
-.kat-chip-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; max-height: 168px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--surface4) transparent; }
+.kat-chip-grid { padding: 10px; max-height: 188px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--surface4) transparent; }
 .kat-chip-grid::-webkit-scrollbar { width: 4px; }
 .kat-chip-grid::-webkit-scrollbar-track { background: transparent; }
 .kat-chip-grid::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
+.kat-chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.kat-chip-group-title { margin-top: 10px; }
+.kat-chip-group-title:first-child { margin-top: 0; }
+.kat-chip-group-title {
+  display: flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 6px;
+}
+.kat-chip-group-title::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.kat-chip-group-title.tur-gider::before { background: var(--rose); }
+.kat-chip-group-title.tur-gelir::before { background: var(--teal); }
+.kat-chip-group-title.tur-diger::before { background: var(--text3); }
 .kat-chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 9px;
   border-radius: 20px; background: var(--surface3); border: 1px solid var(--border2);
@@ -1010,8 +1021,13 @@ input::placeholder { color: var(--text2); opacity: .7; }
 .kat-chip-icon { font-size: 13px; line-height: 1; }
 .kat-chip:hover { background: rgba(251,191,36,.1); border-color: rgba(251,191,36,.35); color: var(--text); transform: translateY(-1px); }
 .kat-chip:active { transform: scale(.96); }
+.kat-chip.kat-tur-gider { background: var(--rose-glow); border-color: color-mix(in srgb, var(--rose) 22%, transparent); color: color-mix(in srgb, var(--rose) 75%, var(--text2)); }
+.kat-chip.kat-tur-gider:hover { background: color-mix(in srgb, var(--rose) 18%, transparent); border-color: var(--rose); color: var(--rose); }
+.kat-chip.kat-tur-gelir { background: var(--teal-glow); border-color: color-mix(in srgb, var(--teal) 22%, transparent); color: color-mix(in srgb, var(--teal) 75%, var(--text2)); }
+.kat-chip.kat-tur-gelir:hover { background: color-mix(in srgb, var(--teal) 18%, transparent); border-color: var(--teal); color: var(--teal); }
 .kat-chip.selected { background: var(--gold-glow); border-color: var(--gold); color: var(--gold); }
-.kat-chip.kat-tur-gelir.selected { background: var(--accent2-glow); border-color: var(--accent2); color: var(--accent2); }
+.kat-chip.kat-tur-gider.selected { background: var(--rose-glow); border-color: var(--rose); color: var(--rose); box-shadow: 0 0 0 1px var(--rose) inset; }
+.kat-chip.kat-tur-gelir.selected { background: var(--accent2-glow); border-color: var(--accent2); color: var(--accent2); box-shadow: 0 0 0 1px var(--accent2) inset; }
 .kat-chip-empty { font-size: 11.5px; color: var(--text3); padding: 6px 4px; }
 .kat-chip-clear {
   display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
@@ -1583,8 +1599,10 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 .tp-rows-scroll::-webkit-scrollbar { width: 4px; }
 .tp-rows-scroll::-webkit-scrollbar-track { background: transparent; }
 .tp-rows-scroll::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
-/* ── İşlem Ekle modalı: kompakt yerleşim ── */
-#modal-islem .msec { margin-bottom: 12px; padding: 12px; }
+/* ── İşlem Ekle modalı: kompakt iki sütunlu yerleşim ── */
+#modal-islem .islem-modal-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; align-items: start; }
+@media(max-width:700px) { #modal-islem .islem-modal-grid { grid-template-columns: 1fr; } }
+#modal-islem .msec { margin-bottom: 12px; padding: 14px; height: 100%; box-sizing: border-box; }
 #modal-islem .msec:last-child { margin-bottom: 0; }
 #modal-islem .msec-label { margin-bottom: 8px; padding-bottom: 6px; }
 #modal-islem .form-row { margin-bottom: 8px; gap: 10px; }
@@ -7629,7 +7647,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
 <!-- İşlem Modal -->
 <div class="modal-bg" id="modal-islem">
-  <div class="modal">
+  <div class="modal" style="max-width:800px">
     <div class="modal-header">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="modal-header-icon" style="background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.2)">⇄</div>
@@ -7641,49 +7659,48 @@ window.addEventListener('load', placeMobProfilePanel);
       <button class="close-btn" onclick="closeModal('modal-islem')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="msec">
-        <div class="msec-label teal">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          İşlem Bilgileri
-        </div>
-        <div class="form-row cols-2">
-          <div style="grid-column:1/-1"><label>Kart / Hesap</label><select id="islem-kart" onchange="onIslemKartChange()"></select></div>
-          <div><label>İşlem Tarihi</label><input id="islem-tarih" type="date" onchange="calcTaksit(false);onIslemTarihiChange()"></div>
-          <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
-        </div>
-        <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
-        <div class="form-row" style="margin-bottom:0;position:relative">
-          <div class="ac-wrap"><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..." autocomplete="off" oninput="onIslemAciklamaInput()" onfocus="onIslemAciklamaInput()" onblur="setTimeout(closeIslemAciklamaSuggest,180)" onkeydown="onIslemAciklamaKeydown(event)">
+      <div class="islem-modal-grid">
+        <div class="msec" style="margin-bottom:0">
+          <div class="msec-label teal">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            İşlem Bilgileri
           </div>
-          <div id="islem-aciklama-suggest" class="ac-suggest"></div>
-          <div id="islem-aciklama-chips" class="ac-chips"></div>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
-          <div>
-            <label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <input type="hidden" id="islem-kategori" value="">
-            <div class="kat-chip-picker" id="islem-kategori-picker">
-              <input type="text" class="kat-chip-search" id="islem-kategori-arama" placeholder="Kategori ara…" autocomplete="off" oninput="renderIslemKategoriChips()">
-              <div class="kat-chip-grid" id="islem-kategori-grid"></div>
+          <div class="form-row" style="margin-bottom:8px"><div><label>Kart / Hesap</label><select id="islem-kart" onchange="onIslemKartChange()"></select></div></div>
+          <div class="form-row cols-2">
+            <div><label>İşlem Tarihi</label><input id="islem-tarih" type="date" onchange="calcTaksit(false);onIslemTarihiChange()"></div>
+            <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
+          </div>
+          <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
+          <div class="form-row" style="margin-bottom:8px;position:relative">
+            <div class="ac-wrap"><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..." autocomplete="off" oninput="onIslemAciklamaInput()" onfocus="onIslemAciklamaInput()" onblur="setTimeout(closeIslemAciklamaSuggest,180)" onkeydown="onIslemAciklamaKeydown(event)">
+            </div>
+            <div id="islem-aciklama-suggest" class="ac-suggest"></div>
+            <div id="islem-aciklama-chips" class="ac-chips"></div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div>
+              <label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+              <input type="hidden" id="islem-kategori" value="">
+              <div class="kat-chip-picker" id="islem-kategori-picker">
+                <input type="text" class="kat-chip-search" id="islem-kategori-arama" placeholder="Kategori ara…" autocomplete="off" oninput="renderIslemKategoriChips()">
+                <div class="kat-chip-grid" id="islem-kategori-grid"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-
-      <div class="msec" style="margin-bottom:0">
-        <div class="msec-label gold">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Tutar &amp; Taksit
-        </div>
-        <div class="form-row cols-3" style="margin-bottom:0">
-          <div><label>Para Birimi</label>
-            <select id="islem-para-birimi" onchange="updateModalMoneyWraps('modal-islem', this.value)"></select>
+        <div class="msec" style="margin-bottom:0">
+          <div class="msec-label gold">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Tutar &amp; Taksit
           </div>
-          <div><label>Toplam Tutar <span style="color:var(--text3);font-size:10px;font-weight:400" title="Kampanya indirimi, iade gibi borç azaltan işlemler için tutarın başına eksi (-) işareti koyabilirsiniz.">(iade için "-" kullanın)</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div>
-          <div><label>Taksit Sayısı</label><input id="islem-taksit" type="number" min="1" max="60" value="1" oninput="calcTaksit(false)"></div>
+          <div class="form-row" style="margin-bottom:8px"><div><label>Para Birimi</label>
+            <select id="islem-para-birimi" onchange="updateModalMoneyWraps('modal-islem', this.value)"></select>
+          </div></div>
+          <div class="form-row" style="margin-bottom:8px"><div><label>Toplam Tutar <span style="color:var(--text3);font-size:10px;font-weight:400" title="Kampanya indirimi, iade gibi borç azaltan işlemler için tutarın başına eksi (-) işareti koyabilirsiniz.">(iade için "-" kullanın)</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div></div>
+          <div class="form-row" style="margin-bottom:0"><div><label>Taksit Sayısı</label><input id="islem-taksit" type="number" min="1" max="60" value="1" oninput="calcTaksit(false)"></div></div>
+          <div id="islem-taksit-alanlari" style="margin-top:10px"></div>
         </div>
-        <div id="islem-taksit-alanlari" style="margin-top:4px"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -18618,13 +18635,21 @@ function renderIslemKategoriChips() {
     grid.innerHTML = `<span class="kat-chip-empty">Sonuç yok</span>`;
     return;
   }
-  grid.innerHTML = tum.map(k => {
+  const chip = k => {
     const sel = k.id == secili ? ' selected' : '';
-    const turCls = k.tur === 'gelir' ? ' kat-tur-gelir' : '';
+    const turCls = k.tur === 'gelir' ? ' kat-tur-gelir' : k.tur === 'gider' ? ' kat-tur-gider' : '';
     return `<button type="button" class="kat-chip${sel}${turCls}" onclick="seçKategoriChip('${k.id}')" title="${k.tur}">
       <span class="kat-chip-icon">${k.ikon||'📂'}</span>${k.ad}
     </button>`;
-  }).join('');
+  };
+  const giderler = tum.filter(k => k.tur === 'gider');
+  const gelirler = tum.filter(k => k.tur === 'gelir');
+  const digerler = tum.filter(k => k.tur !== 'gider' && k.tur !== 'gelir');
+  let html = '';
+  if(giderler.length) html += `<div class="kat-chip-group-title tur-gider">Gider</div><div class="kat-chip-group">${giderler.map(chip).join('')}</div>`;
+  if(gelirler.length) html += `<div class="kat-chip-group-title tur-gelir">Gelir</div><div class="kat-chip-group">${gelirler.map(chip).join('')}</div>`;
+  if(digerler.length) html += `<div class="kat-chip-group-title tur-diger">Diğer</div><div class="kat-chip-group">${digerler.map(chip).join('')}</div>`;
+  grid.innerHTML = html;
 }
 
 function seçKategoriChip(id) {
