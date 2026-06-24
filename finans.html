@@ -5858,12 +5858,20 @@ window.addEventListener('load', placeMobProfilePanel);
     <div id="ozet-odemeler-list" class="ozet-od-list"></div>
   </div>
 
-  <!-- GELECEK 1 YIL TAHMİNİ BAKİYE -->
-  <div class="card ozet-card" style="margin-top:16px">
-    <div class="card-header">
+  <!-- GELECEK TAHMİNİ BAKİYE -->
+  <div class="card ozet-card tbk-card" style="margin-top:16px">
+    <div class="card-header tbk-card-header">
       <span class="card-title-icon"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.7"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></span>
-      <span class="card-title">Gelecek 1 Yıl Tahmini Bakiye</span>
-      <select id="tahmin-pb-secim" onchange="renderTahminBakiye()" style="margin-left:auto;font-size:11.5px;padding:5px 10px;border-radius:8px;background:var(--surface3);border:1px solid var(--border2);color:var(--text)"></select>
+      <span class="card-title" id="tahmin-card-title">Gelecek 1 Yıl Tahmini Bakiye</span>
+      <div class="tbk-controls">
+        <div class="tbk-period-group">
+          <button class="tbk-period-btn" data-gun="90" onclick="tbkSetPeriod(90,this)">3 Ay</button>
+          <button class="tbk-period-btn" data-gun="180" onclick="tbkSetPeriod(180,this)">6 Ay</button>
+          <button class="tbk-period-btn tbk-period-active" data-gun="365" onclick="tbkSetPeriod(365,this)">1 Yıl</button>
+          <button class="tbk-period-btn" data-gun="730" onclick="tbkSetPeriod(730,this)">2 Yıl</button>
+        </div>
+        <select id="tahmin-pb-secim" onchange="renderTahminBakiye()" class="tbk-pb-select"></select>
+      </div>
     </div>
     <div id="ozet-tahmin-bakiye"></div>
   </div>
@@ -6006,6 +6014,87 @@ window.addEventListener('load', placeMobProfilePanel);
 .ee-btn-mini.danger:hover { background:rgba(251,113,133,.2); }
 .ee-btn-mini:disabled { opacity:.45; cursor:not-allowed; }
 .ee-empty { color:var(--text3); font-size:12px; padding:18px; text-align:center; background:var(--surface2); border-radius:10px; border:1px dashed var(--border2); }
+
+/* ── GELECEK 1 YIL TAHMİNİ BAKİYE ─────────────────────────────── */
+.tbk-stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.tbk-stat { position:relative; background:linear-gradient(145deg, var(--surface) 0%, var(--bg2) 100%); border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 14px 12px; display:flex; flex-direction:column; gap:6px; overflow:hidden; transition:border-color .15s, transform .15s; }
+.tbk-stat:hover { border-color:var(--border2); transform:translateY(-1px); }
+.tbk-stat-icon { position:absolute; top:10px; right:10px; width:25px; height:25px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.tbk-stat-label { font-size:9.5px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:.07em; padding-right:26px; }
+.tbk-stat-val { font-size:16px; font-weight:700; color:var(--text); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+
+.tbk-alert { display:flex; align-items:flex-start; gap:9px; padding:10px 14px; background:var(--danger-glow); border:1px solid rgba(251,113,133,.3); border-radius:10px; font-size:12px; line-height:1.5; color:var(--rose); margin-bottom:14px; }
+.tbk-alert b { color:var(--text); }
+
+.tbk-chart-wrap { position:relative; border-radius:var(--radius-sm); background:radial-gradient(ellipse 100% 80% at 50% 0%, rgba(255,255,255,.025) 0%, transparent 70%); padding:4px 0 0; }
+.tbk-tooltip { position:absolute; pointer-events:none; z-index:5; background:rgba(8,10,16,.98); border:1px solid var(--border2); border-radius:9px; padding:9px 12px; min-width:150px; max-width:200px; box-shadow:0 10px 30px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03); transition:opacity .1s; transform:translateY(-50%); }
+.tbk-tt-date { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:3px; }
+.tbk-tt-bakiye { font-size:14.5px; font-weight:700; color:var(--text); }
+.tbk-tt-divider { height:1px; background:var(--border); margin:7px 0 6px; }
+.tbk-tt-row { display:flex; justify-content:space-between; gap:10px; font-size:10.5px; color:var(--text2); padding:2px 0; }
+.tbk-tt-row span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100px; }
+.tbk-tt-more { font-size:9.5px; color:var(--text3); margin-top:3px; font-style:italic; }
+
+.tbk-legend { display:flex; align-items:center; gap:16px; margin-top:12px; font-size:11px; color:var(--text2); flex-wrap:wrap; }
+.tbk-legend span { display:flex; align-items:center; gap:5px; }
+.tbk-dot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; box-shadow:0 0 6px currentColor; }
+
+.tbk-footnote { font-size:10.5px; color:var(--text3); margin-top:12px; padding-top:10px; border-top:1px solid var(--border); line-height:1.55; }
+
+#tahmin-pb-secim { transition:border-color .15s, background .15s; cursor:pointer; }
+#tahmin-pb-secim:hover { border-color:var(--border-active); background:var(--surface4); }
+#tahmin-pb-secim:focus { outline:none; border-color:var(--gold); }
+
+.tbk-pb-select { font-size:11.5px; padding:5px 10px; border-radius:8px; background:var(--surface3); border:1px solid var(--border2); color:var(--text); flex-shrink:0; max-width:140px; }
+.tbk-card-header { flex-wrap:wrap; gap:8px 0; }
+.tbk-card-header .card-title { flex:1 1 auto; min-width:0; }
+.tbk-controls { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
+.tbk-period-group { display:flex; gap:2px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; padding:2px; }
+.tbk-period-btn { font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:6px; border:none; background:transparent; color:var(--text3); cursor:pointer; transition:all .15s; white-space:nowrap; }
+.tbk-period-btn:hover { color:var(--text); background:var(--surface4); }
+.tbk-period-btn.tbk-period-active { background:var(--surface); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+
+/* Aylık breakdown tablosu */
+.tbk-aylik-wrap { margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
+.tbk-aylik-title { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.tbk-aylik-table { width:100%; border-collapse:collapse; font-size:11px; }
+.tbk-aylik-table th { font-size:9px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; padding:4px 8px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; }
+.tbk-aylik-table th:first-child { text-align:left; }
+.tbk-aylik-table td { padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,.03); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tbk-aylik-table td:first-child { text-align:left; color:var(--text2); font-size:10.5px; }
+.tbk-aylik-table tr:hover td { background:var(--surface3); }
+.tbk-aylik-table tr.tbk-ay-kritik td { background:rgba(251,113,133,.06); }
+.tbk-aylik-table tr.tbk-ay-kritik td:first-child { color:var(--rose); }
+
+/* Kalemler özeti */
+.tbk-kalemler { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; border-top:1px solid var(--border); padding-top:14px; }
+.tbk-kalem-col { }
+.tbk-kalem-col-title { font-size:9.5px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:7px; display:flex; align-items:center; gap:4px; }
+.tbk-kalem-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.03); }
+.tbk-kalem-row:last-child { border-bottom:none; }
+.tbk-kalem-ad { font-size:10.5px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px; }
+.tbk-kalem-tutar { font-size:10.5px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* Section toggle */
+.tbk-section-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
+.tbk-section-toggle svg { transition:transform .2s; }
+.tbk-section-collapsed svg { transform:rotate(-90deg); }
+.tbk-section-collapsed .tbk-aylik-body { display:none; }
+
+@media (max-width:640px) {
+  .tbk-stats-grid { grid-template-columns:repeat(2,1fr); }
+  .tbk-legend { gap:12px; }
+  .tbk-card-header { row-gap:10px; }
+  .tbk-card-header .card-title { flex-basis:100%; order:1; }
+  .tbk-controls { order:2; margin-left:0; width:100%; }
+  .tbk-period-group { flex:1; }
+  .tbk-period-btn { flex:1; text-align:center; }
+  .tbk-pb-select { }
+  .tbk-stat-val { font-size:14.5px; word-break:break-word; }
+  .tbk-kalemler { grid-template-columns:1fr; }
+  .tbk-aylik-table { font-size:10.5px; }
+  .tbk-aylik-table th, .tbk-aylik-table td { padding:4px 5px; }
+}
 </style>
 
 <!-- İŞLEMLER FİLTRE MODAL -->
@@ -11368,7 +11457,7 @@ function kdRenderExtreler() {
   const kartPbList = getKartCurrencies(kart.id);
 
   const periodMap = new Map();
-  let minDate = today, maxDate = today;
+  let minDate = new Date(today), maxDate = new Date(today);
   DB.islemler.filter(i => i.kart === kart.id).forEach(i => {
     const dt = new Date(i.tarih + 'T00:00:00');
     if (dt < minDate) minDate = dt;
@@ -12679,8 +12768,8 @@ function renderExtreler() {
   const periodMap = new Map();
 
   // Geniş aralık tara
-  let minDate = today;
-  let maxDate = today;
+  let minDate = new Date(today);
+  let maxDate = new Date(today);
   DB.islemler.filter(i=>i.kart===kart.id).forEach(i=>{
     const dt = new Date(i.tarih+'T00:00:00');
     if(dt < minDate) minDate = dt;
@@ -18675,7 +18764,8 @@ document.addEventListener('click', function(e) {
   const btn = e.target.closest('.od-btn');
   if(!btn) return;
   e.stopPropagation();
-  const params = JSON.parse(decodeURIComponent(btn.dataset.od || '{}'));
+  let params;
+  try { params = JSON.parse(decodeURIComponent(btn.dataset.od || '{}')); } catch(e2) { return; }
   if(!params.tip) return;
   odAcPopup(e, params.tip, params.id, params.key, params.tarih, params.tutar, params.extraLabel);
 });
@@ -19707,6 +19797,88 @@ function tahminGelecekBakiyeHesapla(gunSayisi=365) {
     } catch(e) {}
   });
 
+  // Kredi kartı ekstreleri — her kart için dönem borcu, son ödeme tarihinde tek kalem olarak düşer
+  if(typeof getExtreDonemi === 'function' && typeof calcExtreTarihiOdemeModuyla === 'function') {
+    const tatilSet = typeof getTatilSet === 'function' ? getTatilSet() : new Set();
+    (DB.kartlar||[]).forEach(kart=>{
+      // Bu karta ait işlemlerden dönem haritası kur (rendExtreler'deki mantıkla aynı)
+      const periodMap = new Map();
+      function ensurePeriod(y, m) {
+        const key = `${y}-${String(m+1).padStart(2,'0')}`;
+        if(periodMap.has(key)) return key;
+        const extreDt = calcExtreTarihiOdemeModuyla(kart, y, m, tatilSet);
+        if(!extreDt) return null;
+        const odemeDt = calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet);
+        periodMap.set(key, { key, odeme: localDateStr(odemeDt), year:y, month:m, totalByPb:{} });
+        return key;
+      }
+      const kartIslemleri = (DB.islemler||[]).filter(i=>i.kart===kart.id);
+      if(!kartIslemleri.length) return;
+      let minDate = new Date(today), maxDate = new Date(today);
+      kartIslemleri.forEach(i=>{
+        const dt = new Date(i.tarih+'T00:00:00');
+        if(dt < minDate) minDate = dt;
+        const lastTaksitDt = new Date(i.tarih+'T00:00:00');
+        lastTaksitDt.setMonth(lastTaksitDt.getMonth() + (i.taksit||1) - 1);
+        if(lastTaksitDt > maxDate) maxDate = lastTaksitDt;
+      });
+      const endLimit = new Date(today); endLimit.setDate(endLimit.getDate()+gunSayisi+45);
+      if(maxDate > endLimit) maxDate = endLimit;
+      const startY = minDate.getFullYear(), startM = minDate.getMonth();
+      const endY = maxDate.getFullYear(), endM = maxDate.getMonth();
+      for(let y=startY, m=startM; y<endY||(y===endY&&m<=endM); ) { ensurePeriod(y,m); m++; if(m>11){m=0;y++;} }
+
+      kartIslemleri.forEach(islem=>{
+        const islemPb = getKartCurrency(kart.id, islem.paraBirimi);
+        getIslemTaksitliste(islem).forEach(tak=>{
+          const pd = getExtreDonemi(kart, tak.ekstreTarih);
+          if(!pd) return;
+          const key = ensurePeriod(pd.year, pd.month);
+          if(!key) return;
+          const p = periodMap.get(key);
+          p.totalByPb[islemPb] = (p.totalByPb[islemPb]||0) + tak.tutar;
+        });
+      });
+
+      // Her dönem+pb için: ödeme tarihi gelecekteyse, kalan borcu (ödemeler düşülmüş) o günde gider olarak ekle
+      periodMap.forEach(p=>{
+        if(!p.odeme || p.odeme < todayStr || p.odeme > bitisStr) return;
+        Object.keys(p.totalByPb).forEach(pb=>{
+          const odenenTop = (DB.kartOdemeleri||[])
+            .filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key)
+            .reduce((s,o)=>s+o.tutar,0);
+          const kalan = (p.totalByPb[pb]||0) - odenenTop;
+          if(kalan > 0.01) {
+            olaylar.push({tarih:p.odeme, tutar:-kalan, pb, aciklama:'💳 '+(kart.ad||'Kart')+' Ekstre Ödemesi'});
+          }
+        });
+      });
+    });
+  }
+
+  // Elden ödemeler — sadece nakit dışı (havale/hesaba bağlı) ve ileri tarihli planlı kayıtlar.
+  // Not: yöntemi "nakit" olanlar fiziksel para hareketidir, banka/kart hesap bakiyesini etkilemez,
+  // bu yüzden nakit bakiyesini değiştirir ama hesap projeksiyonuna girmez. "Havale" + hesap bağlıysa dahil edilir.
+  (DB.eldenler||[]).forEach(e=>{
+    if(e.tarih < todayStr || e.tarih > bitisStr) return;
+    const pb = e.paraBirimi || defaultCurrency || 'TRY';
+    if(e.yontem === 'havale' && e.hesapId) {
+      olaylar.push({tarih:e.tarih, tutar:e.tutar, pb, aciklama:'✋ '+(e.aciklama||(e.tur==='gelir'?'Elden Gelir':'Elden Gider'))});
+    } else if(e.yontem === 'nakit') {
+      // Nakit bakiyesini ayrıca takip ediyoruz, hesap toplamına girmiyor — ayrı pb anahtarı ile gösterilebilir
+      const nakitPb = pb + '_NAKIT';
+      olaylar.push({tarih:e.tarih, tutar:e.tutar, pb:nakitPb, aciklama:'✋ '+(e.aciklama||(e.tur==='gelir'?'Elden Gelir':'Elden Gider'))});
+    }
+  });
+
+  // Nakit bakiyesi için başlangıç değerini de ekle (varsa)
+  if(DB._nakitBakiye) {
+    Object.entries(DB._nakitBakiye).forEach(([pb,val])=>{
+      const nakitPb = pb + '_NAKIT';
+      baslangicByPb[nakitPb] = (baslangicByPb[nakitPb]||0) + val;
+    });
+  }
+
   // 3) Para birimi bazında günlere yay ve kümülatif bakiye hesapla
   const pbSet = new Set([...Object.keys(baslangicByPb), ...olaylar.map(o=>o.pb)]);
   const sonuc = {};
@@ -19725,7 +19897,7 @@ function tahminGelecekBakiyeHesapla(gunSayisi=365) {
       byTarih[tarih].forEach(o=>{ bakiye += o.tutar; });
       gunler.push({tarih, bakiye, olaylar: byTarih[tarih]});
     });
-    sonuc[pb] = { gunler, baslangic: baslangicByPb[pb]||0, toplamGelir: pbOlaylar.filter(o=>o.tutar>0).reduce((s,o)=>s+o.tutar,0), toplamGider: pbOlaylar.filter(o=>o.tutar<0).reduce((s,o)=>s+Math.abs(o.tutar),0) };
+    sonuc[pb] = { gunler, baslangic: baslangicByPb[pb]||0, toplamGelir: pbOlaylar.filter(o=>o.tutar>0).reduce((s,o)=>s+o.tutar,0), toplamGider: pbOlaylar.filter(o=>o.tutar<0).reduce((s,o)=>s+Math.abs(o.tutar),0), olaylar: pbOlaylar };
   });
   return sonuc;
 }
@@ -19735,100 +19907,419 @@ function renderTahminBakiye() {
   const elSel = document.getElementById('tahmin-pb-secim');
   if(!elWrap || !elSel) return;
 
-  const data = tahminGelecekBakiyeHesapla(365);
+  const gunSayisi = window._tbkGunSayisi || 365;
+  const data = tahminGelecekBakiyeHesapla(gunSayisi);
   const pbList = Object.keys(data);
   if(!pbList.length) {
-    elWrap.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:16px">Hesap bulunamadı — önce bir hesap ekleyin.</div>';
+    elWrap.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:36px 16px;color:var(--text3)">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>
+      <div style="font-size:12.5px">Hesap bulunamadı — önce bir hesap ekleyin.</div>
+    </div>`;
     elSel.style.display = 'none';
     return;
   }
   elSel.style.display = '';
 
-  // PB dropdown'u doldur (seçim korunur)
+  // PB dropdown'u doldur (seçim korunur). _NAKIT etiketli olanlar "Nakit" olarak gösterilir.
   const oncekiSecim = elSel.value;
-  elSel.innerHTML = pbList.map(pb=>`<option value="${pb}">${pb}</option>`).join('');
+  elSel.innerHTML = pbList.map(pb=>{
+    const isNakit = pb.endsWith('_NAKIT');
+    const gercekPb = isNakit ? pb.replace('_NAKIT','') : pb;
+    const etiket = isNakit ? `💵 ${gercekPb} Nakit` : gercekPb;
+    return `<option value="${pb}">${etiket}</option>`;
+  }).join('');
   elSel.value = pbList.includes(oncekiSecim) ? oncekiSecim : pbList[0];
   const pb = elSel.value;
+  const pbGercek = pb.endsWith('_NAKIT') ? pb.replace('_NAKIT','') : pb;
+  const safeId = pb.replace(/[^a-zA-Z0-9]/g,'');
 
   const d = data[pb];
   const gunler = d.gunler;
   const sonBakiye = gunler[gunler.length-1].bakiye;
   const netDegisim = sonBakiye - d.baslangic;
-  const cfg = (typeof CURRENCY_CONFIG!=='undefined' && CURRENCY_CONFIG[pb]) || {};
+  const yuzdeDegisim = d.baslangic !== 0 ? (netDegisim / Math.abs(d.baslangic)) * 100 : null;
+  const cizgiRenk = netDegisim >= 0 ? 'var(--teal)' : 'var(--rose)';
 
-  // SVG grafik için noktaları normalize et (365 günlük zaman eksenine yay)
+  // ── SVG koordinat sistemi ──────────────────────────────────────
   const today = new Date(); today.setHours(0,0,0,0);
-  const W = 760, H = 200, padL = 8, padR = 8, padT = 16, padB = 28;
-  const minB = Math.min(d.baslangic, ...gunler.map(g=>g.bakiye), 0);
-  const maxB = Math.max(d.baslangic, ...gunler.map(g=>g.bakiye), 1);
+  const todayStrLocal = localDateStr(today);
+  const isMobile = window.innerWidth <= 640;
+  const W = isMobile ? 360 : 800, H = isMobile ? 220 : 250;
+  const yAxisW = isMobile ? 0 : 52;
+  const padL = (isMobile ? 6 : 10) + yAxisW, padR = isMobile ? 10 : 14, padT = 26, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const allVals = gunler.map(g=>g.bakiye).concat([d.baslangic]);
+  let minB = Math.min(...allVals), maxB = Math.max(...allVals);
+  const dataSpan = (maxB - minB) || Math.max(1, Math.abs(maxB) * 0.15) || 1;
+  // Veri hiç negatife düşmüyorsa (gerçek minimum >= 0), sıfırı taban olarak kilitle —
+  // padding asla minimumu negatife düşürmesin (yanıltıcı "-40b" gibi sahte referans önlenir).
+  const gercekMinPozitif = minB >= 0;
+  minB -= dataSpan * 0.08; maxB += dataSpan * 0.12;
+  if(gercekMinPozitif) minB = Math.max(minB, 0);
   const range = (maxB - minB) || 1;
+
   function xFor(tarihStr) {
     const t = new Date(tarihStr+'T00:00:00');
     const gunFarki = Math.round((t - today) / 86400000);
-    return padL + (gunFarki/365) * (W-padL-padR);
+    return padL + Math.max(0, Math.min(1, gunFarki/365)) * plotW;
   }
   function yFor(bakiye) {
-    return padT + (1 - (bakiye-minB)/range) * (H-padT-padB);
+    return padT + (1 - (bakiye-minB)/range) * plotH;
   }
-  let pathD = `M ${xFor(gunler[0].tarih).toFixed(1)} ${yFor(gunler[0].bakiye).toFixed(1)}`;
-  gunler.forEach(g=>{
-    pathD += ` L ${xFor(g.tarih).toFixed(1)} ${yFor(g.bakiye).toFixed(1)}`;
-  });
-  // Son noktayı 365. güne kadar uzat (sabit kalır)
-  pathD += ` L ${(W-padR).toFixed(1)} ${yFor(sonBakiye).toFixed(1)}`;
 
-  const zeroY = yFor(0).toFixed(1);
+  // Çizgi noktaları (son gün 365'e sabit uzatılır)
+  const pts = gunler.map(g=>({x:xFor(g.tarih), y:yFor(g.bakiye), tarih:g.tarih, bakiye:g.bakiye, olaylar:g.olaylar}));
+  pts.push({x: W-padR, y: yFor(sonBakiye), tarih:null, bakiye:sonBakiye, olaylar:[]});
+  let pathD = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  pts.forEach((p,i)=>{ if(i>0) pathD += ` L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`; });
+  const areaTop = `${pathD} L ${(W-padR).toFixed(1)} ${(H-padB).toFixed(1)} L ${padL} ${(H-padB).toFixed(1)} Z`;
+
+  // ── Y ekseni: 4 referans seviyesi + gerçek bakiye değerleri ─────
+  const levelCount = isMobile ? 3 : 4;
+  const gridLevels = Array.from({length:levelCount+1}, (_,i)=> minB + (i/levelCount)*range);
+  let gridLines = '', yLabels = '';
+  gridLevels.forEach(val=>{
+    const y = yFor(val);
+    if(y < padT-2 || y > H-padB+2) return;
+    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.045)" stroke-width="1"/>`;
+    if(!isMobile) {
+      const kisaltilmis = fmtCurShort(val, pbGercek);
+      yLabels += `<text x="${(padL-8).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="var(--text3)" text-anchor="end">${kisaltilmis}</text>`;
+    }
+  });
+
+  // Sıfır çizgisi (sadece aralığa dahilse, ayrı ve net şekilde)
+  const zeroY = yFor(0);
   const sıfırGoster = minB < 0 && maxB > 0;
 
-  // Ay etiketleri (x ekseni)
+  // ── Ay etiketleri: çakışmayı önlemek için dinamik adım ──────────
   let ayEtiketleri = '';
-  for(let i=0; i<=12; i+=3) {
-    const dt = new Date(today.getFullYear(), today.getMonth()+i, today.getDate());
+  const ayKisaTr = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const minPxPerLabel = isMobile ? 56 : 58;
+  const maxLabelCount = Math.max(2, Math.floor(plotW / minPxPerLabel));
+  let ayAdimi = Math.ceil(13 / maxLabelCount);
+  if(ayAdimi < 1) ayAdimi = 1;
+  for(let i=0; i<=12; i+=ayAdimi) {
+    const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
     const x = xFor(localDateStr(dt));
-    ayEtiketleri += `<text x="${x.toFixed(1)}" y="${H-8}" font-size="10" fill="var(--text3)" text-anchor="middle">${dt.toLocaleDateString('tr-TR',{month:'short',year:'2-digit'})}</text>`;
+    if(x > W - padR - 14 && i !== 0) continue;
+    const yilEtiket = (i===0 || dt.getMonth()===0) ? ` '${String(dt.getFullYear()).slice(2)}` : '';
+    ayEtiketleri += `<text x="${x.toFixed(1)}" y="${H-10}" font-size="9.5" font-family="var(--sans)" fill="var(--text3)" text-anchor="middle">${ayKisaTr[dt.getMonth()]}${yilEtiket}</text>`;
   }
 
-  // En düşük bakiyeye düşülen ay (negatife düşme veya dip nokta uyarısı)
+  // Dip nokta (en düşük bakiye) ve negatife düşüş anı
   let dipNokta = gunler[0];
   gunler.forEach(g=>{ if(g.bakiye < dipNokta.bakiye) dipNokta = g; });
   const negatifeDusuyor = dipNokta.bakiye < 0;
+  let negatifGecisGunu = null;
+  for(let i=1; i<gunler.length; i++) {
+    if(gunler[i-1].bakiye >= 0 && gunler[i].bakiye < 0) { negatifGecisGunu = gunler[i]; break; }
+  }
+
+  const gradId = 'tahminGrad_' + safeId;
+  const glowId = 'tahminGlow_' + safeId;
+
+  // Ay sınırı dikey çizgileri (hafif)
+  let ayBolmeleri = '';
+  for(let i=1; i<=Math.ceil(gunSayisi/30)+1; i++) {
+    const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
+    const x = xFor(localDateStr(dt));
+    if(x <= padL || x >= W-padR) continue;
+    ayBolmeleri += `<line x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${H-padB}" stroke="rgba(255,255,255,.055)" stroke-width="1" stroke-dasharray="2,4"/>`;
+  }
+
+  // İşaretçiler
+  let markers = '';
+  if(negatifeDusuyor && negatifGecisGunu) {
+    const mx = xFor(negatifGecisGunu.tarih), my = yFor(negatifGecisGunu.bakiye);
+    markers += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="10" fill="var(--rose)" opacity="0.16"><animate attributeName="r" values="9;15;9" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;0.04;0.2" dur="2.2s" repeatCount="indefinite"/></circle>`;
+    markers += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="4" fill="var(--bg)" stroke="var(--rose)" stroke-width="2"/>`;
+  }
+  // Dip nokta işaretçisi (negatife düşmese bile en düşük noktayı göster)
+  const dipX = xFor(dipNokta.tarih), dipY = yFor(dipNokta.bakiye);
+  const dipRenk = dipNokta.bakiye < 0 ? 'var(--rose)' : 'var(--gold)';
+  if(dipNokta.tarih !== gunler[0].tarih && dipNokta.tarih !== gunler[gunler.length-1]?.tarih) {
+    markers += `<circle cx="${dipX.toFixed(1)}" cy="${dipY.toFixed(1)}" r="3.5" fill="${dipRenk}" stroke="var(--bg)" stroke-width="1.5" opacity="0.85"/>`;
+    if(!isMobile) {
+      const labelX = dipX > W*0.75 ? dipX-4 : dipX+4;
+      const anchor = dipX > W*0.75 ? 'end' : 'start';
+      markers += `<text x="${labelX.toFixed(1)}" y="${(dipY-7).toFixed(1)}" font-size="9" font-family="var(--mono)" fill="${dipRenk}" text-anchor="${anchor}" opacity="0.85">${fmtCurShort(dipNokta.bakiye, pbGercek)}</text>`;
+    }
+  }
+  markers += `<circle cx="${pts[0].x.toFixed(1)}" cy="${pts[0].y.toFixed(1)}" r="4.5" fill="var(--bg)" stroke="var(--gold)" stroke-width="2.25"/>`;
+  const lastPt = pts[pts.length-1];
+  markers += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="5" fill="${cizgiRenk}" opacity="0.18"><animate attributeName="r" values="5;9;5" dur="2.6s" repeatCount="indefinite"/></circle>`;
+  markers += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="4" fill="${cizgiRenk}" stroke="var(--bg)" stroke-width="1.75"/>`;
+  if(!isMobile) {
+    markers += `<text x="${(lastPt.x+6).toFixed(1)}" y="${(lastPt.y+4).toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="${cizgiRenk}" text-anchor="start" opacity="0.8">${fmtCurShort(sonBakiye, pbGercek)}</text>`;
+  }
+
+  // Hover için tüm gerçek olay günleri
+  const olayNoktalari = gunler.map(g=>({x:xFor(g.tarih), y:yFor(g.bakiye), tarih:g.tarih, bakiye:g.bakiye, olaylar:g.olaylar}));
+
+  // ── Aylık Breakdown Hesabı ───────────────────────────────────────
+  const AY_KISATR = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const aylikVeriler = [];
+  {
+    const ayMap = new Map(); // 'YYYY-MM' -> {gelir, gider, baslangicBakiye}
+    let oncekiBakiye = d.baslangic;
+    // Her olay gününü ilgili aya ata
+    const gunlerTumButIlk = gunler.slice(1); // ilk nokta bugün, olay değil
+    gunlerTumButIlk.forEach(g => {
+      const ayKey = g.tarih.slice(0, 7);
+      if (!ayMap.has(ayKey)) {
+        const y = parseInt(ayKey.slice(0,4)), m = parseInt(ayKey.slice(5,7))-1;
+        ayMap.set(ayKey, { ayKey, y, m, gelir: 0, gider: 0, baslangicBakiye: oncekiBakiye });
+      }
+      const ay = ayMap.get(ayKey);
+      g.olaylar.forEach(o => {
+        if (o.tutar > 0) ay.gelir += o.tutar;
+        else ay.gider += Math.abs(o.tutar);
+      });
+      oncekiBakiye = g.bakiye;
+    });
+    // Ayları sıralı diz
+    let birikimli = d.baslangic;
+    Array.from(ayMap.values()).sort((a,b)=>a.ayKey.localeCompare(b.ayKey)).forEach(ay => {
+      const net = ay.gelir - ay.gider;
+      birikimli += net;
+      aylikVeriler.push({ ...ay, net, bitisBakiye: birikimli });
+    });
+  }
+  const kritikAy = aylikVeriler.length ? aylikVeriler.reduce((a,b)=>b.bitisBakiye<a.bitisBakiye?b:a) : null;
+
+  // ── Aylık Tablo HTML ─────────────────────────────────────────────
+  let tbkAylikHtml = '';
+  if (aylikVeriler.length > 0) {
+    const satirlar = aylikVeriler.map(ay => {
+      const isKritik = kritikAy && ay.ayKey === kritikAy.ayKey;
+      const netRenk = ay.net >= 0 ? 'var(--teal)' : 'var(--rose)';
+      const bitisRenk = ay.bitisBakiye < 0 ? 'var(--rose)' : ay.bitisBakiye < d.baslangic * 0.3 ? 'var(--gold)' : 'var(--text)';
+      const ayLabel = `${AY_KISATR[ay.m]} ${ay.y !== today.getFullYear() ? ay.y : ''}`.trim();
+      return `<tr class="${isKritik ? 'tbk-ay-kritik' : ''}">
+        <td>${isKritik ? '⚠️ ' : ''}${ayLabel}</td>
+        <td style="color:var(--teal)">+${fmtCur(ay.gelir, pbGercek)}</td>
+        <td style="color:var(--rose)">-${fmtCur(ay.gider, pbGercek)}</td>
+        <td style="color:${netRenk};font-weight:600">${ay.net>=0?'+':''}${fmtCur(ay.net, pbGercek, true)}</td>
+        <td style="color:${bitisRenk};font-weight:700">${fmtCur(ay.bitisBakiye, pbGercek)}</td>
+      </tr>`;
+    }).join('');
+    tbkAylikHtml = `<div class="tbk-aylik-wrap">
+      <div class="tbk-aylik-title tbk-section-toggle" onclick="this.closest('.tbk-aylik-wrap').classList.toggle('tbk-section-collapsed');this.querySelector('svg').style.transform=this.closest('.tbk-aylik-wrap').classList.contains('tbk-section-collapsed')?'rotate(-90deg)':''">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        Aylık Gelir / Gider / Bakiye Özeti
+      </div>
+      <div class="tbk-aylik-body">
+        <table class="tbk-aylik-table">
+          <thead><tr>
+            <th>Ay</th>
+            <th>Gelir</th>
+            <th>Gider</th>
+            <th>Net</th>
+            <th>Bakiye (Dönem Sonu)</th>
+          </tr></thead>
+          <tbody>${satirlar}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  // ── En Büyük Kalemler ────────────────────────────────────────────
+  let tbkKalemlerHtml = '';
+  {
+    const kalemMap = {}; // aciklama -> {gelir, gider}
+    (d.olaylar||[]).forEach(o=>{
+      if(!kalemMap[o.aciklama]) kalemMap[o.aciklama] = {ad:o.aciklama, gelir:0, gider:0};
+      if(o.tutar>0) kalemMap[o.aciklama].gelir += o.tutar;
+      else kalemMap[o.aciklama].gider += Math.abs(o.tutar);
+    });
+    const kalemler = Object.values(kalemMap);
+    const topGelir = kalemler.filter(k=>k.gelir>0).sort((a,b)=>b.gelir-a.gelir).slice(0,5);
+    const topGider = kalemler.filter(k=>k.gider>0).sort((a,b)=>b.gider-a.gider).slice(0,5);
+    if(topGelir.length || topGider.length) {
+      const gelirSatir = topGelir.map(k=>`<div class="tbk-kalem-row">
+        <span class="tbk-kalem-ad" title="${k.ad}">${k.ad}</span>
+        <span class="tbk-kalem-tutar" style="color:var(--teal)">+${fmtCur(k.gelir,pbGercek)}</span>
+      </div>`).join('');
+      const giderSatir = topGider.map(k=>`<div class="tbk-kalem-row">
+        <span class="tbk-kalem-ad" title="${k.ad}">${k.ad}</span>
+        <span class="tbk-kalem-tutar" style="color:var(--rose)">-${fmtCur(k.gider,pbGercek)}</span>
+      </div>`).join('');
+      tbkKalemlerHtml = `<div class="tbk-kalemler">
+        ${topGelir.length ? `<div class="tbk-kalem-col">
+          <div class="tbk-kalem-col-title"><span style="color:var(--teal)">▲</span> En Büyük Gelirler</div>
+          ${gelirSatir}
+        </div>` : ''}
+        ${topGider.length ? `<div class="tbk-kalem-col">
+          <div class="tbk-kalem-col-title"><span style="color:var(--rose)">▼</span> En Büyük Giderler</div>
+          ${giderSatir}
+        </div>` : ''}
+      </div>`;
+    }
+  }
 
   elWrap.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Şu Anki Bakiye</div>
-        <div class="mono" style="font-size:15px;font-weight:700;color:var(--text)">${fmtCur(d.baslangic, pb)}</div>
+    <div class="tbk-stats-grid">
+      <div class="tbk-stat">
+        <div class="tbk-stat-icon" style="background:var(--gold-glow2);color:var(--gold)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <div class="tbk-stat-label">Şu Anki Bakiye</div>
+        <div class="tbk-stat-val mono">${fmtCur(d.baslangic, pbGercek)}</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">12 Ay Sonra Tahmini</div>
-        <div class="mono" style="font-size:15px;font-weight:700;color:${sonBakiye>=d.baslangic?'var(--teal)':'var(--rose)'}">${fmtCur(sonBakiye, pb)}</div>
+      <div class="tbk-stat">
+        <div class="tbk-stat-icon" style="background:${sonBakiye>=d.baslangic?'var(--teal-glow)':'var(--rose-glow)'};color:${sonBakiye>=d.baslangic?'var(--teal)':'var(--rose)'}">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+        </div>
+        <div class="tbk-stat-label">12 Ay Sonra Tahmini</div>
+        <div class="tbk-stat-val mono" style="color:${sonBakiye>=d.baslangic?'var(--teal)':'var(--rose)'}">${fmtCur(sonBakiye, pbGercek)}</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Net Değişim</div>
-        <div class="mono" style="font-size:15px;font-weight:700;color:${netDegisim>=0?'var(--teal)':'var(--rose)'}">${fmtCur(netDegisim, pb, true)}</div>
+      <div class="tbk-stat">
+        <div class="tbk-stat-icon" style="background:${netDegisim>=0?'var(--teal-glow)':'var(--rose-glow)'};color:${netDegisim>=0?'var(--teal)':'var(--rose)'}">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${netDegisim>=0?'<polyline points="18 15 12 9 6 15"/>':'<polyline points="6 9 12 15 18 9"/>'}</svg>
+        </div>
+        <div class="tbk-stat-label">Net Değişim</div>
+        <div class="tbk-stat-val mono" style="color:${netDegisim>=0?'var(--teal)':'var(--rose)'}">${fmtCur(netDegisim, pbGercek, true)}${yuzdeDegisim!==null?`<span style="font-size:10.5px;opacity:.7;margin-left:4px">(${yuzdeDegisim>=0?'+':''}${yuzdeDegisim.toFixed(0)}%)</span>`:''}</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Toplam Gelir / Gider</div>
-        <div class="mono" style="font-size:12.5px;font-weight:600"><span style="color:var(--teal)">+${fmtCur(d.toplamGelir, pb)}</span> / <span style="color:var(--rose)">-${fmtCur(d.toplamGider, pb)}</span></div>
+      <div class="tbk-stat">
+        <div class="tbk-stat-icon" style="background:var(--purple-glow);color:var(--violet)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 3 5-8"/></svg>
+        </div>
+        <div class="tbk-stat-label">Toplam Gelir / Gider</div>
+        <div class="tbk-stat-val mono" style="font-size:13px;display:flex;flex-wrap:wrap;align-items:baseline;gap:0"><span style="color:var(--teal)">+${fmtCur(d.toplamGelir, pbGercek)}</span><span style="color:var(--text3);margin:0 4px">/</span><span style="color:var(--rose)">-${fmtCur(d.toplamGider, pbGercek)}</span></div>
       </div>
     </div>
-    ${negatifeDusuyor ? `<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--danger-glow);border:1px solid rgba(251,113,133,.3);border-radius:10px;font-size:12px;color:var(--rose);margin-bottom:12px">🚨 <span>Tahmine göre <b>${fmtDate ? fmtDate(new Date(dipNokta.tarih+'T00:00:00')) : dipNokta.tarih}</b> tarihinde bakiye <b>${fmtCur(dipNokta.bakiye, pb)}</b>'ye düşüyor (eksiye geçiyor). Gelir/gider planınızı gözden geçirin.</span></div>` : ''}
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
-      <defs>
-        <linearGradient id="tahminGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      ${sıfırGoster ? `<line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="var(--rose)" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>` : ''}
-      <path d="${pathD} L ${(W-padR).toFixed(1)} ${(H-padB).toFixed(1)} L ${padL} ${(H-padB).toFixed(1)} Z" fill="url(#tahminGrad)" stroke="none"/>
-      <path d="${pathD}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-      ${ayEtiketleri}
-    </svg>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">
-      Bu tahmin; düzenli maaş, kira, abonelik ve kredi taksiti kayıtlarınıza göre hesaplanır. Kredi kartı ekstreleri, plansız harcamalar ve tek seferlik elden işlemler dahil değildir — gerçek bakiyeniz bu tahminden farklılaşabilir.
+
+    ${negatifeDusuyor ? `<div class="tbk-alert">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Tahmine göre <b>${fmtDate ? fmtDate(new Date(dipNokta.tarih+'T00:00:00')) : dipNokta.tarih}</b> civarında bakiye <b>${fmtCur(dipNokta.bakiye, pbGercek)}</b>'ye düşüyor. Gelir/gider planınızı gözden geçirin.</span>
+    </div>` : ''}
+
+    <div class="tbk-chart-wrap">
+      <svg id="tbk-svg-${safeId}" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${cizgiRenk}" stop-opacity="0.4"/>
+            <stop offset="55%" stop-color="${cizgiRenk}" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="${cizgiRenk}" stop-opacity="0"/>
+          </linearGradient>
+          <filter id="${glowId}" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2.2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        ${ayBolmeleri}
+        ${gridLines}
+        ${yLabels}
+        ${sıfırGoster ? `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W-padR}" y2="${zeroY.toFixed(1)}" stroke="var(--rose)" stroke-width="1.1" stroke-dasharray="4,3" opacity="0.55"/>` : ''}
+        <path d="${areaTop}" fill="url(#${gradId})" stroke="none"/>
+        <path d="${pathD}" fill="none" stroke="${cizgiRenk}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#${glowId})"/>
+        ${markers}
+        ${ayEtiketleri}
+        <line id="tbk-hoverline-${safeId}" x1="0" y1="${padT}" x2="0" y2="${H-padB}" stroke="var(--text2)" stroke-width="1" stroke-dasharray="2,3" opacity="0"/>
+        <circle id="tbk-hoverdot-${safeId}" cx="0" cy="0" r="5" fill="${cizgiRenk}" stroke="var(--bg)" stroke-width="2" opacity="0"/>
+        <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair" id="tbk-hoverarea-${safeId}"/>
+      </svg>
+      <div id="tbk-tooltip-${safeId}" class="tbk-tooltip" style="opacity:0"></div>
     </div>
+
+    <div class="tbk-legend">
+      <span><span class="tbk-dot" style="background:var(--gold)"></span>Bugün</span>
+      ${negatifeDusuyor ? `<span><span class="tbk-dot" style="background:var(--rose)"></span>Eksiye geçiş</span>` : ''}
+      ${(dipNokta.tarih !== gunler[0].tarih) ? `<span><span class="tbk-dot" style="background:${dipNokta.bakiye<0?'var(--rose)':'var(--gold)'}"></span>En düşük (${fmtDate?fmtDate(new Date(dipNokta.tarih+'T00:00:00')):dipNokta.tarih})</span>` : ''}
+      <span style="margin-left:auto;font-size:10px;color:var(--text3)">${gunSayisi} günlük projeksiyon</span>
+    </div>
+
+    <div class="tbk-footnote">
+      Maaş, kira, abonelik, kredi taksitleri, kredi kartı ekstre ödemeleri (son ödeme tarihinde tek kalem) ve kayıtlı elden işlemlere göre hesaplanır. Henüz girilmemiş yeni harcamalar tahmine yansımaz.
+    </div>
+
+    ${tbkAylikHtml}
+    ${tbkKalemlerHtml}
   `;
+
+  // ── Hover etkileşimi ────────────────────────────────────────────
+  (function attachHover(){
+    const svg = document.getElementById('tbk-svg-'+safeId);
+    const hoverArea = document.getElementById('tbk-hoverarea-'+safeId);
+    const hoverLine = document.getElementById('tbk-hoverline-'+safeId);
+    const hoverDot = document.getElementById('tbk-hoverdot-'+safeId);
+    const tooltip = document.getElementById('tbk-tooltip-'+safeId);
+    if(!svg || !hoverArea || !tooltip) return;
+
+    function findNearest(svgX) {
+      let nearest = olayNoktalari[0];
+      let minDist = Infinity;
+      olayNoktalari.forEach(p=>{
+        const dist = Math.abs(p.x - svgX);
+        if(dist < minDist) { minDist = dist; nearest = p; }
+      });
+      return nearest;
+    }
+
+    function onMove(evt) {
+      const rect = svg.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const svgX = ((clientX - rect.left) / rect.width) * W;
+      const p = findNearest(svgX);
+      hoverLine.setAttribute('x1', p.x); hoverLine.setAttribute('x2', p.x); hoverLine.setAttribute('opacity', '0.55');
+      hoverDot.setAttribute('cx', p.x); hoverDot.setAttribute('cy', p.y); hoverDot.setAttribute('opacity', '1');
+
+      const tarihLabel = p.tarih === todayStrLocal ? 'Bugün' : (fmtDate ? fmtDate(new Date(p.tarih+'T00:00:00')) : p.tarih);
+      const olayHtml = (p.olaylar||[]).slice(0,4).map(o=>
+        `<div class="tbk-tt-row"><span>${o.aciklama}</span><span class="mono" style="color:${o.tutar>=0?'var(--teal)':'var(--rose)'}">${fmtCur(o.tutar, pbGercek, true)}</span></div>`
+      ).join('');
+      const fazlaOlay = (p.olaylar||[]).length > 4 ? `<div class="tbk-tt-more">+${p.olaylar.length-4} işlem daha</div>` : '';
+      tooltip.innerHTML = `<div class="tbk-tt-date">${tarihLabel}</div>
+        <div class="tbk-tt-bakiye mono">${fmtCur(p.bakiye, pbGercek)}</div>
+        ${olayHtml ? `<div class="tbk-tt-divider"></div>${olayHtml}${fazlaOlay}` : ''}`;
+
+      const pxRatio = rect.width / W;
+      let leftPx = p.x * pxRatio;
+      const ttWidth = 184;
+      if(leftPx + ttWidth > rect.width) leftPx = leftPx - ttWidth - 14;
+      else leftPx = leftPx + 14;
+      tooltip.style.left = Math.max(4, leftPx) + 'px';
+      const pyRatio = (svg.clientHeight||rect.height||H) / H;
+      tooltip.style.top = Math.max(0, (p.y*pyRatio) - 10) + 'px';
+      tooltip.style.opacity = '1';
+    }
+    function onLeave() {
+      hoverLine.setAttribute('opacity','0');
+      hoverDot.setAttribute('opacity','0');
+      tooltip.style.opacity = '0';
+    }
+    hoverArea.addEventListener('mousemove', onMove);
+    hoverArea.addEventListener('mouseleave', onLeave);
+    hoverArea.addEventListener('touchmove', function(e){ onMove(e); }, {passive:true});
+    hoverArea.addEventListener('touchend', onLeave);
+  })();
+}
+
+// tbkSetPeriod: dönem düğmesine tıklanınca güncelle
+function tbkSetPeriod(gun, btn) {
+  window._tbkGunSayisi = gun;
+  // Başlık güncelle
+  const titles = {90:'Gelecek 3 Ay Tahmini Bakiye', 180:'Gelecek 6 Ay Tahmini Bakiye', 365:'Gelecek 1 Yıl Tahmini Bakiye', 730:'Gelecek 2 Yıl Tahmini Bakiye'};
+  const el = document.getElementById('tahmin-card-title');
+  if(el) el.textContent = titles[gun] || 'Tahmini Bakiye';
+  // Aktif buton
+  document.querySelectorAll('.tbk-period-btn').forEach(b=>b.classList.remove('tbk-period-active'));
+  if(btn) btn.classList.add('tbk-period-active');
+  renderTahminBakiye();
+}
+
+// Y ekseni etiketleri için kısa para gösterimi (1.250.000 -> 1,25Mn gibi sıkıştırma)
+function fmtCurShort(n, currency) {
+  const cfg = (typeof CURRENCY_CONFIG!=='undefined' && CURRENCY_CONFIG[currency]) || {};
+  const sym = cfg.symbol || '';
+  const abs = Math.abs(n);
+  let s;
+  if(abs >= 1000000) s = (n/1000000).toFixed(abs>=10000000?0:1).replace('.',',') + 'Mn';
+  else if(abs >= 1000) s = (n/1000).toFixed(abs>=10000?0:1).replace('.',',') + 'b';
+  else s = Math.round(n).toString();
+  return sym + s;
 }
 
 
@@ -27125,8 +27616,8 @@ function renderTransferLog() {
   (DB.hesaplar || []).forEach(h => { hesapMap[h.id] = h.ad; });
   const usedHesapIds = new Set();
   const nakitPbSet = new Set();
+  if (!DB.transferler) DB.transferler = [];
   DB.transferler.forEach(t => {
-    if (t.kTip === 'hesap' && t.kaynakId) usedHesapIds.add(t.kaynakId);
     if (t.hTip === 'hesap' && t.hedefId) usedHesapIds.add(t.hedefId);
     if (t.kTip === 'nakit') nakitPbSet.add(t.kaynakPb);
     if (t.hTip === 'nakit') nakitPbSet.add(t.hedefPb);
