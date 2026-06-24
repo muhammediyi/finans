@@ -3184,13 +3184,25 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   box-shadow: 0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1) !important;
 }
 /* ── KART DETAY POPUP SEKMELERİ ──────────────────────────────── */
+/* Tab satırı: tab grubu + yeni işlem butonu */
+.kd-tab-row { display: flex; align-items: center; gap: 10px; padding: 0 24px; margin-top: -4px; margin-bottom: 14px; flex-wrap: wrap; }
+.kd-tab-row .kd-tab-bar { flex: 1 1 auto; min-width: 0; }
+.kd-yeni-islem-btn { margin-left: auto; flex-shrink: 0; }
+@media(max-width:520px) {
+  .kd-tab-row { gap: 8px; }
+  .kd-tab-row .kd-tab-bar { flex: 1 1 100%; order: 1; }
+  .kd-yeni-islem-btn { flex: 1 1 100%; order: 2; margin-left: 0; justify-content: center; }
+}
 /* Tab bar */
-.kd-tab-bar { display: flex; gap: 2px; background: var(--surface2); border-radius: 9px; padding: 3px; border: 1px solid var(--border); }
-.kd-tab-btn { border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 6px 16px; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--text2); transition: var(--transition); display: flex; align-items: center; gap: 6px; }
+.kd-tab-bar { display: flex; gap: 3px; background: var(--surface2); border-radius: 11px; padding: 4px; border: 1px solid var(--border); }
+.kd-tab-btn { flex: 1 1 0; border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text3); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 7px; }
+.kd-tab-btn svg { opacity: .65; flex-shrink: 0; transition: var(--transition); }
 .kd-tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
-.kd-tab-btn.active { background: var(--surface3); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06); }
+.kd-tab-btn:hover svg { opacity: .9; }
+.kd-tab-btn.active { background: var(--surface3); color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06); }
+.kd-tab-btn.active svg { opacity: 1; color: var(--gold); }
 .kd-tab-badge { background: var(--surface4); color: var(--text2); border-radius: 20px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; line-height: 1.5; }
-.kd-tab-btn.active .kd-tab-badge { background: rgba(255,255,255,.12); color: var(--text); }
+.kd-tab-btn.active .kd-tab-badge { background: rgba(251,191,36,.18); color: var(--gold); }
 @keyframes kdTabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Header banner şeridi */
@@ -5988,8 +6000,14 @@ window.addEventListener('load', placeMobProfilePanel);
 
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       <div class="kd-tab-bar">
-        <button type="button" class="kd-tab-btn active" id="kd2-tab-btn-islem" onclick="kd2SwitchTab('islem')">İşlemler <span class="kd-tab-badge" id="kd2-tab-badge-islem">0</span></button>
-        <button type="button" class="kd-tab-btn" id="kd2-tab-btn-extre" onclick="kd2SwitchTab('extre')">Ekstreler <span class="kd-tab-badge" id="kd2-tab-badge-extre">0</span></button>
+        <button type="button" class="kd-tab-btn active" id="kd2-tab-btn-islem" onclick="kd2SwitchTab('islem')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          İşlemler <span class="kd-tab-badge" id="kd2-tab-badge-islem">0</span>
+        </button>
+        <button type="button" class="kd-tab-btn" id="kd2-tab-btn-extre" onclick="kd2SwitchTab('extre')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          Ekstreler <span class="kd-tab-badge" id="kd2-tab-badge-extre">0</span>
+        </button>
       </div>
     </div>
 
@@ -7608,12 +7626,18 @@ window.addEventListener('load', placeMobProfilePanel);
       <button class="close-btn" onclick="closeModal('modal-kart-detay')">✕</button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px;padding:0 24px;margin-top:-4px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="kd-tab-row">
       <div class="kd-tab-bar">
-        <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">İşlemler <span class="kd-tab-badge" id="kd-tab-badge-islem">0</span></button>
-        <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">Ekstreler <span class="kd-tab-badge" id="kd-tab-badge-extre">0</span></button>
+        <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          İşlemler <span class="kd-tab-badge" id="kd-tab-badge-islem">0</span>
+        </button>
+        <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          Ekstreler <span class="kd-tab-badge" id="kd-tab-badge-extre">0</span>
+        </button>
       </div>
-      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
+      <button class="btn btn-primary btn-sm kd-yeni-islem-btn" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
     </div>
 
     <div class="modal-body" style="padding-top:0">
@@ -7636,6 +7660,7 @@ window.addEventListener('load', placeMobProfilePanel);
         <div class="kd-islem-list" id="kd-islem-list"></div>
       </div>
       <div id="kd-tab-extre" style="display:none">
+        <div id="kd-extre-uyari" style="display:none;margin-bottom:14px"></div>
         <div id="kd-extre-list"></div>
       </div>
     </div>
@@ -11841,6 +11866,8 @@ function kdRenderExtreler() {
   const kart = DB.kartlar.find(k => k.id === _kdKartId);
   if (!kart) { wrap.innerHTML = '<div class="info-box">Kart bulunamadı</div>'; return; }
 
+  kdRenderExtreUyari(kart);
+
   const tatilSet = getTatilSet();
   const today = new Date();
   const todayStr = localDateStr(today);
@@ -12997,7 +13024,39 @@ function kesinlestirEkstre(kartId, donemKey) {
   saveData();
   renderOzetEkstreUyarilar();
   renderExtreler();
+  if (typeof _kdKartId !== 'undefined' && _kdKartId === kartId) {
+    const kart = DB.kartlar.find(k => k.id === kartId);
+    if (kart) kdRenderExtreUyari(kart);
+  }
   showToast('Ekstre kesinleştirildi — bu döneme ait işlemler artık düzenlenemez', 'success');
+}
+
+// Kart detay sayfası — o karta özel bekleyen ekstre kesinleştirme uyarısı
+function kdRenderExtreUyari(kart) {
+  const el = document.getElementById('kd-extre-uyari');
+  if (!el) return;
+  const bekleyenler = kesinlesmeyiBekleyenDonemler().filter(b => b.kart.id === kart.id);
+  if (!bekleyenler.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `<div class="card" style="border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.04);padding:12px 16px">
+    <div class="card-header" style="margin-bottom:8px">
+      <span class="card-title-icon">📋</span>
+      <span class="card-title" style="color:var(--gold);font-size:12.5px">Ekstre Kesinleştirme Bekliyor</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${bekleyenler.map(({key, extreDt, odemeDt}) => {
+        const [y,m] = key.split('-').map(Number);
+        const label = new Date(y, m-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:8px 12px">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${label}</div>
+            <div style="font-size:11px;color:var(--text3)">Ekstre: ${fmtDate(extreDt)} · Son Ödeme: ${fmtDate(odemeDt)}</div>
+          </div>
+          <button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px" onclick="kesinlestirEkstre('${kart.id}','${key}')">✓ Kesinleştir</button>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
 // Dashboard ekstre kesinleştirme uyarısı
