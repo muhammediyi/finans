@@ -959,19 +959,32 @@ input::placeholder { color: var(--text2); opacity: .7; }
 .ac-chip:active { transform: scale(.96); }
 .ac-chip-n { opacity: .55; font-weight: 700; margin-left: 5px; font-size: 9.5px; }
 .ac-suggest {
-  position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 60;
+  position: absolute; z-index: 60;
   background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(0,0,0,.32); max-height: 230px; overflow-y: auto; display: none;
+  box-shadow: 0 14px 32px rgba(0,0,0,.38); max-height: 260px; overflow-y: auto; display: none;
 }
 .ac-suggest.open { display: block; }
+.ac-suggest-hint {
+  padding: 7px 13px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text3); border-bottom: 1px solid var(--border); background: var(--surface3);
+}
 .ac-suggest-item {
   padding: 9px 13px; font-size: 12.5px; color: var(--text); cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   border-bottom: 1px solid var(--border);
 }
 .ac-suggest-item:last-child { border-bottom: none; }
 .ac-suggest-item:hover, .ac-suggest-item.active { background: var(--surface3); }
-.ac-suggest-item .ac-meta { font-size: 10px; color: var(--text3); flex-shrink: 0; white-space: nowrap; }
+.ac-suggest-item .ac-item-icon {
+  width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+  background: rgba(45,212,191,.1); color: var(--teal);
+}
+.ac-suggest-item .ac-item-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-suggest-item .ac-item-text mark { background: rgba(251,191,36,.28); color: var(--text); border-radius: 3px; padding: 0 1px; }
+.ac-suggest-item .ac-meta { font-size: 10px; color: var(--text3); flex-shrink: 0; white-space: nowrap; font-weight: 600; }
+.ac-suggest-item.active .ac-meta { color: var(--gold); }
+.ac-suggest-item:first-child .ac-item-icon { background: rgba(251,191,36,.14); color: var(--gold); }
 /* ─── BUTTONS ─────────────────────────────────────────── */
 /* ══════════════════════════════════════════════════
    MASTER BUTTON SYSTEM — v4
@@ -7543,16 +7556,17 @@ window.addEventListener('load', placeMobProfilePanel);
           <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
         </div>
         <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
-        <div class="form-row cols-2" style="margin-bottom:0">
+        <div class="form-row cols-2" style="margin-bottom:0;position:relative">
           <div class="ac-wrap"><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..." autocomplete="off" oninput="onIslemAciklamaInput()" onfocus="onIslemAciklamaInput()" onblur="setTimeout(closeIslemAciklamaSuggest,180)" onkeydown="onIslemAciklamaKeydown(event)">
-            <div id="islem-aciklama-suggest" class="ac-suggest"></div>
-            <div id="islem-aciklama-chips" class="ac-chips"></div>
           </div>
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
             <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
+          <div id="islem-aciklama-suggest" class="ac-suggest"></div>
+          <div id="islem-aciklama-chips" class="ac-chips" style="grid-column:1/-1"></div>
         </div>
       </div>
+
 
       <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
@@ -11641,8 +11655,8 @@ function kdRenderMiniStats(wrap, islemler) {
   let harcama = 0, gelir = 0;
   islemler.forEach(i => {
     const v = i.tutar || 0;
-    if (v < 0) harcama += Math.abs(v);
-    else gelir += v;
+    if (v < 0) gelir += Math.abs(v);
+    else harcama += v;
   });
   const ort = (harcama + gelir) / count;
 
@@ -11725,6 +11739,34 @@ function _acEsc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Açıklama metninde aranan kısmı <mark> ile vurgular (büyük/küçük harf duyarsız, Türkçe)
+function _acHighlight(text, query) {
+  const esc = _acEsc(text);
+  if(!query) return esc;
+  const lowerText = text.toLocaleLowerCase('tr');
+  const lowerQuery = query.toLocaleLowerCase('tr');
+  const idx = lowerText.indexOf(lowerQuery);
+  if(idx < 0) return esc;
+  const before = _acEsc(text.slice(0, idx));
+  const match = _acEsc(text.slice(idx, idx + query.length));
+  const after = _acEsc(text.slice(idx + query.length));
+  return `${before}<mark>${match}</mark>${after}`;
+}
+
+// İşlem Ekle modalında açıklama öneri kutusunu, açıklama input'unun
+// tam altına ve tam genişliğinde (Kategori sütununu da kapsayacak şekilde) konumlandırır.
+function _acPositionSuggest() {
+  const input = document.getElementById('islem-aciklama');
+  const box = document.getElementById('islem-aciklama-suggest');
+  const row = input ? input.closest('.form-row') : null;
+  if(!input || !box || !row) return;
+  const rowRect = row.getBoundingClientRect();
+  const inputRect = input.getBoundingClientRect();
+  box.style.left = '0px';
+  box.style.width = rowRect.width + 'px';
+  box.style.top = (inputRect.bottom - rowRect.top + 6) + 'px';
+}
+
 // Modal her açıldığında en sık kullanılan açıklamaları buton (chip) olarak göster
 function renderIslemAciklamaChips() {
   const wrap = document.getElementById('islem-aciklama-chips');
@@ -11756,7 +11798,8 @@ function onIslemAciklamaInput() {
   const input = document.getElementById('islem-aciklama');
   const box = document.getElementById('islem-aciklama-suggest');
   if(!input || !box) return;
-  const q = input.value.trim().toLocaleLowerCase('tr');
+  const qRaw = input.value.trim();
+  const q = qRaw.toLocaleLowerCase('tr');
   if(!q) { closeIslemAciklamaSuggest(); return; }
   const veriler = _acGecmisVerisi()
     .filter(v => v.ad.toLocaleLowerCase('tr').includes(q) && v.ad.toLocaleLowerCase('tr') !== q)
@@ -11764,10 +11807,17 @@ function onIslemAciklamaInput() {
     .slice(0,8);
   if(!veriler.length) { closeIslemAciklamaSuggest(); return; }
   _acActiveIdx = -1;
-  box.innerHTML = veriler.map((v,idx) =>
-    `<div class="ac-suggest-item" data-idx="${idx}" data-ac-ad="${_acEsc(v.ad)}" data-ac-kat="${_acEsc(v.kategori||'')}" onclick="islemAciklamaSec(this)"><span>${_acEsc(v.ad)}</span><span class="ac-meta">${v.count}× kullanıldı</span></div>`
+  const hint = `<div class="ac-suggest-hint">Geçmiş işlemlerden öneriler</div>`;
+  const rows = veriler.map((v,idx) =>
+    `<div class="ac-suggest-item" data-idx="${idx}" data-ac-ad="${_acEsc(v.ad)}" data-ac-kat="${_acEsc(v.kategori||'')}" onclick="islemAciklamaSec(this)">
+      <span class="ac-item-icon">${idx===0?'⭐':'🕒'}</span>
+      <span class="ac-item-text">${_acHighlight(v.ad, qRaw)}</span>
+      <span class="ac-meta">${v.count}× kullanıldı</span>
+    </div>`
   ).join('');
+  box.innerHTML = hint + rows;
   box.classList.add('open');
+  _acPositionSuggest();
 }
 
 function closeIslemAciklamaSuggest() {
@@ -11775,6 +11825,16 @@ function closeIslemAciklamaSuggest() {
   if(box) { box.classList.remove('open'); box.innerHTML = ''; }
   _acActiveIdx = -1;
 }
+
+// Modal içinde scroll olursa öneri kutusunun pozisyonu bozulmasın diye kapat
+(function _acBindScrollClose(){
+  function bind(){
+    const mb = document.querySelector('#modal-islem .modal-body');
+    if(mb) mb.addEventListener('scroll', closeIslemAciklamaSuggest, {passive:true});
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
 
 // Öneri kutusunda ok tuşları + Enter ile gezinme
 function onIslemAciklamaKeydown(e) {
