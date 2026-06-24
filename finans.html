@@ -566,6 +566,9 @@ html[data-theme="light"] .close-btn {
   color: rgba(15,22,41,.4) !important;
 }
 html[data-theme="light"] .modal-bg { background: rgba(15,22,41,.45); }
+html[data-theme="light"] .msec { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.09); }
+html[data-theme="light"] .modal-body { background: #f0f2f8; }
+html[data-theme="light"] .modal-footer { background: rgba(0,0,0,.03); }
 html[data-theme="light"] .msec-label { color: rgba(15,22,41,.5); border-bottom-color: rgba(0,0,0,.07); }
 html[data-theme="light"] .msec-label.gold   { color: #c47a00; border-bottom-color: rgba(196,122,0,.2); }
 html[data-theme="light"] .msec-label.teal   { color: #0d9488; border-bottom-color: rgba(13,148,136,.2); }
@@ -1589,6 +1592,10 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 #modal-islem .modal-body { padding: 16px 22px; }
 #modal-islem label { font-size: 11.5px; display: block; margin-bottom: 4px; color: var(--text3); font-weight: 600; }
 #modal-islem input, #modal-islem select { padding: 8px 12px; font-size: 13px; }
+/* Tüm modallerde label ve form-row tutarlı görünsün */
+.modal-body label { font-size: 11.5px; display: block; margin-bottom: 4px; color: var(--text3); font-weight: 600; }
+.modal-body .form-row { gap: 10px; margin-bottom: 10px; }
+.modal-body .form-row:last-child { margin-bottom: 0; }
 #modal-islem .ac-wrap { position: relative; }
 .tp-row:last-child { border-bottom: none; }
 .tp-row:hover { background: var(--surface2); }
