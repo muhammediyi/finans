@@ -5900,6 +5900,8 @@ window.addEventListener('load', placeMobProfilePanel);
   <div id="ozet-mev-aksiyonlar" style="display:none;margin-bottom:16px"></div>
   <!-- Bakiye uyarıları -->
   <div id="ozet-bakiye-uyarilar" style="display:none;margin-bottom:16px"></div>
+  <!-- Ekstre kesinleştirme uyarısı -->
+  <div id="ozet-ekstre-uyarilar" style="display:none;margin-bottom:16px"></div>
   <!-- Provizyon tarihi eksik işlem uyarısı -->
   <div id="ozet-provizyon-uyarilar" style="display:none;margin-bottom:16px"></div>
 
@@ -9212,6 +9214,7 @@ function defaultData() {
     hesaplar: [], subeler: {}, kisiler: [],
     asgariOdemeKurallari: [],
     kartOdemeleri: [],
+    ekstreKayitlari: [],   // {id, kartId, donemKey, kesinlestirildi, kesinlesmeTarih}
     ortakLimitGruplari: [],
     nakitAvansCurlar: [],
     nakitAvansTavanlar: [],
@@ -12107,6 +12110,23 @@ let editIslemId = null;
 let editNaId = null;
 function saveIslem() {
   const taksit = Math.max(1, parseInt(document.getElementById('islem-taksit').value)||1);
+
+  // Kesinleşmiş dönem kontrolü — edit modunda
+  if(editIslemId) {
+    const eskiIslem = DB.islemler.find(i=>i.id===editIslemId);
+    if(eskiIslem) {
+      const k = getKart(eskiIslem.kart);
+      if(k) {
+        const taksitler = getIslemTaksitliste(eskiIslem);
+        const kesinlenmis = taksitler.some(tak => {
+          const pd = getExtreDonemi(k, tak.ekstreTarih);
+          if(!pd) return false;
+          return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+        });
+        if(kesinlenmis) { showToast('Bu işlem kesinleştirilmiş bir ekstreye ait — düzenlenemez', 'error'); return; }
+      }
+    }
+  }
   const container = document.getElementById('islem-taksit-alanlari');
   let tutarlar = [], tarihler = [];
 
@@ -12144,6 +12164,30 @@ function saveIslem() {
     paraBirimi: (()=>{ const kartId=document.getElementById('islem-kart').value; const chosen=document.getElementById('islem-para-birimi').value; return getKartCurrency(kartId, chosen); })()
   };
   if(!validateRequiredFields([{id:'islem-kart',msg:'Kart seçiniz'},{id:'islem-tutar',msg:'Tutar giriniz'}])) return;
+
+  // Yeni işlem veya edit: düşeceği dönem kesinleşmiş mi kontrol et
+  if(!editIslemId) {
+    const k = getKart(islem.kart);
+    if(k) {
+      const kesinlenmis = getIslemTaksitliste(islem).some(tak => {
+        const pd = getExtreDonemi(k, tak.ekstreTarih);
+        if(!pd) return false;
+        return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+      });
+      if(kesinlenmis) { showToast('Bu işlem kesinleştirilmiş bir ekstreye denk geliyor — eklenemez 🔒', 'error'); return; }
+    }
+  } else {
+    // Edit: hem eski hem yeni halin dönemlerini kontrol et
+    const k = getKart(islem.kart);
+    if(k) {
+      const yeniKesinlenmis = getIslemTaksitliste(islem).some(tak => {
+        const pd = getExtreDonemi(k, tak.ekstreTarih);
+        if(!pd) return false;
+        return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+      });
+      if(yeniKesinlenmis) { showToast('Değişiklik sonrası işlem kesinleşmiş bir ekstreye denk geliyor — kaydedilemez 🔒', 'error'); return; }
+    }
+  }
   if(editIslemId) {
     const idx = DB.islemler.findIndex(i=>i.id===editIslemId);
     if(idx>=0) {
@@ -12166,6 +12210,18 @@ function saveIslem() {
 function editIslem(id) {
   const i0 = DB.islemler.find(x=>x.id===id);
   if(i0 && i0.tip === 'nakitAvans') { editNakitAvans(id); return; }
+  // Kesinleşmiş dönem kontrolü
+  if(i0) {
+    const k = getKart(i0.kart);
+    if(k) {
+      const kesinlenmis = getIslemTaksitliste(i0).some(tak => {
+        const pd = getExtreDonemi(k, tak.ekstreTarih);
+        if(!pd) return false;
+        return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+      });
+      if(kesinlenmis) { showToast('Bu işlem kesinleştirilmiş bir ekstreye ait — düzenlenemez 🔒', 'error'); return; }
+    }
+  }
   editIslemId = id;
   _islemProvizyonManuel = true; // mevcut işlemde kayıtlı provizyon tarihi varsa otomatik öngörüyle ezilmesin
   const i = DB.islemler.find(x=>x.id===id);
@@ -12573,11 +12629,102 @@ function saveNakitAvans() {
 }
 
 function deleteIslem(id) {
+  const islem = DB.islemler.find(i=>i.id===id);
+  if(islem) {
+    const k = getKart(islem.kart);
+    if(k) {
+      const kesinlenmis = getIslemTaksitliste(islem).some(tak => {
+        const pd = getExtreDonemi(k, tak.ekstreTarih);
+        if(!pd) return false;
+        return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+      });
+      if(kesinlenmis) { showToast('Kesinleşmiş ekstreye ait işlem silinemez', 'error'); return; }
+    }
+  }
   showConfirm('Bu işlemi silmek istiyor musunuz?', () => {
     DB.islemler = DB.islemler.filter(i=>i.id!==id);
     saveData();
     renderIslemler();
   });
+}
+// donemKey: "2025-06" formatı, kartId: kart.id
+function isEkstreKesinlesmis(kartId, donemKey) {
+  return (DB.ekstreKayitlari||[]).some(k => k.kartId === kartId && k.donemKey === donemKey && k.kesinlestirildi);
+}
+
+// Ekstre kesim tarihinden 1 gün sonra olup kesinleştirilmemiş dönemleri döner
+function kesinlesmeyiBekleyenDonemler() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const sonuc = [];
+  (DB.kartlar||[]).forEach(kart => {
+    // Son 6 ay tara
+    for(let offset = 0; offset <= 6; offset++) {
+      const d = new Date(today);
+      d.setMonth(d.getMonth() - offset);
+      const y = d.getFullYear(), m = d.getMonth();
+      const key = `${y}-${String(m+1).padStart(2,'0')}`;
+      if(isEkstreKesinlesmis(kart.id, key)) continue;
+      const extreDt = calcExtreTarihi(kart, y, m);
+      if(!extreDt) continue;
+      const ekstreSonrasi = new Date(extreDt);
+      ekstreSonrasi.setDate(ekstreSonrasi.getDate() + 1);
+      if(today < ekstreSonrasi) continue; // henüz ekstre kesilmedi+1gün geçmedi
+      // Bu kart+dönem için işlem var mı?
+      const tatilSet = new Set((DB.tatiller||[]).map(t=>t.tarih));
+      const odemeDt = calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet);
+      const hasIslem = (DB.islemler||[]).some(i => {
+        if(i.kart !== kart.id) return false;
+        return getIslemTaksitliste(i).some(tak => {
+          const pd = getExtreDonemi(kart, tak.ekstreTarih);
+          return pd && `${pd.year}-${String(pd.month+1).padStart(2,'0')}` === key;
+        });
+      });
+      if(!hasIslem) continue;
+      sonuc.push({ kart, key, extreDt: localDateStr(extreDt), odemeDt: localDateStr(odemeDt) });
+    }
+  });
+  return sonuc;
+}
+
+function kesinlestirEkstre(kartId, donemKey) {
+  if(!DB.ekstreKayitlari) DB.ekstreKayitlari = [];
+  const var_ = DB.ekstreKayitlari.find(k => k.kartId === kartId && k.donemKey === donemKey);
+  if(var_) { var_.kesinlestirildi = true; var_.kesinlesmeTarih = localDateStr(new Date()); }
+  else DB.ekstreKayitlari.push({ id: uid(), kartId, donemKey, kesinlestirildi: true, kesinlesmeTarih: localDateStr(new Date()) });
+  saveData();
+  renderOzetEkstreUyarilar();
+  renderExtreler();
+  showToast('Ekstre kesinleştirildi — bu döneme ait işlemler artık düzenlenemez', 'success');
+}
+
+// Dashboard ekstre kesinleştirme uyarısı
+function renderOzetEkstreUyarilar() {
+  const el = document.getElementById('ozet-ekstre-uyarilar');
+  if(!el) return;
+  const bekleyenler = kesinlesmeyiBekleyenDonemler();
+  if(!bekleyenler.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `<div class="card" style="border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.04);padding:12px 16px">
+    <div class="card-header" style="margin-bottom:8px">
+      <span class="card-title-icon">📋</span>
+      <span class="card-title" style="color:var(--gold)">Ekstre Kesinleştirme Bekliyor</span>
+      <button class="btn btn-ghost btn-sm" onclick="showPage('extreler')" style="font-size:11px">Ekstrelere Git →</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${bekleyenler.length} dönem ekstre kesim tarihini geçti ancak henüz kesinleştirilmedi.</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${bekleyenler.map(({kart, key, extreDt, odemeDt}) => {
+        const [y,m] = key.split('-').map(Number);
+        const label = new Date(y, m-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:8px 12px">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${kart.ad}</div>
+            <div style="font-size:11px;color:var(--text3)">${label} · Ekstre: ${fmtDate(extreDt)} · Son Ödeme: ${fmtDate(odemeDt)}</div>
+          </div>
+          <button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 12px" onclick="kesinlestirEkstre('${kart.id}','${key}')">✓ Kesinleştir</button>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
 const AY_KISA_TR = ['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
@@ -13100,6 +13247,16 @@ function renderExtreler() {
     else if(isThisMonth) statusBadge = `<span style="background:rgba(251,191,36,.15);color:#fbbf24;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">GÜNCEL</span>`;
     else                 statusBadge = `<span style="background:rgba(45,212,191,.1);color:#2dd4bf;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">GELECEK</span>`;
 
+    // Kesinleşme durumu
+    const kesin = isEkstreKesinlesmis(kart.id, p.key);
+    const kesinBadge = kesin ? `<span style="background:rgba(45,212,191,.15);color:var(--teal);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:600">🔒 KESİNLEŞTİ</span>` : '';
+    // Kesinleştir butonu: ekstre tarihi +1 gün geçmişse ve henüz kesinleşmemişse göster
+    const extreDtMs = new Date(p.extre+'T00:00:00');
+    const ekstreSonrasi = new Date(extreDtMs); ekstreSonrasi.setDate(ekstreSonrasi.getDate()+1);
+    const kesinlestirBtn = (!kesin && today >= ekstreSonrasi)
+      ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 10px;color:var(--teal);border-color:rgba(45,212,191,.3)" onclick="event.stopPropagation();kesinlestirEkstre('${kart.id}','${p.key}')">✓ Kesinleştir</button>`
+      : '';
+
     // Para birimi rozeti — sadece kart çoklu pb destekliyorsa göster
     const pbBadge = kartPbList.length > 1
       ? `<span style="background:rgba(167,139,250,.15);color:var(--purple);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;font-family:var(--mono)">${pb}</span>`
@@ -13132,7 +13289,7 @@ function renderExtreler() {
     const accId = `exk-${kart.id}-${p.key}-${pb}`;
     const openCls = defaultOpen ? ' open' : '';
 
-    return `<div class="card exk-acc-card${openCls}" id="${accId}" style="margin-bottom:8px${isThisMonth?';border-color:rgba(251,191,36,.3)':''}">
+    return `<div class="card exk-acc-card${openCls}" id="${accId}" style="margin-bottom:8px${isThisMonth?';border-color:rgba(251,191,36,.3)':''}${kesin?';border-color:rgba(45,212,191,.25)':''}">
       <div class="exk-acc-head" onclick="document.getElementById('${accId}').classList.toggle('open')">
         <div class="exk-acc-left">
           <span class="exk-acc-chev">▶</span>
@@ -13140,11 +13297,13 @@ function renderExtreler() {
           ${pbBadge}
           ${statusBadge}
           ${odendiBadge}
+          ${kesinBadge}
           <span class="exk-acc-meta">Son ödeme: ${fmtDate(p.odeme)} · ${kalanStr}</span>
         </div>
         <div class="exk-acc-right">
           <div class="exk-acc-sum" style="color:${kalanAll<=0&&toplamBorc>0?'var(--teal)':(isPast?'var(--danger)':'var(--warn)')}">${fmtCur(toplamBorc, pb)}</div>
-          <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();openOzelExtreModal('${p.key}')" title="Bu dönem için özel ekstre kesim tarihi belirle">📅 Özel Tarih</button>
+          ${kesinlestirBtn}
+          ${!kesin ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();openOzelExtreModal('${p.key}')" title="Bu dönem için özel ekstre kesim tarihi belirle">📅 Özel Tarih</button>` : ''}
         </div>
       </div>
       <div class="exk-acc-body">
@@ -19438,6 +19597,9 @@ function renderOzet() {
   // ── BAKİYE UYARILARI ────────────────────────────────────────────
   if(typeof renderOzetBakiyeUyarilar === 'function') renderOzetBakiyeUyarilar();
 
+  // ── EKSTRE KESİNLEŞTİRME UYARISI ─────────────────────────────────
+  if(typeof renderOzetEkstreUyarilar === 'function') renderOzetEkstreUyarilar();
+
   // ── PROVİZYON TARİHİ EKSİK İŞLEM UYARISI ────────────────────────
   if(typeof renderOzetProvizyonUyarilar === 'function') renderOzetProvizyonUyarilar();
 
@@ -25638,7 +25800,20 @@ const _origDeleteIslem = window.deleteIslem;
 if (typeof _origDeleteIslem === 'function') {
   window.deleteIslem = function(id) {
     const islem = (DB.islemler || []).find(i => i.id === id);
-    if (islem) entIslemHesabaYansit(islem, true);
+    // Kesinleşmiş ekstre kontrolü: önce orijinal fonksiyon çalışsın,
+    // entegrasyon yansıtması yalnızca silme onaylanırsa tetiklensin
+    if (islem) {
+      const k = getKart(islem.kart);
+      if (k) {
+        const kesinlenmis = getIslemTaksitliste(islem).some(tak => {
+          const pd = getExtreDonemi(k, tak.ekstreTarih);
+          if (!pd) return false;
+          return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+        });
+        if (kesinlenmis) { showToast('Kesinleşmiş ekstreye ait işlem silinemez', 'error'); return; }
+      }
+      entIslemHesabaYansit(islem, true);
+    }
     _origDeleteIslem.apply(this, arguments);
   };
 }
@@ -29362,6 +29537,19 @@ function eeSistemeEkle(j) {
 function eeSilSistemden(j) {
   const s = EE_STATE.sadeceSistem[j];
   if (!s) return;
+  // Kesinleşmiş ekstre kontrolü
+  const islem = DB.islemler.find(i => i.id === s.id);
+  if (islem) {
+    const k = getKart(islem.kart);
+    if (k) {
+      const kesinlenmis = getIslemTaksitliste(islem).some(tak => {
+        const pd = getExtreDonemi(k, tak.ekstreTarih);
+        if (!pd) return false;
+        return isEkstreKesinlesmis(k.id, `${pd.year}-${String(pd.month+1).padStart(2,'0')}`);
+      });
+      if (kesinlenmis) { showToast('Kesinleşmiş ekstreye ait işlem silinemez', 'error'); return; }
+    }
+  }
   showConfirm('Bu işlem PDF ekstrede bulunamadı. Sistemden silinsin mi?', () => {
     DB.islemler = DB.islemler.filter(x => x.id !== s.id);
     saveData();
