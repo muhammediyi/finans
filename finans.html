@@ -5073,6 +5073,10 @@ html[data-theme="light"] .brand-logo {
   box-shadow: 0 2px 20px rgba(180,83,9,.32), 0 1px 3px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.4);
 }
 /* ── 23. CARD header — Daha belirgin başlık sol çizgi ────── */
+/* Bu çizgi sadece ikonsuz (yalın metin) card-title'larda gösterilir.
+   SVG ikonlu (.card-title-icon + .card-title) ve emoji ile başlayan
+   (.card-title-emoji) başlıklarda zaten kendi ikonları olduğu için
+   çizgi tekrar/çakışma yaratıyordu — bu yüzden o varyantlarda kapatılıyor. */
 .card-title { position: relative; padding-left: 10px; }
 .card-title::before {
   content: '';
@@ -5085,6 +5089,14 @@ html[data-theme="light"] .brand-logo {
 }
 html[data-theme="light"] .card-title::before {
   background: rgba(0,0,0,.15);
+}
+.card-title-icon + .card-title,
+.card-title.card-title-emoji {
+  padding-left: 0;
+}
+.card-title-icon + .card-title::before,
+.card-title.card-title-emoji::before {
+  display: none;
 }
 /* ── 24. INPUT GROUP WRAPPER — İyileştirilmiş ───────────── */
 .form-group {
@@ -5870,7 +5882,7 @@ window.addEventListener('load', placeMobProfilePanel);
           <button class="tbk-period-btn tbk-period-active" data-gun="365" onclick="tbkSetPeriod(365,this)">1 Yıl</button>
           <button class="tbk-period-btn" data-gun="730" onclick="tbkSetPeriod(730,this)">2 Yıl</button>
         </div>
-        <select id="tahmin-pb-secim" onchange="renderTahminBakiye()" class="tbk-pb-select"></select>
+        <select id="tahmin-pb-secim" onchange="renderTahminBakiye()" class="tbk-pb-select" style="display:none"></select>
       </div>
     </div>
     <div id="ozet-tahmin-bakiye"></div>
@@ -6080,6 +6092,7 @@ window.addEventListener('load', placeMobProfilePanel);
 .tbk-section-toggle svg { transition:transform .2s; }
 .tbk-section-collapsed svg { transform:rotate(-90deg); }
 .tbk-section-collapsed .tbk-aylik-body { display:none; }
+.tbk-aylik-body { max-height:400px; overflow-y:auto; }
 
 @media (max-width:640px) {
   .tbk-stats-grid { grid-template-columns:repeat(2,1fr); }
@@ -6455,7 +6468,7 @@ window.addEventListener('load', placeMobProfilePanel);
       <!-- STOPAJ -->
       <div class="card" style="margin-bottom:0">
         <div class="card-header">
-          <span class="card-title">📌 Stopaj Oranları (Mevduat)</span>
+          <span class="card-title card-title-emoji">📌 Stopaj Oranları (Mevduat)</span>
           <button class="btn btn-primary btn-sm" onclick="openOranModal('stopaj')">+ Ekle</button>
         </div>
         <div class="tbl-wrap"><table>
@@ -6467,7 +6480,7 @@ window.addEventListener('load', placeMobProfilePanel);
       <!-- KKDF -->
       <div class="card" style="margin-bottom:0">
         <div class="card-header">
-          <span class="card-title">📌 KKDF Oranları (Kredi)</span>
+          <span class="card-title card-title-emoji">📌 KKDF Oranları (Kredi)</span>
           <button class="btn btn-primary btn-sm" onclick="openOranModal('kkdf')">+ Ekle</button>
         </div>
         <div class="tbl-wrap"><table>
@@ -6479,7 +6492,7 @@ window.addEventListener('load', placeMobProfilePanel);
       <!-- BSMV -->
       <div class="card" style="margin-bottom:0">
         <div class="card-header">
-          <span class="card-title">📌 BSMV Oranları (Kredi)</span>
+          <span class="card-title card-title-emoji">📌 BSMV Oranları (Kredi)</span>
           <button class="btn btn-primary btn-sm" onclick="openOranModal('bsmv')">+ Ekle</button>
         </div>
         <div class="tbl-wrap"><table>
@@ -6491,7 +6504,7 @@ window.addEventListener('load', placeMobProfilePanel);
       <!-- KMH FAİZ -->
       <div class="card" style="margin-bottom:0">
         <div class="card-header">
-          <span class="card-title">📌 KMH Faiz Oranları (% Aylık)</span>
+          <span class="card-title card-title-emoji">📌 KMH Faiz Oranları (% Aylık)</span>
           <button class="btn btn-primary btn-sm" onclick="openOranModal('kmhFaiz')">+ Ekle</button>
         </div>
         <div style="font-size:11.5px;color:var(--teal);background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:7px 12px;margin-bottom:8px">
@@ -6515,7 +6528,7 @@ window.addEventListener('load', placeMobProfilePanel);
     <!-- Kural ekleme formu -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-header" style="flex-wrap:wrap;gap:6px">
-        <span class="card-title">➕ Yeni Kural Ekle</span>
+        <span class="card-title card-title-emoji">➕ Yeni Kural Ekle</span>
         <span style="font-size:11px;color:var(--text3);font-weight:400">Kurallar sırayla değerlendirilir — ilk eşleşen uygulanır</span>
       </div>
       <div id="asgari-uyari-wrap"></div>
@@ -6587,7 +6600,7 @@ window.addEventListener('load', placeMobProfilePanel);
     <!-- Kural listesi -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">📋 Tanımlı Kurallar <span style="color:var(--text3);font-size:11px;font-weight:400">(yukarıdan aşağı öncelik sırasıyla)</span></span>
+        <span class="card-title card-title-emoji">📋 Tanımlı Kurallar <span style="color:var(--text3);font-size:11px;font-weight:400">(yukarıdan aşağı öncelik sırasıyla)</span></span>
         <div style="display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="asgariKurallariTemizle()" style="color:var(--danger)">Tümünü Sil</button>
         </div>
@@ -6599,7 +6612,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
     <!-- Önizleme -->
     <div class="card" style="margin-top:16px">
-      <div class="card-header"><span class="card-title">🔍 Kural Önizleme</span></div>
+      <div class="card-header"><span class="card-title card-title-emoji">🔍 Kural Önizleme</span></div>
       <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <label>Kart Limiti (₺)</label>
@@ -6629,7 +6642,7 @@ window.addEventListener('load', placeMobProfilePanel);
     <!-- Para Birimleri -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
-        <span class="card-title">💱 Nakit Avans Çekilebilir Para Birimleri</span>
+        <span class="card-title card-title-emoji">💱 Nakit Avans Çekilebilir Para Birimleri</span>
         <span style="font-size:11px;color:var(--text3)">(Tüm kartlar için geçerli)</span>
       </div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Nakit avans işleminde seçilebilecek para birimlerini işaretleyin.</div>
@@ -6643,7 +6656,7 @@ window.addEventListener('load', placeMobProfilePanel);
     <!-- Limit Kuralı + Tavan Miktar -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
-        <span class="card-title">🔢 Çekilebilir Maksimum Nakit Avans Oranı &amp; Tavan Miktar</span>
+        <span class="card-title card-title-emoji">🔢 Çekilebilir Maksimum Nakit Avans Oranı &amp; Tavan Miktar</span>
       </div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px">
         Hangi limite göre hesaplanacağını ve maksimum oranı belirleyin. <b>Tavan miktar, oranla hesaplanan limiti hiçbir koşulda geçemez.</b>
@@ -6696,7 +6709,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
       <!-- TARİH FORMATI -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">📅 Tarih Formatı</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">📅 Tarih Formatı</span></div>
         <div style="margin-bottom:12px;font-size:12px;color:var(--text3)">
           Kullanılabilir belirteçler:
           <span class="badge" style="font-family:var(--mono);margin:0 2px">dd</span> gün &nbsp;
@@ -6746,7 +6759,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
       <!-- SAAT FORMATI -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">🕐 Saat Formatı</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">🕐 Saat Formatı</span></div>
         <div style="margin-bottom:12px;font-size:12px;color:var(--text3)">
           Kullanılabilir belirteçler:
           <span class="badge" style="font-family:var(--mono);margin:0 2px">HH</span> saat (24s) &nbsp;
@@ -6786,7 +6799,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
       <!-- GÖSTERİM PARA BİRİMİ -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">💱 Gösterim Para Birimi</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">💱 Gösterim Para Birimi</span></div>
         <div>
           <label>Gösterim Birimi</label>
           <div class="cur-grid" id="para-birimi-grid" style="margin-top:6px"></div>
@@ -6800,7 +6813,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
       <!-- PARA FORMATI -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">💰 Para Birimi Gösterim Formatı</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">💰 Para Birimi Gösterim Formatı</span></div>
         <div class="form-row cols-3" style="align-items:end">
           <div>
             <label>Ondalık Ayraç</label>
@@ -6862,7 +6875,7 @@ window.addEventListener('load', placeMobProfilePanel);
     <div class="grid-2" style="gap:16px">
       <!-- YEDEK AL -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">⬇️ Yedek Al (Backup)</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">⬇️ Yedek Al (Backup)</span></div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
           Sistemdeki tüm verinin anlık bir kopyasını <span class="mono">.json</span> dosyası olarak bilgisayarınıza indirir. Bu dosyayı güvenli bir yerde saklayın.
         </div>
@@ -6872,7 +6885,7 @@ window.addEventListener('load', placeMobProfilePanel);
 
       <!-- GERİ YÜKLE -->
       <div class="card" style="margin-bottom:0">
-        <div class="card-header"><span class="card-title">⬆️ Yedekten Geri Yükle (Restore)</span></div>
+        <div class="card-header"><span class="card-title card-title-emoji">⬆️ Yedekten Geri Yükle (Restore)</span></div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
           Daha önce indirdiğiniz bir yedek dosyasını seçin. <b style="color:var(--danger)">Geri yükleme işlemi sistemdeki mevcut tüm veriyi siler ve yedekteki veriyle değiştirir.</b> Bu işlem geri alınamaz — önce güncel veriyi de yedeklemeniz önerilir.
         </div>
@@ -6885,7 +6898,7 @@ window.addEventListener('load', placeMobProfilePanel);
     </div>
 
     <div class="card" style="margin-top:16px;margin-bottom:0">
-      <div class="card-header"><span class="card-title">🕓 Google Drive Sürüm Geçmişinden Kurtar</span></div>
+      <div class="card-header"><span class="card-title card-title-emoji">🕓 Google Drive Sürüm Geçmişinden Kurtar</span></div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
         Drive her kayıtta önceki sürümü saklar. Veri yanlışlıkla silindiyse veya senkronizasyon sırasında üzerine yazıldıysa, geçmiş sürümlerden birini görüntüleyip geri yükleyebilirsiniz.
       </div>
@@ -19200,13 +19213,8 @@ function renderOzet() {
         // Strateji 1: Otomatik yenile (ana para + faiz)
         if(strateji === 'yenile_tum') {
           return `<div class="card" style="border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.04);margin-bottom:10px">
-            <div class="card-header" style="gap:10px">
-              <span style="font-size:18px">⏰</span>
-              <div>
-                <div class="card-title" style="color:var(--gold)">Mevduat Vadesi Doldu — Yenileme Gerekiyor</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:2px">${bankaAd} · ${fmtCur(m.nihai,cur)} · Vade: ${fmtDate(m.bitis)}</div>
-              </div>
-            </div>
+            <div class="card-header"><span class="card-title-icon">⏰</span><span class="card-title" style="color:var(--gold)">Mevduat Vadesi Doldu — Yenileme Gerekiyor</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:-10px 0 12px">${bankaAd} · ${fmtCur(m.nihai,cur)} · Vade: ${fmtDate(m.bitis)}</div>
             <div style="padding:0 0 12px;font-size:12px;color:var(--text2)">
               <b>Strateji:</b> Ana Para + Faiz → Yeni Mevduat. Yeni vadeli hesabın IBAN ve vade bilgilerini girerek yeni mevduat oluşturun.
             </div>
@@ -19225,13 +19233,8 @@ function renderOzet() {
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.04);margin-bottom:10px">
-            <div class="card-header" style="gap:10px">
-              <span style="font-size:18px">💸</span>
-              <div>
-                <div class="card-title" style="color:var(--teal)">Mevduat Vadesi Doldu — Ana Para Yenileme</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:2px">${bankaAd} · Ana: ${fmtCur(m.tutar,cur)} · Faiz: ${fmtCur(m.faiz,cur)} · Vade: ${fmtDate(m.bitis)}</div>
-              </div>
-            </div>
+            <div class="card-header"><span class="card-title-icon">💸</span><span class="card-title" style="color:var(--teal)">Mevduat Vadesi Doldu — Ana Para Yenileme</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:-10px 0 12px">${bankaAd} · Ana: ${fmtCur(m.tutar,cur)} · Faiz: ${fmtCur(m.faiz,cur)} · Vade: ${fmtDate(m.bitis)}</div>
             <div style="font-size:12px;color:var(--text2);margin-bottom:4px">
               <b>Strateji:</b> Ana Para → Yeni Mevduat · Net Faiz (${fmtCur(m.faiz,cur)}) → Vadesiz Hesap
             </div>
@@ -19251,13 +19254,8 @@ function renderOzet() {
                </select>`
             : `<div style="color:var(--danger);font-size:11px;margin:8px 0">⚠ Vadesiz hesap bulunamadı. Önce hesap ekleyin.</div>`;
           return `<div class="card" style="border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04);margin-bottom:10px">
-            <div class="card-header" style="gap:10px">
-              <span style="font-size:18px">🏦</span>
-              <div>
-                <div class="card-title" style="color:var(--violet)">Mevduat Vadesi Doldu — Vadesiz Hesaba Aktar</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:2px">${bankaAd} · Nihai: ${fmtCur(m.nihai,cur)} · Vade: ${fmtDate(m.bitis)}</div>
-              </div>
-            </div>
+            <div class="card-header"><span class="card-title-icon">🏦</span><span class="card-title" style="color:var(--violet)">Mevduat Vadesi Doldu — Vadesiz Hesaba Aktar</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:-10px 0 12px">${bankaAd} · Nihai: ${fmtCur(m.nihai,cur)} · Vade: ${fmtDate(m.bitis)}</div>
             <div style="font-size:12px;color:var(--text2);margin-bottom:4px">
               <b>Strateji:</b> Tüm tutar (${fmtCur(m.nihai,cur)}) seçilen vadesiz hesaba aktarılacak.
             </div>
@@ -19908,6 +19906,10 @@ function renderTahminBakiye() {
   if(!elWrap || !elSel) return;
 
   const gunSayisi = window._tbkGunSayisi || 365;
+  // Aktif period butonunu senkronize et (sayfa yenilemelerinde)
+  document.querySelectorAll('.tbk-period-btn').forEach(b=>{
+    b.classList.toggle('tbk-period-active', Number(b.dataset.gun)===gunSayisi);
+  });
   const data = tahminGelecekBakiyeHesapla(gunSayisi);
   const pbList = Object.keys(data);
   if(!pbList.length) {
@@ -20106,7 +20108,7 @@ function renderTahminBakiye() {
       </tr>`;
     }).join('');
     tbkAylikHtml = `<div class="tbk-aylik-wrap">
-      <div class="tbk-aylik-title tbk-section-toggle" onclick="this.closest('.tbk-aylik-wrap').classList.toggle('tbk-section-collapsed');this.querySelector('svg').style.transform=this.closest('.tbk-aylik-wrap').classList.contains('tbk-section-collapsed')?'rotate(-90deg)':''">
+      <div class="tbk-aylik-title tbk-section-toggle" onclick="this.closest('.tbk-aylik-wrap').classList.toggle('tbk-section-collapsed')">
         <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         Aylık Gelir / Gider / Bakiye Özeti
       </div>
@@ -20193,7 +20195,7 @@ function renderTahminBakiye() {
 
     ${negatifeDusuyor ? `<div class="tbk-alert">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span>Tahmine göre <b>${fmtDate ? fmtDate(new Date(dipNokta.tarih+'T00:00:00')) : dipNokta.tarih}</b> civarında bakiye <b>${fmtCur(dipNokta.bakiye, pbGercek)}</b>'ye düşüyor. Gelir/gider planınızı gözden geçirin.</span>
+      <span>Tahmine göre <b>${fmtDate(new Date(dipNokta.tarih+'T00:00:00'))}</b> civarında bakiye <b>${fmtCur(dipNokta.bakiye, pbGercek)}</b>'ye düşüyor. Gelir/gider planınızı gözden geçirin.</span>
     </div>` : ''}
 
     <div class="tbk-chart-wrap">
@@ -20227,7 +20229,7 @@ function renderTahminBakiye() {
     <div class="tbk-legend">
       <span><span class="tbk-dot" style="background:var(--gold)"></span>Bugün</span>
       ${negatifeDusuyor ? `<span><span class="tbk-dot" style="background:var(--rose)"></span>Eksiye geçiş</span>` : ''}
-      ${(dipNokta.tarih !== gunler[0].tarih) ? `<span><span class="tbk-dot" style="background:${dipNokta.bakiye<0?'var(--rose)':'var(--gold)'}"></span>En düşük (${fmtDate?fmtDate(new Date(dipNokta.tarih+'T00:00:00')):dipNokta.tarih})</span>` : ''}
+      ${(dipNokta.tarih !== gunler[0].tarih) ? `<span><span class="tbk-dot" style="background:${dipNokta.bakiye<0?'var(--rose)':'var(--gold)'}"></span>En düşük (${fmtDate(new Date(dipNokta.tarih+'T00:00:00'))})</span>` : ''}
       <span style="margin-left:auto;font-size:10px;color:var(--text3)">${gunSayisi} günlük projeksiyon</span>
     </div>
 
@@ -20266,7 +20268,7 @@ function renderTahminBakiye() {
       hoverLine.setAttribute('x1', p.x); hoverLine.setAttribute('x2', p.x); hoverLine.setAttribute('opacity', '0.55');
       hoverDot.setAttribute('cx', p.x); hoverDot.setAttribute('cy', p.y); hoverDot.setAttribute('opacity', '1');
 
-      const tarihLabel = p.tarih === todayStrLocal ? 'Bugün' : (fmtDate ? fmtDate(new Date(p.tarih+'T00:00:00')) : p.tarih);
+      const tarihLabel = p.tarih === todayStrLocal ? 'Bugün' : fmtDate(new Date(p.tarih+'T00:00:00'));
       const olayHtml = (p.olaylar||[]).slice(0,4).map(o=>
         `<div class="tbk-tt-row"><span>${o.aciklama}</span><span class="mono" style="color:${o.tutar>=0?'var(--teal)':'var(--rose)'}">${fmtCur(o.tutar, pbGercek, true)}</span></div>`
       ).join('');
@@ -24723,7 +24725,7 @@ function renderBakiyeIzlemePanel() {
   if(uyarilar.length) {
     uyariHtml = `<div class="card" style="border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.04);margin-bottom:12px">
       <div class="card-header" style="margin-bottom:10px">
-        <span class="card-title" style="color:var(--danger)">🔔 Bakiye Uyarıları (${uyarilar.length})</span>
+        <span class="card-title card-title-emoji" style="color:var(--danger)">🔔 Bakiye Uyarıları (${uyarilar.length})</span>
       </div>
       ${uyarilar.map(u => {
         const tipRenk = u.tip === 'kritik' ? 'var(--danger)' : u.tip === 'dusuk' ? 'var(--warn)' : 'var(--sky)';
@@ -24740,7 +24742,7 @@ function renderBakiyeIzlemePanel() {
   if(durumluHesaplar.length) {
     kartlarHtml = `<div class="card">
       <div class="card-header" style="margin-bottom:14px">
-        <span class="card-title">📊 Bakiye Durum Analizi</span>
+        <span class="card-title card-title-emoji">📊 Bakiye Durum Analizi</span>
         <span style="font-size:10px;color:var(--text3)">30 günlük projeksiyon</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
@@ -24838,16 +24840,11 @@ function renderOzetBakiyeUyarilar() {
   const dusukler  = uyarilar.filter(u => u.tip === 'dusuk'  || u.tip === 'gelecek-kritik' || u.tip === 'gelecek-dusuk');
 
   el.innerHTML = `<div class="card" style="border-color:${kritikler.length?'rgba(251,113,133,.4)':'rgba(251,146,60,.35)'};background:${kritikler.length?'rgba(251,113,133,.04)':'rgba(251,146,60,.04)'}">
-    <div class="card-header" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:18px">${kritikler.length?'🚨':'⚠️'}</span>
-        <div>
-          <div class="card-title" style="color:${kritikler.length?'var(--danger)':'var(--warn)'}">Bakiye Uyarıları</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:1px">${uyarilar.length} hesap dikkat gerektiriyor</div>
-        </div>
-      </div>
+    <div class="card-header">
+      <span class="card-title-icon">${kritikler.length?'🚨':'⚠️'}</span><span class="card-title" style="color:${kritikler.length?'var(--danger)':'var(--warn)'}">Bakiye Uyarıları</span>
       <button class="btn btn-ghost btn-sm" onclick="showPage('hesaplar')" style="font-size:11px">Hesaplara Git →</button>
     </div>
+    <div style="font-size:11px;color:var(--text3);margin:-10px 0 12px">${uyarilar.length} hesap dikkat gerektiriyor</div>
     <div style="display:flex;flex-direction:column;gap:6px">
       ${uyarilar.slice(0,5).map(u => {
         const c = u.tip === 'kritik' || u.tip === 'gelecek-negatif' ? 'var(--danger)' : 'var(--warn)';
@@ -24885,14 +24882,11 @@ function renderOzetProvizyonUyarilar() {
   eksikler.sort((a,b) => (b.tarih||'').localeCompare(a.tarih||''));
 
   el.innerHTML = `<div class="card" style="border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.04);padding:10px 12px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:14px">🧾</span>
-      <div style="flex:1;min-width:0">
-        <div class="card-title" style="color:var(--violet);font-size:12.5px;line-height:1.3;text-transform:none;letter-spacing:normal">Provizyon Tarihi Girilmemiş İşlemler</div>
-        <div style="font-size:10px;color:var(--text3)">${eksikler.length} işlem</div>
-      </div>
+    <div class="card-header">
+      <span class="card-title-icon">🧾</span><span class="card-title" style="color:var(--violet)">Provizyon Tarihi Girilmemiş İşlemler</span>
       <button class="btn btn-ghost btn-sm" onclick="provizyonUyariTumunuGizle()" style="font-size:10px;padding:3px 8px;min-height:auto">Tümünü Sonraya Bırak</button>
     </div>
+    <div style="font-size:10px;color:var(--text3);margin:-10px 0 8px">${eksikler.length} işlem</div>
     <div style="display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto" id="provizyon-uyari-liste">
       ${eksikler.slice(0,12).map(i => _provizyonUyariSatiri(i)).join('')}
     </div>
