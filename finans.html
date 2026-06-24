@@ -985,6 +985,38 @@ input::placeholder { color: var(--text2); opacity: .7; }
 .ac-suggest-item .ac-meta { font-size: 10px; color: var(--text3); flex-shrink: 0; white-space: nowrap; font-weight: 600; }
 .ac-suggest-item.active .ac-meta { color: var(--gold); }
 .ac-suggest-item:first-child .ac-item-icon { background: rgba(251,191,36,.14); color: var(--gold); }
+/* ─── KATEGORİ CHIP SEÇİCİ (İşlem Ekle modalı) ─── */
+.kat-chip-picker { border: 1px solid var(--border2); border-radius: 10px; background: var(--surface1); overflow: hidden; }
+.kat-chip-search {
+  border: none; border-bottom: 1px solid var(--border); border-radius: 0;
+  background: transparent; font-size: 12.5px; padding: 9px 13px; width: 100%;
+  box-shadow: none;
+}
+.kat-chip-search:hover, .kat-chip-search:focus { border-color: var(--border); background: transparent; box-shadow: none; }
+.kat-chip-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; max-height: 168px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--surface4) transparent; }
+.kat-chip-grid::-webkit-scrollbar { width: 4px; }
+.kat-chip-grid::-webkit-scrollbar-track { background: transparent; }
+.kat-chip-grid::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
+.kat-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 9px;
+  border-radius: 20px; background: var(--surface3); border: 1px solid var(--border2);
+  color: var(--text2); cursor: pointer; font-size: 12px; font-weight: 600;
+  white-space: nowrap; transition: background .15s, border-color .15s, color .15s, transform .15s;
+  line-height: 1.4; user-select: none;
+}
+.kat-chip-icon { font-size: 13px; line-height: 1; }
+.kat-chip:hover { background: rgba(251,191,36,.1); border-color: rgba(251,191,36,.35); color: var(--text); transform: translateY(-1px); }
+.kat-chip:active { transform: scale(.96); }
+.kat-chip.selected { background: var(--gold-glow); border-color: var(--gold); color: var(--gold); }
+.kat-chip.kat-tur-gelir.selected { background: var(--accent2-glow); border-color: var(--accent2); color: var(--accent2); }
+.kat-chip-empty { font-size: 11.5px; color: var(--text3); padding: 6px 4px; }
+.kat-chip-clear {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: 20px; background: transparent; border: 1px dashed var(--border2);
+  color: var(--text3); cursor: pointer; font-size: 11.5px; font-weight: 600;
+  white-space: nowrap; transition: var(--transition);
+}
+.kat-chip-clear:hover { border-color: var(--rose); color: var(--rose); }
 /* ─── BUTTONS ─────────────────────────────────────────── */
 /* ══════════════════════════════════════════════════
    MASTER BUTTON SYSTEM — v4
@@ -7556,14 +7588,21 @@ window.addEventListener('load', placeMobProfilePanel);
           <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
         </div>
         <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
-        <div class="form-row cols-2" style="margin-bottom:0;position:relative">
+        <div class="form-row" style="margin-bottom:0;position:relative">
           <div class="ac-wrap"><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..." autocomplete="off" oninput="onIslemAciklamaInput()" onfocus="onIslemAciklamaInput()" onblur="setTimeout(closeIslemAciklamaSuggest,180)" onkeydown="onIslemAciklamaKeydown(event)">
           </div>
-          <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
-            <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
-          </div>
           <div id="islem-aciklama-suggest" class="ac-suggest"></div>
-          <div id="islem-aciklama-chips" class="ac-chips" style="grid-column:1/-1"></div>
+          <div id="islem-aciklama-chips" class="ac-chips"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
+            <input type="hidden" id="islem-kategori" value="">
+            <div class="kat-chip-picker" id="islem-kategori-picker">
+              <input type="text" class="kat-chip-search" id="islem-kategori-arama" placeholder="Kategori ara…" autocomplete="off" oninput="renderIslemKategoriChips()">
+              <div class="kat-chip-grid" id="islem-kategori-grid"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -7577,7 +7616,7 @@ window.addEventListener('load', placeMobProfilePanel);
           <div><label>Para Birimi</label>
             <select id="islem-para-birimi" onchange="updateModalMoneyWraps('modal-islem', this.value)"></select>
           </div>
-          <div><label>Toplam Tutar</label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div>
+          <div><label>Toplam Tutar <span style="color:var(--text3);font-size:10px;font-weight:400" title="Kampanya indirimi, iade gibi borç azaltan işlemler için tutarın başına eksi (-) işareti koyabilirsiniz.">(iade için "-" kullanın)</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div>
           <div><label>Taksit Sayısı</label><input id="islem-taksit" type="number" min="1" max="60" value="1" oninput="calcTaksit(false)"></div>
         </div>
         <div id="islem-taksit-alanlari" style="margin-top:4px"></div>
@@ -11675,7 +11714,7 @@ function kdRenderMiniStats(wrap, islemler) {
       <div class="kd-mini-stat teal">
         <div class="kd-mini-stat-label">Gelir / İade</div>
         <div class="kd-mini-stat-val">${gelir > 0 ? fmtCur(gelir, pb) : '—'}</div>
-        <div class="kd-mini-stat-sub">Pozitif işlemler</div>
+        <div class="kd-mini-stat-sub">İade / Eksi işlemler</div>
       </div>
     </div>`;
 }
@@ -11702,6 +11741,9 @@ function populateIslemModal(onceSecimKartId) {
   closeIslemAciklamaSuggest();
   populateKategoriSelects();
   document.getElementById('islem-kategori').value = '';
+  const katArama = document.getElementById('islem-kategori-arama');
+  if(katArama) katArama.value = '';
+  renderIslemKategoriChips();
   document.getElementById('islem-taksit-alanlari').innerHTML = '';
   document.getElementById('islem-provizyon-tarihi').value = '';
   _islemProvizyonManuel = false;
@@ -12132,6 +12174,7 @@ function editIslem(id) {
   renderIslemAciklamaChips();
   closeIslemAciklamaSuggest();
   document.getElementById('islem-kategori').value = i.kategori||'';
+  renderIslemKategoriChips();
   setMoneyInput('islem-tutar', i.tutar);
   document.getElementById('islem-taksit').value = i.taksit;
   const pbEl = document.getElementById('islem-para-birimi');
@@ -18096,9 +18139,40 @@ function getKategoriOptsAbonelik(seciliId) {
   return list.map(k => `<option value="${k.id}">${k.ikon||''} ${k.ad}</option>`).join('');
 }
 
+function renderIslemKategoriChips() {
+  const grid = document.getElementById('islem-kategori-grid');
+  if(!grid) return;
+  const q = (document.getElementById('islem-kategori-arama')||{}).value || '';
+  const secili = document.getElementById('islem-kategori').value || '';
+  const tum = (DB.kategoriler||[]).filter(k => !q || k.ad.toLowerCase().includes(q.toLowerCase()));
+  if(!tum.length) {
+    grid.innerHTML = `<span class="kat-chip-empty">Sonuç yok</span>`;
+    return;
+  }
+  grid.innerHTML = tum.map(k => {
+    const sel = k.id == secili ? ' selected' : '';
+    const turCls = k.tur === 'gelir' ? ' kat-tur-gelir' : '';
+    return `<button type="button" class="kat-chip${sel}${turCls}" onclick="seçKategoriChip('${k.id}')" title="${k.tur}">
+      <span class="kat-chip-icon">${k.ikon||'📂'}</span>${k.ad}
+    </button>`;
+  }).join('');
+}
+
+function seçKategoriChip(id) {
+  const hidden = document.getElementById('islem-kategori');
+  if(!hidden) return;
+  if(hidden.value == id) {
+    // toggle off — seçimi kaldır
+    hidden.value = '';
+  } else {
+    hidden.value = id;
+  }
+  renderIslemKategoriChips();
+}
+
 function populateKategoriSelects() {
-  const islemEl = document.getElementById('islem-kategori');
-  if(islemEl) { islemEl.innerHTML = getKategoriOpts(''); phSet(islemEl, 'Kategori seçin…', islemEl.value||'', '— Kategori bulunamadı —'); }
+  // islem-kategori artık hidden input + chip grid — chip'leri render et
+  renderIslemKategoriChips();
   // elden-kategori tür bazlı doldurulur (onEldenTurChange ile)
   onEldenTurChange();
   // ab-kategori: sadece abonelige uygun işaretli gider/diğer kategorileri
