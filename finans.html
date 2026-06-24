@@ -9872,6 +9872,17 @@ function getKart(id) {
   return DB.kartlar.find(k=>k.id===id);
 }
 
+// Kart için renk: kullanıcı özel renk seçmemişse (renk:''/null = "Otomatik"),
+// kartın listedeki sırasına göre sabit bir paletten otomatik & birbirinden farklı renk ata.
+const KART_RENK_PALET = ['#4f8ef7','#10d98a','#f0a429','#f05454','#9b7ef8','#f472b6','#22d3ee','#fb7185','#a3e635','#64748b'];
+function getKartRenk(k) {
+  if (!k) return KART_RENK_PALET[0];
+  if (k.renk) return k.renk;
+  let idx = (DB.kartlar||[]).findIndex(x=>x.id===k.id);
+  if (idx < 0) idx = 0;
+  return KART_RENK_PALET[idx % KART_RENK_PALET.length];
+}
+
 // Ekstre tarihi hesapla (kart için belirli ay/yıl)
 function calcExtreTarihi(kart, year, month) {
   // month 0-indexed
@@ -10297,6 +10308,7 @@ function populateKartModal(kart=null) {
     document.getElementById('kart-limit-tarih').value = kart.limitTarih||localDateStr(new Date());
     renderKartLimitGecmis(kart.limitGecmisi||[]);
     document.getElementById('kart-no').value = kart.no||'';
+    document.getElementById('kart-renk').value = kart.renk||'';
     document.getElementById('kart-extre-tip').value = kart.extraTip||'gun';
     document.getElementById('kart-extre-gun').value = kart.extraGun||25;
     document.getElementById('kart-extre-hafta').value = kart.extraHafta||1;
@@ -10323,6 +10335,7 @@ function populateKartModal(kart=null) {
     renderKartAyarGecmis([]);
     document.getElementById('kart-ad').value = '';
     document.getElementById('kart-no').value = '';
+    document.getElementById('kart-renk').value = '';
     bankaEl.value = '';
     tipEl.value = '';
     phUpdate(bankaEl);
@@ -11064,15 +11077,15 @@ function renderKartlar() {
     const odemeUrgent = kalanGun !== null && kalanGun <= 3;
     const odemePast = odemeStr !== null && odemeStr < todayStr0;
 
-    return `<div class="card" style="border-top:3px solid ${k.renk||'var(--accent)'}">
+    return `<div class="card" style="border-top:3px solid ${getKartRenk(k)};cursor:pointer" onclick="gotoKartIslemleri('${k.id}')" title="Kart detayına gir">
       <div class="card-header">
         <div style="min-width:0;flex:1;overflow:hidden">
           <div style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${k.ad}">${k.ad}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${banka} · ${tip?tip.ad:''} ${k.no?'·· '+k.no:''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">
-          <button class="btn btn-ghost btn-sm btn-act" onclick="editKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
-          <button class="btn btn-danger btn-sm btn-act" onclick="deleteKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
+          <button class="btn btn-ghost btn-sm btn-act" onclick="event.stopPropagation();editKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+          <button class="btn btn-danger btn-sm btn-act" onclick="event.stopPropagation();deleteKart('${k.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
         </div>
       </div>
       <div style="margin-bottom:6px;display:flex;gap:4px;flex-wrap:wrap;min-height:22px">
@@ -11082,7 +11095,7 @@ function renderKartlar() {
           const g = k.ortakLimitGrupId && (DB.ortakLimitGruplari||[]).find(x=>x.id===k.ortakLimitGrupId);
           if(!g) return '';
           const uyeSayisi = (DB.kartlar||[]).filter(x=>x.ortakLimitGrupId===g.id).length;
-          return `<span class="ortak-grup-chip" onclick="openOrtakGrupModal('${g.id}')" title="${g.ad} grubunu düzenle"><span class="ortak-grup-chip-icon">🔗</span>${g.ad}<span class="ortak-grup-chip-count">${uyeSayisi}</span></span>`;
+          return `<span class="ortak-grup-chip" onclick="event.stopPropagation();openOrtakGrupModal('${g.id}')" title="${g.ad} grubunu düzenle"><span class="ortak-grup-chip-icon">🔗</span>${g.ad}<span class="ortak-grup-chip-count">${uyeSayisi}</span></span>`;
         })()}
       </div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px">
@@ -11117,13 +11130,13 @@ function renderKartlar() {
         </div>
       </div>
       <div class="kart-action-row" style="display:flex;gap:6px;margin-top:10px">
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="gotoKartIslemleri('${k.id}')" title="Bu karta ait işlemleri görüntüle">
+        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="event.stopPropagation();gotoKartIslemleri('${k.id}')" title="Bu karta ait işlemleri görüntüle">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><path d="M2 8h8M7 4l4 4-4 4M14 3v10"/></svg>İşlemler
         </button>
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="gotoKartEkstre('${k.id}')" title="Ekstreleri görüntüle">
+        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="event.stopPropagation();gotoKartEkstre('${k.id}')" title="Ekstreleri görüntüle">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><path d="M4 2h6l2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5.5 6.5h5M5.5 9h5M5.5 11.5h3"/></svg>Ekstre
         </button>
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:var(--gold)" onclick="openNakitAvansModal('${k.id}')" title="Bu karttan nakit avans çek">
+        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:var(--gold)" onclick="event.stopPropagation();openNakitAvansModal('${k.id}')" title="Bu karttan nakit avans çek">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5c0-1 .9-1.5 2-1.5s2 .5 2 1.3c0 1.7-4 1-4 2.7 0 .8 1 1.3 2 1.3s2-.5 2-1.5"/></svg>Nakit Avans
         </button>
       </div>
@@ -11165,7 +11178,7 @@ function openKartDetayModal(kartId, tab) {
   document.getElementById('kd-kart-adi').title = k.ad;
   document.getElementById('kd-kart-sub').textContent = `${banka}${k.no ? ' ·· ' + k.no : ''}`;
   // Kart rengi ile header icon ve banner'ı renklendir
-  const renk = k.renk || 'var(--gold)';
+  const renk = getKartRenk(k);
   const iconEl = document.getElementById('kd-header-icon');
   if (iconEl) { iconEl.style.background = renk + '1a'; iconEl.style.borderColor = renk + '40'; }
   const bannerEl = document.getElementById('kd-header-banner');
@@ -12589,7 +12602,7 @@ function islemRowHtml(i) {
   const ikon = kat && kat.ikon ? kat.ikon : '💳';
   const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
   const amtClass = i.tutar < 0 ? 'neg' : i.tutar > 0 ? 'pos' : 'neutral';
-  const renk = (k&&k.renk)||'var(--accent)';
+  const renk = getKartRenk(k);
 
   let taksitSub = '';
   if(isTaksitli) {
@@ -12690,7 +12703,7 @@ function renderIslemFiltreGrids() {
   const kartGrid = document.getElementById('islem-filtre-kart-grid');
   if(kartGrid) {
     const opts = [`<button type="button" class="chip-select-opt${!fk.value?' active':''}" data-val="">Tüm Kartlar</button>`]
-      .concat(DB.kartlar.map(k=>`<button type="button" class="chip-select-opt${fk.value===k.id?' active':''}" data-val="${k.id}"><span class="chip-dot" style="background:${k.renk||'var(--accent)'}"></span>${k.ad}</button>`));
+      .concat(DB.kartlar.map(k=>`<button type="button" class="chip-select-opt${fk.value===k.id?' active':''}" data-val="${k.id}"><span class="chip-dot" style="background:${getKartRenk(k)}"></span>${k.ad}</button>`));
     kartGrid.innerHTML = opts.join('');
     kartGrid.querySelectorAll('.chip-select-opt').forEach(btn=>{
       btn.onclick = () => { fk.value = btn.dataset.val; renderIslemler(); renderIslemFiltreGrids(); };
@@ -13153,7 +13166,7 @@ function renderExtreKartModalGrid() {
   if(!grid) return;
   const kf = document.getElementById('extre-kart-filter');
   if(!DB.kartlar.length) { grid.innerHTML = '<div class="info-box" style="margin:0">Henüz kart eklenmedi.</div>'; return; }
-  grid.innerHTML = DB.kartlar.map(k=>`<button type="button" class="chip-select-opt${kf.value===k.id?' active':''}" data-val="${k.id}"><span class="chip-dot" style="background:${k.renk||'var(--accent)'}"></span>${k.ad}</button>`).join('');
+  grid.innerHTML = DB.kartlar.map(k=>`<button type="button" class="chip-select-opt${kf.value===k.id?' active':''}" data-val="${k.id}"><span class="chip-dot" style="background:${getKartRenk(k)}"></span>${k.ad}</button>`).join('');
   grid.querySelectorAll('.chip-select-opt').forEach(btn=>{
     btn.onclick = () => {
       kf.value = btn.dataset.val;
@@ -24986,7 +24999,7 @@ function renderOzetProvizyonUyarilar() {
 function _provizyonUyariSatiri(i) {
   const k = (typeof getKart === 'function') ? getKart(i.kart) : null;
   const kartAd = k ? k.ad : '—';
-  const kartRenk = (k && k.renk) || 'var(--violet)';
+  const kartRenk = (typeof getKartRenk === 'function') ? getKartRenk(k) : ((k && k.renk) || 'var(--violet)');
   const tutarStr = (typeof fmtCur === 'function') ? fmtCur(i.tutar, i.paraBirimi || 'TRY') : i.tutar;
   const tarihStr = (typeof fmtDate === 'function') ? fmtDate(i.tarih) : i.tarih;
   const aciklamaSafe = (i.aciklama || '—').replace(/"/g,'&quot;');
