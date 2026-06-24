@@ -1530,6 +1530,20 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 .tp-header { display: grid; grid-template-columns: 28px 1fr 72px 100px 28px; padding: 7px 10px; font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; gap: 6px; align-items: center; }
 .tp-header > div:nth-child(4) { text-align: right; }
 .tp-row { display: grid; grid-template-columns: 28px 1fr 72px 100px 28px; padding: 4px 10px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; transition: background .1s; gap: 6px; }
+.tp-rows-scroll { max-height: 168px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--surface4) transparent; }
+.tp-rows-scroll::-webkit-scrollbar { width: 4px; }
+.tp-rows-scroll::-webkit-scrollbar-track { background: transparent; }
+.tp-rows-scroll::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
+/* ── İşlem Ekle modalı: kompakt yerleşim ── */
+#modal-islem .msec { margin-bottom: 12px; padding: 12px; }
+#modal-islem .msec:last-child { margin-bottom: 0; }
+#modal-islem .msec-label { margin-bottom: 8px; padding-bottom: 6px; }
+#modal-islem .form-row { margin-bottom: 8px; gap: 10px; }
+#modal-islem .form-row:last-child { margin-bottom: 0; }
+#modal-islem .modal-body { padding: 16px 22px; }
+#modal-islem label { font-size: 11.5px; display: block; margin-bottom: 4px; color: var(--text3); font-weight: 600; }
+#modal-islem input, #modal-islem select { padding: 8px 12px; font-size: 13px; }
+#modal-islem .ac-wrap { position: relative; }
 .tp-row:last-child { border-bottom: none; }
 .tp-row:hover { background: var(--surface2); }
 .tp-donem { font-size: 11px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
@@ -7528,13 +7542,11 @@ window.addEventListener('load', placeMobProfilePanel);
           <div><label>Provizyon Tarihi <span style="color:var(--text3);font-size:10px">(ekstreye yansıma)</span></label><input id="islem-provizyon-tarihi" type="date" onchange="onIslemProvizyonManuelDegisti();calcTaksit(true)"></div>
         </div>
         <div id="islem-provizyon-hint" style="font-size:10.5px;color:var(--text3);margin:-2px 0 8px;display:none"></div>
-        <div class="form-row">
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div class="ac-wrap"><label>Açıklama</label><input id="islem-aciklama" placeholder="Market alışverişi..." autocomplete="off" oninput="onIslemAciklamaInput()" onfocus="onIslemAciklamaInput()" onblur="setTimeout(closeIslemAciklamaSuggest,180)" onkeydown="onIslemAciklamaKeydown(event)">
             <div id="islem-aciklama-suggest" class="ac-suggest"></div>
             <div id="islem-aciklama-chips" class="ac-chips"></div>
           </div>
-        </div>
-        <div class="form-row" style="margin-bottom:0">
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
             <select id="islem-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
@@ -11933,7 +11945,7 @@ function calcTaksit(preserveManuel=false) {
 
   container.innerHTML = `<div class="tp-wrap">
     <div class="tp-header"><div></div><div>Tarih</div><div>Tutar</div><div></div></div>
-    ${rows}
+    <div class="tp-rows-scroll">${rows}</div>
     <div class="tp-footer">
       <div class="tp-footer-info">
         <span class="tp-footer-total">Toplam: <span id="islem-tp-toplam">${fmt(toplam)}</span></span>
