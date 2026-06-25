@@ -418,6 +418,14 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 }
 .islem-day-head::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .islem-day-head:first-child { padding-top: 2px; }
+/* ─── Her işlem satırının solunda gün/ay tarih kartı ─── */
+.islem-date-card {
+  width: 40px; height: 40px; border-radius: 11px; background: var(--surface3);
+  border: 1px solid var(--border); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;
+}
+.islem-date-day { font-size: 15px; font-weight: 800; color: var(--text); }
+.islem-date-mon { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text3); letter-spacing: .03em; margin-top: 2px; }
 /* ─── Mobil bankacılık tarzı işlem satırı ─── */
 .islem-row2 { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--radius-xs); transition: background .15s, box-shadow .15s; cursor: pointer; }
 .islem-row2:hover { background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
@@ -3194,14 +3202,14 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   .kd-yeni-islem-btn { flex: 1 1 100%; order: 2; margin-left: 0; justify-content: center; }
 }
 /* Tab bar */
-.kd-tab-bar { display: flex; gap: 3px; background: var(--surface2); border-radius: 11px; padding: 4px; border: 1px solid var(--border); }
-.kd-tab-btn { flex: 1 1 0; border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text3); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 7px; }
+.kd-tab-bar { display: flex; gap: 4px; background: var(--surface2); border-radius: 12px; padding: 5px; border: 1px solid var(--border); }
+.kd-tab-btn { flex: 1 1 0; border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 12px 18px; border-radius: 9px; font-size: 14.5px; font-weight: 700; color: var(--text3); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .kd-tab-btn svg { opacity: .65; flex-shrink: 0; transition: var(--transition); }
 .kd-tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
 .kd-tab-btn:hover svg { opacity: .9; }
 .kd-tab-btn.active { background: var(--surface3); color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06); }
 .kd-tab-btn.active svg { opacity: 1; color: var(--gold); }
-.kd-tab-badge { background: var(--surface4); color: var(--text2); border-radius: 20px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; line-height: 1.5; }
+.kd-tab-badge { background: var(--surface4); color: var(--text2); border-radius: 20px; font-size: 11.5px; font-weight: 700; padding: 2px 7px; min-width: 20px; text-align: center; line-height: 1.5; }
 .kd-tab-btn.active .kd-tab-badge { background: rgba(251,191,36,.18); color: var(--gold); }
 @keyframes kdTabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -3402,20 +3410,20 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd-extre-body { max-height: 0; overflow: hidden; transition: max-height .2s ease; }
 .kd-extre-card.open .kd-extre-body { border-top: 1px solid var(--border); }
 .kd-extre-detail-list { padding: 4px 12px 10px; }
-.kd-extre-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 6px; border-radius: 7px; cursor: pointer; transition: var(--transition); }
+.kd-extre-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: var(--transition); }
 .kd-extre-detail-row:hover { background: var(--surface3); }
 .kd-extre-detail-row:hover .kd-extre-detail-title { color: var(--accent); }
-.kd-extre-detail-info { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 8px; }
-.kd-extre-detail-ikon { font-size: 16px; flex-shrink: 0; width: 28px; height: 28px; background: var(--surface3); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+.kd-extre-detail-info { min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 9px; }
+.kd-extre-detail-ikon { font-size: 16px; flex-shrink: 0; width: 32px; height: 32px; background: var(--surface3); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 .kd-extre-detail-text { min-width: 0; }
 .kd-extre-detail-title { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: var(--transition); font-weight: 500; }
 .kd-extre-detail-sub { font-size: 10px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kd-extre-detail-amt { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--text); flex-shrink: 0; white-space: nowrap; padding-left: 8px; }
 .kd-extre-detail-empty { padding: 16px 0; font-size: 11.5px; color: var(--text3); text-align: center; }
 .kd-extre-meta { min-width: 0; overflow: hidden; }
-.kd-extre-period { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kd-extre-dates { font-size: 10.5px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
-.kd-extre-date-chip { display: inline-flex; align-items: center; gap: 3px; }
+.kd-extre-period { font-size: 14.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kd-extre-dates { font-size: 13px; font-weight: 600; color: var(--text2); margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kd-extre-date-chip { display: inline-flex; align-items: center; gap: 4px; }
 .kd-extre-amt { text-align: right; flex-shrink: 0; }
 .kd-extre-amt-val { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
 .kd-extre-badge { display: inline-flex; align-items: center; gap: 3px; border-radius: 20px; padding: 2px 8px; font-size: 9.5px; font-weight: 700; margin-top: 3px; letter-spacing: .03em; }
@@ -6127,11 +6135,11 @@ window.addEventListener('load', placeMobProfilePanel);
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       <div class="kd-tab-bar">
         <button type="button" class="kd-tab-btn active" id="kd2-tab-btn-islem" onclick="kd2SwitchTab('islem')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           İşlemler <span class="kd-tab-badge" id="kd2-tab-badge-islem">0</span>
         </button>
         <button type="button" class="kd-tab-btn" id="kd2-tab-btn-extre" onclick="kd2SwitchTab('extre')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
           Ekstreler <span class="kd-tab-badge" id="kd2-tab-badge-extre">0</span>
         </button>
       </div>
@@ -7755,11 +7763,11 @@ window.addEventListener('load', placeMobProfilePanel);
     <div class="kd-tab-row">
       <div class="kd-tab-bar">
         <button type="button" class="kd-tab-btn active" id="kd-tab-btn-islem" onclick="kdSwitchTab('islem')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           İşlemler <span class="kd-tab-badge" id="kd-tab-badge-islem">0</span>
         </button>
         <button type="button" class="kd-tab-btn" id="kd-tab-btn-extre" onclick="kdSwitchTab('extre')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
           Ekstreler <span class="kd-tab-badge" id="kd-tab-badge-extre">0</span>
         </button>
       </div>
@@ -10309,6 +10317,34 @@ function updateSidebarKartNav() {
   if(navExtreler) navExtreler.style.display = hasKart ? '' : 'none';
 }
 
+// ── Hash state yardımcıları (deep-link desteği) ──────────────
+// navigateToHash içinde window.* ile üzerine yazılır; buradaki
+// stub'lar ilk renderAll/showPage çağrılmadan önce hata vermesini önler.
+if(typeof window._pushHashState === 'undefined') {
+  window._pushHashState = function(page, params) {
+    let hash = '#' + page;
+    const parts = [];
+    Object.entries(params || {}).forEach(([k,v]) => { if(v != null && v !== '') parts.push(encodeURIComponent(k)+'='+encodeURIComponent(v)); });
+    if(parts.length) hash += '?' + parts.join('&');
+    if(location.hash !== hash) {
+      try { history.pushState({page,params}, '', hash); }
+      catch(e) { location.hash = hash.slice(1); }
+    }
+  };
+  window._currentHashPage = function() { return (location.hash.replace('#','').split('?')[0]) || 'ozet'; };
+  window._currentHashParams = function() {
+    const qIdx = location.hash.indexOf('?');
+    if(qIdx < 0) return {};
+    const params = {};
+    location.hash.slice(qIdx+1).split('&').forEach(pair => {
+      const [k,v] = pair.split('=').map(decodeURIComponent);
+      if(k) params[k] = v || '';
+    });
+    return params;
+  };
+}
+// ─────────────────────────────────────────────────────────────
+
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -10328,11 +10364,8 @@ function showPage(id, btn) {
   const labelEl = document.getElementById('topbar-label');
   if(iconEl && _navIcons[id]) iconEl.textContent = _navIcons[id];
   if(labelEl) labelEl.textContent = PAGE_TITLES[id] || id;
-  // URL hash güncelle (popstate döngüsünü önlemek için kontrol)
-  if(location.hash !== '#' + id) {
-    try { history.pushState({page: id}, '', '#' + id); }
-    catch(e) { location.hash = id; }
-  }
+  // URL hash güncelle — sadece sayfa adını yaz, alt-state (tab/kart) kendi fonksiyonları yazar
+  _pushHashState(id, {});
   // Mobile: close sidebar, sync bottom nav
   if(window.innerWidth <= 768) {
     if(typeof closeMobileSidebar === 'function') closeMobileSidebar();
@@ -10395,6 +10428,13 @@ function showTab(id, btn) {
   document.getElementById(id).style.display='block';
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  else {
+    // btn verilmemişse tab butonunu id'den bul
+    const tabBtn = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
+    if(tabBtn) tabBtn.classList.add('active');
+  }
+  // Hash'e tab bilgisini yaz
+  _pushHashState('tanimlamalar', {tab: id});
   if(id==='tab-para-birimi' || id==='tab-para-birimi-yonetim') {
     populateCurrencySelects();
   }
@@ -10485,6 +10525,13 @@ function openModal(id, onceSecimKartId) {
   // Money input binding — yeni açılan modalda da çalışsın
   const modalEl = document.getElementById(id);
   if(modalEl) setTimeout(()=>bindMoneyInputs(modalEl), 10);
+
+  // Hash'e modal bilgisini ekle (mevcut sayfa korunarak)
+  const curPage = _currentHashPage() || 'ozet';
+  const curParams = _currentHashParams();
+  curParams.modal = id;
+  if(onceSecimKartId) curParams.modalKart = onceSecimKartId;
+  _pushHashState(curPage, curParams);
 }
 
 function closeModal(id) {
@@ -10556,6 +10603,13 @@ function closeModal(id) {
       if (first) el.value = '';
     }
   });
+
+  // Hash'ten modal bilgisini temizle
+  const curPage = _currentHashPage() || 'ozet';
+  const curParams = _currentHashParams();
+  delete curParams.modal;
+  delete curParams.modalKart;
+  _pushHashState(curPage, curParams);
 }
 
 document.querySelectorAll('.modal-bg').forEach(m => {
@@ -11483,6 +11537,8 @@ function acKartDetaySayfa(kartId, tab) {
   document.getElementById('kartlar-liste-view').style.display = 'none';
   document.getElementById('kartlar-detay-view').style.display = 'block';
   window.scrollTo(0, 0);
+  // Hash: kart detay state
+  _pushHashState('kartlar', {kart: kartId, tab: tab || 'islem'});
   kd2SwitchTab(tab || 'islem');
 }
 
@@ -11490,6 +11546,7 @@ function kartDetayGeriDon() {
   document.getElementById('kartlar-detay-view').style.display = 'none';
   document.getElementById('kartlar-liste-view').style.display = 'block';
   _kd2KartId = null;
+  _pushHashState('kartlar', {});
 }
 
 function kd2RenderOzetBanner(k, renk) {
@@ -11826,6 +11883,8 @@ function kd2SwitchTab(tab) {
   (tab === 'islem' ? tabExtre : tabIslem).style.display = 'none';
   const activeEl = tab === 'islem' ? tabIslem : tabExtre;
   activeEl.style.display = 'block';
+  // Hash'e kart + tab bilgisini yaz (sadece kd2KartId varsa)
+  if (_kd2KartId) _pushHashState('kartlar', {kart: _kd2KartId, tab: tab});
   if (tab === 'islem') kd2RenderIslemler();
   else kd2RenderExtreler();
 }
@@ -11904,9 +11963,8 @@ function kd2RenderIslemler() {
   list.innerHTML = ayGruplari.map(function(grp) {
     const baslik = grp.key === buAyKey ? AY_UZUN_TR[grp.m - 1] + ' ' + grp.y + ' - Bu ay' : AY_UZUN_TR[grp.m - 1] + ' ' + grp.y;
     const isOpen = _kd2AcikIslemAy === grp.key;
-    let rowsHtml = '', lastTarih = null;
+    let rowsHtml = '';
     grp.items.forEach(function(i) {
-      if (i.tarih !== lastTarih) { rowsHtml += '<div class="kd-islem-day-head">' + islemGunBasligi(i.tarih) + '</div>'; lastTarih = i.tarih; }
       rowsHtml += islemRowHtml(i);
     });
     const ayToplam = {};
@@ -12126,14 +12184,9 @@ function kdRenderIslemler() {
     const baslik = grp.key === buAyKey ? `${AY_UZUN_TR[grp.m - 1]} ${grp.y} · Bu ay` : `${AY_UZUN_TR[grp.m - 1]} ${grp.y}`;
     const isOpen = _kdAcikIslemAy === grp.key;
 
-    // Ay içinde, mevcut sıralamayı koruyarak gün başlıklarıyla satırları diz
+    // Her satırın solunda kendi tarih kartı gösterildiği için ayrı gün başlığına gerek yok
     let rowsHtml = '';
-    let lastTarih = null;
     grp.items.forEach(i => {
-      if (i.tarih !== lastTarih) {
-        rowsHtml += `<div class="kd-islem-day-head">${islemGunBasligi(i.tarih)}</div>`;
-        lastTarih = i.tarih;
-      }
       rowsHtml += islemRowHtml(i);
     });
 
@@ -12377,13 +12430,17 @@ function kdRenderExtreler() {
       const kat = (DB.kategoriler || []).find(x => x.id === islem.kategori);
       const ikon = kat && kat.ikon ? kat.ikon : '💳';
       const aciklamaSafe = (islem.aciklama || '—').replace(/"/g, '&quot;');
-      const taksitTxt = (islem.taksit || 1) > 1 ? `${tak.no}/${islem.taksit} taksit · ` : '';
+      const taksitTxt = (islem.taksit || 1) > 1 ? `${tak.no}/${islem.taksit} taksit` : '';
+      const subText = [taksitTxt, kat ? kat.ad : ''].filter(Boolean).join(' · ');
+      const dObj = new Date(tak.tarih + 'T00:00:00');
+      const dateCardHtml = `<div class="islem-date-card"><div class="islem-date-day">${dObj.getDate()}</div><div class="islem-date-mon">${AY_KISA_TR[dObj.getMonth()]}</div></div>`;
       return `<div class="kd-extre-detail-row" onclick="event.stopPropagation();editIslem('${islem.id}')" title="Düzenlemek için tıklayın">
         <div class="kd-extre-detail-info">
+          ${dateCardHtml}
           <div class="kd-extre-detail-ikon">${ikon}</div>
           <div class="kd-extre-detail-text">
             <div class="kd-extre-detail-title">${aciklamaSafe}</div>
-            <div class="kd-extre-detail-sub">${taksitTxt}${fmtDate(tak.tarih)}${kat ? ' · ' + kat.ad : ''}</div>
+            <div class="kd-extre-detail-sub">${subText}</div>
           </div>
         </div>
         <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(tak.tutar, pb)}</div>
@@ -13631,14 +13688,9 @@ function renderIslemler() {
     return;
   }
 
-  // ── Gün başlıklarıyla gruplandırılmış mobil bankacılık tarzı liste ──
+  // ── Her satırın solunda kendi tarih kartı olduğu için ayrı gün başlığı yok ──
   let html = '';
-  let lastTarih = null;
   islemler.forEach(i=>{
-    if(i.tarih !== lastTarih) {
-      html += `<div class="islem-day-head">${islemGunBasligi(i.tarih)}</div>`;
-      lastTarih = i.tarih;
-    }
     html += islemRowHtml(i);
   });
   list.innerHTML = html;
@@ -13658,6 +13710,8 @@ function islemRowHtml(i) {
                  : kat && kat.tur === 'gider' ? 'neg'
                  : i.tutar < 0 ? 'neg' : i.tutar > 0 ? 'pos' : 'neutral';
   const renk = getKartRenk(k);
+  const dObj = new Date(i.tarih+'T00:00:00');
+  const dateCardHtml = `<div class="islem-date-card"><div class="islem-date-day">${dObj.getDate()}</div><div class="islem-date-mon">${AY_KISA_TR[dObj.getMonth()]}</div></div>`;
 
   let taksitSub = '';
   if(isTaksitli) {
@@ -13670,6 +13724,7 @@ function islemRowHtml(i) {
   }
 
   return `<div class="islem-row2" onclick="editIslem('${i.id}')">
+    ${dateCardHtml}
     <div class="islem-row2-icon" style="background:${renk}18;border:1px solid ${renk}30">${ikon}</div>
     <div class="islem-row2-body">
       <div class="islem-row2-title" title="${aciklamaSafe}">${aciklamaSafe}</div>
@@ -23546,14 +23601,69 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Para birimi önizleme
   updateParaBirimiPreview();
 
-  // ── Hash tabanlı sayfa yönlendirme ──────────────────────────
+  // ── Hash tabanlı gelişmiş sayfa yönlendirme ──────────────────────────
   const VALID_PAGES = ['ozet','kartlar','islemler','extreler','ekstreeslestir','mevduat','hesaplar',
                        'kira','maas','elden','kmhkredi','kredi','tanimlamalar'];
 
+  // Hash yardımcıları — global scope'ta tanımlı olmalı
+  window._pushHashState = function(page, params) {
+    let hash = '#' + page;
+    const parts = [];
+    Object.entries(params || {}).forEach(([k,v]) => { if(v != null && v !== '') parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v)); });
+    if(parts.length) hash += '?' + parts.join('&');
+    if(location.hash !== hash) {
+      try { history.pushState({page, params}, '', hash); }
+      catch(e) { location.hash = hash.slice(1); }
+    }
+  };
+
+  window._currentHashPage = function() {
+    return (location.hash.replace('#','').split('?')[0]) || 'ozet';
+  };
+
+  window._currentHashParams = function() {
+    const qIdx = location.hash.indexOf('?');
+    if(qIdx < 0) return {};
+    const qs = location.hash.slice(qIdx + 1);
+    const params = {};
+    qs.split('&').forEach(pair => {
+      const [k, v] = pair.split('=').map(decodeURIComponent);
+      if(k) params[k] = v || '';
+    });
+    return params;
+  };
+
   function navigateToHash() {
-    const hash = location.hash.replace('#', '').split('?')[0];
-    const page = VALID_PAGES.includes(hash) ? hash : 'ozet';
-    showPage(page, null);
+    const page = _currentHashPage();
+    const params = _currentHashParams();
+    const validPage = VALID_PAGES.includes(page) ? page : 'ozet';
+
+    // Önce sayfayı göster (renderPage çalışsın, kart listesi hazır olsun)
+    showPage(validPage, null);
+
+    // Kart detayı geri yükle
+    if(validPage === 'kartlar' && params.kart) {
+      const k = typeof getKart === 'function' ? getKart(params.kart) : null;
+      if(k) {
+        setTimeout(() => acKartDetaySayfa(params.kart, params.tab || 'islem'), 60);
+      }
+    }
+
+    // Tanımlamalar tab'ı geri yükle
+    if(validPage === 'tanimlamalar' && params.tab) {
+      const tabEl = document.getElementById(params.tab);
+      if(tabEl) setTimeout(() => showTab(params.tab, null), 30);
+    }
+
+    // Modal geri yükle — sadece belirli "form dışı" / "okuma" modalleri restore et
+    // (Yeni kayıt formları restore edilmez — kullanıcı formu yarıda bırakmış sayılır)
+    const RESTORABLE_MODALS = ['modal-kart-odeme','modal-hesap-log','modal-iban-popup'];
+    if(params.modal && RESTORABLE_MODALS.includes(params.modal)) {
+      setTimeout(() => {
+        const modalEl = document.getElementById(params.modal);
+        if(modalEl) openModal(params.modal, params.modalKart || undefined);
+      }, 120);
+    }
   }
 
   // Geri/ileri tarayıcı tuşu
