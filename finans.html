@@ -3221,6 +3221,120 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd-mini-stat.teal { border-color: rgba(45,212,191,.2); background: rgba(45,212,191,.05); }
 .kd-mini-stat.teal .kd-mini-stat-val { color: var(--teal); }
 
+/* ─── Kart Detay v2 — Yeni Bileşenler ─── */
+/* Kart Görseli */
+.kd2-card-visual {
+  width: 100px; height: 62px; border-radius: 8px; flex-shrink: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 8px 10px; position: relative; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.kd2-card-visual::before {
+  content: ''; position: absolute; inset: 0; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+.kd2-card-chip {
+  width: 22px; height: 16px; border-radius: 3px;
+  background: linear-gradient(135deg, #d4a017, #f5d060, #a07010);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.kd2-card-no { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,.8); letter-spacing: .08em; }
+.kd2-card-logo { font-size: 8px; font-weight: 700; color: rgba(255,255,255,.7); text-transform: uppercase; letter-spacing: .06em; }
+
+/* Özet Banner yeni layout */
+.kd2-ozet-grid {
+  display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center;
+}
+@media(max-width:600px){ .kd2-ozet-grid { grid-template-columns: 1fr; } .kd2-card-visual { width: 80px; height: 50px; } }
+.kd2-ozet-rakamlar { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media(max-width:700px){ .kd2-ozet-rakamlar { grid-template-columns: repeat(2,1fr); } }
+.kd2-ozet-rakam-item { display: flex; flex-direction: column; gap: 2px; }
+.kd2-ozet-rakam-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.kd2-ozet-rakam-val { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+.kd2-ozet-rakam-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+/* Ayarlar satırı */
+.kd2-ayarlar-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+@media(max-width:700px){ .kd2-ayarlar-grid { grid-template-columns: repeat(2,1fr); } }
+.kd2-ayar-kart {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+}
+.kd2-ayar-icon { font-size: 15px; line-height: 1; margin-bottom: 2px; }
+.kd2-ayar-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.kd2-ayar-val { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.kd2-ayar-sub { font-size: 10px; color: var(--text3); }
+
+/* Trend & İstatistik satırı */
+.kd2-trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(max-width:640px){ .kd2-trend-grid { grid-template-columns: 1fr; } }
+.kd2-grafik-kart {
+  background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.kd2-grafik-baslik { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.kd2-bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
+.kd2-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.kd2-bar-fill { border-radius: 3px 3px 0 0; width: 100%; min-height: 3px; transition: height .3s ease; }
+.kd2-bar-lbl { font-size: 8.5px; color: var(--text3); white-space: nowrap; }
+.kd2-bar-val { font-size: 8px; font-family: var(--mono); color: var(--text2); white-space: nowrap; }
+
+/* Limit geçmişi mini */
+.kd2-limit-gecmis { display: flex; flex-direction: column; gap: 5px; }
+.kd2-limit-gecmis-satir { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; padding: 5px 8px; background: var(--surface2); border-radius: 6px; }
+.kd2-limit-gecmis-tarih { color: var(--text3); }
+.kd2-limit-gecmis-tutar { font-family: var(--mono); font-weight: 700; color: var(--text); }
+.kd2-limit-gecmis-badge { font-size: 9px; padding: 2px 6px; border-radius: 99px; font-weight: 700; }
+.kd2-limit-gecmis-badge.artti { background: rgba(45,212,191,.15); color: var(--teal); }
+.kd2-limit-gecmis-badge.azaldi { background: rgba(251,113,133,.15); color: var(--rose); }
+.kd2-limit-gecmis-badge.ilk { background: rgba(251,191,36,.12); color: var(--gold); }
+
+/* Aksiyon butonları (kd2 header) */
+.kd2-action-menu-wrap { position: relative; }
+.kd2-action-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 200;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+  padding: 5px; min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  animation: menuIn .15s ease;
+}
+@keyframes menuIn { from { opacity:0; transform: translateY(-6px) scale(.97); } to { opacity:1; transform: none; } }
+.kd2-action-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px;
+  background: none; border: none; border-radius: 7px; cursor: pointer;
+  font-size: 12.5px; font-family: var(--sans); color: var(--text); transition: var(--transition);
+}
+.kd2-action-menu button:hover { background: var(--surface2); }
+.kd2-action-menu button.kd2-action-danger { color: var(--rose); }
+.kd2-action-menu button.kd2-action-danger:hover { background: rgba(251,113,133,.1); }
+.kd2-action-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* Asgari ödeme satırı */
+.kd2-asgari-banner {
+  background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.22);
+  border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+}
+.kd2-asgari-banner .label { font-size: 10.5px; color: var(--text3); flex: 1; }
+.kd2-asgari-banner .val { font-family: var(--mono); font-weight: 700; font-size: 14px; color: var(--gold); }
+
+/* Ortak limit grubu bilgi şeridi */
+.kd2-ortak-grup-bilgi {
+  background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.2);
+  border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;
+  margin-top: 8px; font-size: 11.5px;
+}
+.kd2-ortak-grup-bilgi .og-label { color: var(--text3); }
+.kd2-ortak-grup-bilgi .og-val { font-weight: 700; color: var(--violet); font-family: var(--mono); }
+
+/* Para birimi chip */
+.kd2-pb-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  background: var(--surface3); border: 1px solid var(--border2); border-radius: 99px;
+  font-size: 10px; font-weight: 700; font-family: var(--mono); color: var(--text2);
+}
+
 /* Kategori barı — kalın + daha belirgin */
 .kd-kat-bar { margin-bottom: 16px; }
 .kd-kat-bar-track { display: flex; width: 100%; height: 10px; border-radius: 6px; overflow: hidden; background: var(--surface3); gap: 1px; }
@@ -5990,13 +6104,25 @@ window.addEventListener('load', placeMobProfilePanel);
           <div id="kd2-kart-sub" style="font-size:12px;color:var(--text3);margin-top:1px"></div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
+      <div style="display:flex;gap:8px;flex-shrink:0;align-items:center">
+        <div class="kd2-action-menu-wrap">
+          <button class="btn btn-ghost btn-sm" id="kd2-more-btn" onclick="kd2ToggleMoreMenu()" title="Diğer işlemler">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <div class="kd2-action-menu" id="kd2-more-menu" style="display:none">
+            <button type="button" id="kd2-limit-guncelle-btn" onclick="kd2LimitGuncelleFromDetay()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Limit Güncelle</button>
+            <div class="kd2-action-divider"></div>
+            <button type="button" id="kd2-delete-btn" class="kd2-action-danger" onclick="kd2DeleteKartFromDetay()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Kartı Sil</button>
+          </div>
+        </div>
         <button class="btn btn-ghost btn-sm" id="kd2-edit-btn">✏️ Düzenle</button>
         <button class="btn btn-primary btn-sm" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
       </div>
     </div>
 
-    <div id="kd2-ozet-banner" style="margin-bottom:20px"></div>
+    <div id="kd2-ozet-banner" style="margin-bottom:14px"></div>
+    <div id="kd2-ayarlar-row" style="margin-bottom:20px"></div>
+    <div id="kd2-trend-row" style="margin-bottom:20px"></div>
 
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
       <div class="kd-tab-bar">
@@ -11383,18 +11509,312 @@ function kd2RenderOzetBanner(k, renk) {
   const kalanGun = odemeStr ? Math.ceil((new Date(odemeStr + 'T00:00:00') - today) / 86400000) : null;
   const odemeUrgent = kalanGun !== null && kalanGun <= 3;
   const odemePast = odemeStr !== null && odemeStr < localDateStr(today);
-  banner.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;border-top:3px solid ' + renk + '">'
-    + '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px">'
-    + '<div style="min-width:120px;flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">KULLANIMDA</div><div class="mono" style="font-size:20px;font-weight:700;color:var(--warn)">' + fmtCur(kullanim, pb) + '</div></div>'
-    + '<div style="min-width:120px;flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">KULLANILABILIR</div><div class="mono" style="font-size:20px;font-weight:700;color:var(--teal)">' + fmtCur(musait, pb) + '</div></div>'
-    + '<div style="min-width:120px;flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">TOPLAM LIMIT</div><div class="mono" style="font-size:20px;font-weight:700;color:var(--text)">' + fmtCur(toplamLimit, pb) + '</div></div>'
-    + '<div style="min-width:120px;flex:1"><div style="font-size:10px;color:var(--text3);margin-bottom:3px">SON ODEME</div>'
-    + '<div class="mono" style="font-size:16px;font-weight:700;color:' + (odemePast ? 'var(--danger)' : odemeUrgent ? 'var(--warn)' : 'var(--text)') + '">' + (odemeDt ? fmtDate(odemeDt) : '&#x2014;') + '</div>'
-    + (kalanGun !== null ? '<div style="font-size:11px;color:' + (odemePast ? 'var(--danger)' : odemeUrgent ? 'var(--warn)' : 'var(--text3)') + ';margin-top:2px">' + (odemePast ? 'Gecti!' : kalanGun === 0 ? 'Bugun!' : kalanGun + ' gun kaldi') + '</div>' : '')
-    + '</div></div>'
-    + '<div class="progress-bar" style="margin-bottom:4px"><div class="progress-fill" style="width:' + pct + '%;background:' + pctColor + '"></div></div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)"><span>%' + pct.toFixed(0) + ' kullanildi</span><span>Ekstre: ' + (extreDt ? fmtDate(extreDt) : '&#x2014;') + '</span></div>'
-    + '</div>';
+  const odemeColor = odemePast ? 'var(--danger)' : odemeUrgent ? 'var(--warn)' : 'var(--text)';
+  const kalanStr = kalanGun === null ? '' : odemePast ? '⚠️ Geçti!' : kalanGun === 0 ? '🔴 Bugün!' : kalanGun <= 3 ? '⚠️ ' + kalanGun + ' gün kaldı' : kalanGun + ' gün kaldı';
+
+  // Kart görsel (mini kredi kartı)
+  const sonanNo = k.no ? ('·· ' + String(k.no).replace(/\s/g,'').slice(-4)) : '·· ····';
+  const banka = getBanka(k.banka);
+  const tip = (DB.urunTipler || []).find(t => t.id === k.tip);
+  const tipAd = tip ? tip.ad : '';
+  const cardVisual = `<div class="kd2-card-visual" style="background:linear-gradient(135deg,${renk}dd,${renk}88)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="kd2-card-chip"></div>
+      <span class="kd2-pb-chip" style="padding:1px 5px;font-size:7.5px">${pb}</span>
+    </div>
+    <div>
+      <div class="kd2-card-no">${sonanNo}</div>
+      <div class="kd2-card-logo">${banka || k.ad}</div>
+    </div>
+  </div>`;
+
+  // Asgari ödeme
+  const asgari = kullanim > 0 ? calcAsgariOdeme(toplamLimit, kullanim, pb) : null;
+  const asgariHTML = asgari ? `<div class="kd2-asgari-banner">
+    <span style="font-size:13px">💳</span>
+    <span class="label">Asgari Ödeme (kural: %${asgari.oran})</span>
+    <span class="val">${fmtCur(asgari.tutar, pb)}</span>
+  </div>` : '';
+
+  // Ortak limit grubu
+  let ortakHTML = '';
+  if (k.ortakLimitGrupId) {
+    const grup = (DB.ortakLimitGruplari || []).find(g => g.id === k.ortakLimitGrupId);
+    if (grup) {
+      const grupKullanim = getOrtakGrupKullanim(k.ortakLimitGrupId);
+      const grupPct = grup.limit > 0 ? Math.min(100, grupKullanim / grup.limit * 100) : 0;
+      const grupKartlar = (DB.kartlar || []).filter(x => x.ortakLimitGrupId === k.ortakLimitGrupId);
+      ortakHTML = `<div class="kd2-ortak-grup-bilgi">
+        <span style="font-size:12px">🔗</span>
+        <span class="og-label">Ortak Limit Grubu: <b style="color:var(--violet)">${grup.ad}</b></span>
+        <span class="og-val">${fmtCur(grupKullanim, pb)} / ${fmtCur(grup.limit, pb)}</span>
+        <span style="font-size:10px;color:var(--text3)">(${grupKartlar.length} kart)</span>
+      </div>`;
+    }
+  }
+
+  banner.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;border-top:3px solid ${renk}">
+    <div class="kd2-ozet-grid">
+      ${cardVisual}
+      <div>
+        <div class="kd2-ozet-rakamlar">
+          <div class="kd2-ozet-rakam-item">
+            <div class="kd2-ozet-rakam-label">Kullanimda</div>
+            <div class="kd2-ozet-rakam-val" style="color:var(--warn);font-size:16px">${fmtCur(kullanim, pb)}</div>
+            <div class="kd2-ozet-rakam-sub">%${pct.toFixed(0)} kullanıldı</div>
+          </div>
+          <div class="kd2-ozet-rakam-item">
+            <div class="kd2-ozet-rakam-label">Kullanılabilir</div>
+            <div class="kd2-ozet-rakam-val" style="color:var(--teal);font-size:16px">${fmtCur(musait, pb)}</div>
+            <div class="kd2-ozet-rakam-sub">Kalan limit</div>
+          </div>
+          <div class="kd2-ozet-rakam-item">
+            <div class="kd2-ozet-rakam-label">Toplam Limit</div>
+            <div class="kd2-ozet-rakam-val" style="color:var(--text);font-size:16px">${fmtCur(toplamLimit, pb)}</div>
+            <div class="kd2-ozet-rakam-sub">${tipAd || 'Kredi Kartı'}</div>
+          </div>
+          <div class="kd2-ozet-rakam-item">
+            <div class="kd2-ozet-rakam-label">Son Ödeme</div>
+            <div class="kd2-ozet-rakam-val" style="color:${odemeColor};font-size:15px">${odemeDt ? fmtDate(odemeDt) : '—'}</div>
+            <div class="kd2-ozet-rakam-sub" style="color:${odemeColor}">${kalanStr}</div>
+          </div>
+        </div>
+        <div class="progress-bar" style="margin:10px 0 4px"><div class="progress-fill" style="width:${pct}%;background:${pctColor}"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
+          <span>Ekstre: ${extreDt ? fmtDate(extreDt) : '—'}</span>
+          <span style="color:${pctColor};font-weight:700">%${pct.toFixed(1)} kullanıldı</span>
+        </div>
+        ${asgariHTML}
+        ${ortakHTML}
+      </div>
+    </div>
+  </div>`;
+
+  // Ayarlar ve trend satırını da render et
+  kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit);
+  kd2RenderTrendRow(k, renk, pb);
+}
+
+function kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit) {
+  const wrap = document.getElementById('kd2-ayarlar-row');
+  if (!wrap) return;
+  const banka = getBanka(k.banka);
+  const tip = (DB.urunTipler || []).find(t => t.id === k.tip);
+
+  // Ekstre kesim bilgisi
+  let ekstreKesimStr = '—';
+  if (k.extraTip === 'gun') ekstreKesimStr = 'Her ayın ' + (k.extraGun || 25) + '. günü';
+  else if (k.extraTip === 'hafta') {
+    const haftaAdlar = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+    ekstreKesimStr = (k.extraHafta || 1) + '. hafta ' + (haftaAdlar[k.extraHaftaGun] || '');
+  } else if (k.extraTip === 'statik') ekstreKesimStr = k.extraStatik ? fmtDate(new Date(k.extraStatik + 'T00:00:00')) : '—';
+
+  // Ödeme süresi
+  const odemeSure = parseInt(k.odemeSure) || 30;
+  const odemeGunTipEtk = {
+    'ilerle':'Tatilde ilerle','geri':'Tatilde geri',
+    'extre-ilerle':'Ekstre ileri','extre-geri':'Ekstre geri',
+    'extre-odeme-ilerle':'Ekstre+ödeme ileri','extre-odeme-geri':'Ekstre+ödeme geri'
+  };
+  const odemeGunTipStr = odemeGunTipEtk[k.odemeGunTip] || k.odemeGunTip || '—';
+
+  // Limit geçmişi — kaç kez değişti
+  const limitGecmis = k.limitGecmisi || [];
+  const limitGecmisStr = limitGecmis.length > 0 ? limitGecmis.length + ' değişim' : 'İlk limit';
+
+  // Para birimi
+  const paraBirimiStr = pb || 'TRY';
+
+  wrap.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px">
+    <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📋 Kart Bilgileri & Ayarlar</div>
+    <div class="kd2-ayarlar-grid">
+      <div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">🗓️</div>
+        <div class="kd2-ayar-label">Ekstre Kesim</div>
+        <div class="kd2-ayar-val">${ekstreKesimStr}</div>
+        <div class="kd2-ayar-sub">${extreDt ? 'Bu ay: ' + fmtDate(extreDt) : '—'}</div>
+      </div>
+      <div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">⏱️</div>
+        <div class="kd2-ayar-label">Ödeme Süresi</div>
+        <div class="kd2-ayar-val">${odemeSure} gün</div>
+        <div class="kd2-ayar-sub">${odemeGunTipStr}</div>
+      </div>
+      <div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">💱</div>
+        <div class="kd2-ayar-label">Para Birimi</div>
+        <div class="kd2-ayar-val">${paraBirimiStr}</div>
+        <div class="kd2-ayar-sub">${banka || '—'} · ${tip ? tip.ad : '—'}</div>
+      </div>
+      <div class="kd2-ayar-kart" style="cursor:pointer" onclick="kd2LimitGecmisToggle()" title="Limit geçmişini göster/gizle">
+        <div class="kd2-ayar-icon">📈</div>
+        <div class="kd2-ayar-label">Limit Geçmişi</div>
+        <div class="kd2-ayar-val">${fmtCur(toplamLimit, pb)}</div>
+        <div class="kd2-ayar-sub" style="color:var(--accent)">${limitGecmisStr} — tıkla ▸</div>
+      </div>
+    </div>
+    <div id="kd2-limit-gecmis-panel" style="display:none;margin-top:10px">
+      ${kd2BuildLimitGecmisHTML(k, pb)}
+    </div>
+  </div>`;
+}
+
+function kd2BuildLimitGecmisHTML(k, pb) {
+  const gecmis = (k.limitGecmisi || []).slice().sort((a,b) => b.tarih.localeCompare(a.tarih));
+  if (!gecmis.length) {
+    return `<div style="font-size:12px;color:var(--text3);padding:8px 4px">Limit geçmişi kaydı yok — ilk limit ${fmtCur(k.limit||0, pb)}</div>`;
+  }
+  const rows = gecmis.map((g, idx) => {
+    const sonraki = gecmis[idx + 1];
+    let badge = '';
+    if (!sonraki) badge = '<span class="kd2-limit-gecmis-badge ilk">İlk</span>';
+    else if (g.tutar > sonraki.tutar) badge = `<span class="kd2-limit-gecmis-badge artti">▲ +${fmtCur(g.tutar - sonraki.tutar, pb)}</span>`;
+    else if (g.tutar < sonraki.tutar) badge = `<span class="kd2-limit-gecmis-badge azaldi">▼ -${fmtCur(sonraki.tutar - g.tutar, pb)}</span>`;
+    else badge = '<span class="kd2-limit-gecmis-badge" style="background:var(--surface3)">—</span>';
+    return `<div class="kd2-limit-gecmis-satir">
+      <span class="kd2-limit-gecmis-tarih">${g.tarih}</span>
+      <span class="kd2-limit-gecmis-tutar">${fmtCur(g.tutar, pb)}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+  return `<div class="kd2-limit-gecmis">${rows}</div>`;
+}
+
+function kd2LimitGecmisToggle() {
+  const p = document.getElementById('kd2-limit-gecmis-panel');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function kd2RenderTrendRow(k, renk, pb) {
+  const wrap = document.getElementById('kd2-trend-row');
+  if (!wrap) return;
+  const today = new Date();
+  // Son 6 ayın aylık harcama toplamları
+  const aylar = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    aylar.push({ y: d.getFullYear(), m: d.getMonth(), key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') });
+  }
+  const kartIslemler = DB.islemler.filter(is => is.kart === k.id);
+  const ayToplam = {};
+  aylar.forEach(a => { ayToplam[a.key] = 0; });
+  kartIslemler.forEach(is => {
+    const key = is.tarih ? is.tarih.slice(0, 7) : null;
+    if (key && ayToplam.hasOwnProperty(key) && (is.tutar || 0) > 0) {
+      ayToplam[key] += is.tutar;
+    }
+  });
+  const vals = aylar.map(a => ayToplam[a.key] || 0);
+  const maxVal = Math.max(...vals, 1);
+  const AY_K = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+
+  // Bar chart HTML
+  const barHTML = aylar.map((a, idx) => {
+    const v = vals[idx];
+    const h = Math.max(4, Math.round((v / maxVal) * 60));
+    const isThisMonth = a.key === (today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0'));
+    const barColor = isThisMonth ? renk : 'rgba(99,102,241,.45)';
+    const valStr = v > 0 ? fmtCurShort(v, pb) : '—';
+    return `<div class="kd2-bar-col">
+      <div class="kd2-bar-val">${v > 0 ? valStr : ''}</div>
+      <div class="kd2-bar-fill" style="height:${h}px;background:${barColor};opacity:${isThisMonth?1:.75}"></div>
+      <div class="kd2-bar-lbl" style="font-weight:${isThisMonth?700:400};color:${isThisMonth?'var(--text2)':'var(--text3)'}">${AY_K[a.m]}</div>
+    </div>`;
+  }).join('');
+
+  // Toplam ve ortalama hesapla
+  const toplamHarcama = vals.reduce((s, v) => s + v, 0);
+  const aktifAy = vals.filter(v => v > 0).length || 1;
+  const ortHarcama = toplamHarcama / aktifAy;
+
+  // Son ay ekstresi özeti için işlem sayıları
+  const buAyKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+  const buAyIslemler = kartIslemler.filter(is => is.tarih && is.tarih.slice(0,7) === buAyKey);
+  const buAyGider = buAyIslemler.filter(i => (i.tutar||0) > 0).reduce((s,i) => s + i.tutar, 0);
+  const buAyIade = buAyIslemler.filter(i => (i.tutar||0) < 0).reduce((s,i) => s + Math.abs(i.tutar), 0);
+  const buAyTaksitli = buAyIslemler.filter(i => (i.taksit||1) > 1).length;
+
+  wrap.innerHTML = `<div class="kd2-trend-grid">
+    <div class="kd2-grafik-kart">
+      <div class="kd2-grafik-baslik">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        6 Aylık Harcama Trendi
+      </div>
+      <div class="kd2-bar-chart">${barHTML}</div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <div style="font-size:10px;color:var(--text3)">6 ay toplam: <b style="color:var(--text);font-family:var(--mono)">${fmtCur(toplamHarcama, pb)}</b></div>
+        <div style="font-size:10px;color:var(--text3)">Aylık ort: <b style="color:var(--text);font-family:var(--mono)">${fmtCur(ortHarcama, pb)}</b></div>
+      </div>
+    </div>
+    <div class="kd2-grafik-kart">
+      <div class="kd2-grafik-baslik">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Bu Ay Özeti
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;color:var(--text3)">💸 Toplam Harcama</span>
+          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--rose)">${buAyGider > 0 ? fmtCur(buAyGider, pb) : '—'}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;color:var(--text3)">↩️ İade / Eksi</span>
+          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--teal)">${buAyIade > 0 ? fmtCur(buAyIade, pb) : '—'}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;color:var(--text3)">📦 İşlem Sayısı</span>
+          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text)">${buAyIslemler.length} adet</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;color:var(--text3)">🔢 Taksitli İşlem</span>
+          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text)">${buAyTaksitli > 0 ? buAyTaksitli + ' adet' : '—'}</span>
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:2px;padding-top:8px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;color:var(--text3)">📊 Net (harcama-iade)</span>
+          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:${buAyGider-buAyIade > 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(buAyGider - buAyIade, pb)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function kd2ToggleMoreMenu() {
+  const menu = document.getElementById('kd2-more-menu');
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Dışarı tıklanınca kapat
+    setTimeout(() => {
+      function outsideClick(e) {
+        const wrap = document.querySelector('.kd2-action-menu-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+          menu.style.display = 'none';
+          document.removeEventListener('click', outsideClick);
+        }
+      }
+      document.addEventListener('click', outsideClick);
+    }, 10);
+  }
+}
+
+function kd2DeleteKartFromDetay() {
+  const id = _kd2KartId;
+  if (!id) return;
+  document.getElementById('kd2-more-menu').style.display = 'none';
+  showConfirm('Bu kartı silmek istiyor musunuz? Tüm işlemler de silinecek.', () => {
+    kartDetayGeriDon();
+    DB.kartlar = DB.kartlar.filter(k => k.id !== id);
+    saveData();
+    renderKartlar();
+    updateSidebarKartNav();
+  });
+}
+
+function kd2LimitGuncelleFromDetay() {
+  const id = _kd2KartId;
+  if (!id) return;
+  document.getElementById('kd2-more-menu').style.display = 'none';
+  editKart(id);
 }
 
 function kd2SwitchTab(tab) {
