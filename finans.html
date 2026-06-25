@@ -121,6 +121,7 @@ html[data-theme="light"] .startup-card {
   --bg: #080a0e;
   --bg2: #0c0f15;
   --surface: #111520;
+  --surface1: #141827;
   --surface2: #161b2a;
   --surface3: #1c2235;
   --surface4: #222a42;
@@ -219,6 +220,7 @@ html[data-theme="light"] {
   --bg:      #f0f2f8;
   --bg2:     #e8ebf4;
   --surface: #ffffff;
+  --surface1:#fafbff;
   --surface2:#f4f6fc;
   --surface3:#eaecf6;
   --surface4:#dde1f0;
@@ -244,6 +246,13 @@ html[data-theme="light"] {
   --danger:   var(--rose);
   --warn:     #c2410c;
   --purple:   var(--violet);
+
+  --accent-glow:   rgba(196,122,0,.12);
+  --accent-glow2:  rgba(196,122,0,.06);
+  --accent2-glow:  rgba(13,148,136,.1);
+  --danger-glow:   rgba(225,29,72,.1);
+  --warn-glow:     rgba(194,65,12,.1);
+  --purple-glow:   rgba(124,58,237,.1);
 
   --text:  #0f1629;
   --text2: #4a5578;
@@ -427,6 +436,7 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 .islem-date-day { font-size: 15px; font-weight: 800; color: var(--text); }
 .islem-date-mon { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text3); letter-spacing: .03em; margin-top: 2px; }
 /* ─── Mobil bankacılık tarzı işlem satırı ─── */
+.islem-row2-wrap { display: block; }
 .islem-row2 { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--radius-xs); transition: background .15s, box-shadow .15s; cursor: pointer; }
 .islem-row2:hover { background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
 .islem-row2:hover .islem-row2-actions { opacity: 1; }
@@ -435,8 +445,9 @@ html[data-theme="light"] .stat.s-purple .stat-icon { background: rgba(124,58,237
 .islem-row2-body { flex: 1 1 auto; min-width: 0; }
 .islem-row2-title { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .islem-row2-sub { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); margin-top: 2px; min-width: 0; }
-.islem-row2-kartad { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.islem-row2-kat-chip { flex-shrink: 1; min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+.islem-row2-kartad { flex-shrink: 1; flex-grow: 0; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.islem-row2-kat-line { padding: 0 6px 6px 104px; margin-top: -3px; cursor: pointer; }
+.islem-row2-kat-chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 4px; padding: 2px 7px; font-size: 10.5px; color: var(--text2); }
 .islem-row2-amount { text-align: right; flex-shrink: 0; }
 .islem-row2-amount-val { font-family: var(--mono); font-size: 13.5px; font-weight: 700; white-space: nowrap; }
 .islem-row2-amount-val.neg { color: var(--rose); }
@@ -10505,7 +10516,7 @@ function showTab(id, btn) {
     if(!ALL_CURRENCIES.length) rebuildAllCurrencies();
     const pbSel = document.getElementById('asgari-prev-pb');
     if(pbSel) {
-      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.flag} ${c.code}</option>`).join('');
+      pbSel.innerHTML = ALL_CURRENCIES.map(c=>`<option value="${c.code}">${c.code}${c.symbol && c.symbol!==c.code ? ' · '+c.symbol : ''}</option>`).join('');
       pbSel.value = defaultCurrency;
     }
     asgariOnizle();
@@ -13876,13 +13887,14 @@ function islemRowHtml(i) {
     taksitSub = `<div class="islem-row2-amount-sub">${mevcutNo}/${i.taksit} taksit · ${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`;
   }
 
-  return `<div class="islem-row2" onclick="editIslem('${i.id}')">
+  return `<div class="islem-row2-wrap">
+  <div class="islem-row2" onclick="editIslem('${i.id}')">
     ${dateCardHtml}
     <div class="islem-row2-icon" style="background:${renk}18;border:1px solid ${renk}30">${ikon}</div>
     <div class="islem-row2-body">
       <div class="islem-row2-title" title="${aciklamaSafe}">${aciklamaSafe}</div>
       <div class="islem-row2-sub">
-        <span class="islem-kart-dot" style="background:${renk};box-shadow:0 0 5px ${renk}88"></span><span class="islem-row2-kartad">${k?k.ad:'-'}</span>${kat?` · <span class="islem-row2-kat-chip" style="background:var(--surface3)" title="${(kat.ad||'').replace(/"/g,'&quot;')}">${kat.ad}</span>`:''}
+        <span class="islem-kart-dot" style="background:${renk};box-shadow:0 0 5px ${renk}88"></span><span class="islem-row2-kartad">${k?k.ad:'-'}</span>
       </div>
     </div>
     <div class="islem-row2-amount">
@@ -13893,6 +13905,8 @@ function islemRowHtml(i) {
       <button class="btn btn-ghost btn-sm btn-act" onclick="editIslem('${i.id}')" title="Düzenle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
       <button class="btn btn-danger btn-sm btn-act" onclick="deleteIslem('${i.id}')" title="Sil"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
     </div>
+  </div>
+  ${kat ? `<div class="islem-row2-kat-line" onclick="editIslem('${i.id}')"><span class="islem-row2-kat-chip" style="background:var(--surface3)" title="${(kat.ad||'').replace(/"/g,'&quot;')}">${kat.ikon||'🏷️'} ${kat.ad}</span></div>` : ''}
   </div>`;
 }
 
@@ -28846,7 +28860,7 @@ function _populateTransferHesaplar() {
       .filter(c => `nakit:${c.code}` !== excludeVal)
       .filter(c => !filterPb || c.code === filterPb)
       .filter(c => ((DB._nakitBakiye || {})[c.code] || 0) > 0)
-      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.code}</option>`).join('');
     return (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
   };
@@ -28859,7 +28873,7 @@ function _populateTransferHesaplar() {
     const nakitOpts = curList
       .filter(c => `nakit:${c.code}` !== excludeVal)
       .filter(c => !filterPb || c.code === filterPb)
-      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+      .map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.code}</option>`).join('');
     return (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
   };
@@ -28934,7 +28948,7 @@ function swapTransferHesaplar() {
   const kaynakFullOpts = () => {
     const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
     const hesapOpts = hesaplar.filter(h => ((h.bakiye||0)+(h.kmhLimit||0)) > 0).map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-    const nakitOpts = curList.filter(c => ((DB._nakitBakiye||{})[c.code]||0) > 0).map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    const nakitOpts = curList.filter(c => ((DB._nakitBakiye||{})[c.code]||0) > 0).map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.code}</option>`).join('');
     return ph
       + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
@@ -28942,7 +28956,7 @@ function swapTransferHesaplar() {
   const hedefFullOpts = () => {
     const ph = '<option value="" disabled selected hidden>— Hesap Seçin —</option>';
     const hesapOpts = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-    const nakitOpts = curList.map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.flag || ''} ${c.code}</option>`).join('');
+    const nakitOpts = curList.map(c => `<option value="nakit:${c.code}">💵 Nakit — ${c.code}</option>`).join('');
     return ph
       + (hesapOpts ? `<optgroup label="🏛️ Hesaplar">${hesapOpts}</optgroup>` : '')
       + (nakitOpts ? `<optgroup label="💵 Nakit">${nakitOpts}</optgroup>` : '');
