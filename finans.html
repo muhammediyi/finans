@@ -6165,6 +6165,7 @@ window.addEventListener('load', placeMobProfilePanel);
     </div>
 
     <div id="kd2-tab-extre" style="display:none">
+      <div class="kd-kat-bar" id="kd2-extre-kat-bar"></div>
       <div id="kd2-extre-list"></div>
     </div>
   </div>
@@ -6226,6 +6227,7 @@ window.addEventListener('load', placeMobProfilePanel);
       <option value="guncel">Güncel</option>
       <option value="gelecek">Gelecek</option>
     </select>
+    <select id="extre-kategori-filter" onchange="renderExtreler()" style="display:none"><option value="">Tüm Kategoriler</option></select>
     <button class="btn btn-ghost btn-sm filtre-toggle-btn" id="extre-kart-btn" onclick="openExtreKartModal()">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       <span id="extre-kart-btn-label">Kart Seçin</span>
@@ -6233,6 +6235,10 @@ window.addEventListener('load', placeMobProfilePanel);
     <button class="btn btn-ghost btn-sm filtre-toggle-btn" id="extre-durum-btn" onclick="openExtreDurumModal()">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span id="extre-durum-btn-label">Tüm Dönemler</span>
+    </button>
+    <button class="btn btn-ghost btn-sm filtre-toggle-btn" id="extre-kategori-btn" onclick="openExtreKategoriModal()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/></svg>
+      <span id="extre-kategori-btn-label">Tüm Kategoriler</span>
     </button>
     <button class="btn btn-ghost btn-sm" onclick="openOzelExtreModal()">📅 Özel Ekstre Kesim Tarihi</button>
   </div>
@@ -6471,6 +6477,25 @@ window.addEventListener('load', placeMobProfilePanel);
         <button type="button" class="chip-select-opt" data-val="guncel">Güncel</button>
         <button type="button" class="chip-select-opt" data-val="gelecek">Gelecek</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- EKSTRELER KATEGORİ FİLTRE MODAL -->
+<div class="modal-bg" id="modal-extre-kategori">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2)">🏷️</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Kategoriye Göre Filtrele</div>
+          <div class="modal-subtitle">Ekstre işlemlerini kategoriye göre filtrele</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-extre-kategori')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chip-select-grid" id="extre-kategori-modal-grid"></div>
     </div>
   </div>
 </div>
@@ -7795,6 +7820,7 @@ window.addEventListener('load', placeMobProfilePanel);
       </div>
       <div id="kd-tab-extre" style="display:none">
         <div id="kd-extre-uyari" style="display:none;margin-bottom:14px"></div>
+        <div class="kd-kat-bar" id="kd-extre-kat-bar"></div>
         <div id="kd-extre-list"></div>
       </div>
     </div>
@@ -11496,6 +11522,20 @@ let _kdIslemArama = '';       // İşlemler sekmesi: arama metni
 let _kdIslemSiralama = 'tarih-yeni'; // İşlemler sekmesi: sıralama modu
 let _kdIslemKatFiltre = null; // İşlemler sekmesi: seçili kategori id (kategori barından tıklanarak)
 let _kdAcikIslemAy = null;    // İşlemler sekmesi akordeonunda hangi ay açık (tek seferde bir tane)
+let _kdExtreKatFiltre = null; // Ekstreler sekmesi (modal): seçili kategori id
+let _kd2ExtreKatFiltre = null; // Ekstreler sekmesi (tam sayfa): seçili kategori id
+// kdRenderKatBar/kdKatFiltreToggle ortak bileşeni hangi bağlamda render edildiğini bilmeli ki
+// tıklama doğru state'i güncelleyip doğru (görünür) listeyi yeniden çizsin.
+// Olası değerler: 'kd-islem' (modal işlem), 'kd2-islem' (tam sayfa işlem), 'kd-extre' (modal ekstre), 'kd2-extre' (tam sayfa ekstre)
+let _kdKatBarCtx = 'kd-islem';
+function _kdKatBarAktifFiltre() {
+  switch (_kdKatBarCtx) {
+    case 'kd2-islem': return _kd2IslemKatFiltre;
+    case 'kd-extre':  return _kdExtreKatFiltre;
+    case 'kd2-extre': return _kd2ExtreKatFiltre;
+    default:          return _kdIslemKatFiltre; // 'kd-islem'
+  }
+}
 const KD_KAT_PALET = ['var(--gold)', 'var(--teal)', 'var(--violet)', 'var(--sky)', 'var(--rose)', '#34d399', '#f472b6', '#facc15'];
 
 function gotoKartIslemleri(kartId) {
@@ -11916,6 +11956,7 @@ function kd2RenderIslemler() {
   if (katBarWrap) {
     const _prev = _kdKartId; _kdKartId = _kd2KartId;
     _kdIslemKatFiltre = _kd2IslemKatFiltre;
+    _kdKatBarCtx = 'kd2-islem';
     kdRenderKatBar(katBarWrap, tumIslemler);
     _kdKartId = _prev;
   }
@@ -11998,10 +12039,12 @@ function kd2RenderExtreler() {
   const _prevDonem = _kdAcikExtreDonem;
   _kdKartId = _kd2KartId;
   _kdAcikExtreDonem = _kd2AcikExtreDonem;
+  _kdExtreKatFiltre = _kd2ExtreKatFiltre;
   const origGet = document.getElementById.bind(document);
   document.getElementById = function(id) {
     if (id === 'kd-extre-list') return wrap;
     if (id === 'kd-tab-badge-extre') return origGet('kd2-tab-badge-extre') || { textContent: '' };
+    if (id === 'kd-extre-kat-bar') return origGet('kd2-extre-kat-bar');
     return origGet(id);
   };
   try { kdRenderExtreler(); } finally { document.getElementById = origGet; }
@@ -12068,7 +12111,10 @@ function kdRenderIslemler() {
   // hesaplanır (arama/filtre uygulansa bile genel tabloyu göstermeye devam eder) — sadece kategori
   // barındaki tıklama bir filtre olarak listeye yansır.
   if (statsWrap) kdRenderMiniStats(statsWrap, tumIslemler);
-  if (katBarWrap) kdRenderKatBar(katBarWrap, tumIslemler);
+  if (katBarWrap) {
+    _kdKatBarCtx = 'kd-islem';
+    kdRenderKatBar(katBarWrap, tumIslemler);
+  }
 
   // Arama kutusunun mevcut değeri ile senkron kal (DOM yeniden kurulmadıysa input'u ezme)
   const aramaInput = document.getElementById('kd-islem-arama');
@@ -12177,7 +12223,7 @@ function kdRenderKatBar(wrap, islemler) {
     return { katId, ad, ikon, pct, tutar, renk, filtrelenebilir };
   });
 
-  const aktifFiltre = _kdIslemKatFiltre;
+  const aktifFiltre = _kdKatBarAktifFiltre();
   const trackHtml = segments.map(s => {
     const dim = aktifFiltre && aktifFiltre !== s.katId ? ' dim' : '';
     const clickAttr = s.filtrelenebilir ? `onclick="kdKatFiltreToggle('${s.katId}')"` : '';
@@ -12202,10 +12248,25 @@ function kdRenderKatBar(wrap, islemler) {
     <div class="kd-kat-bar-legend">${legendHtml}${temizleHtml}</div>`;
 }
 
-// Kategori barı/lejantına tıklayınca işlem listesini o kategoriye göre filtrele (tekrar tıklayınca kaldır)
+// Kategori barı/lejantına tıklayınca işlem/ekstre listesini o kategoriye göre filtrele (tekrar tıklayınca kaldır)
+// Not: kat barı modal (kd) ve tam sayfa (kd2) kart detayında, hem İşlem hem Ekstre sekmesinde ortak
+// kullanılıyor — _kdKatBarCtx hangi bağlamda render edildiğini tutar, böylece doğru state + doğru
+// (görünür) liste güncellenir.
 function kdKatFiltreToggle(katId) {
-  _kdIslemKatFiltre = (katId === null || _kdIslemKatFiltre === katId) ? null : katId;
-  kdRenderIslemler();
+  const toggle = (cur) => (katId === null || cur === katId) ? null : katId;
+  if (_kdKatBarCtx === 'kd2-islem') {
+    _kd2IslemKatFiltre = toggle(_kd2IslemKatFiltre);
+    kd2RenderIslemler();
+  } else if (_kdKatBarCtx === 'kd-extre') {
+    _kdExtreKatFiltre = toggle(_kdExtreKatFiltre);
+    kdRenderExtreler();
+  } else if (_kdKatBarCtx === 'kd2-extre') {
+    _kd2ExtreKatFiltre = toggle(_kd2ExtreKatFiltre);
+    kd2RenderExtreler();
+  } else {
+    _kdIslemKatFiltre = toggle(_kdIslemKatFiltre);
+    kdRenderIslemler();
+  }
 }
 
 // Arama kutusu değiştikçe işlem listesini filtrele
@@ -12241,6 +12302,12 @@ function kdRenderExtreler() {
   if (!kart) { wrap.innerHTML = '<div class="info-box">Kart bulunamadı</div>'; return; }
 
   kdRenderExtreUyari(kart);
+
+  const tumIslemler = DB.islemler.filter(i => i.kart === kart.id);
+  const katBarWrap = document.getElementById('kd-extre-kat-bar');
+  _kdKatBarCtx = (katBarWrap && katBarWrap.id === 'kd2-extre-kat-bar') ? 'kd2-extre' : 'kd-extre';
+  if (katBarWrap) kdRenderKatBar(katBarWrap, tumIslemler);
+  const aktifEkstreKat = _kdKatBarAktifFiltre();
 
   const tatilSet = getTatilSet();
   const today = new Date();
@@ -12326,7 +12393,8 @@ function kdRenderExtreler() {
       .filter(Boolean).join(' · ') || fmtCur(0, kartPbList[0] || defaultCurrency);
 
     // Bu döneme dahil olan her işlem/taksit kaydını (en yeni üstte) detay listesi olarak hazırla
-    const detayItems = p.items.slice().sort((a, b) => b.tak.tarih.localeCompare(a.tak.tarih));
+    const detayItemsAll = p.items.slice().sort((a, b) => b.tak.tarih.localeCompare(a.tak.tarih));
+    const detayItems = aktifEkstreKat ? detayItemsAll.filter(({ islem }) => islem.kategori === aktifEkstreKat) : detayItemsAll;
     const detayHtml = detayItems.length ? detayItems.map(({ islem, tak, pb }) => {
       const kat = (DB.kategoriler || []).find(x => x.id === islem.kategori);
       const ikon = kat && kat.ikon ? kat.ikon : '💳';
@@ -12346,7 +12414,7 @@ function kdRenderExtreler() {
         </div>
         <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(tak.tutar, pb)}</div>
       </div>`;
-    }).join('') : `<div class="kd-extre-detail-empty">Bu döneme ait işlem bulunamadı</div>`;
+    }).join('') : `<div class="kd-extre-detail-empty">${aktifEkstreKat ? 'Seçili kategoriye ait işlem bulunamadı' : 'Bu döneme ait işlem bulunamadı'}</div>`;
 
     return `<div class="kd-extre-card ${statusClass}" id="kd-extre-card-${p.key}">
       <div class="kd-extre-progress"><div class="kd-extre-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div></div>
@@ -13865,13 +13933,18 @@ function renderExtreler() {
   const df = document.getElementById('extre-durum-filter');
   const dfVal = df ? df.value : '';
 
+  const ktf = document.getElementById('extre-kategori-filter');
+  const ktfVal = ktf ? ktf.value : '';
+
   // ── Filtre tercihlerini DB'ye yaz ve Drive'a senkronize et ──
   persistExtreFiltreToDB();
 
   renderExtreKartButon();
   renderExtreDurumButon();
+  renderExtreKategoriButon();
   renderExtreKartModalGrid();
   renderExtreDurumModalGrid();
+  renderExtreKategoriModalGrid();
 
   const kart = DB.kartlar.find(k=>k.id===kf.value);
   const content = document.getElementById('extre-content');
@@ -13946,7 +14019,8 @@ function renderExtreler() {
         tarih: fmtDate(islem.tarih),
         aciklama: islem.aciklama,
         taksitInfo: islem.taksit>1?`${tak.no}/${islem.taksit}`:'Peşin',
-        tutar: tak.tutar
+        tutar: tak.tutar,
+        kategori: islem.kategori
       });
       p.totalByPb[islemPb] = (p.totalByPb[islemPb]||0) + tak.tutar;
     });
@@ -13978,7 +14052,8 @@ function renderExtreler() {
   }
 
   function renderExstreKart(p, pb, defaultOpen) {
-    const rows       = p.rowsByPb[pb] || [];
+    const rowsAll    = p.rowsByPb[pb] || [];
+    const rows       = ktfVal ? rowsAll.filter(r=>r.kategori===ktfVal) : rowsAll;
     const toplamBorc = p.totalByPb[pb] || 0;
     const isPast     = p.odeme < todayStr;
     const isThisMonth = p.key === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
@@ -14121,6 +14196,8 @@ function renderExtreler() {
     const durum = isThisMonth ? 'guncel' : (isPastPeriod ? 'gecmis' : 'gelecek');
     if(dfVal && dfVal !== durum) return;
     pbsInPeriod.forEach(pb => {
+      // Kategori filtresi aktifse ve bu dönem+para biriminde o kategoriye ait hiç işlem yoksa atla
+      if(ktfVal && !(p.rowsByPb[pb]||[]).some(r=>r.kategori===ktfVal)) return;
       const toplamBorc = p.totalByPb[pb] || 0;
       const odenenTop = (DB.kartOdemeleri||[]).filter(o=>o.kartId===kart.id && o.paraBirimi===pb && o.donemKey===p.key).reduce((s,o)=>s+o.tutar,0);
       const kalan = Math.max(0, toplamBorc - odenenTop);
@@ -14152,17 +14229,20 @@ function restoreExtreFiltreFromDB() {
   const saved = (DB.uiFiltreler && DB.uiFiltreler.extreler) || {};
   const kf = document.getElementById('extre-kart-filter');
   const df = document.getElementById('extre-durum-filter');
+  const ktf = document.getElementById('extre-kategori-filter');
   // Kayıtlı kart hâlâ mevcutsa geri yükle (silinmiş kart varsa yok sayılır)
   if(kf && saved.kart && DB.kartlar.some(k=>k.id===saved.kart)) kf.value = saved.kart;
   if(df && saved.durum) df.value = saved.durum;
+  if(ktf && saved.kategori && (DB.kategoriler||[]).some(k=>k.id===saved.kategori)) ktf.value = saved.kategori;
 }
 
 function persistExtreFiltreToDB() {
   const kf = document.getElementById('extre-kart-filter');
   const df = document.getElementById('extre-durum-filter');
-  const yeni = { kart: kf ? kf.value : '', durum: df ? df.value : '' };
+  const ktf = document.getElementById('extre-kategori-filter');
+  const yeni = { kart: kf ? kf.value : '', durum: df ? df.value : '', kategori: ktf ? ktf.value : '' };
   const eski = (DB.uiFiltreler && DB.uiFiltreler.extreler) || {};
-  if(eski.kart===yeni.kart && eski.durum===yeni.durum) return;
+  if(eski.kart===yeni.kart && eski.durum===yeni.durum && eski.kategori===yeni.kategori) return;
   if(!DB.uiFiltreler) DB.uiFiltreler = { islemler:{}, extreler:{} };
   DB.uiFiltreler.extreler = yeni;
   saveData();
@@ -14225,6 +14305,40 @@ function renderExtreDurumModalGrid() {
       df.value = btn.dataset.val;
       renderExtreler();
       closeModal('modal-extre-durum');
+    };
+  });
+}
+
+// ── Ekstreler Kategori Filtre Modalı ─────────────────────────────
+function openExtreKategoriModal() {
+  renderExtreKategoriModalGrid();
+  openModal('modal-extre-kategori');
+}
+
+function renderExtreKategoriButon() {
+  const ktf = document.getElementById('extre-kategori-filter');
+  const label = document.getElementById('extre-kategori-btn-label');
+  if(!label || !ktf) return;
+  const kat = (DB.kategoriler||[]).find(k=>k.id===ktf.value);
+  label.textContent = kat ? `${kat.ikon||'🏷️'} ${kat.ad}` : 'Tüm Kategoriler';
+  const btn = document.getElementById('extre-kategori-btn');
+  if(btn) btn.classList.toggle('is-active', !!ktf.value);
+}
+
+function renderExtreKategoriModalGrid() {
+  const grid = document.getElementById('extre-kategori-modal-grid');
+  if(!grid) return;
+  const ktf = document.getElementById('extre-kategori-filter');
+  const kategoriler = DB.kategoriler || [];
+  if(!kategoriler.length) { grid.innerHTML = '<div class="info-box" style="margin:0">Henüz kategori tanımlanmadı.</div>'; return; }
+  const temizBtn = `<button type="button" class="chip-select-opt${!ktf.value?' active':''}" data-val="">Tüm Kategoriler</button>`;
+  const katBtns = kategoriler.map(k=>`<button type="button" class="chip-select-opt${ktf.value===k.id?' active':''}" data-val="${k.id}">${k.ikon||'🏷️'} ${k.ad}</button>`).join('');
+  grid.innerHTML = temizBtn + katBtns;
+  grid.querySelectorAll('.chip-select-opt').forEach(btn=>{
+    btn.onclick = () => {
+      ktf.value = btn.dataset.val;
+      renderExtreler();
+      closeModal('modal-extre-kategori');
     };
   });
 }
@@ -20205,11 +20319,11 @@ function kontratPlanFormAc(ay, islem) {
         <div><label>Yeni Ödeme Tarihi</label><input id="kpf-tarih" type="date"></div>
         <div><label>Tutar (değişecekse)</label><input id="kpf-tutar" type="number" step="0.01" placeholder="${mevcutTutar}"></div>
       </div>
-      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Erteleme nedeni..."></div></div>`;
+      <div class="form-row"><div><label>Not</label><input id="kpf-not-ertele" placeholder="Erteleme nedeni..."></div></div>`;
     setTimeout(()=>{
       const el = document.getElementById('kpf-tarih'); if(el) el.value = ertelemeTarih;
       const el2 = document.getElementById('kpf-tutar'); if(el2) el2.value = mevcutTutar;
-      const el3 = document.getElementById('kpf-not'); if(el3) el3.value = mevcutNot;
+      const el3 = document.getElementById('kpf-not-ertele'); if(el3) el3.value = mevcutNot;
     }, 0);
   } else if(islem==='taksit') {
     const t1 = ov.taksitler?.[0]?.tutar || (mevcutTutar/2).toFixed(2);
@@ -20229,21 +20343,21 @@ function kontratPlanFormAc(ay, islem) {
         <div><label>2. Taksit Tarihi</label><input id="kpf-t2-tarih" type="date"></div>
         <div><label>2. Taksit Tutarı</label><input id="kpf-t2-tutar" type="number" step="0.01"></div>
       </div>
-      <div class="form-row"><div><label>Not</label><input id="kpf-not" placeholder="Taksit nedeni..."></div></div>`;
+      <div class="form-row"><div><label>Not</label><input id="kpf-not-taksit" placeholder="Taksit nedeni..."></div></div>`;
     setTimeout(()=>{
       const i1t = document.getElementById('kpf-t1-tarih'); if(i1t) i1t.value = d1;
       const i1a = document.getElementById('kpf-t1-tutar'); if(i1a) i1a.value = t1;
       const i2t = document.getElementById('kpf-t2-tarih'); if(i2t) i2t.value = d2;
       const i2a = document.getElementById('kpf-t2-tutar'); if(i2a) i2a.value = t2;
-      const iN  = document.getElementById('kpf-not');      if(iN)  iN.value  = mevcutNot;
+      const iN  = document.getElementById('kpf-not-taksit');      if(iN)  iN.value  = mevcutNot;
     }, 0);
   } else if(islem==='not') {
     titleEl.textContent = '✎ Not Ekle — ' + ay;
     bodyEl.innerHTML = `
       <div class="form-row">
-        <div><label>Not</label><input id="kpf-not" placeholder="Bu ödeme için not..." style="width:100%"></div>
+        <div><label>Not</label><input id="kpf-not-not" placeholder="Bu ödeme için not..." style="width:100%"></div>
       </div>`;
-    setTimeout(()=>{ const el = document.getElementById('kpf-not'); if(el) el.value = mevcutNot; }, 0);
+    setTimeout(()=>{ const el = document.getElementById('kpf-not-not'); if(el) el.value = mevcutNot; }, 0);
   }
 
   formEl.style.display = '';
@@ -20267,7 +20381,7 @@ function kontratPlanFormKaydet() {
   if(islem==='ertele') {
     const tarih = document.getElementById('kpf-tarih')?.value;
     const tutar = parseFloat(document.getElementById('kpf-tutar')?.value);
-    const not   = document.getElementById('kpf-not')?.value.trim();
+    const not   = document.getElementById('kpf-not-ertele')?.value.trim();
     if(!tarih) { showToast('Tarih zorunlu', 'error'); return; }
     k.odemeOverrides[ay] = { ...ov, durum:'ertelendi', tarih, tutar: isNaN(tutar)?Math.abs(k.tutar):tutar, not };
   } else if(islem==='taksit') {
@@ -20275,11 +20389,11 @@ function kontratPlanFormKaydet() {
     const t1a = parseFloat(document.getElementById('kpf-t1-tutar')?.value);
     const t2t = document.getElementById('kpf-t2-tarih')?.value;
     const t2a = parseFloat(document.getElementById('kpf-t2-tutar')?.value);
-    const not = document.getElementById('kpf-not')?.value.trim();
+    const not = document.getElementById('kpf-not-taksit')?.value.trim();
     if(!t1t || !t2t || isNaN(t1a) || isNaN(t2a)) { showToast('Tüm alanları doldurun', 'error'); return; }
     k.odemeOverrides[ay] = { ...ov, durum:'taksit', taksitler:[{tarih:t1t,tutar:t1a},{tarih:t2t,tutar:t2a}], not };
   } else if(islem==='not') {
-    const not = document.getElementById('kpf-not')?.value.trim();
+    const not = document.getElementById('kpf-not-not')?.value.trim();
     k.odemeOverrides[ay] = { ...ov, not };
     if(!k.odemeOverrides[ay].durum) delete k.odemeOverrides[ay].durum; // not only
   }
@@ -23334,6 +23448,10 @@ async function gDriveLoadFromDrive() {
     _islemFiltreRestored = false;
     _extreFiltreRestored = false;
     renderAll();
+    // Drive verisi bu noktaya kadar gelmemiş olabileceğinden, sayfa ilk açıldığında
+    // #kartlar?kart=...&tab=... gibi bir deep-link varsa ve kart o an DB'de yoktu diye
+    // açılamadıysa, taze veri geldikten sonra tekrar dene.
+    if(typeof window._retryKartDeepLink === 'function') window._retryKartDeepLink();
     gDriveSetStatus('Senkronize edildi ✓', 'var(--success, #4ade80)');
     if(typeof showToast==='function') showToast('Google Drive senkronize edildi ✓', 'success');
     setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
@@ -23566,6 +23684,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
       }, 120);
     }
   }
+
+  // Drive senkronizasyonu tamamlandığında (sayfa ilk açılışta DB.kartlar henüz
+  // gelmemiş olabileceğinden) #kartlar?kart=...&tab=... deep-link'i ilk denemede
+  // başarısız olmuş olabilir — taze veri geldikten sonra bunu tekrar denemek için kullanılır.
+  window._retryKartDeepLink = function() {
+    const page = _currentHashPage();
+    const params = _currentHashParams();
+    if(page !== 'kartlar' || !params.kart) return;
+    const k = typeof getKart === 'function' ? getKart(params.kart) : null;
+    if(!k) return;
+    if(_kd2KartId === params.kart) return; // zaten açık, tekrar açmaya gerek yok
+    // Kullanıcı hâlâ kartlar (liste) sayfasındaysa kart detayını aç — başka bir
+    // sayfaya geçtiyse müdahale etmeyelim
+    const pageEl = document.getElementById('page-kartlar');
+    if(pageEl && pageEl.classList.contains('active')) {
+      setTimeout(() => acKartDetaySayfa(params.kart, params.tab || 'islem'), 60);
+    }
+  };
 
   // Geri/ileri tarayıcı tuşu
   window.addEventListener('popstate', navigateToHash);
@@ -25091,6 +25227,7 @@ document.addEventListener('click', function(e) {
     'filter-taksit':            SVG.filter,
     'extre-kart-filter':        SVG.card,
     'extre-durum-filter':       SVG.filter,
+    'extre-kategori-filter':    SVG.tag,
     'ga-tarih-ayrac':           SVG.separator,
     'ga-saat-ayrac':            SVG.separator,
     'ga-ondalik-ayrac':         SVG.decimal,
