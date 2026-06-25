@@ -23657,6 +23657,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const params = _currentHashParams();
     const validPage = VALID_PAGES.includes(page) ? page : 'ozet';
 
+    // showPage() hash'i kendi _pushHashState('kartlar', {}) çağrısıyla hemen
+    // sıfırlıyor (alt-state'i siliyor) — bu yüzden deep-link param'larını
+    // (kart/tab) showPage çağrılmadan önce burada bir global'de saklıyoruz.
+    // _retryKartDeepLink, Drive verisi geldiğinde location.hash'i değil bu
+    // saklanan değeri kullanacak.
+    window._pendingKartDeepLink = (validPage === 'kartlar' && params.kart)
+      ? { kart: params.kart, tab: params.tab || 'islem' }
+      : null;
+
     // Önce sayfayı göster (renderPage çalışsın, kart listesi hazır olsun)
     showPage(validPage, null);
 
@@ -23664,6 +23673,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(validPage === 'kartlar' && params.kart) {
       const k = typeof getKart === 'function' ? getKart(params.kart) : null;
       if(k) {
+        window._pendingKartDeepLink = null; // hemen açıldı, retry'a gerek yok
         setTimeout(() => acKartDetaySayfa(params.kart, params.tab || 'islem'), 60);
       }
     }
@@ -23688,18 +23698,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Drive senkronizasyonu tamamlandığında (sayfa ilk açılışta DB.kartlar henüz
   // gelmemiş olabileceğinden) #kartlar?kart=...&tab=... deep-link'i ilk denemede
   // başarısız olmuş olabilir — taze veri geldikten sonra bunu tekrar denemek için kullanılır.
+  // NOT: location.hash'i değil window._pendingKartDeepLink'i okur, çünkü showPage()
+  // ilk denemede zaten hash'teki kart/tab parametrelerini silmiş oluyor.
   window._retryKartDeepLink = function() {
-    const page = _currentHashPage();
-    const params = _currentHashParams();
-    if(page !== 'kartlar' || !params.kart) return;
-    const k = typeof getKart === 'function' ? getKart(params.kart) : null;
+    const pending = window._pendingKartDeepLink;
+    if(!pending) return;
+    const k = typeof getKart === 'function' ? getKart(pending.kart) : null;
     if(!k) return;
-    if(_kd2KartId === params.kart) return; // zaten açık, tekrar açmaya gerek yok
+    if(_kd2KartId === pending.kart) { window._pendingKartDeepLink = null; return; } // zaten açık
     // Kullanıcı hâlâ kartlar (liste) sayfasındaysa kart detayını aç — başka bir
     // sayfaya geçtiyse müdahale etmeyelim
     const pageEl = document.getElementById('page-kartlar');
     if(pageEl && pageEl.classList.contains('active')) {
-      setTimeout(() => acKartDetaySayfa(params.kart, params.tab || 'islem'), 60);
+      window._pendingKartDeepLink = null;
+      setTimeout(() => acKartDetaySayfa(pending.kart, pending.tab || 'islem'), 60);
     }
   };
 
