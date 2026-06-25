@@ -1645,18 +1645,18 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 .extre-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 12px; }
 .extre-item:last-child { border-bottom: none; }
 /* Ekstre bilgi kutuları — kompakt */
-.exk-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin: 10px 18px 0; }
-.exk-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 8px 11px; display: flex; flex-direction: column; gap: 2px; min-width: 0; position: relative; overflow: hidden; transition: border-color .15s; }
-.exk-box-icon { font-size: 12px; line-height: 1; margin-bottom: 0; }
-.exk-box-label { font-size: 8.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exk-box-val { font-size: 13.5px; font-weight: 700; color: var(--text); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exk-box-meta { font-size: 9.5px; color: var(--text3); font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
+.exk-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 18px 0; }
+.exk-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; overflow: hidden; transition: border-color .15s; }
+.exk-box-icon { font-size: 17px; line-height: 1; margin-bottom: 1px; }
+.exk-box-label { font-size: 10.5px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exk-box-val { font-size: 17px; font-weight: 800; color: var(--text); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exk-box-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
 .exk-box-urgent { background: rgba(251,191,36,.07); border-color: rgba(251,191,36,.25); }
 .exk-box-urgent .exk-box-val { color: #fbbf24; }
 .exk-box-past { background: rgba(251,113,133,.06); border-color: rgba(251,113,133,.2); }
 .exk-box-asgari { background: rgba(245,158,11,.07); border-color: rgba(245,158,11,.22); }
 .exk-box-ok { border-left: 3px solid #2dd4bf; }
-.exk-box-bar { height: 3px; border-radius: 3px; background: var(--surface3); overflow: hidden; margin-top: 3px; }
+.exk-box-bar { height: 4px; border-radius: 4px; background: var(--surface3); overflow: hidden; margin-top: 4px; }
 .exk-box-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
 /* Ekstre accordion — kompakt */
 .exk-acc-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 16px; cursor:pointer; user-select:none; flex-wrap:wrap; }
@@ -3202,15 +3202,15 @@ select option { background: #0b0e1e; color: #f0f4ff; }
   .kd-yeni-islem-btn { flex: 1 1 100%; order: 2; margin-left: 0; justify-content: center; }
 }
 /* Tab bar */
-.kd-tab-bar { display: flex; gap: 4px; background: var(--surface2); border-radius: 12px; padding: 5px; border: 1px solid var(--border); }
-.kd-tab-btn { flex: 1 1 0; border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 12px 18px; border-radius: 9px; font-size: 14.5px; font-weight: 700; color: var(--text3); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
-.kd-tab-btn svg { opacity: .65; flex-shrink: 0; transition: var(--transition); }
-.kd-tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
-.kd-tab-btn:hover svg { opacity: .9; }
-.kd-tab-btn.active { background: var(--surface3); color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06); }
+.kd-tab-bar { display: flex; gap: 4px; width: 100%; flex: 1 1 auto; box-sizing: border-box; background: var(--surface2); border-radius: 13px; padding: 5px; border: 1px solid var(--border); }
+.kd-tab-btn { flex: 1 1 0; border: none; background: none; font-family: var(--sans); cursor: pointer; white-space: nowrap; padding: 13px 16px; border-radius: 10px; font-size: 14.5px; font-weight: 700; color: var(--text3); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.kd-tab-btn svg { opacity: .6; flex-shrink: 0; transition: var(--transition); }
+.kd-tab-btn:hover { color: var(--text2); background: rgba(255,255,255,.05); }
+.kd-tab-btn:hover svg { opacity: .85; }
+.kd-tab-btn.active { background: linear-gradient(180deg, rgba(251,191,36,.16), rgba(251,191,36,.06)); color: var(--gold); box-shadow: 0 3px 10px rgba(251,191,36,.12), inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(251,191,36,.28); }
 .kd-tab-btn.active svg { opacity: 1; color: var(--gold); }
 .kd-tab-badge { background: var(--surface4); color: var(--text2); border-radius: 20px; font-size: 11.5px; font-weight: 700; padding: 2px 7px; min-width: 20px; text-align: center; line-height: 1.5; }
-.kd-tab-btn.active .kd-tab-badge { background: rgba(251,191,36,.18); color: var(--gold); }
+.kd-tab-btn.active .kd-tab-badge { background: rgba(251,191,36,.24); color: var(--gold); }
 @keyframes kdTabFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Header banner şeridi */
@@ -11949,41 +11949,8 @@ function kd2RenderIslemler() {
     list.innerHTML = '<div class="islem-empty"><div class="islem-empty-title">Sonuc bulunamadi</div><div class="islem-empty-sub">Arama veya filtreyi degistirin</div></div>';
     return;
   }
-  const ayGruplari = [];
-  filtered.forEach(function(i) {
-    const parts = i.tarih.split('-');
-    const y = Number(parts[0]), m = Number(parts[1]);
-    const key = parts[0] + '-' + parts[1];
-    let grp = ayGruplari.find(function(g) { return g.key === key; });
-    if (!grp) { grp = { key: key, y: y, m: m, items: [] }; ayGruplari.push(grp); }
-    grp.items.push(i);
-  });
-  const bugun = new Date();
-  const buAyKey = bugun.getFullYear() + '-' + String(bugun.getMonth() + 1).padStart(2, '0');
-  list.innerHTML = ayGruplari.map(function(grp) {
-    const baslik = grp.key === buAyKey ? AY_UZUN_TR[grp.m - 1] + ' ' + grp.y + ' - Bu ay' : AY_UZUN_TR[grp.m - 1] + ' ' + grp.y;
-    const isOpen = _kd2AcikIslemAy === grp.key;
-    let rowsHtml = '';
-    grp.items.forEach(function(i) {
-      rowsHtml += islemRowHtml(i);
-    });
-    const ayToplam = {};
-    grp.items.forEach(function(i) { const c = i.paraBirimi || getKartCurrency(i.kart); ayToplam[c] = (ayToplam[c] || 0) + (i.tutar || 0); });
-    const toplamStr = Object.entries(ayToplam).map(function(e) { return fmtCur(e[1], e[0]); }).join(' + ');
-    return '<div class="kd-islem-month-card' + (isOpen ? ' open' : '') + '" id="kd2-islem-month-card-' + grp.key + '">'
-      + '<div class="kd-islem-month-row" onclick="kd2ToggleIslemAy(\'' + grp.key + '\')">'
-      + '<div class="kd-islem-month-meta"><div class="kd-islem-month-title">' + baslik + '</div><div class="kd-islem-month-sub">' + grp.items.length + ' islem</div></div>'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div class="kd-islem-month-amt">' + toplamStr + '</div>'
-      + '<svg class="kd-islem-month-chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,6 8,10 12,6"/></svg></div>'
-      + '</div>'
-      + '<div class="kd-islem-month-body" id="kd2-islem-month-body-' + grp.key + '">'
-      + '<div class="kd-islem-month-list">' + rowsHtml + '</div>'
-      + '</div></div>';
-  }).join('');
-  if (_kd2AcikIslemAy) {
-    const body = document.getElementById('kd2-islem-month-body-' + _kd2AcikIslemAy);
-    if (body) body.style.maxHeight = body.scrollHeight + 'px';
-  }
+  // Aylık akordeon yok — basit, düz bir liste (her satır kendi tarih kartını taşıyor)
+  list.innerHTML = filtered.map(function(i) { return islemRowHtml(i); }).join('');
 }
 
 function kd2ToggleIslemAy(key) {
@@ -12144,74 +12111,8 @@ function kdRenderIslemler() {
     default: islemler.sort((a, b) => b.tarih.localeCompare(a.tarih)); // tarih-yeni
   }
 
-  // Tutar sıralamasında ay grupları da en yüksek/düşük işlemin bulunduğu sıraya göre dizilir;
-  // tarih sıralamasında ay grupları kronolojik (yeni→eski veya eski→yeni) sırada kalır.
-  const ayMap = new Map(); // 'YYYY-MM' -> { items: [...], y, m }
-  islemler.forEach(i => {
-    const key = i.tarih.slice(0, 7);
-    if (!ayMap.has(key)) {
-      const [y, m] = key.split('-').map(Number);
-      ayMap.set(key, { key, y, m, items: [] });
-    }
-    ayMap.get(key).items.push(i);
-  });
-
-  let ayGruplari = Array.from(ayMap.values());
-  if (_kdIslemSiralama === 'tarih-eski') {
-    ayGruplari.sort((a, b) => a.key.localeCompare(b.key));
-  } else if (_kdIslemSiralama === 'tutar-yuksek' || _kdIslemSiralama === 'tutar-dusuk') {
-    // Grupların kendi sırası, içindeki ilk (en öncelikli) işlemin sırasına göre belirlenir
-    // (Map insertion order zaten islemler dizisinin tarama sırasını yansıtıyor, ekstra iş yok)
-  } else {
-    ayGruplari.sort((a, b) => b.key.localeCompare(a.key)); // tarih-yeni (varsayılan)
-  }
-
-  // Tek bir ay grubu varsa ve arama/filtre aktifse akordeonu otomatik aç (kullanıcı sonucu hemen görsün)
-  if (ayGruplari.length === 1 && (aramaQ || _kdIslemKatFiltre)) {
-    _kdAcikIslemAy = ayGruplari[0].key;
-  }
-
-  const bugun = new Date();
-  const buAyKey = `${bugun.getFullYear()}-${String(bugun.getMonth() + 1).padStart(2, '0')}`;
-
-  list.innerHTML = ayGruplari.map(grp => {
-    const ayToplam = {};
-    grp.items.forEach(i => {
-      const cur = i.paraBirimi || getKartCurrency(i.kart);
-      ayToplam[cur] = (ayToplam[cur] || 0) + (i.tutar || 0);
-    });
-    const toplamStr = Object.entries(ayToplam).map(([c, v]) => fmtCur(v, c)).join(' + ');
-    const baslik = grp.key === buAyKey ? `${AY_UZUN_TR[grp.m - 1]} ${grp.y} · Bu ay` : `${AY_UZUN_TR[grp.m - 1]} ${grp.y}`;
-    const isOpen = _kdAcikIslemAy === grp.key;
-
-    // Her satırın solunda kendi tarih kartı gösterildiği için ayrı gün başlığına gerek yok
-    let rowsHtml = '';
-    grp.items.forEach(i => {
-      rowsHtml += islemRowHtml(i);
-    });
-
-    return `<div class="kd-islem-month-card${isOpen ? ' open' : ''}" id="kd-islem-month-card-${grp.key}">
-      <div class="kd-islem-month-row" onclick="kdToggleIslemAy('${grp.key}')">
-        <div class="kd-islem-month-meta">
-          <div class="kd-islem-month-title">${baslik}</div>
-          <div class="kd-islem-month-sub">${grp.items.length} işlem</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-          <div class="kd-islem-month-amt">${toplamStr}</div>
-          <svg class="kd-islem-month-chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,6 8,10 12,6"/></svg>
-        </div>
-      </div>
-      <div class="kd-islem-month-body" id="kd-islem-month-body-${grp.key}">
-        <div class="kd-islem-month-list">${rowsHtml}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Açık olan ay grubu varsa yüksekliğini render sonrası ayarla (akordeon animasyonu için gerekli)
-  if (_kdAcikIslemAy) {
-    const body = document.getElementById('kd-islem-month-body-' + _kdAcikIslemAy);
-    if (body) body.style.maxHeight = body.scrollHeight + 'px';
-  }
+  // Aylık akordeon yok — basit, düz bir liste (her satır kendi tarih kartını taşıyor)
+  list.innerHTML = islemler.map(i => islemRowHtml(i)).join('');
 }
 
 // Ay akordeon başlığına tıklanınca o ayın işlemlerini aç/kapat (tek seferde bir ay açık kalır)
