@@ -6612,6 +6612,7 @@ window.addEventListener('load', placeMobProfilePanel);
           </div>
         </div>
         <button class="btn btn-ghost btn-sm" id="kd2-edit-btn">✏️ Düzenle</button>
+        <button class="btn btn-success btn-sm" id="kd2-borc-ode-btn" onclick="kd2BorcOdeAc()" title="Güncel dönem borcunu öde" style="background:linear-gradient(155deg,#1ec2b0,#16a394);color:#fff;gap:5px">💳 Borç Öde</button>
         <button class="btn btn-primary btn-sm" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
       </div>
     </div>
@@ -12231,6 +12232,32 @@ function kartDetayGeriDon() {
   _pushHashState('kartlar', {});
 }
 
+// ── Kart Detay: Borç Öde butonu ────────────────────────────
+function kd2BorcOdeAc() {
+  if (!_kd2KartId) return;
+  const k = getKart(_kd2KartId);
+  if (!k) return;
+  const tatilSet = getTatilSet();
+  const today = new Date();
+  const pb = getKartCurrency(k.id);
+  const extreDt = calcExtreTarihiOdemeModuyla(k, today.getFullYear(), today.getMonth(), tatilSet);
+  // Mevcut dönemin key'ini hesapla (YYYY-MM)
+  let donemKey;
+  if (extreDt) {
+    const pd = getExtreDonemi(k, localDateStr(extreDt));
+    if (pd) {
+      donemKey = pd.year + '-' + String(pd.month + 1).padStart(2, '0');
+    }
+  }
+  if (!donemKey) {
+    donemKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+  }
+  // Dönem borcunu hesapla
+  const kullanim = getKartKullanim(k.id);
+  // 0 borç olsa da izin ver (peşin/erken ödeme)
+  openKartOdemeModal(k.id, pb, donemKey, kullanim, true);
+}
+
 function kd2RenderOzetBanner(k, renk) {
   const banner = document.getElementById('kd2-ozet-banner');
   if (!banner) return;
@@ -14434,14 +14461,15 @@ function islemRowHtml(i, taksitOverride) {
   const iCur = i.paraBirimi || getKartCurrency(i.kart);
   const isTaksitli = (i.taksit||1) > 1;
   const kat = (DB.kategoriler||[]).find(x=>x.id===i.kategori);
-  const ikon = kat && kat.ikon ? kat.ikon : '💳';
+  const ikon = i._mahsup ? '💳' : (kat && kat.ikon ? kat.ikon : '💳');
   const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
   // Ekstre bağlamında (taksitOverride verilmişse) o döneme ait spesifik taksidin tarih/tutarı
   // gösterilir; aksi halde işlemin kendi tarihi ve toplam tutarı kullanılır.
   const rowTutar = taksitOverride ? taksitOverride.tutar : i.tutar;
   const rowTarih = taksitOverride ? taksitOverride.tarih : i.tarih;
   // Renk: kategori türüne bak (gelir=yeşil, gider=kırmızı), yoksa tutar işaretine göre
-  const amtClass = kat && kat.tur === 'gelir' ? 'pos'
+  const amtClass = i._mahsup ? 'pos'
+                 : kat && kat.tur === 'gelir' ? 'pos'
                  : kat && kat.tur === 'gider' ? 'neg'
                  : rowTutar < 0 ? 'neg' : rowTutar > 0 ? 'pos' : 'neutral';
   const renk = getKartRenk(k);
@@ -14469,7 +14497,7 @@ function islemRowHtml(i, taksitOverride) {
     <div class="islem-row2-body">
       <div class="islem-row2-title" title="${aciklamaSafe}">${aciklamaSafe}</div>
       <div class="islem-row2-sub">
-        <span class="islem-kart-dot" style="background:${renk};box-shadow:0 0 5px ${renk}88"></span><span class="islem-row2-kartad">${k?k.ad:'-'}</span>
+        <span class="islem-kart-dot" style="background:${renk};box-shadow:0 0 5px ${renk}88"></span><span class="islem-row2-kartad">${k?k.ad:'-'}</span>${i._mahsup ? ' <span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:20px;background:rgba(45,212,191,.12);color:var(--teal);margin-left:4px">Ödeme</span>' : ''}
       </div>
     </div>
     <div class="islem-row2-amount">
@@ -15164,7 +15192,7 @@ function renderExtreStatsStrip(kart, periods, kartToplamBorcByPb, todayStr, toda
 }
 
 // ========== KART BORÇ ÖDEME ==========
-function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
+function openKartOdemeModal(kartId, pb, donemKey, toplamBorc, borcSifirIzin) {
   const kart = DB.kartlar.find(k=>k.id===kartId);
   if(!kart) return;
 
@@ -15177,7 +15205,10 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
   document.getElementById('kart-odeme-kart-id').value = kartId;
   document.getElementById('kart-odeme-pb').value = pb;
   document.getElementById('kart-odeme-donem-key').value = donemKey;
-  setMoneyInput('kart-odeme-tutar', kalan > 0 ? kalan : toplamBorc);
+  // Borç varsa kalana doldur; peşin ödeme ise 0 bırak
+  if (kalan > 0) { setMoneyInput('kart-odeme-tutar', kalan); }
+  else if (borcSifirIzin) { setMoneyInput('kart-odeme-tutar', 0); }
+  else { setMoneyInput('kart-odeme-tutar', toplamBorc); }
   document.getElementById('kart-odeme-tarih').value = localDateStr(new Date());
 
 
@@ -15203,12 +15234,15 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc) {
   const odemeDt = extreDt ? calcOdemeTarihi(extreDt, kart.odemeSure, kart.odemeGunTip, tatilSet) : null;
   const donemLabel = new Date(dy, dm-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
   document.getElementById('kart-odeme-sub').textContent = `${kart.ad} · ${donemLabel}`;
-  document.getElementById('kart-odeme-info').innerHTML = `
-    <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Dönem Borcu</span><span class="mono" style="font-weight:700">${fmtCur(toplamBorc, pb)}</span></div>
-    ${odenenTop>0?`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Ödenen</span><span class="mono" style="color:var(--teal)">${fmtCur(odenenTop, pb)}</span></div>`:''}
-    <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Kalan</span><span class="mono" style="font-weight:700;color:${kalan<=0?'var(--teal)':'var(--warn)'}">${fmtCur(kalan, pb)}</span></div>
-    ${odemeDt?`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Son Ödeme Tarihi</span><span class="mono">${fmtDate(localDateStr(odemeDt))}</span></div>`:''}
-  `;
+  document.getElementById('kart-odeme-info').innerHTML =
+    (toplamBorc > 0
+      ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Dönem Borcu</span><span class="mono" style="font-weight:700">${fmtCur(toplamBorc, pb)}</span></div>`
+      : `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Mevcut Borç</span><span class="mono" style="color:var(--teal)">Yok — Peşin / Erken Ödeme</span></div>`
+    )
+    + (odenenTop > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Bu Dönem Ödenen</span><span class="mono" style="color:var(--teal)">${fmtCur(odenenTop, pb)}</span></div>` : '')
+    + (kalan > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Kalan</span><span class="mono" style="font-weight:700;color:var(--warn)">${fmtCur(kalan, pb)}</span></div>` : '')
+    + (odemeDt ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Son Ödeme Tarihi</span><span class="mono">${fmtDate(localDateStr(odemeDt))}</span></div>` : '')
+    + (toplamBorc <= 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">ℹ️ Borç yoksa ödeme tutarı gelecek ekstre borcundan mahsup edilir</div>` : '');
 
   openModal('modal-kart-odeme');
 }
@@ -15267,7 +15301,8 @@ function saveKartOdeme() {
 
   if(!DB.kartOdemeleri) DB.kartOdemeleri = [];
 
-  const odeme = { id: uid(), kartId, paraBirimi: pb, donemKey, tutar, tarih, hesapId: hesapId||null };
+  const odemeId = uid();
+  const odeme = { id: odemeId, kartId, paraBirimi: pb, donemKey, tutar, tarih, hesapId: hesapId||null };
   DB.kartOdemeleri.push(odeme);
 
   // Hesap bakiyesi düşür
@@ -15277,10 +15312,47 @@ function saveKartOdeme() {
     DB.entLog[_lKey('kartodeme', odeme.id, null)] = tutar;
   }
 
+  // ── İşlem listesine yansıt ──────────────────────────────────
+  // Kart ödemesi gelir olarak kaydedilir (karttaki borcu azaltır).
+  // Tutar pozitif: ekstreye "ödeme alacağı" olarak yansır,
+  // böylece borç yokken yapılan peşin ödeme gelecek dönem mahsup edilir.
+  if(!DB.islemler) DB.islemler = [];
+  const kart = DB.kartlar.find(k=>k.id===kartId);
+  const kartAdi = kart ? kart.ad : 'Kart';
+  // "Kart Ödemesi" kategorisini bul ya da ilk kullanımda oluştur
+  let odemeKatId = (DB.kategoriler||[]).find(k=>k.ad==='Kart Ödemesi')?.id;
+  if(!odemeKatId) {
+    if(!DB.kategoriler) DB.kategoriler = [];
+    odemeKatId = uid();
+    DB.kategoriler.push({ id: odemeKatId, ad: 'Kart Ödemesi', ikon: '💳', tur: 'gelir', sistem: true });
+  }
+  const odemeIslem = {
+    id: uid(),
+    kart: kartId,
+    aciklama: `Kart Ödemesi — ${donemKey}`,
+    tutar: tutar,           // pozitif = gelir (borç azaltır)
+    paraBirimi: pb,
+    tarih: tarih,
+    kategori: odemeKatId,
+    taksit: 1,
+    aylik: tutar,
+    _odemeRef: odemeId,     // kartOdemeleri kaydıyla bağlantı
+    _mahsup: true           // işlem listesinde özel gösterim için
+  };
+  DB.islemler.push(odemeIslem);
+  // entLog: silme sırasında geri alabilmek için
+  if(!DB.entLog) DB.entLog = {};
+  DB.entLog[_lKey('odemeislem', odemeIslem.id, null)] = odemeIslem.id;
+
   saveData();
   closeModal('modal-kart-odeme');
   renderExtreler();
+  renderIslemler();
   renderOzet();
+  if(typeof kd2RenderOzetBanner === 'function' && _kd2KartId) {
+    const _k = DB.kartlar.find(k=>k.id===_kd2KartId);
+    if(_k) { const { getKartRenk: _gr } = window; kd2RenderOzetBanner(_k, typeof _gr==='function' ? _gr(_k) : '#fbbf24'); }
+  }
   showToast(`✓ ${fmtCur(tutar, pb)} ödeme kaydedildi`, 'success');
 }
 
@@ -15296,9 +15368,15 @@ function deleteKartOdeme(odemeId) {
     if(eski > 0) { _bakiyeDelta(odeme.hesapId, eski); _lDel(lk); }
   }
 
+  // İşlem listesinden de kaldır (_odemeRef ile eşleşeni sil)
+  if(DB.islemler) {
+    DB.islemler = DB.islemler.filter(i => i._odemeRef !== odemeId);
+  }
+
   DB.kartOdemeleri = DB.kartOdemeleri.filter(o=>o.id!==odemeId);
   saveData();
   renderExtreler();
+  renderIslemler();
   renderOzet();
   showToast('Ödeme silindi', 'info');
 }
