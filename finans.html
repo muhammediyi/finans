@@ -3436,10 +3436,16 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd-extre-card.status-past { border-left: 3px solid rgba(251,113,133,.4); }
 .kd-extre-card.status-current { border-left: 3px solid rgba(251,191,36,.4); }
 .kd-extre-card.status-future { border-left: 3px solid rgba(45,212,191,.25); }
-.kd-extre-card.status-kesin { border-left-color: rgba(45,212,191,.55); }
-.kd-extre-kesin-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 700; color: var(--teal); background: rgba(45,212,191,.13); border-radius: 20px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
-.kd-extre-kesin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; background: var(--surface3); border-bottom: 1px solid var(--border); cursor: default; }
-.kd-extre-kesin-info { display: flex; flex-direction: column; gap: 1px; font-size: 11.5px; }
+.kd-extre-card.status-kesin { border-left: 4px solid #10e0a8; box-shadow: inset 0 0 0 1px rgba(16,224,168,.25); }
+.kd-extre-kesin-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; color: #04332a; background: linear-gradient(135deg,#2dffc4,#10e0a8); border-radius: 20px; padding: 2px 10px; margin-left: 6px; vertical-align: middle; box-shadow: 0 1px 6px rgba(16,224,168,.4); }
+.kd-extre-kesin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; cursor: default; border-bottom: 1px solid var(--border); }
+.kd-extre-kesin-row.is-kesin { background: linear-gradient(90deg, rgba(16,224,168,.22), rgba(16,224,168,.06)); border-bottom-color: rgba(16,224,168,.35); }
+.kd-extre-kesin-row.is-acik { background: linear-gradient(90deg, rgba(251,191,36,.20), rgba(251,191,36,.05)); border-bottom-color: rgba(251,191,36,.3); }
+.kd-extre-kesin-info { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.kd-extre-kesin-btn-confirm { background: linear-gradient(135deg,#2dffc4,#0bc99a) !important; color: #04332a !important; border: none !important; font-weight: 800 !important; box-shadow: 0 2px 8px rgba(16,224,168,.45); }
+.kd-extre-kesin-btn-confirm:hover { filter: brightness(1.08); }
+.kd-extre-kesin-btn-undo { background: rgba(251,191,36,.16) !important; color: #fbbf24 !important; border: 1px solid rgba(251,191,36,.4) !important; font-weight: 700 !important; }
+.kd-extre-kesin-btn-undo:hover { background: rgba(251,191,36,.26) !important; }
 .kd-extre-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; border-radius: 0; margin-bottom: 0; background: none; border: none; cursor: pointer; user-select: none; transition: var(--transition); }
 .kd-extre-row:hover { background: var(--surface3); }
 .kd-extre-progress { height: 3px; background: var(--surface3); overflow: hidden; }
@@ -12699,10 +12705,10 @@ function kdRenderExtreler() {
     const extreDtMs = new Date(p.extre + 'T00:00:00');
     const ekstreSonrasi = new Date(extreDtMs); ekstreSonrasi.setDate(ekstreSonrasi.getDate() + 1);
     const kesinlestirBtn = (!kesin && today >= ekstreSonrasi)
-      ? `<button class="btn btn-ghost btn-sm" style="font-size:10.5px;padding:3px 9px;color:var(--teal);border-color:rgba(45,212,191,.3)" onclick="event.stopPropagation();kesinlestirEkstre('${kart.id}','${p.key}')">✓ Kesinleştir</button>`
+      ? `<button class="btn btn-sm kd-extre-kesin-btn-confirm" style="font-size:11px;padding:5px 12px" onclick="event.stopPropagation();kesinlestirEkstre('${kart.id}','${p.key}')">✓ Kesinleştir</button>`
       : (!kesin ? `<span style="font-size:10px;color:var(--text3)" title="Ekstre kesim tarihinden bir gün sonra kesinleştirilebilir">Henüz kesinleştirilemez</span>` : '');
     const kesinKaldirBtn = kesin
-      ? `<button class="btn btn-ghost btn-sm" style="font-size:10.5px;padding:3px 9px;color:var(--text3)" onclick="event.stopPropagation();kesinlestirmeyiKaldir('${kart.id}','${p.key}')" title="Kesinleştirmeyi kaldır — işlemler tekrar düzenlenebilir olur">↺ Geri Al</button>`
+      ? `<button class="btn btn-sm kd-extre-kesin-btn-undo" style="font-size:11px;padding:5px 12px" onclick="event.stopPropagation();kesinlestirmeyiKaldir('${kart.id}','${p.key}')" title="Kesinleştirmeyi kaldır — işlemler tekrar düzenlenebilir olur">↺ Geri Al</button>`
       : '';
 
     // Bu döneme dahil olan her işlem/taksit kaydını (en yeni üstte) detay listesi olarak hazırla
@@ -12731,11 +12737,11 @@ function kdRenderExtreler() {
         </div>
       </div>
       <div class="kd-extre-body" id="kd-extre-body-${p.key}">
-        <div class="kd-extre-kesin-row" onclick="event.stopPropagation()">
+        <div class="kd-extre-kesin-row ${kesin ? 'is-kesin' : 'is-acik'}" onclick="event.stopPropagation()">
           <div class="kd-extre-kesin-info">
             ${kesin
-              ? `<span style="color:var(--teal);font-weight:600">🔒 Bu ekstre kesinleştirildi${kesinKayit.kesinlesmeTarih ? ' — ' + fmtDate(kesinKayit.kesinlesmeTarih) : ''}</span><span style="color:var(--text3);font-size:10.5px">İşlemler düzenlenemez/silinemez</span>`
-              : `<span style="color:var(--text2)">🔓 Bu dönem henüz kesinleşmedi</span><span style="color:var(--text3);font-size:10.5px">İşlemler hâlâ düzenlenebilir</span>`}
+              ? `<span style="color:#10e0a8;font-weight:800">🔒 Bu ekstre kesinleştirildi${kesinKayit.kesinlesmeTarih ? ' — ' + fmtDate(kesinKayit.kesinlesmeTarih) : ''}</span><span style="color:var(--text2);font-size:10.5px">İşlemler düzenlenemez/silinemez</span>`
+              : `<span style="color:#fbbf24;font-weight:800">🔓 Bu dönem henüz kesinleşmedi</span><span style="color:var(--text2);font-size:10.5px">İşlemler hâlâ düzenlenebilir</span>`}
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0">${kesinlestirBtn}${kesinKaldirBtn}</div>
         </div>
