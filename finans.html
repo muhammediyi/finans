@@ -12391,7 +12391,10 @@ function kdToggleIslemAy(key) {
 // Üstüne ayrıca, TÜM tanımlı kategorilerde (bar'daki en-fazla-7 sınırına bağlı kalmadan)
 // yazdıkça arayan ve seçilince aynı filtreyi uygulayan bir kategori-arama kutusu eklenir.
 function kdRenderKatBar(wrap, islemler) {
-  const aramaHtml = kdKatAraHtml(wrap.id);
+  // Not: kategori bar'ının kendi mini arama kutusu kaldırıldı — alttaki genel arama kutusu
+  // (kd-islem-arama) zaten açıklama + kategori adına göre arıyor, iki ayrı "kategori ara"
+  // kutusu göstermek kafa karıştırıyordu. Bar/lejant tıklanabilir filtre olarak kalıyor.
+  const aramaHtml = '';
 
   const katToplam = new Map(); // katId -> toplam tutar (kart para biriminde, basit toplama)
   let genelToplam = 0;
@@ -12615,7 +12618,7 @@ function kdRenderExtreler() {
             <div class="kd-extre-detail-sub">${subText}</div>
           </div>
         </div>
-        <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(tak.tutar, pb)}</div>
+        <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--teal)' : 'var(--rose)'}">${fmtCur(tak.tutar, pb)}</div>
       </div>`;
     }).join('') : `<div class="kd-extre-detail-empty">${aktifEkstreKat ? 'Seçili kategoriye ait işlem bulunamadı' : 'Bu döneme ait işlem bulunamadı'}</div>`;
 
