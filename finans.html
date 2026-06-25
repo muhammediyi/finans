@@ -11916,8 +11916,25 @@ function kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit) {
   const limitGecmis = k.limitGecmisi || [];
   const limitGecmisStr = limitGecmis.length > 0 ? limitGecmis.length + ' değişim' : 'İlk limit';
 
-  // Para birimi
-  const paraBirimiStr = pb || 'TRY';
+  // Ekstre/ödeme ayar geçmişi — kaç kez değişti
+  const ayarGecmis = k.extraGunGecmis || [];
+  const ayarGecmisStr = ayarGecmis.length > 0 ? ayarGecmis.length + ' kayıt' : 'Tek dönem';
+
+  // Para birimi — kart birden fazla destekliyorsa hepsini göster
+  const tumParaBirimleri = (k.paraBirimleri && k.paraBirimleri.length) ? k.paraBirimleri : (k.paraBirimi ? [k.paraBirimi] : [pb || 'TRY']);
+  const varsayilanPb = k.varsayilanParaBirimi || tumParaBirimleri[0];
+  const paraBirimiStr = tumParaBirimleri.length > 1
+    ? tumParaBirimleri.map(c => c === varsayilanPb ? c + ' ⭐' : c).join(' · ')
+    : (pb || 'TRY');
+
+  // Kart altyapısı (Visa/Mastercard/Troy vb.)
+  const altyapi = (DB.kartAltyapilari || []).find(a => a.id === k.altyapiId);
+
+  // KMH/kredi borcu (kart tipi KMH ise)
+  const kmhTip = DB.urunTipler.find(t => t.kod === 'KMH');
+  const isKmh = kmhTip && k.tip === kmhTip.id;
+  const kmhKrediler = isKmh ? (DB.krediler || []).filter(kr => kr.kmhId === k.id && getKrediKalanBorc(kr) > 0) : [];
+  const kmhKalanToplam = kmhKrediler.reduce((s, kr) => s + getKrediKalanBorc(kr), 0);
 
   wrap.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px">
     <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📋 Kart Bilgileri & Ayarlar</div>
@@ -11936,8 +11953,8 @@ function kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit) {
       </div>
       <div class="kd2-ayar-kart">
         <div class="kd2-ayar-icon">💱</div>
-        <div class="kd2-ayar-label">Para Birimi</div>
-        <div class="kd2-ayar-val">${paraBirimiStr}</div>
+        <div class="kd2-ayar-label">Para Birimi${tumParaBirimleri.length > 1 ? 'leri' : ''}</div>
+        <div class="kd2-ayar-val" style="${tumParaBirimleri.length > 1 ? 'font-size:11px' : ''}">${paraBirimiStr}</div>
         <div class="kd2-ayar-sub">${banka || '—'} · ${tip ? tip.ad : '—'}</div>
       </div>
       <div class="kd2-ayar-kart" style="cursor:pointer" onclick="kd2LimitGecmisToggle()" title="Limit geçmişini göster/gizle">
@@ -11946,12 +11963,76 @@ function kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit) {
         <div class="kd2-ayar-val">${fmtCur(toplamLimit, pb)}</div>
         <div class="kd2-ayar-sub" style="color:var(--accent)">${limitGecmisStr} — tıkla ▸</div>
       </div>
+      <div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">🔢</div>
+        <div class="kd2-ayar-label">Kart Numarası</div>
+        <div class="kd2-ayar-val" style="font-family:var(--mono)">${k.no || '—'}</div>
+        <div class="kd2-ayar-sub">${k.ad || '—'}</div>
+      </div>
+      <div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">🏷️</div>
+        <div class="kd2-ayar-label">Kart Altyapısı</div>
+        <div class="kd2-ayar-val">${altyapi ? altyapi.ad : '—'}</div>
+        <div class="kd2-ayar-sub">${banka || '—'}</div>
+      </div>
+      <div class="kd2-ayar-kart" style="cursor:pointer" onclick="kd2AyarGecmisToggle()" title="Ekstre/ödeme ayar geçmişini göster/gizle">
+        <div class="kd2-ayar-icon">🕘</div>
+        <div class="kd2-ayar-label">Ekstre/Ödeme Ayar Geçmişi</div>
+        <div class="kd2-ayar-val">${ayarGecmisStr}</div>
+        <div class="kd2-ayar-sub" style="color:var(--accent)">tıkla ▸</div>
+      </div>
+      ${isKmh ? `<div class="kd2-ayar-kart">
+        <div class="kd2-ayar-icon">🏦</div>
+        <div class="kd2-ayar-label">KMH Kredi Borcu</div>
+        <div class="kd2-ayar-val" style="color:${kmhKrediler.length ? 'var(--danger)' : 'var(--text)'}">${kmhKrediler.length ? fmtCur(kmhKalanToplam, pb) : 'Borç yok'}</div>
+        <div class="kd2-ayar-sub">${kmhKrediler.length} aktif kredi</div>
+      </div>` : ''}
     </div>
     <div id="kd2-limit-gecmis-panel" style="display:none;margin-top:10px">
       ${kd2BuildLimitGecmisHTML(k, pb)}
     </div>
+    <div id="kd2-ayar-gecmis-panel" style="display:none;margin-top:10px">
+      ${kd2BuildAyarGecmisHTML(k)}
+    </div>
   </div>`;
 }
+
+// Ekstre/ödeme ayar geçmişini, kart düzenleme modalındaki ile aynı mantıkla (en yeni üstte) listeler
+function kd2BuildAyarGecmisHTML(k) {
+  const gecmis = (k.extraGunGecmis || []).slice().sort((a,b) => b.baslangic.localeCompare(a.baslangic));
+  if (!gecmis.length) {
+    return `<div style="font-size:12px;color:var(--text3);padding:8px 4px">Ayar değişikliği kaydı yok — kart başından beri aynı ekstre/ödeme kuralını kullanıyor.</div>`;
+  }
+  const odemeGunTipEtiket = {
+    'ilerle': 'Ödeme ileri', 'geri': 'Ödeme geri',
+    'extre-ilerle': 'Ekstre ileri (ödeme sabit)', 'extre-geri': 'Ekstre geri (ödeme sabit)',
+    'extre-odeme-ilerle': 'Ekstre ileri (ödeme kayar)', 'extre-odeme-geri': 'Ekstre geri (ödeme kayar)'
+  };
+  const rows = gecmis.map((g, idx) => {
+    const isLast = idx === 0;
+    const ekstreOzet = g.tip === 'hafta'
+      ? `${g.hafta}. hafta / ${['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'][g.haftaGun]}`
+      : `Her ayın ${g.gun}. günü`;
+    const odemeOzet = (g.odemeSure !== undefined && g.odemeSure !== null)
+      ? `${g.odemeSure} gün sonra · ${odemeGunTipEtiket[g.odemeGunTip] || g.odemeGunTip || '-'}`
+      : '<span style="color:var(--text3)">(bu kayıttan önce ödeme ayarı tutulmuyordu)</span>';
+    return `<div class="kd2-limit-gecmis-satir" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <span class="kd2-limit-gecmis-tarih" style="color:var(--text);font-weight:600">${g.baslangic === '2000-01' ? 'Başından beri' : g.baslangic}</span>
+        ${isLast ? '<span class="kd2-limit-gecmis-badge ilk">▶ Güncel</span>' : ''}
+      </div>
+      <div style="color:var(--text2);font-size:11px">🗓️ ${ekstreOzet}</div>
+      <div style="color:var(--text2);font-size:11px">💳 ${odemeOzet}</div>
+    </div>`;
+  }).join('');
+  return `<div class="kd2-limit-gecmis">${rows}</div>`;
+}
+
+function kd2AyarGecmisToggle() {
+  const p = document.getElementById('kd2-ayar-gecmis-panel');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
 
 function kd2BuildLimitGecmisHTML(k, pb) {
   const gecmis = (k.limitGecmisi || []).slice().sort((a,b) => b.tarih.localeCompare(a.tarih));
@@ -12108,7 +12189,14 @@ function kd2LimitGuncelleFromDetay() {
   const id = _kd2KartId;
   if (!id) return;
   document.getElementById('kd2-more-menu').style.display = 'none';
-  editKart(id, true);
+  const kart = DB.kartlar.find(k => k.id === id);
+  // Kart ortak limit grubuna bağlıysa kart modalındaki limit alanı salt-okunur olur —
+  // gerçek değişiklik için doğrudan ortak grup limit modalını açıyoruz.
+  if (kart && kart.ortakLimitGrupId) {
+    openOrtakGrupModal(kart.ortakLimitGrupId);
+  } else {
+    editKart(id, true);
+  }
 }
 
 function kd2SwitchTab(tab) {
