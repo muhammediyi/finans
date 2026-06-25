@@ -3436,6 +3436,10 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd-extre-card.status-past { border-left: 3px solid rgba(251,113,133,.4); }
 .kd-extre-card.status-current { border-left: 3px solid rgba(251,191,36,.4); }
 .kd-extre-card.status-future { border-left: 3px solid rgba(45,212,191,.25); }
+.kd-extre-card.status-kesin { border-left-color: rgba(45,212,191,.55); }
+.kd-extre-kesin-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 700; color: var(--teal); background: rgba(45,212,191,.13); border-radius: 20px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+.kd-extre-kesin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; background: var(--surface3); border-bottom: 1px solid var(--border); cursor: default; }
+.kd-extre-kesin-info { display: flex; flex-direction: column; gap: 1px; font-size: 11.5px; }
 .kd-extre-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; border-radius: 0; margin-bottom: 0; background: none; border: none; cursor: pointer; user-select: none; transition: var(--transition); }
 .kd-extre-row:hover { background: var(--surface3); }
 .kd-extre-progress { height: 3px; background: var(--surface3); overflow: hidden; }
@@ -12686,17 +12690,32 @@ function kdRenderExtreler() {
     const toplamHtml = kartPbList.map(pb => p.totalByPb[pb] ? fmtCur(p.totalByPb[pb], pb) : null)
       .filter(Boolean).join(' · ') || fmtCur(0, kartPbList[0] || defaultCurrency);
 
+    // Kesinleşme durumu
+    const kesinKayit = (DB.ekstreKayitlari || []).find(rk => rk.kartId === kart.id && rk.donemKey === p.key);
+    const kesin = !!(kesinKayit && kesinKayit.kesinlestirildi);
+    const kesinBadge = kesin
+      ? `<span class="kd-extre-kesin-badge" title="${kesinKayit.kesinlesmeTarih ? 'Kesinleşme tarihi: ' + fmtDate(kesinKayit.kesinlesmeTarih) : ''}">🔒 Kesinleşti</span>`
+      : '';
+    const extreDtMs = new Date(p.extre + 'T00:00:00');
+    const ekstreSonrasi = new Date(extreDtMs); ekstreSonrasi.setDate(ekstreSonrasi.getDate() + 1);
+    const kesinlestirBtn = (!kesin && today >= ekstreSonrasi)
+      ? `<button class="btn btn-ghost btn-sm" style="font-size:10.5px;padding:3px 9px;color:var(--teal);border-color:rgba(45,212,191,.3)" onclick="event.stopPropagation();kesinlestirEkstre('${kart.id}','${p.key}')">✓ Kesinleştir</button>`
+      : (!kesin ? `<span style="font-size:10px;color:var(--text3)" title="Ekstre kesim tarihinden bir gün sonra kesinleştirilebilir">Henüz kesinleştirilemez</span>` : '');
+    const kesinKaldirBtn = kesin
+      ? `<button class="btn btn-ghost btn-sm" style="font-size:10.5px;padding:3px 9px;color:var(--text3)" onclick="event.stopPropagation();kesinlestirmeyiKaldir('${kart.id}','${p.key}')" title="Kesinleştirmeyi kaldır — işlemler tekrar düzenlenebilir olur">↺ Geri Al</button>`
+      : '';
+
     // Bu döneme dahil olan her işlem/taksit kaydını (en yeni üstte) detay listesi olarak hazırla
     const detayItemsAll = p.items.slice().sort((a, b) => b.tak.tarih.localeCompare(a.tak.tarih));
     const detayItems = aktifEkstreKat ? detayItemsAll.filter(({ islem }) => islem.kategori === aktifEkstreKat) : detayItemsAll;
     const detayHtml = detayItems.length ? detayItems.map(({ islem, tak }) => islemRowHtml(islem, tak)).join('')
       : `<div class="kd-extre-detail-empty">${aktifEkstreKat ? 'Seçili kategoriye ait işlem bulunamadı' : 'Bu döneme ait işlem bulunamadı'}</div>`;
 
-    return `<div class="kd-extre-card ${statusClass}" id="kd-extre-card-${p.key}">
+    return `<div class="kd-extre-card ${statusClass}${kesin ? ' status-kesin' : ''}" id="kd-extre-card-${p.key}">
       <div class="kd-extre-progress"><div class="kd-extre-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div></div>
       <div class="kd-extre-row" onclick="kdToggleExtreDonem('${p.key}')">
         <div class="kd-extre-meta">
-          <div class="kd-extre-period">${p.label}</div>
+          <div class="kd-extre-period">${p.label} ${kesinBadge}</div>
           <div class="kd-extre-dates">
             <span class="kd-extre-date-chip">✂ ${fmtDate(p.extre)}</span>
             <span style="color:var(--border2)">·</span>
@@ -12712,6 +12731,14 @@ function kdRenderExtreler() {
         </div>
       </div>
       <div class="kd-extre-body" id="kd-extre-body-${p.key}">
+        <div class="kd-extre-kesin-row" onclick="event.stopPropagation()">
+          <div class="kd-extre-kesin-info">
+            ${kesin
+              ? `<span style="color:var(--teal);font-weight:600">🔒 Bu ekstre kesinleştirildi${kesinKayit.kesinlesmeTarih ? ' — ' + fmtDate(kesinKayit.kesinlesmeTarih) : ''}</span><span style="color:var(--text3);font-size:10.5px">İşlemler düzenlenemez/silinemez</span>`
+              : `<span style="color:var(--text2)">🔓 Bu dönem henüz kesinleşmedi</span><span style="color:var(--text3);font-size:10.5px">İşlemler hâlâ düzenlenebilir</span>`}
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">${kesinlestirBtn}${kesinKaldirBtn}</div>
+        </div>
         <div class="kd-extre-detail-list">${detayHtml}</div>
       </div>
     </div>`;
@@ -13748,9 +13775,27 @@ function kesinlestirEkstre(kartId, donemKey) {
   renderExtreler();
   if (typeof _kdKartId !== 'undefined' && _kdKartId === kartId) {
     const kart = DB.kartlar.find(k => k.id === kartId);
-    if (kart) kdRenderExtreUyari(kart);
+    if (kart) { kdRenderExtreUyari(kart); kdRenderExtreler(); }
   }
+  if (typeof _kd2KartId !== 'undefined' && _kd2KartId === kartId) kd2RenderExtreler();
   showToast('Ekstre kesinleştirildi — bu döneme ait işlemler artık düzenlenemez', 'success');
+}
+
+// Kesinleştirmeyi geri al — döneme ait işlemler tekrar düzenlenebilir/silinebilir hale gelir
+function kesinlestirmeyiKaldir(kartId, donemKey) {
+  showConfirm('Bu dönemin ekstre kesinleştirmesi kaldırılsın mı? İşlemler tekrar düzenlenebilir hale gelir.', () => {
+    const var_ = (DB.ekstreKayitlari || []).find(k => k.kartId === kartId && k.donemKey === donemKey);
+    if (var_) { var_.kesinlestirildi = false; var_.kesinlesmeTarih = null; }
+    saveData();
+    renderOzetEkstreUyarilar();
+    renderExtreler();
+    if (typeof _kdKartId !== 'undefined' && _kdKartId === kartId) {
+      const kart = DB.kartlar.find(k => k.id === kartId);
+      if (kart) { kdRenderExtreUyari(kart); kdRenderExtreler(); }
+    }
+    if (typeof _kd2KartId !== 'undefined' && _kd2KartId === kartId) kd2RenderExtreler();
+    showToast('Kesinleştirme kaldırıldı', 'success');
+  });
 }
 
 // Kart detay sayfası — o karta özel bekleyen ekstre kesinleştirme uyarısı
