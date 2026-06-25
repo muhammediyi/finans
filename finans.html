@@ -3236,16 +3236,17 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 
 /* Mini stats — daha zengin */
 .kd-mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
-.kd-mini-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
-.kd-mini-stat-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
-.kd-mini-stat-val { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kd-mini-stat { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--border2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; transition: transform .12s ease; }
+.kd-mini-stat:hover { transform: translateY(-1px); }
+.kd-mini-stat-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+.kd-mini-stat-val { font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kd-mini-stat-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
-.kd-mini-stat.accent { border-color: rgba(251,191,36,.2); background: rgba(251,191,36,.05); }
-.kd-mini-stat.accent .kd-mini-stat-val { color: var(--gold); }
-.kd-mini-stat.danger { border-color: rgba(251,113,133,.2); background: rgba(251,113,133,.05); }
-.kd-mini-stat.danger .kd-mini-stat-val { color: var(--rose); }
-.kd-mini-stat.teal { border-color: rgba(45,212,191,.2); background: rgba(45,212,191,.05); }
-.kd-mini-stat.teal .kd-mini-stat-val { color: var(--teal); }
+.kd-mini-stat.accent { border-left-color: #fbbf24; background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,191,36,.03)); }
+.kd-mini-stat.accent .kd-mini-stat-val { color: #fbbf24; }
+.kd-mini-stat.danger { border-left-color: #fb7185; background: linear-gradient(135deg, rgba(251,113,133,.18), rgba(251,113,133,.03)); }
+.kd-mini-stat.danger .kd-mini-stat-val { color: #fb7185; }
+.kd-mini-stat.teal { border-left-color: #10e0a8; background: linear-gradient(135deg, rgba(16,224,168,.18), rgba(16,224,168,.03)); }
+.kd-mini-stat.teal .kd-mini-stat-val { color: #10e0a8; }
 
 /* ─── Kart Detay v2 — Yeni Bileşenler ─── */
 /* Kart Görseli */
@@ -3275,10 +3276,14 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 @media(max-width:600px){ .kd2-ozet-grid { grid-template-columns: 1fr; } .kd2-card-visual { width: 80px; height: 50px; } }
 .kd2-ozet-rakamlar { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
 @media(max-width:700px){ .kd2-ozet-rakamlar { grid-template-columns: repeat(2,1fr); } }
-.kd2-ozet-rakam-item { display: flex; flex-direction: column; gap: 2px; }
-.kd2-ozet-rakam-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
-.kd2-ozet-rakam-val { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+.kd2-ozet-rakam-item { display: flex; flex-direction: column; gap: 2px; border-radius: 10px; padding: 9px 12px; border: 1px solid transparent; }
+.kd2-ozet-rakam-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; }
+.kd2-ozet-rakam-val { font-family: var(--mono); font-size: 18px; font-weight: 800; }
 .kd2-ozet-rakam-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.kd2-ozet-rakam-item.is-warn { background: linear-gradient(135deg, rgba(251,191,36,.22), rgba(251,191,36,.05)); border-color: rgba(251,191,36,.35); }
+.kd2-ozet-rakam-item.is-teal { background: linear-gradient(135deg, rgba(16,224,168,.22), rgba(16,224,168,.05)); border-color: rgba(16,224,168,.35); }
+.kd2-ozet-rakam-item.is-neutral { background: linear-gradient(135deg, rgba(99,102,241,.16), rgba(99,102,241,.04)); border-color: rgba(99,102,241,.3); }
+.kd2-ozet-rakam-item.is-danger { background: linear-gradient(135deg, rgba(251,113,133,.22), rgba(251,113,133,.05)); border-color: rgba(251,113,133,.35); }
 
 /* Ayarlar satırı */
 .kd2-ayarlar-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
@@ -3286,7 +3291,16 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd2-ayar-kart {
   background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
   padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;
+  border-left: 3px solid var(--border2); transition: transform .12s ease, border-color .12s ease;
 }
+.kd2-ayar-kart:hover { transform: translateY(-1px); }
+.kd2-ayar-kart.ayar-c1 { background: linear-gradient(135deg, rgba(56,189,248,.13), rgba(56,189,248,.02)); border-left-color: #38bdf8; }
+.kd2-ayar-kart.ayar-c2 { background: linear-gradient(135deg, rgba(251,191,36,.13), rgba(251,191,36,.02)); border-left-color: #fbbf24; }
+.kd2-ayar-kart.ayar-c3 { background: linear-gradient(135deg, rgba(167,139,250,.13), rgba(167,139,250,.02)); border-left-color: #a78bfa; }
+.kd2-ayar-kart.ayar-c4 { background: linear-gradient(135deg, rgba(16,224,168,.13), rgba(16,224,168,.02)); border-left-color: #10e0a8; }
+.kd2-ayar-kart.ayar-c5 { background: linear-gradient(135deg, rgba(244,114,182,.13), rgba(244,114,182,.02)); border-left-color: #f472b6; }
+.kd2-ayar-kart.ayar-c6 { background: linear-gradient(135deg, rgba(248,113,113,.13), rgba(248,113,113,.02)); border-left-color: #f87171; }
+.kd2-ayar-kart.ayar-c7 { background: linear-gradient(135deg, rgba(251,146,60,.13), rgba(251,146,60,.02)); border-left-color: #fb923c; }
 .kd2-ayar-icon { font-size: 15px; line-height: 1; margin-bottom: 2px; }
 .kd2-ayar-label { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
 .kd2-ayar-val { font-size: 12.5px; font-weight: 700; color: var(--text); }
@@ -3296,13 +3310,16 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 .kd2-trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media(max-width:640px){ .kd2-trend-grid { grid-template-columns: 1fr; } }
 .kd2-grafik-kart {
-  background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius);
+  background: linear-gradient(160deg, var(--surface), rgba(99,102,241,.04));
+  border: 1px solid var(--border2); border-radius: var(--radius);
   padding: 14px 16px;
 }
+.kd2-grafik-kart.is-trend { background: linear-gradient(160deg, var(--surface), rgba(99,102,241,.07)); border-top: 2px solid rgba(99,102,241,.5); }
+.kd2-grafik-kart.is-ozet { background: linear-gradient(160deg, var(--surface), rgba(16,224,168,.06)); border-top: 2px solid rgba(16,224,168,.45); }
 .kd2-grafik-baslik { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .kd2-bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
 .kd2-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-.kd2-bar-fill { border-radius: 3px 3px 0 0; width: 100%; min-height: 3px; transition: height .3s ease; }
+.kd2-bar-fill { border-radius: 3px 3px 0 0; width: 100%; min-height: 3px; transition: height .3s ease; box-shadow: 0 0 8px -2px currentColor; }
 .kd2-bar-lbl { font-size: 8.5px; color: var(--text3); white-space: nowrap; }
 .kd2-bar-val { font-size: 8px; font-family: var(--mono); color: var(--text2); white-space: nowrap; }
 
@@ -3338,21 +3355,23 @@ select option { background: #0b0e1e; color: #f0f4ff; }
 
 /* Asgari ödeme satırı */
 .kd2-asgari-banner {
-  background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.22);
-  border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(90deg, rgba(251,191,36,.24), rgba(251,191,36,.05));
+  border: 1px solid rgba(251,191,36,.4); border-left: 3px solid #fbbf24;
+  border-radius: 8px; padding: 9px 13px; display: flex; align-items: center; gap: 10px;
   margin-top: 10px;
 }
-.kd2-asgari-banner .label { font-size: 10.5px; color: var(--text3); flex: 1; }
-.kd2-asgari-banner .val { font-family: var(--mono); font-weight: 700; font-size: 14px; color: var(--gold); }
+.kd2-asgari-banner .label { font-size: 10.5px; color: var(--text2); flex: 1; font-weight: 600; }
+.kd2-asgari-banner .val { font-family: var(--mono); font-weight: 800; font-size: 14px; color: #fbbf24; }
 
 /* Ortak limit grubu bilgi şeridi */
 .kd2-ortak-grup-bilgi {
-  background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.2);
-  border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(90deg, rgba(167,139,250,.24), rgba(167,139,250,.05));
+  border: 1px solid rgba(167,139,250,.4); border-left: 3px solid #a78bfa;
+  border-radius: 8px; padding: 9px 13px; display: flex; align-items: center; gap: 10px;
   margin-top: 8px; font-size: 11.5px;
 }
-.kd2-ortak-grup-bilgi .og-label { color: var(--text3); }
-.kd2-ortak-grup-bilgi .og-val { font-weight: 700; color: var(--violet); font-family: var(--mono); }
+.kd2-ortak-grup-bilgi .og-label { color: var(--text2); font-weight: 600; }
+.kd2-ortak-grup-bilgi .og-val { font-weight: 800; color: #a78bfa; font-family: var(--mono); }
 
 /* Para birimi chip */
 .kd2-pb-chip {
@@ -5855,6 +5874,422 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
   .topbar-profile-content #gdrive-signin-panel {
     margin-bottom: 0 !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KAPSAMLI MOBİL RESPONSIVE İYİLEŞTİRME — TÜMÜ KAPSAYAN
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── İşlem listesi satırları — mobile ─────────────────────── */
+@media(max-width:768px) {
+
+  /* İşlem istatistik chip'leri */
+  .islem-stats {
+    grid-template-columns: repeat(2,1fr) !important;
+    gap: 8px !important;
+  }
+  .islem-chip {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+  .islem-chip-val {
+    font-size: 12px !important;
+  }
+
+  /* İşlem toolbar — tek satır scroll */
+  .islem-toolbar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .islem-search-wrap {
+    flex: 1 1 100% !important;
+    min-width: unset !important;
+  }
+  .islem-toolbar select {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0 !important;
+    font-size: 14px !important;
+  }
+
+  /* İşlem listesi başlığı gizle */
+  .islem-list-head {
+    display: none !important;
+  }
+  .islem-list {
+    max-height: none !important;
+    gap: 4px !important;
+  }
+
+  /* İşlem satırı — kart görünümüne dönüştür */
+  .islem-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 12px 12px !important;
+    border-radius: 10px !important;
+    background: var(--surface2) !important;
+    border: 1px solid var(--border) !important;
+    margin-bottom: 2px !important;
+  }
+  .islem-row2 {
+    flex-wrap: wrap !important;
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+  .islem-row2-cat {
+    flex: 0 0 auto !important;
+  }
+  .islem-row2-desc {
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+  }
+  .islem-row2-amount {
+    margin-left: auto !important;
+    text-align: right !important;
+  }
+  .islem-row2-actions {
+    opacity: 1 !important;
+    flex: 0 0 100% !important;
+    justify-content: flex-end !important;
+    padding-top: 4px !important;
+    border-top: 1px solid var(--border) !important;
+  }
+
+  /* Ekstre eşleştirme satırları */
+  .ee-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .ee-row-main {
+    min-width: unset !important;
+  }
+  .ee-row .ee-inline-field {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .ee-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .ee-actions .ee-btn-mini {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    min-height: 38px !important;
+    font-size: 12px !important;
+  }
+  .ee-row-amt {
+    font-size: 15px !important;
+  }
+
+  /* Kart detay kd2 özet rakamlar */
+  .kd2-ozet-rakamlar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .kd2-ayarlar-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .kd2-trend-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Kategori toolbar */
+  .kat-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .kat-toolbar-left,
+  .kat-toolbar-right {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  .kat-seg {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .kat-seg-btn {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+  .kat-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Kart (kredi kartı) listesi */
+  #kartlar-list.grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Ekstre bilgi kutuları */
+  .exk-boxes {
+    grid-template-columns: repeat(2, 1fr) !important;
+    margin: 10px 12px 0 !important;
+  }
+
+  /* Tab bar kart detayı */
+  .kd-tab-row {
+    padding: 0 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .kd-tab-row .kd-tab-bar {
+    flex: 1 1 100% !important;
+    order: 2 !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  .kd-tab-row .kd-tab-bar::-webkit-scrollbar { display: none; }
+  .kd-yeni-islem-btn {
+    order: 1 !important;
+    margin-left: auto !important;
+  }
+
+  /* Action row: butonlar sarılsın */
+  .action-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Dönem tab bar (işlemler) */
+  .islem-donem-tab-bar {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  .islem-donem-tab-bar::-webkit-scrollbar { display: none; }
+
+  /* Taksit planı — sütunları daralt */
+  .tp-header {
+    display: none !important;
+  }
+  .tp-row {
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 4px !important;
+    padding: 8px 10px !important;
+  }
+  .tp-row > div:nth-child(1) { grid-column: 1; }
+  .tp-row > div:nth-child(2) { grid-column: 1 / -1; }
+  .tp-row > div:nth-child(3) { grid-column: 1; }
+  .tp-row > div:nth-child(4) { grid-column: 2; text-align: right; }
+  .tp-row > div:nth-child(5) { grid-column: 1 / -1; }
+
+  /* Stat cards — yatayda 2 sütun */
+  .stats-grid,
+  div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* KD2 aksiyon menüsü */
+  .kd2-action-menu {
+    right: auto !important;
+    left: 0 !important;
+  }
+
+  /* Kart görsel */
+  .kart-card-visual {
+    transform: none !important;
+  }
+
+  /* Inline flex-end buton container'lar */
+  div[style*="display:flex"][style*="justify-content:flex-end"],
+  div[style*="display: flex"][style*="justify-content: flex-end"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Genel overflow önleme */
+  .card, .stat {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Sayfa içi yatay scroll alanları */
+  .tbl-wrap,
+  .tp-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Section başlıkları */
+  .section-title {
+    font-size: 11px !important;
+  }
+
+  /* Ödeme planı footer */
+  .tp-footer {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Ekstre accordion başlıkları */
+  .exk-acc-head {
+    padding: 10px 12px !important;
+  }
+  .exk-acc-title {
+    font-size: 12px !important;
+  }
+
+  /* Butonu tam genişlik yapma — form footer */
+  .modal-footer .btn-success,
+  .modal-footer .btn-danger,
+  .modal-footer .btn-primary,
+  .modal-footer .btn-ghost {
+    flex: 1 !important;
+  }
+
+  /* Topbar: sağ taraf butonları */
+  .topbar-right {
+    gap: 6px !important;
+  }
+
+  /* İşlem dönem seçici tablar */
+  .islem-donem-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .islem-donem-tabs::-webkit-scrollbar { display: none; }
+
+  /* Genel inline style grid'leri override */
+  [style*="grid-template-columns: 1fr 1fr 1fr"],
+  [style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  [style*="grid-template-columns: 1fr 1fr 1fr 1fr"],
+  [style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* kd2 header butonları küçült */
+  .kd2-action-menu-wrap {
+    position: static !important;
+  }
+}
+
+/* ── Çok küçük ekran (≤480px) ─────────────────────────────── */
+@media(max-width:480px) {
+
+  .islem-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .exk-boxes {
+    grid-template-columns: 1fr !important;
+  }
+
+  .kd2-ozet-rakamlar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .kd2-ayarlar-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .page {
+    padding: 12px 10px 20px !important;
+  }
+
+  .page-header h1 {
+    font-size: 20px !important;
+  }
+
+  .stat-val {
+    font-size: 16px !important;
+  }
+
+  .btn {
+    font-size: 12.5px !important;
+    padding: 9px 16px !important;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important; /* iOS zoom engelleyici */
+  }
+
+  .modal-body {
+    padding: 12px 14px !important;
+  }
+
+  .modal-footer {
+    padding: 10px 14px !important;
+    gap: 6px !important;
+  }
+
+  .card {
+    padding: 14px !important;
+  }
+
+  /* Tab bar — daha küçük */
+  .tab-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* Mobil more menu — 3 sütun */
+  .mob-more-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* İşlem satırı butonları */
+  .islem-row2-actions .btn-act {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* Kart detay tab satırı */
+  .kd-tab-row {
+    padding: 0 10px !important;
+  }
+}
+
+/* ── Orta ekran (769px – 1024px) — tablet ─────────────────── */
+@media(min-width:769px) and (max-width:1024px) {
+
+  .islem-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .kd2-ayarlar-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Sidebar collapsed on tablet */
+  .sidebar {
+    width: var(--sidebar-collapsed) !important;
+  }
+  .main-wrap {
+    margin-left: var(--sidebar-collapsed) !important;
+  }
+  .brand-text, .nav-label, .nav-section-label {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .sidebar:hover {
+    width: var(--sidebar-w) !important;
+    z-index: 300 !important;
+    box-shadow: 8px 0 40px rgba(0,0,0,.5) !important;
+  }
+  .sidebar:hover .brand-text,
+  .sidebar:hover .nav-label,
+  .sidebar:hover .nav-section-label {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* ── Sadece desktop'ta bottom nav gizle ───────────────────── */
+@media(min-width:769px) {
+  .mobile-bottom-nav { display: none !important; }
+  .topbar-hamburger { display: none !important; }
+  .mobile-sidebar-backdrop { display: none !important; }
 }
 </style>
 
@@ -11857,27 +12292,27 @@ function kd2RenderOzetBanner(k, renk) {
     }
   }
 
-  banner.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;border-top:3px solid ${renk}">
+  banner.innerHTML = `<div style="background:linear-gradient(135deg, ${renk}14, var(--surface) 55%);border:1px solid var(--border2);border-radius:var(--radius);padding:18px 20px;border-top:3px solid ${renk}">
     <div class="kd2-ozet-grid">
       ${cardVisual}
       <div>
         <div class="kd2-ozet-rakamlar">
-          <div class="kd2-ozet-rakam-item">
+          <div class="kd2-ozet-rakam-item is-warn">
             <div class="kd2-ozet-rakam-label">Kullanimda</div>
-            <div class="kd2-ozet-rakam-val" style="color:var(--warn);font-size:16px">${fmtCur(kullanim, pb)}</div>
+            <div class="kd2-ozet-rakam-val" style="color:#fbbf24;font-size:16px">${fmtCur(kullanim, pb)}</div>
             <div class="kd2-ozet-rakam-sub">%${pct.toFixed(0)} kullanıldı</div>
           </div>
-          <div class="kd2-ozet-rakam-item">
+          <div class="kd2-ozet-rakam-item is-teal">
             <div class="kd2-ozet-rakam-label">Kullanılabilir</div>
-            <div class="kd2-ozet-rakam-val" style="color:var(--teal);font-size:16px">${fmtCur(musait, pb)}</div>
+            <div class="kd2-ozet-rakam-val" style="color:#10e0a8;font-size:16px">${fmtCur(musait, pb)}</div>
             <div class="kd2-ozet-rakam-sub">Kalan limit</div>
           </div>
-          <div class="kd2-ozet-rakam-item">
+          <div class="kd2-ozet-rakam-item is-neutral">
             <div class="kd2-ozet-rakam-label">Toplam Limit</div>
             <div class="kd2-ozet-rakam-val" style="color:var(--text);font-size:16px">${fmtCur(toplamLimit, pb)}</div>
             <div class="kd2-ozet-rakam-sub">${tipAd || 'Kredi Kartı'}</div>
           </div>
-          <div class="kd2-ozet-rakam-item">
+          <div class="kd2-ozet-rakam-item ${odemePast || odemeUrgent ? 'is-danger' : 'is-neutral'}">
             <div class="kd2-ozet-rakam-label">Son Ödeme</div>
             <div class="kd2-ozet-rakam-val" style="color:${odemeColor};font-size:15px">${odemeDt ? fmtDate(odemeDt) : '—'}</div>
             <div class="kd2-ozet-rakam-sub" style="color:${odemeColor}">${kalanStr}</div>
@@ -11946,55 +12381,55 @@ function kd2RenderAyarlarRow(k, renk, pb, extreDt, toplamLimit) {
   const kmhKrediler = isKmh ? (DB.krediler || []).filter(kr => kr.kmhId === k.id && getKrediKalanBorc(kr) > 0) : [];
   const kmhKalanToplam = kmhKrediler.reduce((s, kr) => s + getKrediKalanBorc(kr), 0);
 
-  wrap.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px">
+  wrap.innerHTML = `<div style="background:linear-gradient(160deg, var(--surface), rgba(167,139,250,.04));border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px">
     <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📋 Kart Bilgileri & Ayarlar</div>
     <div class="kd2-ayarlar-grid">
-      <div class="kd2-ayar-kart">
+      <div class="kd2-ayar-kart ayar-c1">
         <div class="kd2-ayar-icon">🗓️</div>
         <div class="kd2-ayar-label">Ekstre Kesim</div>
         <div class="kd2-ayar-val">${ekstreKesimStr}</div>
         <div class="kd2-ayar-sub">${extreDt ? 'Bu ay: ' + fmtDate(extreDt) : '—'}</div>
       </div>
-      <div class="kd2-ayar-kart">
+      <div class="kd2-ayar-kart ayar-c2">
         <div class="kd2-ayar-icon">⏱️</div>
         <div class="kd2-ayar-label">Ödeme Süresi</div>
         <div class="kd2-ayar-val">${odemeSure} gün</div>
         <div class="kd2-ayar-sub">${odemeGunTipStr}</div>
       </div>
-      <div class="kd2-ayar-kart">
+      <div class="kd2-ayar-kart ayar-c3">
         <div class="kd2-ayar-icon">💱</div>
         <div class="kd2-ayar-label">Para Birimi${tumParaBirimleri.length > 1 ? 'leri' : ''}</div>
         <div class="kd2-ayar-val" style="${tumParaBirimleri.length > 1 ? 'font-size:11px' : ''}">${paraBirimiStr}</div>
         <div class="kd2-ayar-sub">${banka || '—'} · ${tip ? tip.ad : '—'}</div>
       </div>
-      <div class="kd2-ayar-kart" style="cursor:pointer" onclick="kd2LimitGecmisToggle()" title="Limit geçmişini göster/gizle">
+      <div class="kd2-ayar-kart ayar-c4" style="cursor:pointer" onclick="kd2LimitGecmisToggle()" title="Limit geçmişini göster/gizle">
         <div class="kd2-ayar-icon">📈</div>
         <div class="kd2-ayar-label">Limit Geçmişi</div>
         <div class="kd2-ayar-val">${fmtCur(toplamLimit, pb)}</div>
-        <div class="kd2-ayar-sub" style="color:var(--accent)">${limitGecmisStr} — tıkla ▸</div>
+        <div class="kd2-ayar-sub" style="color:#10e0a8;font-weight:700">${limitGecmisStr} — tıkla ▸</div>
       </div>
-      <div class="kd2-ayar-kart">
+      <div class="kd2-ayar-kart ayar-c5">
         <div class="kd2-ayar-icon">🔢</div>
         <div class="kd2-ayar-label">Kart Numarası</div>
         <div class="kd2-ayar-val" style="font-family:var(--mono)">${k.no || '—'}</div>
         <div class="kd2-ayar-sub">${k.ad || '—'}</div>
       </div>
-      <div class="kd2-ayar-kart">
+      <div class="kd2-ayar-kart ayar-c6">
         <div class="kd2-ayar-icon">🏷️</div>
         <div class="kd2-ayar-label">Kart Altyapısı</div>
         <div class="kd2-ayar-val">${altyapi ? altyapi.ad : '—'}</div>
         <div class="kd2-ayar-sub">${banka || '—'}</div>
       </div>
-      <div class="kd2-ayar-kart" style="cursor:pointer" onclick="kd2AyarGecmisToggle()" title="Ekstre/ödeme ayar geçmişini göster/gizle">
+      <div class="kd2-ayar-kart ayar-c7" style="cursor:pointer" onclick="kd2AyarGecmisToggle()" title="Ekstre/ödeme ayar geçmişini göster/gizle">
         <div class="kd2-ayar-icon">🕘</div>
         <div class="kd2-ayar-label">Ekstre/Ödeme Ayar Geçmişi</div>
         <div class="kd2-ayar-val">${ayarGecmisStr}</div>
-        <div class="kd2-ayar-sub" style="color:var(--accent)">tıkla ▸</div>
+        <div class="kd2-ayar-sub" style="color:#fb923c;font-weight:700">tıkla ▸</div>
       </div>
-      ${isKmh ? `<div class="kd2-ayar-kart">
+      ${isKmh ? `<div class="kd2-ayar-kart ${kmhKrediler.length ? 'ayar-c6' : 'ayar-c4'}">
         <div class="kd2-ayar-icon">🏦</div>
         <div class="kd2-ayar-label">KMH Kredi Borcu</div>
-        <div class="kd2-ayar-val" style="color:${kmhKrediler.length ? 'var(--danger)' : 'var(--text)'}">${kmhKrediler.length ? fmtCur(kmhKalanToplam, pb) : 'Borç yok'}</div>
+        <div class="kd2-ayar-val" style="color:${kmhKrediler.length ? '#f87171' : 'var(--text)'}">${kmhKrediler.length ? fmtCur(kmhKalanToplam, pb) : 'Borç yok'}</div>
         <div class="kd2-ayar-sub">${kmhKrediler.length} aktif kredi</div>
       </div>` : ''}
     </div>
@@ -12098,11 +12533,11 @@ function kd2RenderTrendRow(k, renk, pb) {
     const v = vals[idx];
     const h = Math.max(4, Math.round((v / maxVal) * 60));
     const isThisMonth = a.key === (today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0'));
-    const barColor = isThisMonth ? renk : 'rgba(99,102,241,.45)';
+    const barColor = isThisMonth ? renk : '#818cf8';
     const valStr = v > 0 ? fmtCurShort(v, pb) : '—';
     return `<div class="kd2-bar-col">
       <div class="kd2-bar-val">${v > 0 ? valStr : ''}</div>
-      <div class="kd2-bar-fill" style="height:${h}px;background:${barColor};opacity:${isThisMonth?1:.75}"></div>
+      <div class="kd2-bar-fill" style="height:${h}px;background:${barColor};color:${barColor};opacity:${isThisMonth?1:.8}"></div>
       <div class="kd2-bar-lbl" style="font-weight:${isThisMonth?700:400};color:${isThisMonth?'var(--text2)':'var(--text3)'}">${AY_K[a.m]}</div>
     </div>`;
   }).join('');
@@ -12120,42 +12555,42 @@ function kd2RenderTrendRow(k, renk, pb) {
   const buAyTaksitli = buAyIslemler.filter(i => (i.taksit||1) > 1).length;
 
   wrap.innerHTML = `<div class="kd2-trend-grid">
-    <div class="kd2-grafik-kart">
+    <div class="kd2-grafik-kart is-trend">
       <div class="kd2-grafik-baslik">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         6 Aylık Harcama Trendi
       </div>
       <div class="kd2-bar-chart">${barHTML}</div>
       <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
-        <div style="font-size:10px;color:var(--text3)">6 ay toplam: <b style="color:var(--text);font-family:var(--mono)">${fmtCur(toplamHarcama, pb)}</b></div>
-        <div style="font-size:10px;color:var(--text3)">Aylık ort: <b style="color:var(--text);font-family:var(--mono)">${fmtCur(ortHarcama, pb)}</b></div>
+        <div style="font-size:10px;color:var(--text3)">6 ay toplam: <b style="color:#a78bfa;font-family:var(--mono)">${fmtCur(toplamHarcama, pb)}</b></div>
+        <div style="font-size:10px;color:var(--text3)">Aylık ort: <b style="color:#a78bfa;font-family:var(--mono)">${fmtCur(ortHarcama, pb)}</b></div>
       </div>
     </div>
-    <div class="kd2-grafik-kart">
+    <div class="kd2-grafik-kart is-ozet">
       <div class="kd2-grafik-baslik">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Bu Ay Özeti
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11.5px;color:var(--text3)">💸 Toplam Harcama</span>
-          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--rose)">${buAyGider > 0 ? fmtCur(buAyGider, pb) : '—'}</span>
+          <span style="font-size:11.5px;color:var(--text2)">💸 Toplam Harcama</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:13px;color:#fb7185">${buAyGider > 0 ? fmtCur(buAyGider, pb) : '—'}</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11.5px;color:var(--text3)">↩️ İade / Eksi</span>
-          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--teal)">${buAyIade > 0 ? fmtCur(buAyIade, pb) : '—'}</span>
+          <span style="font-size:11.5px;color:var(--text2)">↩️ İade / Eksi</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:13px;color:#10e0a8">${buAyIade > 0 ? fmtCur(buAyIade, pb) : '—'}</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11.5px;color:var(--text3)">📦 İşlem Sayısı</span>
-          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text)">${buAyIslemler.length} adet</span>
+          <span style="font-size:11.5px;color:var(--text2)">📦 İşlem Sayısı</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:13px;color:#38bdf8">${buAyIslemler.length} adet</span>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11.5px;color:var(--text3)">🔢 Taksitli İşlem</span>
-          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text)">${buAyTaksitli > 0 ? buAyTaksitli + ' adet' : '—'}</span>
+          <span style="font-size:11.5px;color:var(--text2)">🔢 Taksitli İşlem</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:13px;color:#fb923c">${buAyTaksitli > 0 ? buAyTaksitli + ' adet' : '—'}</span>
         </div>
         <div style="border-top:1px solid var(--border);margin-top:2px;padding-top:8px;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11.5px;color:var(--text3)">📊 Net (harcama-iade)</span>
-          <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:${buAyGider-buAyIade > 0 ? 'var(--rose)' : 'var(--teal)'}">${fmtCur(buAyGider - buAyIade, pb)}</span>
+          <span style="font-size:11.5px;color:var(--text2)">📊 Net (harcama-iade)</span>
+          <span style="font-family:var(--mono);font-weight:800;font-size:13px;color:${buAyGider-buAyIade > 0 ? '#fb7185' : '#10e0a8'}">${fmtCur(buAyGider - buAyIade, pb)}</span>
         </div>
       </div>
     </div>
