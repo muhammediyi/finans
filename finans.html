@@ -12601,26 +12601,8 @@ function kdRenderExtreler() {
     // Bu döneme dahil olan her işlem/taksit kaydını (en yeni üstte) detay listesi olarak hazırla
     const detayItemsAll = p.items.slice().sort((a, b) => b.tak.tarih.localeCompare(a.tak.tarih));
     const detayItems = aktifEkstreKat ? detayItemsAll.filter(({ islem }) => islem.kategori === aktifEkstreKat) : detayItemsAll;
-    const detayHtml = detayItems.length ? detayItems.map(({ islem, tak, pb }) => {
-      const kat = (DB.kategoriler || []).find(x => x.id === islem.kategori);
-      const ikon = kat && kat.ikon ? kat.ikon : '💳';
-      const aciklamaSafe = (islem.aciklama || '—').replace(/"/g, '&quot;');
-      const taksitTxt = (islem.taksit || 1) > 1 ? `${tak.no}/${islem.taksit} taksit` : '';
-      const subText = [taksitTxt, kat ? kat.ad : ''].filter(Boolean).join(' · ');
-      const dObj = new Date(tak.tarih + 'T00:00:00');
-      const dateCardHtml = `<div class="islem-date-card"><div class="islem-date-day">${dObj.getDate()}</div><div class="islem-date-mon">${AY_KISA_TR[dObj.getMonth()]}</div></div>`;
-      return `<div class="kd-extre-detail-row" onclick="event.stopPropagation();editIslem('${islem.id}')" title="Düzenlemek için tıklayın">
-        <div class="kd-extre-detail-info">
-          ${dateCardHtml}
-          <div class="kd-extre-detail-ikon">${ikon}</div>
-          <div class="kd-extre-detail-text">
-            <div class="kd-extre-detail-title">${aciklamaSafe}</div>
-            <div class="kd-extre-detail-sub">${subText}</div>
-          </div>
-        </div>
-        <div class="kd-extre-detail-amt" style="color:${tak.tutar < 0 ? 'var(--teal)' : 'var(--rose)'}">${fmtCur(tak.tutar, pb)}</div>
-      </div>`;
-    }).join('') : `<div class="kd-extre-detail-empty">${aktifEkstreKat ? 'Seçili kategoriye ait işlem bulunamadı' : 'Bu döneme ait işlem bulunamadı'}</div>`;
+    const detayHtml = detayItems.length ? detayItems.map(({ islem, tak }) => islemRowHtml(islem, tak)).join('')
+      : `<div class="kd-extre-detail-empty">${aktifEkstreKat ? 'Seçili kategoriye ait işlem bulunamadı' : 'Bu döneme ait işlem bulunamadı'}</div>`;
 
     return `<div class="kd-extre-card ${statusClass}" id="kd-extre-card-${p.key}">
       <div class="kd-extre-progress"><div class="kd-extre-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div></div>
@@ -13872,7 +13854,7 @@ function renderIslemler() {
 }
 
 // Tek bir işlem satırının HTML'i (mobil bankacılık tarzı kompakt satır)
-function islemRowHtml(i) {
+function islemRowHtml(i, taksitOverride) {
   const k = getKart(i.kart);
   const tutarlar = i.taksitTutarlari || Array(i.taksit||1).fill(i.aylik||0);
   const iCur = i.paraBirimi || getKartCurrency(i.kart);
@@ -13880,22 +13862,30 @@ function islemRowHtml(i) {
   const kat = (DB.kategoriler||[]).find(x=>x.id===i.kategori);
   const ikon = kat && kat.ikon ? kat.ikon : '💳';
   const aciklamaSafe = (i.aciklama||'—').replace(/"/g,'&quot;');
+  // Ekstre bağlamında (taksitOverride verilmişse) o döneme ait spesifik taksidin tarih/tutarı
+  // gösterilir; aksi halde işlemin kendi tarihi ve toplam tutarı kullanılır.
+  const rowTutar = taksitOverride ? taksitOverride.tutar : i.tutar;
+  const rowTarih = taksitOverride ? taksitOverride.tarih : i.tarih;
   // Renk: kategori türüne bak (gelir=yeşil, gider=kırmızı), yoksa tutar işaretine göre
   const amtClass = kat && kat.tur === 'gelir' ? 'pos'
                  : kat && kat.tur === 'gider' ? 'neg'
-                 : i.tutar < 0 ? 'neg' : i.tutar > 0 ? 'pos' : 'neutral';
+                 : rowTutar < 0 ? 'neg' : rowTutar > 0 ? 'pos' : 'neutral';
   const renk = getKartRenk(k);
-  const dObj = new Date(i.tarih+'T00:00:00');
+  const dObj = new Date(rowTarih+'T00:00:00');
   const dateCardHtml = `<div class="islem-date-card"><div class="islem-date-day">${dObj.getDate()}</div><div class="islem-date-mon">${AY_KISA_TR[dObj.getMonth()]}</div></div>`;
 
   let taksitSub = '';
   if(isTaksitli) {
-    const todayStr = localDateStr(new Date());
-    const taksitler = getIslemTaksitliste(i);
-    let mevcutNo = taksitler.filter(t=>t.tarih <= todayStr).length;
-    if(mevcutNo < 1) mevcutNo = 1;
-    if(mevcutNo > i.taksit) mevcutNo = i.taksit;
-    taksitSub = `<div class="islem-row2-amount-sub">${mevcutNo}/${i.taksit} taksit · ${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`;
+    if (taksitOverride) {
+      taksitSub = `<div class="islem-row2-amount-sub">${taksitOverride.no}/${i.taksit} taksit</div>`;
+    } else {
+      const todayStr = localDateStr(new Date());
+      const taksitler = getIslemTaksitliste(i);
+      let mevcutNo = taksitler.filter(t=>t.tarih <= todayStr).length;
+      if(mevcutNo < 1) mevcutNo = 1;
+      if(mevcutNo > i.taksit) mevcutNo = i.taksit;
+      taksitSub = `<div class="islem-row2-amount-sub">${mevcutNo}/${i.taksit} taksit · ${fmtCur(tutarlar[0]||0, iCur)}/ay</div>`;
+    }
   }
 
   return `<div class="islem-row2-wrap">
@@ -13909,7 +13899,7 @@ function islemRowHtml(i) {
       </div>
     </div>
     <div class="islem-row2-amount">
-      <div class="islem-row2-amount-val ${amtClass}">${fmtCur(i.tutar, iCur)}</div>
+      <div class="islem-row2-amount-val ${amtClass}">${fmtCur(rowTutar, iCur)}</div>
       ${taksitSub}
     </div>
     <div class="islem-row2-actions" onclick="event.stopPropagation()">
