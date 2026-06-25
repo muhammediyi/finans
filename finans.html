@@ -4296,6 +4296,13 @@ html[data-theme="light"] {
 html[data-theme="light"] .nav-count { color: rgba(15,22,41,.5); background: rgba(0,0,0,.05); }
 html[data-theme="light"] .nav-btn.active .nav-count { color: rgba(196,122,0,.7); background: rgba(196,122,0,.1); }
 html[data-theme="light"] .hr-text { color: rgba(15,22,41,.65); }
+html[data-theme="light"] .empty-state-text { color: rgba(15,22,41,.38); }
+html[data-theme="light"] .iban-picker-label { color: rgba(15,22,41,.45); }
+html[data-theme="light"] .modal::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); }
+html[data-theme="light"] .mkp-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); }
+html[data-theme="light"] .mkp-act-btn:hover { background: rgba(0,0,0,.06); color: var(--text); }
+html[data-theme="light"] .mob-more-item:hover { border-color: var(--border2); background: rgba(0,0,0,.04); color: var(--text); }
+html[data-theme="light"] .filtre-toggle-btn { border-color: var(--border2) !important; }
 html[data-theme="light"] .hr-text::before, html[data-theme="light"] .hr-text::after { background: rgba(0,0,0,.08); }
 html[data-theme="light"] .kbd { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.12); color: rgba(15,22,41,.4); }
 html[data-theme="light"] [data-tip]::after { background: rgba(255,255,255,.98); border-color: rgba(0,0,0,.1); color: rgba(15,22,41,.8); }
@@ -4974,7 +4981,8 @@ html[data-theme="light"] #scroll-top-btn {
 /* ── 26. PRINT STYLES ───────────────────────────────────── */
 @media print {
   .sidebar, .topbar, .mobile-bottom-nav, .action-row,
-  .mob-more-menu, .mob-more-backdrop, #scroll-top-btn { display: none !important; }
+  .mob-more-menu, .mob-more-backdrop, #scroll-top-btn,
+  .modal-bg, .modal, .toast, .ctx-menu, #mini-kisi-popup { display: none !important; }
   .main-wrap { margin: 0 !important; }
   .page { padding: 12px !important; display: block !important; }
   .page:not(.active) { display: none !important; }
@@ -13688,7 +13696,7 @@ function kdRenderExtreUyari(kart) {
       ${bekleyenler.map(({key, extreDt, odemeDt}) => {
         const [y,m] = key.split('-').map(Number);
         const label = new Date(y, m-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
-        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:8px 12px">
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
           <div>
             <div style="font-size:12px;font-weight:600;color:var(--text)">${label}</div>
             <div style="font-size:11px;color:var(--text3)">Ekstre: ${fmtDate(extreDt)} · Son Ödeme: ${fmtDate(odemeDt)}</div>
@@ -13718,7 +13726,7 @@ function renderOzetEkstreUyarilar() {
       ${bekleyenler.map(({kart, key, extreDt, odemeDt}) => {
         const [y,m] = key.split('-').map(Number);
         const label = new Date(y, m-1, 1).toLocaleDateString('tr-TR',{year:'numeric',month:'long'});
-        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:8px 12px">
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
           <div>
             <div style="font-size:12px;font-weight:600;color:var(--text)">${kart.ad}</div>
             <div style="font-size:11px;color:var(--text3)">${label} · Ekstre: ${fmtDate(extreDt)} · Son Ödeme: ${fmtDate(odemeDt)}</div>
@@ -21463,7 +21471,8 @@ function renderTahminBakiye() {
   gridLevels.forEach(val=>{
     const y = yFor(val);
     if(y < padT-2 || y > H-padB+2) return;
-    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,.045)" stroke-width="1"/>`;
+    const _isDark1 = document.documentElement.getAttribute('data-theme') !== 'light';
+    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${_isDark1 ? 'rgba(255,255,255,.045)' : 'rgba(0,0,0,.07)'}" stroke-width="1"/>`;
     if(!isMobile) {
       const kisaltilmis = fmtCurShort(val, pbGercek);
       yLabels += `<text x="${(padL-8).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="var(--text3)" text-anchor="end">${kisaltilmis}</text>`;
@@ -21507,7 +21516,8 @@ function renderTahminBakiye() {
     const dt = new Date(today.getFullYear(), today.getMonth()+i, 1);
     const x = xFor(localDateStr(dt));
     if(x <= padL || x >= W-padR) continue;
-    ayBolmeleri += `<line x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${H-padB}" stroke="rgba(255,255,255,.055)" stroke-width="1" stroke-dasharray="2,4"/>`;
+    const _isDarkAy = document.documentElement.getAttribute('data-theme') !== 'light';
+  ayBolmeleri += `<line x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${H-padB}" stroke="${_isDarkAy ? 'rgba(255,255,255,.055)' : 'rgba(0,0,0,.08)'}" stroke-width="1" stroke-dasharray="2,4"/>`;
   }
 
   // İşaretçiler
@@ -22795,7 +22805,7 @@ function renderHesaplar() {
       if(kritik) return `<div class="stat s-red"><div class="stat-label">Bakiye Uyarısı</div><div class="stat-val red">${kritik + dusuk}</div><div class="stat-sub">${kritik} kritik, ${dusuk} düşük</div></div>`;
       return `<div class="stat s-warn"><div class="stat-label">Bakiye Uyarısı</div><div class="stat-val warn">${dusuk}</div><div class="stat-sub">${dusuk} hesap dikkat istiyor</div></div>`;
     })()}
-    ${DB._nakitBakiye && Object.keys(DB._nakitBakiye).length ? Object.entries(DB._nakitBakiye).map(([pb,val])=>`<div class="stat s-${val>=0?'green':'red'}"><button onclick="event.stopPropagation();openNakitLogModal('${pb}')" title="${pb} Nakit İşlem Logu" style="position:absolute;top:14px;right:14px;border:none;background:rgba(255,255,255,.06);color:var(--text2);width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:.75"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M2 4h12M2 8h8M2 12h5"/></svg></button><div class="stat-label">Nakit Bakiye (${pb})</div><div class="stat-val ${val>=0?'green':'red'}">${fmtCur(val,pb)}</div><div class="stat-sub">Elden/nakit işlemler</div></div>`).join('') : ''}`;
+    ${DB._nakitBakiye && Object.keys(DB._nakitBakiye).length ? Object.entries(DB._nakitBakiye).map(([pb,val])=>`<div class="stat s-${val>=0?'green':'red'}"><button onclick="event.stopPropagation();openNakitLogModal('${pb}')" title="${pb} Nakit İşlem Logu" style="position:absolute;top:14px;right:14px;border:none;background:var(--surface4);color:var(--text2);width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:.75"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:block"><path d="M2 4h12M2 8h8M2 12h5"/></svg></button><div class="stat-label">Nakit Bakiye (${pb})</div><div class="stat-val ${val>=0?'green':'red'}">${fmtCur(val,pb)}</div><div class="stat-sub">Elden/nakit işlemler</div></div>`).join('') : ''}`;
 
   if(!liste.length) {
     document.getElementById('hesaplar-tbody').innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">Kayıt yok</td></tr>';
@@ -24019,7 +24029,7 @@ function showManuelKarsiKaydetModal(ad, iban, saveFn) {
   `;
   modal.innerHTML = `
     <div style="
-      background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:16px;
+      background:var(--surface2);border:1px solid var(--border2);border-radius:16px;
       padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.4);
     ">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
@@ -24039,7 +24049,7 @@ function showManuelKarsiKaydetModal(ad, iban, saveFn) {
           background:linear-gradient(135deg,var(--accent2,#63b3ed),var(--teal,#2dd4bf));color:#0f1629;
         ">✓ Kaydet ve Devam</button>
         <button id="mkm-devam" style="
-          flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+          flex:1;padding:9px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;
           font-size:13px;background:transparent;color:var(--text2);
         ">Kaydetme</button>
         <button id="mkm-iptal" style="
@@ -24680,7 +24690,7 @@ function applyTheme(theme) {
       btn.style.background    = 'rgba(255,255,255,.05)';
       btn.style.border        = '1px solid rgba(255,255,255,.08)';
       btn.style.color         = 'rgba(255,255,255,.4)';
-      btn.onmouseover = () => { btn.style.background='rgba(255,255,255,.1)'; btn.style.color='rgba(255,255,255,.75)'; };
+      btn.onmouseover = () => { btn.style.background='var(--surface3)'; btn.style.color='var(--text)'; };
       btn.onmouseout  = () => { btn.style.background='rgba(255,255,255,.05)'; btn.style.color='rgba(255,255,255,.4)'; };
     }
   }
@@ -24714,7 +24724,7 @@ document.addEventListener('click', function(e) {
   r.className = 'ripple';
   const rect = btn.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 1.5;
-  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;position:absolute;border-radius:50%;background:rgba(255,255,255,.18);animation:rippleOut .5s ease-out forwards;pointer-events:none;`;
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;position:absolute;border-radius:50%;background:rgba(128,128,128,.25);animation:rippleOut .5s ease-out forwards;pointer-events:none;`;
   btn.appendChild(r);
   r.addEventListener('animationend', () => r.remove());
 }, { passive: true });
@@ -25011,7 +25021,7 @@ document.addEventListener('keydown', function(e) {
       const cols = tbody.closest('table')?.querySelectorAll('thead th').length || 4;
       emptyRow = document.createElement('tr');
       emptyRow.className = 'empty-row';
-      emptyRow.innerHTML = `<td colspan="${cols}" style="text-align:center;padding:32px 16px;color:rgba(255,255,255,.2);font-size:13px;letter-spacing:.02em">— Kayıt bulunamadı —</td>`;
+      emptyRow.innerHTML = `<td colspan="${cols}" style="text-align:center;padding:32px 16px;color:var(--text3);font-size:13px;letter-spacing:.02em">— Kayıt bulunamadı —</td>`;
       tbody.appendChild(emptyRow);
     } else if (hasRows && emptyRow) {
       emptyRow.remove();
@@ -26318,7 +26328,9 @@ function renderBakiyeIzlemePanel() {
         ${durumluHesaplar.map(a => {
           const d = a.durum;
           const pb = a.pb;
-          const bgCol = d ? (seviyeRenk[d.seviye]||'rgba(255,255,255,.03)') : 'rgba(255,255,255,.03)';
+          const _lt = document.documentElement.getAttribute('data-theme') === 'light';
+          const _defBg = _lt ? 'rgba(0,0,0,.02)' : 'rgba(255,255,255,.03)';
+          const bgCol = d ? (seviyeRenk[d.seviye]||_defBg) : _defBg;
           const bdCol = d ? (seviyeBorder[d.seviye]||'var(--border)') : 'var(--border)';
 
           // Progress bar (hedef varsa)
@@ -26481,7 +26493,7 @@ function _provizyonUyariSatiri(i) {
     onerilenTarih = localDateStr(dt);
   }
 
-  return `<div class="provizyon-uyari-row" id="prov-row-${i.id}" style="display:flex;align-items:center;gap:6px;padding:4px 7px;background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.05)">
+  return `<div class="provizyon-uyari-row" id="prov-row-${i.id}" style="display:flex;align-items:center;gap:6px;padding:4px 7px;background:var(--surface3);border-radius:6px;border:1px solid var(--border)">
     <span style="width:6px;height:6px;border-radius:50%;background:${kartRenk};flex-shrink:0"></span>
     <div style="flex:1;min-width:0;overflow:hidden">
       <span style="font-size:11px;color:var(--text);font-weight:600">${kartAd}</span>
@@ -28215,8 +28227,11 @@ function renderOzetGrafikler() {
       const y = yOf(tv);
       const label = Math.abs(tv) >= 1000000 ? (tv/1000000).toFixed(1)+'M' :
                     Math.abs(tv) >= 1000 ? (tv/1000).toFixed(0)+'K' : tv.toFixed(0);
-      return `<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="rgba(255,255,255,.3)">${label}</text>
-              <line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+      const _svgDark = document.documentElement.getAttribute('data-theme') !== 'light';
+      const _svgTxtClr = _svgDark ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.3)';
+      const _svgLineClr = _svgDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)';
+      return `<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="${_svgTxtClr}">${label}</text>
+              <line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${_svgLineClr}" stroke-width="1"/>`;
     }).join('');
 
     // X ekseni — tarih etiketleri (max 8 adet)
@@ -28225,7 +28240,7 @@ function renderOzetGrafikler() {
       const i = vals.indexOf(d);
       const x = xOf(i);
       const lbl = d.t.slice(5); // MM-DD
-      return `<text x="${x}" y="${H-4}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.3)">${lbl}</text>`;
+      return `<text x="${x}" y="${H-4}" text-anchor="middle" font-size="9" fill="${_svgTxtClr}">${lbl}</text>`;
     }).join('');
 
     // Polygon fill için kapalı alan
