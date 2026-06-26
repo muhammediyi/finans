@@ -10739,15 +10739,18 @@ function calcExtreTarihi(kart, year, month) {
     }
     // Find nth weekday in month
     let count = 0;
+    let lastFound = null;
     for(let d=1; d<=31; d++) {
       const dt = new Date(year, month, d);
       if(dt.getMonth() !== month) break;
       if(dt.getDay() === haftaGun) {
         count++;
+        lastFound = new Date(dt);
         if(count === hafta) return dt;
       }
     }
-    return new Date(year, month, 1);
+    // N. hafta o ayda yoksa (örn. 5. Salı), o ayın son ilgili haftasını döndür
+    return lastFound || new Date(year, month, 1);
   } else if(kart.extraTip === 'statik') {
     return kart.extraStatik ? new Date(kart.extraStatik+'T00:00:00') : null;
   }
@@ -11165,6 +11168,8 @@ document.querySelectorAll('.modal-bg').forEach(m => {
 
 // ========== KARTLAR ==========
 function populateKartModal(kart=null) {
+  const titleEl = document.getElementById('kart-modal-title');
+  if (titleEl) titleEl.textContent = kart ? 'Kart Düzenle' : 'Kart Ekle';
   const bankaEl = document.getElementById('kart-banka');
   bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
   const tipEl = document.getElementById('kart-tip');
@@ -16094,9 +16099,11 @@ function mevduatTumunuVadesizeAktar(mevId, silent) {
   if(!hesap) { if(!silent) showToast('Hesap bulunamadı', 'error'); return; }
   const _yap = () => {
     const lk = _lKey('mevduat', mevId, null);
+    // nihai kaydedilmemişse (eski veri) calcMevduatObj ile hesapla
+    const nihaiTutar = m.nihai != null ? m.nihai : calcMevduatObj(m).nihai;
     if(_lGet(lk) == null) {
-      hesap.bakiye = (hesap.bakiye||0) + m.nihai;
-      _lSet(lk, m.nihai);
+      hesap.bakiye = (hesap.bakiye||0) + nihaiTutar;
+      _lSet(lk, nihaiTutar);
     }
     // Mevduat kaydı geçmiş kayıt olarak listede kalır (silinmez), sadece "Aktarıldı" işaretlenir.
     // İlişkili vadeli hesap varsa kapatılır ve bakiyesi sıfırlanır (para zaten vadesize aktarıldı).
@@ -16111,12 +16118,13 @@ function mevduatTumunuVadesizeAktar(mevId, silent) {
     renderOzet();
     if(typeof renderMevduat==='function') renderMevduat();
     if(typeof renderHesaplar==='function') renderHesaplar();
-    showToast(`${fmtCur(m.nihai,m.paraBirimi)} → ${hesap.ad} aktarıldı ✓`, 'success');
+    showToast(`${fmtCur(nihaiTutar,m.paraBirimi)} → ${hesap.ad} aktarıldı ✓`, 'success');
   };
   if(silent) {
     _yap();
   } else {
-    showConfirm(`${fmtCur(m.nihai, m.paraBirimi)} tutarını "${hesap.ad}" hesabına aktarmak istiyor musunuz?\nVadeli hesap kapatılacak.`, _yap);
+    const _nihaiGoster = m.nihai != null ? m.nihai : calcMevduatObj(m).nihai;
+    showConfirm(`${fmtCur(_nihaiGoster, m.paraBirimi)} tutarını "${hesap.ad}" hesabına aktarmak istiyor musunuz?\nVadeli hesap kapatılacak.`, _yap);
   }
 }
 
