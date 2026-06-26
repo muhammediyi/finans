@@ -6606,6 +6606,8 @@ window.addEventListener('load', placeMobProfilePanel);
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
           </button>
           <div class="kd2-action-menu" id="kd2-more-menu" style="display:none">
+            <button type="button" id="kd2-eslestir-btn" onclick="kd2EslestirAc()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.5-2.5a5 5 0 0 0-7.07-7.07L11 5"/><path d="M14 11a5 5 0 0 0-7.07 0l-2.5 2.5a5 5 0 0 0 7.07 7.07L13 19"/></svg> İşlem Eşleştir</button>
+            <div class="kd2-action-divider"></div>
             <button type="button" id="kd2-limit-guncelle-btn" onclick="kd2LimitGuncelleFromDetay()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Limit Güncelle</button>
             <div class="kd2-action-divider"></div>
             <button type="button" id="kd2-delete-btn" class="kd2-action-danger" onclick="kd2DeleteKartFromDetay()"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Kartı Sil</button>
@@ -6613,6 +6615,7 @@ window.addEventListener('load', placeMobProfilePanel);
         </div>
         <button class="btn btn-ghost btn-sm" id="kd2-edit-btn">✏️ Düzenle</button>
         <button class="btn btn-success btn-sm" id="kd2-borc-ode-btn" onclick="kd2BorcOdeAc()" title="Güncel dönem borcunu öde" style="background:linear-gradient(155deg,#1ec2b0,#16a394);color:#fff;gap:5px">💳 Borç Öde</button>
+        <button class="btn btn-sm" id="kd2-nakit-avans-btn" onclick="openNakitAvansModal(_kd2KartId)" title="Bu karttan nakit avans çek" style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--gold);gap:5px">💵 Nakit Avans</button>
         <button class="btn btn-primary btn-sm" onclick="kdYeniIslemAc()">+ Yeni İşlem</button>
       </div>
     </div>
@@ -6734,43 +6737,55 @@ window.addEventListener('load', placeMobProfilePanel);
   <div id="extre-content"></div>
 </div>
 
-<!-- ═══ EKSTRE EŞLEŞTİRME SAYFASI ═══ -->
-<div id="page-ekstreeslestir" class="page">
-  <div class="page-header"><h1>İşlem Eşleştir</h1><p>PDF ekstre veya ekran görüntüsü yükleyin (birden fazla dosya seçilebilir, hepsi tek bir bütün halinde analiz edilir) — kart otomatik tespit edilir, sistemdeki <b>tüm</b> işlemlerle (geçmiş, gelecek, tüm dönemler) tarih ve tutar baz alınarak eşleştirilir</p></div>
-
-  <div id="ee-step-upload" class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
-    <div id="ee-dropzone" style="border:2px dashed var(--border2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)" onclick="document.getElementById('ee-pdf-input').click()">
-      <div style="font-size:34px;margin-bottom:8px">🧾</div>
-      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstre veya ekran görüntüsü (fotoğraf) seçmek için tıklayın</div>
-      <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın — <b>birden fazla dosya</b> seçebilirsiniz, hepsi tek seferde analiz edilir</div>
-      <input type="file" id="ee-pdf-input" accept="application/pdf,image/*" multiple style="display:none" onchange="eeHandlePdfFile(event)">
+<!-- ═══ İŞLEM EŞLEŞTİR (popup) ═══ -->
+<div class="modal-bg" id="modal-eslestir">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.2)">🔗</div>
+        <div class="modal-header-text">
+          <div class="modal-title">İşlem Eşleştir</div>
+          <div class="modal-subtitle">PDF ekstre veya ekran görüntüsü yükleyin — kart otomatik tespit edilir, sistemdeki tüm işlemlerle eşleştirilir</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-eslestir')">✕</button>
     </div>
-    <div id="ee-upload-status" style="display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)"></div>
-    <div id="ee-file-list" style="display:none;flex-direction:column;gap:6px"></div>
+    <div class="modal-body">
+      <div id="ee-step-upload" class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
+        <div id="ee-dropzone" style="border:2px dashed var(--border2);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)" onclick="document.getElementById('ee-pdf-input').click()">
+          <div style="font-size:34px;margin-bottom:8px">🧾</div>
+          <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px">PDF ekstre veya ekran görüntüsü (fotoğraf) seçmek için tıklayın</div>
+          <div style="color:var(--text3);font-size:12px">veya buraya sürükleyip bırakın — <b>birden fazla dosya</b> seçebilirsiniz, hepsi tek seferde analiz edilir</div>
+          <input type="file" id="ee-pdf-input" accept="application/pdf,image/*" multiple style="display:none" onchange="eeHandlePdfFile(event)">
+        </div>
+        <div id="ee-upload-status" style="display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text2)"></div>
+        <div id="ee-file-list" style="display:none;flex-direction:column;gap:6px"></div>
 
-    <div id="ee-kart-confirm" style="display:none;padding:14px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px">
-      <div id="ee-kart-confirm-detected" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
-        <span style="font-size:18px">✅</span>
-        <div style="flex:1">
-          <div style="font-size:12px;color:var(--text3)">Otomatik tespit edilen kart</div>
-          <div id="ee-kart-confirm-name" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+        <div id="ee-kart-confirm" style="display:none;padding:14px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px">
+          <div id="ee-kart-confirm-detected" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:18px">✅</span>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--text3)">Otomatik tespit edilen kart</div>
+              <div id="ee-kart-confirm-name" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+            </div>
+            <button class="ee-btn-mini" onclick="eeShowKartPicker()">Yanlış, değiştir</button>
+          </div>
+          <div id="ee-kart-confirm-picker" style="display:none">
+            <div class="msec-label" style="margin-bottom:8px">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              Kart otomatik tespit edilemedi — lütfen seçin
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <select id="ee-kart-select" style="flex:1;min-width:220px"></select>
+              <button class="ee-btn-mini primary" onclick="eeConfirmManualKart()">Onayla ve Eşleştir</button>
+            </div>
+          </div>
         </div>
-        <button class="ee-btn-mini" onclick="eeShowKartPicker()">Yanlış, değiştir</button>
       </div>
-      <div id="ee-kart-confirm-picker" style="display:none">
-        <div class="msec-label" style="margin-bottom:8px">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          Kart otomatik tespit edilemedi — lütfen seçin
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select id="ee-kart-select" style="flex:1;min-width:220px"></select>
-          <button class="ee-btn-mini primary" onclick="eeConfirmManualKart()">Onayla ve Eşleştir</button>
-        </div>
-      </div>
+
+      <div id="ee-step-results" style="display:none"></div>
     </div>
   </div>
-
-  <div id="ee-step-results" style="display:none"></div>
 </div>
 
 <style>
@@ -10861,6 +10876,13 @@ if(typeof window._pushHashState === 'undefined') {
 // ─────────────────────────────────────────────────────────────
 
 function showPage(id, btn) {
+  // İşlem Eşleştir artık ayrı bir sayfa değil, hangi sayfadaysan onun üzerinde açılan bir
+  // popup (modal). Mevcut sayfadan ayrılmadan (kart detayı dahil) üstte açılır.
+  if (id === 'ekstreeslestir') {
+    if (!document.querySelector('.page.active')) showPage('ozet', null);
+    openModal('modal-eslestir');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const pageEl = document.getElementById('page-'+id);
@@ -11037,6 +11059,7 @@ function openModal(id, onceSecimKartId) {
   if(id==='modal-kart') populateKartModal();
   if(id==='modal-islem') populateIslemModal(onceSecimKartId);
   if(id==='modal-mevduat') populateMevduatModal();
+  if(id==='modal-eslestir') renderEkstreEslestir();
   // Money input binding — yeni açılan modalda da çalışsın
   const modalEl = document.getElementById(id);
   if(modalEl) setTimeout(()=>bindMoneyInputs(modalEl), 10);
@@ -12000,17 +12023,6 @@ function renderKartlar() {
           </div>
         </div>
       </div>
-      <div class="kart-action-row" style="display:flex;gap:6px;margin-top:10px">
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="event.stopPropagation();gotoKartIslemleri('${k.id}')" title="Bu karta ait işlemleri görüntüle">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><path d="M2 8h8M7 4l4 4-4 4M14 3v10"/></svg>İşlemler
-        </button>
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="event.stopPropagation();gotoKartEkstre('${k.id}')" title="Ekstreleri görüntüle">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><path d="M4 2h6l2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M5.5 6.5h5M5.5 9h5M5.5 11.5h3"/></svg>Ekstre
-        </button>
-        <button class="btn btn-ghost btn-sm" style="flex:1;min-width:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:var(--gold)" onclick="event.stopPropagation();openNakitAvansModal('${k.id}')" title="Bu karttan nakit avans çek">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px;flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 6.5c0-1 .9-1.5 2-1.5s2 .5 2 1.3c0 1.7-4 1-4 2.7 0 .8 1 1.3 2 1.3s2-.5 2-1.5"/></svg>Nakit Avans
-        </button>
-      </div>
     </div>`;
   }).join('');
 }
@@ -12232,6 +12244,26 @@ function kartDetayGeriDon() {
   _pushHashState('kartlar', {});
 }
 
+// ── Belirli bir ekstre dönemine ait borcu hesaplar (diğer/gelecek dönemler dahil edilmez) ──
+// kdRenderExtreler / kd2RenderExtreler'deki dönem haritalama mantığıyla aynı: o döneme denk
+// gelen taksitlerin tutarları toplanır (nakit avans dahil, faizi ile birlikte — ekstreye yansıyan tam tutar).
+function getKartDonemBorcu(kartId, donemKey, pb) {
+  const kart = DB.kartlar.find(k => k.id === kartId);
+  if (!kart) return 0;
+  let toplam = 0;
+  (DB.islemler || []).filter(i => i.kart === kartId).forEach(islem => {
+    const islemPb = getKartCurrency(kartId, islem.paraBirimi);
+    if (pb && islemPb !== pb) return;
+    getIslemTaksitliste(islem).forEach(tak => {
+      const pd = getExtreDonemi(kart, tak.ekstreTarih);
+      if (!pd) return;
+      const key = pd.year + '-' + String(pd.month + 1).padStart(2, '0');
+      if (key === donemKey) toplam += tak.tutar;
+    });
+  });
+  return toplam;
+}
+
 // ── Kart Detay: Borç Öde butonu ────────────────────────────
 function kd2BorcOdeAc() {
   if (!_kd2KartId) return;
@@ -12252,10 +12284,12 @@ function kd2BorcOdeAc() {
   if (!donemKey) {
     donemKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
   }
-  // Dönem borcunu hesapla
-  const kullanim = getKartKullanim(k.id);
+  // Sadece GÜNCEL dönemin ekstre borcunu hesapla — getKartKullanim() tüm dönemleri (gelecek
+  // taksitler dahil) topladığı için burada kullanılırsa ödeme sonrasında bile gelecek dönem
+  // borçları "kalan" gibi görünüyordu. Bunun yerine sadece bu döneme denk gelen taksitler toplanır.
+  const donemBorcu = getKartDonemBorcu(k.id, donemKey, pb);
   // 0 borç olsa da izin ver (peşin/erken ödeme)
-  openKartOdemeModal(k.id, pb, donemKey, kullanim, true);
+  openKartOdemeModal(k.id, pb, donemKey, donemBorcu, true);
 }
 
 function kd2RenderOzetBanner(k, renk) {
@@ -12669,6 +12703,17 @@ function kd2LimitGuncelleFromDetay() {
   } else {
     editKart(id, true);
   }
+}
+
+// Kart detayından "İşlem Eşleştir" sayfasına geç — bu kart, eşleştirme ekranındaki
+// kart seçim kutusunda öntanımlı olarak gelsin (henüz "onaylanmış" sayılmaz, kullanıcı
+// PDF/görsel yükleyince zaten bu kartla eşleştirme başlayacak).
+function kd2EslestirAc() {
+  const id = _kd2KartId;
+  if (!id) return;
+  document.getElementById('kd2-more-menu').style.display = 'none';
+  EE_STATE._pendingKartId = id;
+  showPage('ekstreeslestir');
 }
 
 function kd2SwitchTab(tab) {
