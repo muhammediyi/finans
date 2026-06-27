@@ -20435,6 +20435,58 @@ function getTcmbKur(code, tarihStr) {
   return (secili.kurlar && secili.kurlar[tcmbKodu]) || null;
 }
 
+/**
+ * Bir tutarı bir para biriminden başka bir para birimine TCMB kuru üzerinden çevirir.
+ * tutar: çevrilecek miktar (kaynak para biriminde)
+ * kaynakPb / hedefPb: uygulamadaki para birimi kodları (örn. "USD", "TRY")
+ * tarihStr: 'YYYY-MM-DD' — verilmezse en güncel kur kullanılır
+ *
+ * Mantık: her iki para birimi de TRY'ye çevrilip (satış kuru üzerinden) oradan
+ * orana bölünür — yani TRY her zaman "ortak payda"dır (TCMB kurları zaten
+ * "1 birim X = Y TRY" biçiminde yayınlanır). Kaynak veya hedef zaten TRY ise
+ * o adım atlanır. XAU (altın) gibi TCMB'de karşılığı olmayan birimler veya
+ * kuru bulunamayan birimler için çevrilemediği takdirde null döner; çağıran
+ * taraf bu durumda orijinal tutarı (çevrilmemiş) göstermeyi tercih edebilir.
+ */
+function paraBirimiCevir(tutar, kaynakPb, hedefPb, tarihStr) {
+  if (tutar === null || tutar === undefined || isNaN(tutar)) return 0;
+  if (!kaynakPb || !hedefPb || kaynakPb === hedefPb) return tutar;
+
+  // Kaynak -> TRY
+  let tutarTry;
+  if (kaynakPb === 'TRY') {
+    tutarTry = tutar;
+  } else {
+    const kurKaynak = getTcmbKur(kaynakPb, tarihStr);
+    const oranKaynak = kurKaynak && (kurKaynak.satis || kurKaynak.alis);
+    if (!oranKaynak) return null; // kur bulunamadı — çevrilemez
+    tutarTry = tutar * oranKaynak;
+  }
+
+  // TRY -> Hedef
+  if (hedefPb === 'TRY') return tutarTry;
+  const kurHedef = getTcmbKur(hedefPb, tarihStr);
+  const oranHedef = kurHedef && (kurHedef.satis || kurHedef.alis);
+  if (!oranHedef) return null;
+  return tutarTry / oranHedef;
+}
+
+/**
+ * paraBirimiCevir'in "asla null dönme" garantili sürümü: kur bulunamazsa
+ * (ör. TCMB'de karşılığı olmayan özel/altın birimi, veya henüz hiç kur
+ * çekilmemiş) tutarı çevrilmemiş haliyle döner ve konsola uyarı yazar.
+ * Toplam varlık gibi tek bir sayıya indirgenen yerlerde "sessizce sıfırlanma"
+ * yerine en azından kabaca doğru bir rakam göstermek için kullanılır.
+ */
+function paraBirimiCevirGuvenli(tutar, kaynakPb, hedefPb, tarihStr) {
+  const sonuc = paraBirimiCevir(tutar, kaynakPb, hedefPb, tarihStr);
+  if (sonuc === null) {
+    console.warn(`[pb-cevir] ${kaynakPb} \u2192 ${hedefPb} kuru bulunamadı, tutar çevrilmeden kullanıldı`);
+    return tutar;
+  }
+  return sonuc;
+}
+
 // ═══════════════════════════════════════════════════════════
 // GEÇMİŞ TCMB KURLARI MODALI
 // ═══════════════════════════════════════════════════════════
@@ -22755,8 +22807,11 @@ function renderOzet() {
 
   // Kart stats — ortak limit grubuna dahil kartlarda grup limiti kart sayısı kadar tekrar tekrar
   // sayılmasın diye her grup sadece bir kez (kendi limitiyle) toplama eklenir.
+  // Kullanım, kartın kendi para birimi cinsinden hesaplanır (bkz. getKartKullanim) — TRY
+  // toplamına geçerken her kartın varsayılan para birimi kuruna göre çevrilir (aşağıda).
   let toplamLimit=0, toplamKullanim=0;
   const _sayilanOrtakGruplar = new Set();
+  const kartKullanimByPb = {}; // para birimi -> toplam kullanım (kendi cinsinden)
   DB.kartlar.forEach(k=>{
     if (k.ortakLimitGrupId) {
       if (!_sayilanOrtakGruplar.has(k.ortakLimitGrupId)) {
@@ -22767,12 +22822,20 @@ function renderOzet() {
     } else {
       toplamLimit += k.limit||0;
     }
-    toplamKullanim+=getKartKullanim(k.id);
+    const kullanim = getKartKullanim(k.id);
+    toplamKullanim += kullanim;
+    const kartPb = getKartDefaultCurrency(k.id);
+    kartKullanimByPb[kartPb] = (kartKullanimByPb[kartPb]||0) + kullanim;
   });
 
   // Mevduat
   let mevduatAktif=0;
-  DB.mevduatlar.filter(m=>m.bitis && m.bitis>=todayStr).forEach(m=>mevduatAktif+=(m.nihai||0));
+  const mevduatByPb = {}; // para birimi -> toplam aktif mevduat (kendi cinsinden)
+  DB.mevduatlar.filter(m=>m.bitis && m.bitis>=todayStr).forEach(m=>{
+    mevduatAktif+=(m.nihai||0);
+    const mevPb = m.paraBirimi || defaultCurrency || 'TRY';
+    mevduatByPb[mevPb] = (mevduatByPb[mevPb]||0) + (m.nihai||0);
+  });
 
   // Bu ay kira net - kiraPayInMonth kullan (sadece fiilen ödenmiş/kısmi ödenmiş tutarlar sayılır)
   const ayKey = `${year}-${String(month+1).padStart(2,'0')}`;
@@ -22797,7 +22860,7 @@ function renderOzet() {
     maasTop += odFiilenGerceklesenTutar(ov, m.tutar);
   });
 
-  // KMH Kredi kalan borç
+  // KMH Kredi kalan borç (krediler her zaman TRY bazlı tanımlanır — bkz. tahminGelecekBakiyeHesapla)
   const krediKalan = (DB.krediler||[]).reduce((s,kr)=>s+getKrediKalanBorc(kr), 0);
   // Bireysel kredi kalan borç
   const bireyselKrediKalan = (DB.bireyselKrediler||[]).reduce((s,kr)=>s+getBireyselKrediKalan(kr), 0);
@@ -22847,11 +22910,36 @@ function renderOzet() {
   // NOT: 'vadeli' türü hesaplar, vadeli mevduat açılırken otomatik oluşturulan ve parayı tutan hesaplardır.
   // Bu paralar zaten aşağıda mevduatAktif (m.nihai) olarak sayılıyor — aksi halde aynı para iki kez sayılır
   // (mükerrer sayım net varlığın şişmesine sebep oluyordu).
-  const toplamHesapBakiye = (DB.hesaplar||[]).filter(h=>h.durum!=='kapali' && h.tur!=='vadeli').reduce((s,h)=>s+(Number(h.bakiye)||0),0);
-  const safeMevduatAktif = Number(mevduatAktif)||0;
-  const safeNbTutar = Number(nbTutar)||0;
-  const safeToplamKullanim = Number(toplamKullanim)||0;
-  const safeKrediKalan = Number(krediKalan)||0;
+  //
+  // ÖNEMLİ: Hesaplar, mevduatlar, nakit ve kartlar farklı para birimlerinde olabilir.
+  // Bunları doğrudan toplamak yanlış sonuç verir (örn. 100 USD + 100 EUR ≠ 200).
+  // Bu yüzden her kalem önce kendi para birimi bazında toplanır, sonra TCMB günlük
+  // kuruyla gösterim para birimine (defaultCurrency, genelde TRY) çevrilip toplanır.
+  const gosterimPb = defaultCurrency || 'TRY';
+
+  // Hesap bakiyelerini para birimi bazında topla
+  const hesapByPb = {};
+  (DB.hesaplar||[]).filter(h=>h.durum!=='kapali' && h.tur!=='vadeli').forEach(h=>{
+    const pb = h.paraBirimi || gosterimPb;
+    hesapByPb[pb] = (hesapByPb[pb]||0) + (Number(h.bakiye)||0);
+  });
+
+  // Tüm para birimi haritalarını (hesap, mevduat, nakit, kart kullanımı) gösterim
+  // para birimine çevirip toplayan ortak yardımcı.
+  function pbHaritasiniTopla(harita) {
+    return Object.entries(harita).reduce((toplam, [pb, tutar]) => {
+      const cevrilmis = paraBirimiCevirGuvenli(tutar, pb, gosterimPb);
+      return toplam + (Number(cevrilmis) || 0);
+    }, 0);
+  }
+
+  const toplamHesapBakiye = pbHaritasiniTopla(hesapByPb);
+  const safeMevduatAktif = pbHaritasiniTopla(mevduatByPb);
+  // Nakit: gösterim birimindeki tutar + diğer tüm para birimlerindeki nakit (çevrilerek) —
+  // önceden sadece gösterim birimindeki nakit (nbTutar) sayılıyordu, diğerleri atlanıyordu.
+  const safeNbTutar = pbHaritasiniTopla(nakitMap);
+  const safeToplamKullanim = pbHaritasiniTopla(kartKullanimByPb);
+  const safeKrediKalan = Number(krediKalan)||0; // krediler TRY bazlı — bkz. yukarıdaki not
   const safeBireyselKrediKalan = Number(bireyselKrediKalan)||0;
   const toplamVarlik = toplamHesapBakiye + safeMevduatAktif + (safeNbTutar>0?safeNbTutar:0);
   const toplamBorc = safeToplamKullanim + safeKrediKalan + safeBireyselKrediKalan + (safeNbTutar<0?-safeNbTutar:0);
@@ -23534,96 +23622,84 @@ function tahminGelecekBakiyeHesapla(gunSayisi=365) {
     });
   }
 
-  // Elden ödemeler — sadece nakit dışı (havale/hesaba bağlı) ve ileri tarihli planlı kayıtlar.
-  // Not: yöntemi "nakit" olanlar fiziksel para hareketidir, banka/kart hesap bakiyesini etkilemez,
-  // bu yüzden nakit bakiyesini değiştirir ama hesap projeksiyonuna girmez. "Havale" + hesap bağlıysa dahil edilir.
+  // Elden ödemeler — havale (hesaba bağlı) ve nakit (fiziksel) hareketlerin hepsi
+  // birleşik toplam varlık projeksiyonuna dahil edilir (TRY'ye çevrilerek).
   (DB.eldenler||[]).forEach(e=>{
     if(e.tarih < todayStr || e.tarih > bitisStr) return;
     const pb = e.paraBirimi || defaultCurrency || 'TRY';
-    if(e.yontem === 'havale' && e.hesapId) {
-      olaylar.push({tarih:e.tarih, tutar:e.tutar, pb, aciklama:'✋ '+(e.aciklama||(e.tur==='gelir'?'Elden Gelir':'Elden Gider'))});
-    } else if(e.yontem === 'nakit') {
-      // Nakit bakiyesini ayrıca takip ediyoruz, hesap toplamına girmiyor — ayrı pb anahtarı ile gösterilebilir
-      const nakitPb = pb + '_NAKIT';
-      olaylar.push({tarih:e.tarih, tutar:e.tutar, pb:nakitPb, aciklama:'✋ '+(e.aciklama||(e.tur==='gelir'?'Elden Gelir':'Elden Gider'))});
-    }
+    olaylar.push({tarih:e.tarih, tutar:e.tutar, pb, aciklama:'✋ '+(e.aciklama||(e.tur==='gelir'?'Elden Gelir':'Elden Gider'))});
   });
 
-  // Nakit bakiyesi için başlangıç değerini de ekle (varsa)
+  // Nakit bakiyesi için başlangıç değerini de ekle (varsa) — banka hesaplarıyla aynı şekilde,
+  // ayrı bir pb anahtarı olmadan doğrudan kendi para birimiyle.
   if(DB._nakitBakiye) {
     Object.entries(DB._nakitBakiye).forEach(([pb,val])=>{
-      const nakitPb = pb + '_NAKIT';
-      baslangicByPb[nakitPb] = (baslangicByPb[nakitPb]||0) + val;
+      baslangicByPb[pb] = (baslangicByPb[pb]||0) + val;
     });
   }
 
-  // 3) Para birimi bazında günlere yay ve kümülatif bakiye hesapla
-  const pbSet = new Set([...Object.keys(baslangicByPb), ...olaylar.map(o=>o.pb)]);
-  const sonuc = {};
-  pbSet.forEach(pb=>{
-    const pbOlaylar = olaylar.filter(o=>o.pb===pb).sort((a,b)=>a.tarih.localeCompare(b.tarih));
-    let bakiye = baslangicByPb[pb] || 0;
-    const gunler = [];
-    // Olayları tarihe göre grupla, her olay gününde bir nokta oluştur
-    const byTarih = {};
-    pbOlaylar.forEach(o=>{
-      if(!byTarih[o.tarih]) byTarih[o.tarih] = [];
-      byTarih[o.tarih].push(o);
-    });
-    gunler.push({tarih: todayStr, bakiye, olaylar:[]});
-    Object.keys(byTarih).sort().forEach(tarih=>{
-      byTarih[tarih].forEach(o=>{ bakiye += o.tutar; });
-      gunler.push({tarih, bakiye, olaylar: byTarih[tarih]});
-    });
-    sonuc[pb] = { gunler, baslangic: baslangicByPb[pb]||0, toplamGelir: pbOlaylar.filter(o=>o.tutar>0).reduce((s,o)=>s+o.tutar,0), toplamGider: pbOlaylar.filter(o=>o.tutar<0).reduce((s,o)=>s+Math.abs(o.tutar),0), olaylar: pbOlaylar };
+  // 3) Tüm para birimlerini gösterim para birimine (TCMB kuruyla) çevirip BİRLEŞİK
+  //    tek bir günlük kümülatif bakiye serisi oluştur. Geçmiş/bugün için o günün
+  //    TCMB kuru, henüz bülteni yayınlanmamış gelecek tarihler için en güncel
+  //    (bugünkü) kur kullanılır — TCMB ileri tarihli kur yayınlamadığından bu,
+  //    yapılabilecek en iyi tahmindir.
+  const gosterimPb = defaultCurrency || 'TRY';
+  function cevirGosterime(tutar, pb, tarihStr) {
+    const hedefTarih = tarihStr && tarihStr <= todayStr ? tarihStr : null; // gelecek tarih -> en güncel kur
+    const cevrilmis = paraBirimiCevirGuvenli(tutar, pb, gosterimPb, hedefTarih);
+    return Number(cevrilmis) || 0;
+  }
+
+  const baslangicTRY = Object.entries(baslangicByPb).reduce((s,[pb,val])=>s+cevirGosterime(val, pb, todayStr), 0);
+  const olaylarTRY = olaylar
+    .map(o=>({ tarih:o.tarih, tutar:cevirGosterime(o.tutar, o.pb, o.tarih), aciklama:o.aciklama }))
+    .sort((a,b)=>a.tarih.localeCompare(b.tarih));
+
+  const gunler = [];
+  let bakiye = baslangicTRY;
+  const byTarih = {};
+  olaylarTRY.forEach(o=>{
+    if(!byTarih[o.tarih]) byTarih[o.tarih] = [];
+    byTarih[o.tarih].push(o);
   });
-  return sonuc;
+  gunler.push({tarih: todayStr, bakiye, olaylar:[]});
+  Object.keys(byTarih).sort().forEach(tarih=>{
+    byTarih[tarih].forEach(o=>{ bakiye += o.tutar; });
+    gunler.push({tarih, bakiye, olaylar: byTarih[tarih]});
+  });
+
+  return {
+    gunler,
+    baslangic: baslangicTRY,
+    toplamGelir: olaylarTRY.filter(o=>o.tutar>0).reduce((s,o)=>s+o.tutar,0),
+    toplamGider: olaylarTRY.filter(o=>o.tutar<0).reduce((s,o)=>s+Math.abs(o.tutar),0),
+    olaylar: olaylarTRY,
+    pb: gosterimPb
+  };
 }
 
 function renderTahminBakiye() {
   const elWrap = document.getElementById('ozet-tahmin-bakiye');
   const elChips = document.getElementById('tahmin-pb-chips');
-  if(!elWrap || !elChips) return;
+  if(!elWrap) return;
+  if(elChips) elChips.style.display = 'none'; // Para birimleri artık birleşik gösterildiği için chip seçimi gerekmiyor
 
   const gunSayisi = window._tbkGunSayisi || 365;
   // Aktif period butonunu senkronize et (sayfa yenilemelerinde)
   document.querySelectorAll('.tbk-period-btn').forEach(b=>{
     b.classList.toggle('tbk-period-active', Number(b.dataset.gun)===gunSayisi);
   });
-  const data = tahminGelecekBakiyeHesapla(gunSayisi);
-  const pbList = Object.keys(data);
-  if(!pbList.length) {
+  const d = tahminGelecekBakiyeHesapla(gunSayisi);
+  if(!d.gunler || d.gunler.length < 2) {
     elWrap.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:36px 16px;color:var(--text3)">
       <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>
       <div style="font-size:12.5px">Hesap bulunamadı — önce bir hesap ekleyin.</div>
     </div>`;
-    elChips.style.display = 'none';
     return;
   }
 
-  // Chip'leri oluştur (seçim korunur)
-  const oncekiSecim = window._tbkSeciliPb || null;
-  let aktifPb = pbList.includes(oncekiSecim) ? oncekiSecim : pbList[0];
-
-  if(pbList.length > 1) {
-    elChips.style.display = '';
-    elChips.innerHTML = pbList.map(pb=>{
-      const isNakit = pb.endsWith('_NAKIT');
-      const gercekPb = isNakit ? pb.replace('_NAKIT','') : pb;
-      const etiket = isNakit ? `💵 ${gercekPb}` : gercekPb;
-      const isActive = pb === aktifPb;
-      return `<button class="tbk-pb-chip${isActive?' active':''}" onclick="window._tbkSeciliPb='${pb}';renderTahminBakiye()">${etiket}</button>`;
-    }).join('');
-  } else {
-    elChips.style.display = 'none';
-  }
-
-  const pb = aktifPb;
-  window._tbkSeciliPb = pb;
-  const pbGercek = pb.endsWith('_NAKIT') ? pb.replace('_NAKIT','') : pb;
-  const safeId = pb.replace(/[^a-zA-Z0-9]/g,'');
-
-  const d = data[pb];
+  const pbGercek = d.pb;
+  const safeId = 'birlesik';
   const gunler = d.gunler;
   const sonBakiye = gunler[gunler.length-1].bakiye;
   const netDegisim = sonBakiye - d.baslangic;
