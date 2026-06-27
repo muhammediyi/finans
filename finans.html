@@ -7310,6 +7310,8 @@ html[data-theme="light"] .kart-extre-footer {
   border-radius: 9px;
   padding: 7px 10px 7px 28px;
   font-size: 12.5px;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
   color: var(--text);
   outline: none;
   transition: border-color .15s;
@@ -7321,10 +7323,12 @@ html[data-theme="light"] .kart-extre-footer {
 .snav-group-label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: .09em;
+  font-family: var(--sans);
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--text3);
   padding: 8px 10px 4px;
+  -webkit-font-smoothing: antialiased;
 }
 .snav-group[data-hidden="true"] { display: none; }
 
@@ -7343,6 +7347,8 @@ html[data-theme="light"] .kart-extre-footer {
   transition: background .13s, transform .1s;
   color: var(--text2);
   position: relative;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
 }
 .snav-item:hover {
   background: var(--surface2);
@@ -7369,20 +7375,24 @@ html[data-theme="light"] .kart-extre-footer {
   min-width: 0;
 }
 .snav-name {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
+  font-family: var(--sans);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -.01em;
 }
 .snav-desc {
-  font-size: 10.5px;
+  font-size: 11px;
+  font-family: var(--sans);
   color: var(--text3);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0;
 }
 .snav-item.active .snav-desc { color: var(--text2); }
 .snav-arrow {
@@ -7450,10 +7460,12 @@ html[data-theme="light"] .kart-extre-footer {
     flex: 1;
     font-size: 14px;
     font-weight: 600;
+    font-family: var(--sans);
     color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -.01em;
   }
   .snav-mobile-back {
     background: none;
@@ -7461,6 +7473,7 @@ html[data-theme="light"] .kart-extre-footer {
     border-radius: 7px;
     color: var(--text2);
     font-size: 12px;
+    font-family: var(--sans);
     padding: 5px 10px;
     cursor: pointer;
     white-space: nowrap;
@@ -7471,6 +7484,7 @@ html[data-theme="light"] .kart-extre-footer {
     border-radius: 7px;
     color: var(--text);
     font-size: 12px;
+    font-family: var(--sans);
     padding: 5px 10px;
     cursor: pointer;
     white-space: nowrap;
