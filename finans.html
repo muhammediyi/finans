@@ -7414,11 +7414,11 @@ html[data-theme="light"] .kart-extre-footer {
   padding: 20px 24px;
 }
 .snav-content > div[id^="tab-"] {
-  animation: snavFadeIn .18s ease;
+  animation: snavFadeIn .2s ease;
 }
 @keyframes snavFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Mobile header (hidden on desktop) ── */
@@ -8032,32 +8032,6 @@ html[data-theme="light"] .kart-extre-footer {
     <div id="kategori-grid" class="kat-grid"></div>
   </div>
 
-  <!-- KATEGORİ ÖNERİ MODAL -->
-  <div class="modal-bg" id="modal-kategori-oneri">
-    <div class="modal" style="max-width:560px">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">✨</div>
-          <div class="modal-header-text">
-            <div class="modal-title">Önerilen Kategoriler</div>
-            <div class="modal-subtitle">Sık kullanılan kategorilerden seçip toplu ekleyin</div>
-          </div>
-        </div>
-        <button class="close-btn" onclick="closeModal('modal-kategori-oneri')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(true)">Tümünü Seç</button>
-          <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(false)">Seçimi Kaldır</button>
-        </div>
-        <div id="kategori-oneri-list" style="display:flex;flex-direction:column;gap:14px;max-height:50vh;overflow-y:auto;padding-right:4px"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('modal-kategori-oneri')">İptal</button>
-        <button class="btn btn-primary" onclick="katOneriEkleSecili()">Seçilenleri Ekle</button>
-      </div>
-    </div>
-  </div>
 
   <!-- KİŞİLER / KARŞI TARAFLAR SEKMESİ -->
   <div id="tab-kisiler" style="display:none">
@@ -32640,5 +32614,32 @@ function snavFilter(q) {
   });
 }
 </script>
+<!-- KATEGORİ ÖNERİ MODAL — body'de olmalı, snav-content içinde değil -->
+<div class="modal-bg" id="modal-kategori-oneri">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)">✨</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Önerilen Kategoriler</div>
+          <div class="modal-subtitle">Sık kullanılan kategorilerden seçip toplu ekleyin</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-kategori-oneri')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(true)">Tümünü Seç</button>
+        <button class="btn btn-ghost btn-sm" onclick="katOneriSelectAll(false)">Seçimi Kaldır</button>
+      </div>
+      <div id="kategori-oneri-list" style="display:flex;flex-direction:column;gap:14px;max-height:50vh;overflow-y:auto;padding-right:4px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-kategori-oneri')">İptal</button>
+      <button class="btn btn-primary" onclick="katOneriEkleSecili()">Seçilenleri Ekle</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
