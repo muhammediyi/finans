@@ -8069,6 +8069,13 @@ html[data-theme="light"] .kart-extre-footer {
       <span id="tcmb-guncelle-status" style="font-size:12px;color:var(--text3)"></span>
       <span id="tcmb-son-guncelleme" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <label style="font-size:12px;color:var(--text3);white-space:nowrap;margin:0">🔧 CORS Proxy Worker URL:</label>
+      <input id="cors-proxy-worker-url" type="url" placeholder="https://your-worker.your-subdomain.workers.dev  (boş bırakılırsa ücretsiz proxy'ler denenir)"
+        style="flex:1;min-width:240px;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text1)"
+        oninput="saveCorsProxyWorker(this.value)">
+      <a href="https://developers.cloudflare.com/workers/" target="_blank" style="font-size:11px;color:var(--accent);white-space:nowrap">Nasıl kurulur?</a>
+    </div>
     <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>İkon</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>TCMB Kuru (₺)</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
   </div>
 
@@ -20318,32 +20325,44 @@ function paraSayiyaCevir(v) {
 // GC=F (gold futures front-month) kullanılır — API key gerektirmez, tarayıcıdan CORS açık çalışır.
 // Dönüş: { alis, satis } USD cinsinden (ons başına) veya null.
 async function xauYahooCek() {
-  // Yahoo Finance CORS açık değil — allorigins / corsproxy üzerinden geçiriyoruz.
   const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d';
-  const proxied = [
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: true },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
-    { url: `https://cors-anywhere.herokuapp.com/${YAHOO_URL}`, wrapped: false },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
-    { url: `https://thingproxy.freeboard.io/fetch/${YAHOO_URL}`, wrapped: false },
+
+  async function parseYahoo(text) {
+    const j = JSON.parse(text);
+    return j?.chart?.result?.[0]?.meta?.regularMarketPrice
+        ?? j?.quoteResponse?.result?.[0]?.regularMarketPrice
+        ?? null;
+  }
+
+  async function tryProxy(url, wrapped) {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    let text = await resp.text();
+    if (wrapped) {
+      const outer = JSON.parse(text);
+      if (!outer?.contents) throw new Error('wrap-no-contents');
+      text = outer.contents;
+    }
+    const price = await parseYahoo(text);
+    if (!price) throw new Error('no-price');
+    return price;
+  }
+
+  const workerUrl = DB?.ayarlar?.corsProxyWorker;
+  const attempts = [
+    ...(workerUrl ? [[`${workerUrl.replace(/\/$/, '')}?url=${encodeURIComponent(YAHOO_URL)}`, false]] : []),
+    [`https://api.allorigins.win/get?url=${encodeURIComponent(YAHOO_URL)}`, true],
+    [`https://api.allorigins.win/raw?url=${encodeURIComponent(YAHOO_URL)}`, false],
+    [`https://corsproxy.io/?url=${encodeURIComponent(YAHOO_URL)}`, false],
+    [`https://thingproxy.freeboard.io/fetch/${YAHOO_URL}`, false],
+    [`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(YAHOO_URL)}`, false],
   ];
-  for (const ep of proxied) {
+
+  for (const [url, wrapped] of attempts) {
     try {
-      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) { console.warn('[xau-yahoo] proxy HTTP', resp.status, ep.url); continue; }
-      let text = await resp.text();
-      if (ep.wrapped) {
-        const outer = JSON.parse(text);
-        if (!outer?.contents) { console.warn('[xau-yahoo] wrap-no-contents', ep.url); continue; }
-        text = outer.contents;
-      }
-      const j = JSON.parse(text);
-      const price = j?.chart?.result?.[0]?.meta?.regularMarketPrice
-                 ?? j?.quoteResponse?.result?.[0]?.regularMarketPrice;
-      if (price) return { alis: price, satis: price };
-      console.warn('[xau-yahoo] fiyat bulunamadı:', ep.url, JSON.stringify(j).slice(0, 150));
-    } catch(err) { console.warn('[xau-yahoo] hata:', ep.url, err.message); }
+      const price = await tryProxy(url, wrapped);
+      return { alis: price, satis: price };
+    } catch(e) { console.warn('[xau-yahoo]', url.slice(0, 60), e.message); }
   }
   return null;
 }
@@ -20422,31 +20441,12 @@ async function tcmbKurXmlCek(targetDateIso) {
     const [yyyy, mm, dd] = targetDateIso.split('-');
     TARGET = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
   }
-  const endpoints = [
-    // Önce doğrudan dene (TCMB bazen CORS açık olabiliyor)
-    { url: TARGET, wrapped: false },
-    // allOrigins en güvenilir — önce al
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-    // corsproxy.io — ücretsiz, güvenilir
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-    // cors-anywhere Heroku instance'ları
-    { url: `https://cors-anywhere.herokuapp.com/${TARGET}`, wrapped: false },
-    // Diğer yedekler
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
-    { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
-    { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
-    { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-    { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
-    // jsonp.afeld.me — XML için de çalışır
-    { url: `https://jsonp.afeld.me/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-  ];
-  // Tüm proxy'leri paralel dene — ilk geçerli yanıtı al (sıralı bekleme yok)
-  async function tryEp(ep) {
-    const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
+
+  async function tryFetch(url, wrapped) {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     let text = await resp.text();
-    if (ep.wrapped) {
+    if (wrapped) {
       const parsed = JSON.parse(text);
       if (!parsed?.contents) throw new Error('wrap-no-contents');
       text = parsed.contents;
@@ -20454,17 +20454,51 @@ async function tcmbKurXmlCek(targetDateIso) {
     if (!text || !text.includes('<Tarih_Date')) throw new Error('invalid-xml');
     return text;
   }
-  // İlk 3'ü hemen, kalanları 400ms gecikmeli başlat (thundering herd önlemi)
-  const results = await Promise.any([
-    ...endpoints.slice(0, 3).map(ep => tryEp(ep).catch(() => Promise.reject())),
-    new Promise(res => setTimeout(async () => {
-      try { res(await Promise.any(endpoints.slice(3).map(ep => tryEp(ep)))); } catch { /* ignore */ }
-    }, 400))
-  ]).catch(() => null);
-  return results || null;
+
+  // 1) Kullanıcının kendi Cloudflare Worker'ı varsa önce onu dene
+  const workerUrl = DB?.ayarlar?.corsProxyWorker;
+  if (workerUrl) {
+    try {
+      const text = await tryFetch(`${workerUrl.replace(/\/$/, '')}?url=${encodeURIComponent(TARGET)}`, false);
+      if (text) return text;
+    } catch(e) { console.warn('[tcmb-kur] worker hata:', e.message); }
+  }
+
+  // 2) allorigins — en güvenilir ücretsiz proxy
+  try {
+    const text = await tryFetch(`https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, true);
+    if (text) return text;
+  } catch(e) { console.warn('[tcmb-kur] allorigins/get:', e.message); }
+
+  try {
+    const text = await tryFetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, false);
+    if (text) return text;
+  } catch(e) { console.warn('[tcmb-kur] allorigins/raw:', e.message); }
+
+  // 3) corsproxy.io
+  try {
+    const text = await tryFetch(`https://corsproxy.io/?url=${encodeURIComponent(TARGET)}`, false);
+    if (text) return text;
+  } catch(e) { console.warn('[tcmb-kur] corsproxy.io:', e.message); }
+
+  // 4) Diğer yedekler sırayla
+  const fallbacks = [
+    [`https://thingproxy.freeboard.io/fetch/${TARGET}`, false],
+    [`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, false],
+    [`https://cors-anywhere.herokuapp.com/${TARGET}`, false],
+    [`https://proxy.corsfix.com/?${TARGET}`, false],
+    [TARGET, false], // direkt son çare
+  ];
+  for (const [url, wrapped] of fallbacks) {
+    try {
+      const text = await tryFetch(url, wrapped);
+      if (text) return text;
+    } catch(e) { console.warn('[tcmb-kur] fallback hata:', url.slice(0, 60), e.message); }
+  }
+  return null;
 }
 
-// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
+// Ham TCMB XML metnini// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
 function tcmbKurXmlParse(xmlText) {
   try {
     const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
@@ -21008,6 +21042,7 @@ function renderTanimlamalar() {
   renderHesapTurTablo();
   renderTumOranTablolari();
   renderKisilerGrid();
+  loadCorsProxyWorkerInput();
 
   document.getElementById('banka-tbody').innerHTML = (DB.bankalar||[]).map((b,i)=>`<tr>
     <td class="mono">${i+1}</td>
@@ -21696,6 +21731,17 @@ function saveParaBirimi() {
   closeModal('modal-para-birimi');
   renderTanimlamalar();
   showToast('Para birimi kaydedildi');
+}
+
+function saveCorsProxyWorker(val) {
+  DB.ayarlar = DB.ayarlar || {};
+  DB.ayarlar.corsProxyWorker = val.trim() || null;
+  saveData();
+}
+
+function loadCorsProxyWorkerInput() {
+  const inp = document.getElementById('cors-proxy-worker-url');
+  if (inp && DB?.ayarlar?.corsProxyWorker) inp.value = DB.ayarlar.corsProxyWorker;
 }
 
 function deleteParaBirimi(kod) {
