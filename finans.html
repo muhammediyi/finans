@@ -8061,9 +8061,14 @@ html[data-theme="light"] .kart-extre-footer {
   </div>
 
   <div id="tab-para-birimi-yonetim" style="display:none">
-    <div class="info-box">Sistemde kullanılabilecek para birimlerini buradan ekleyip yönetin. Genel gösterim para birimi seçimi artık <b>🎨 Görüntü Ayarları</b> sekmesinde yer alıyor.</div>
-    <div class="action-row"><button class="btn btn-primary btn-sm" onclick="openParaBirimiModal()">+ Para Birimi Ekle</button></div>
-    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>İkon</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
+    <div class="info-box">Sistemde kullanılabilecek para birimlerini buradan ekleyip yönetin. Genel gösterim para birimi seçimi artık <b>🎨 Görüntü Ayarları</b> sekmesinde yer alıyor. <b>TCMB döviz kurları her gün otomatik olarak çekilir</b>; aşağıdaki tabloda TRY karşılığını görebilir, gerekirse manuel olarak da güncelleyebilirsiniz.</div>
+    <div class="action-row">
+      <button class="btn btn-primary btn-sm" onclick="openParaBirimiModal()">+ Para Birimi Ekle</button>
+      <button class="btn btn-ghost btn-sm" id="btn-tcmb-guncelle" onclick="tcmbKurlariniGuncelle(true)" title="TCMB'den güncel kurları çek">🔄 TCMB Kurlarını Güncelle</button>
+      <span id="tcmb-guncelle-status" style="font-size:12px;color:var(--text3)"></span>
+      <span id="tcmb-son-guncelleme" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Sembol</th><th>Ad</th><th>Bayrak</th><th>İkon</th><th>Konum</th><th>Ondalık</th><th>Yerel</th><th>TCMB Kuru (₺)</th><th>İşlemler</th></tr></thead><tbody id="para-birimi-tbody"></tbody></table></div></div>
   </div>
 
   <!-- VERGI & FAİZ ORANLARI SEKMESİ -->
@@ -10801,7 +10806,9 @@ function defaultData() {
     nakitAvansMaxOran: 50,
     snapshots: {},
     uiFiltreler: { islemler: { kart:'', ay:'', taksit:'', q:'' }, extreler: { kart:'', durum:'' } },
-    navStats: {}  // sayfa ziyaret sayaçları (Drive'a kaydedilir, mobil footer dinamik slotlar için)
+    navStats: {},  // sayfa ziyaret sayaçları (Drive'a kaydedilir, mobil footer dinamik slotlar için)
+    // TCMB döviz kurları — her gün otomatik çekilir (bkz. tcmbKurlariniGuncelle)
+    tcmbKur: { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} }
   };
 }
 
@@ -20131,6 +20138,134 @@ async function resmiTatilleriGuncelle() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// TCMB DÖVİZ KURLARI — her gün otomatik çekme
+// ═══════════════════════════════════════════════════════════
+// TCMB'nin today.xml ucu güncel günün (hafta sonu/resmi tatilse en son
+// yayınlanan iş gününün) bültenini döner; bu yüzden tarih kontrolü
+// TCMB bülten tarihine göre değil, "bugün bu kontrolü zaten yaptık mı"
+// bilgisine göre yapılır (bkz. DB.tcmbKur.sonKontrol). Böylece hafta
+// sonu/tatil günlerinde de günde bir defa kontrol edilir, gereksiz
+// tekrar istek atılmaz; aynı zamanda resmi tatil güncellemesindeki gibi
+// CORS proxy zincirine düşülür (TCMB sunucusu doğrudan tarayıcıdan
+// isteklere CORS izni vermeyebiliyor).
+async function tcmbKurlariniGuncelle(manuel = false) {
+  const btn = document.getElementById('btn-tcmb-guncelle');
+  const status = document.getElementById('tcmb-guncelle-status');
+  if (manuel && btn) { btn.disabled = true; btn.textContent = '⏳ Çekiliyor...'; }
+  if (status) status.textContent = '';
+
+  const TARGET = 'https://www.tcmb.gov.tr/kurlar/today.xml';
+  const endpoints = [
+    { url: TARGET, wrapped: false },
+    { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
+    { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
+    { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+    // AllOrigins'in /raw ucu bazen boş/ham olmayan içerik döndürebiliyor; JSON-sarmalı /get ucu yedek olarak denenir.
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
+    { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
+  ];
+
+  let xmlText = null;
+  for (const ep of endpoints) {
+    try {
+      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
+      if (!resp.ok) { console.warn('[tcmb-kur] proxy HTTP', resp.status, ep.url); continue; }
+      let text = await resp.text();
+      if (ep.wrapped) {
+        let parsed;
+        try { parsed = JSON.parse(text); } catch(e) { console.warn('[tcmb-kur] proxy sarmalı JSON değil:', ep.url); continue; }
+        if (!parsed || typeof parsed.contents !== 'string') { console.warn('[tcmb-kur] proxy sarmalı geçersiz:', ep.url); continue; }
+        text = parsed.contents;
+      }
+      if (text && text.includes('<Tarih_Date')) { xmlText = text; break; }
+      console.warn('[tcmb-kur] proxy boş/geçersiz veri döndü:', ep.url);
+    } catch(err) { console.warn('[tcmb-kur] proxy hata:', ep.url, err.message); }
+  }
+
+  // Her durumda "bugün kontrol edildi" işaretini koy — başarısızsa bile aynı gün
+  // içinde her sayfa yüklemesinde proxy zincirinin baştan denenmesini önler.
+  DB.tcmbKur = DB.tcmbKur || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
+  DB.tcmbKur.sonKontrol = localDateStr(new Date());
+
+  if (!xmlText) {
+    const msg = 'Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin';
+    saveData();
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + msg; }
+    if (manuel && typeof showToast === 'function') showToast('TCMB kur güncelleme hatası: ' + msg, 'error');
+    if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
+    if (status) setTimeout(() => { status.textContent = ''; }, 6000);
+    return false;
+  }
+
+  try {
+    const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+    if (xml.querySelector('parsererror')) throw new Error('XML ayrıştırılamadı');
+
+    const root = xml.querySelector('Tarih_Date');
+    const tarihAttr = root ? root.getAttribute('Tarih') : null; // "27.06.2026" biçiminde
+    let tarihIso = null;
+    if (tarihAttr) {
+      const [gg, aa, yyyy] = tarihAttr.split('.');
+      if (gg && aa && yyyy) tarihIso = `${yyyy}-${aa.padStart(2,'0')}-${gg.padStart(2,'0')}`;
+    }
+
+    const kurlar = {};
+    xml.querySelectorAll('Currency').forEach(node => {
+      const kod = node.getAttribute('Kod');
+      if (!kod) return;
+      const unit = parseFloat(node.querySelector('Unit')?.textContent) || 1;
+      const alisRaw = parseFloat(node.querySelector('ForexBuying')?.textContent);
+      const satisRaw = parseFloat(node.querySelector('ForexSelling')?.textContent);
+      if (!alisRaw && !satisRaw) return;
+      kurlar[kod] = {
+        alis: alisRaw ? +(alisRaw / unit).toFixed(6) : null,
+        satis: satisRaw ? +(satisRaw / unit).toFixed(6) : null,
+        isim: node.querySelector('Isim')?.textContent || kod
+      };
+    });
+
+    if (!Object.keys(kurlar).length) throw new Error('XML içinde kur verisi bulunamadı');
+
+    DB.tcmbKur = {
+      tarih: tarihIso,
+      guncellendi: new Date().toISOString(),
+      sonKontrol: localDateStr(new Date()),
+      kurlar
+    };
+    saveData();
+    if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
+
+    if (status) {
+      status.style.color = 'var(--teal)';
+      status.textContent = `✓ ${Object.keys(kurlar).length} kur güncellendi (${tarihAttr || tarihIso || ''})`;
+    }
+    if (manuel && typeof showToast === 'function') showToast(`TCMB kurları güncellendi (${tarihAttr || tarihIso || ''})`, 'success');
+    return true;
+  } catch (e) {
+    saveData();
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ Veri işleme hatası: ' + e.message; }
+    if (manuel && typeof showToast === 'function') showToast('TCMB kur verisi işlenemedi: ' + e.message, 'error');
+    return false;
+  } finally {
+    if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
+    if (status) setTimeout(() => { status.textContent = ''; }, 6000);
+  }
+}
+
+// Uygulama her açıldığında (Drive verisi yüklendiğinde) çağrılır — bugün için
+// kur kontrolü zaten yapılmadıysa sessizce (manuel=false) günceller.
+function tcmbKurGunlukKontrolEt() {
+  const bugun = localDateStr(new Date());
+  if (!DB.tcmbKur || DB.tcmbKur.sonKontrol !== bugun) {
+    tcmbKurlariniGuncelle(false);
+  }
+}
+
+
+
 
 // ═══════════════════════════════════════════════════════════
 // NAKİT AVANS TANIMLAMA FONKSİYONLARI
@@ -20351,6 +20486,7 @@ function renderTanimlamalar() {
   const pbTbody = document.getElementById('para-birimi-tbody');
   if(pbTbody) {
     const allCodes = Object.keys(CURRENCY_CONFIG);
+    const tcmbKurlar = (DB.tcmbKur && DB.tcmbKur.kurlar) || {};
     pbTbody.innerHTML = allCodes.map(code => {
       const cfg = CURRENCY_CONFIG[code];
       const isCustom = cfg.custom || false;
@@ -20358,6 +20494,12 @@ function renderTanimlamalar() {
       const gosteimBtn = isDefault
         ? '<span style="font-size:10px;font-weight:700;color:var(--accent2);background:rgba(16,185,129,.15);padding:2px 8px;border-radius:4px;white-space:nowrap">&#11088; Gösterim</span>'
         : `<button class="btn btn-ghost btn-sm btn-act" onclick="setGosterimParaBirimi('${code}')" title="Gösterim birimi yap">&#11088;</button>`;
+      const kur = tcmbKurlar[code];
+      const kurHucresi = code === 'TRY'
+        ? '<span style="color:var(--text3)">—</span>'
+        : (kur
+            ? `<span class="mono" style="font-size:11.5px" title="Alış: ${kur.alis} · Satış: ${kur.satis}">${kur.satis ?? kur.alis}</span>`
+            : '<span style="color:var(--text3);font-size:11px">TCMB\u2019de yok</span>');
       return `<tr${isDefault ? ' style="background:rgba(16,185,129,.06)"' : ''}>
         <td><span class="badge badge-blue mono">${code}</span></td>
         <td class="mono" style="font-size:16px">${cfg.symbol}</td>
@@ -20367,6 +20509,7 @@ function renderTanimlamalar() {
         <td><span class="badge ${cfg.position==='prefix'?'badge-green':'badge-purple'}">${cfg.position==='prefix'?'Önde':'Sonda'}</span></td>
         <td class="mono">${cfg.decimals !== undefined ? cfg.decimals : 2}</td>
         <td style="font-size:11px;color:var(--text3)">${cfg.locale}</td>
+        <td class="mono">${kurHucresi}</td>
         <td style="white-space:nowrap">
           <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
             ${gosteimBtn}
@@ -20375,7 +20518,13 @@ function renderTanimlamalar() {
           </div>
         </td>
       </tr>`;
-    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
+    }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
+    const sonGuncEl = document.getElementById('tcmb-son-guncelleme');
+    if(sonGuncEl) {
+      sonGuncEl.textContent = (DB.tcmbKur && DB.tcmbKur.tarih)
+        ? `TCMB bülten tarihi: ${fmtDate(DB.tcmbKur.tarih)}`
+        : 'TCMB kurları henüz çekilmedi';
+    }
   }
 }
 
@@ -25535,6 +25684,7 @@ async function gDriveLoadFromDrive() {
       // Drive'da henüz dosya yok — boş veri ile devam et, kullanıcı veri girdikçe oluşacak
       gDriveSetStatus('Hazır (yeni)', 'var(--success, #4ade80)');
       setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
+      if(typeof tcmbKurGunlukKontrolEt === 'function') tcmbKurGunlukKontrolEt();
       return;
     }
     gDriveFileId = file.id;
@@ -25559,6 +25709,8 @@ async function gDriveLoadFromDrive() {
     setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
     // Format config yüklendikten sonra saati güncelle
     if(typeof updateClockFn === 'function') updateClockFn();
+    // Her gün bir defa: TCMB döviz kurlarını sessizce kontrol et / güncelle
+    if(typeof tcmbKurGunlukKontrolEt === 'function') tcmbKurGunlukKontrolEt();
   } catch(e) {
     console.error('Drive load error:', e);
     gDriveSetStatus('Yükleme hatası', 'var(--danger)');
