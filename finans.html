@@ -753,7 +753,6 @@ body::before {
 /* ─── TOP BAR ─────────────────────────────────────────── */
 .topbar { position: sticky; top: 0; z-index: 100; }
 .topbar-date { font-family: var(--mono); }
-.topbar-dot { border-radius: 50%; }
 /* ─── PAGE ────────────────────────────────────────────── */
 .page { display: none; max-width: 1600px; }
 .page.active { display: block; animation: pageFadeIn .2s ease; }
@@ -1722,7 +1721,7 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 .kart-extre-box.urgent { background:rgba(251,191,36,.06); border-color:rgba(251,191,36,.22); }
 .kart-extre-icon { font-size:17px; line-height:1; flex-shrink:0; }
 .kart-extre-meta { display:flex; flex-direction:column; gap:1px; min-width:0; overflow:hidden; }
-.kart-extre-label { font-size:10px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kart-extre-label { font-size:10px; color:var(--text3); font-weight:600; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .kart-extre-val { font-size:14px; font-weight:700; color:var(--text); font-family:var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .kart-extre-sub { font-size:10px; font-family:var(--mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* ─── TOAST ───────────────────────────────────────────── */
@@ -3070,7 +3069,6 @@ body::before {
 /* ── TOPBAR — Sleek command bar ──────────────────────────── */
 .topbar { height: 52px; padding: 0 30px; background: rgba(6,8,16,.93); border-bottom: 1px solid rgba(255,255,255,.04); backdrop-filter: blur(36px) saturate(2); box-shadow: 0 1px 0 rgba(255,255,255,.03), 0 4px 32px rgba(0,0,0,.25); gap: 14px; }
 .topbar-title { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.35); letter-spacing: .08em; text-transform: uppercase; }
-.topbar-dot { width: 5px; height: 5px; background: var(--teal); box-shadow: 0 0 10px rgba(45,212,191,1), 0 0 4px rgba(45,212,191,1); }
 .topbar-date { color: rgba(255,255,255,.5); font-size: 10.5px; letter-spacing: .06em; }
 /* ── PAGE ────────────────────────────────────────────────── */
 .page { padding: 30px 30px 60px; }
@@ -4163,7 +4161,6 @@ html[data-theme="light"] .input-suffix { color: rgba(15,22,41,.35); }
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: .6; transform: scale(.85); }
 }
-.topbar-dot { animation: pulse 3s ease-in-out infinite; }
 /* ── Button loading state ── */
 .btn.loading { opacity: .65; pointer-events: none; }
 .btn.loading::after {
@@ -4595,10 +4592,13 @@ html[data-theme="light"] .btn-act[onclick*="Delete"] {
 /* ── DATE OVERLAY: FORMAT_CONFIG.tarihFormat'a göre görüntü ── */
 .date-wrap { display: inline-flex; align-items: center; }
 .date-wrap input[type="date"] {
-  /* Gerçek input — değer ve picker korunuyor, görünmüyor */
+  /* Gerçek input — sadece takvim ikonu bölgesinde tıklanabilir,
+     metin alanına tıklayınca picker açılmasın */
   position: absolute;
-  inset: 0;
-  width: 100%;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
   height: 100%;
   opacity: 0;
   cursor: pointer;
@@ -4612,7 +4612,8 @@ html[data-theme="light"] .btn-act[onclick*="Delete"] {
   box-sizing: border-box;
   cursor: text;
 }
-/* Takvim ikonu butonu */
+/* Takvim ikonu butonu — tamamen görsel; tıklamalar altındaki gerçek
+   input[type=date]'e geçer (bkz. .date-wrap input[type="date"]) */
 .date-fake-icon-btn {
   position: absolute;
   right: 6px;
@@ -4627,7 +4628,11 @@ html[data-theme="light"] .btn-act[onclick*="Delete"] {
   line-height: 1;
   color: inherit;
   transition: opacity .15s;
-  z-index: 3;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 .date-wrap:hover .date-fake-icon-btn { opacity: .75; }
 .date-wrap { position: relative; }
@@ -5591,11 +5596,11 @@ html[data-theme="light"] .mob-theme-toggle {
   /* Başlık satırı (başka sütun sayısına göre) yoksa ilk td label+val */
   .tbl-wrap tbody td[data-label]::before {
     content: attr(data-label);
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.55);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: none;
+    color: rgba(255,255,255,.45);
     flex-shrink: 0;
     white-space: nowrap;
     min-width: 80px;
@@ -5627,7 +5632,7 @@ html[data-theme="light"] .mob-theme-toggle {
     color: rgba(15,22,41,.85) !important;
   }
   html[data-theme="light"] .tbl-wrap tbody td[data-label]::before {
-    color: rgba(15,22,41,.6);
+    color: rgba(15,22,41,.5);
   }
   html[data-theme="light"] .tbl-wrap tfoot tr {
     background: rgba(0,0,0,.02) !important;
@@ -5946,27 +5951,32 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     margin-bottom: 2px !important;
   }
   .islem-row2 {
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     padding: 12px !important;
     gap: 8px !important;
   }
   .islem-row2-cat {
     flex: 0 0 auto !important;
   }
-  .islem-row2-desc {
+  .islem-row2-body {
     flex: 1 1 auto !important;
-    min-width: 120px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .islem-row2-title {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   .islem-row2-amount {
-    margin-left: auto !important;
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
     text-align: right !important;
   }
   .islem-row2-actions {
     opacity: 1 !important;
-    flex: 0 0 100% !important;
+    flex: 0 0 auto !important;
     justify-content: flex-end !important;
-    padding-top: 4px !important;
-    border-top: 1px solid var(--border) !important;
   }
 
   /* Ekstre eşleştirme satırları */
@@ -6247,8 +6257,8 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
 
   /* İşlem satırı butonları */
   .islem-row2-actions .btn-act {
-    width: 36px !important;
-    height: 36px !important;
+    width: 30px !important;
+    height: 30px !important;
   }
 
   /* Kart detay tab satırı */
@@ -6284,7 +6294,6 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     margin-left: var(--sidebar-collapsed) !important;
   }
   /* Collapsed'da footer içeriğini gizle */
-  .sidebar .sidebar-footer .sidebar-time,
   .sidebar .sidebar-footer #gdrive-signin-panel,
   .sidebar .sidebar-footer #gdrive-user-panel,
   .sidebar .sidebar-footer .theme-toggle-btn {
@@ -6293,7 +6302,6 @@ html[data-theme="light"] .kredi-taksit-row.bu-ay { background: rgba(180,140,0,.0
     transition: opacity .2s ease !important;
   }
   /* Hover'da footer içeriğini göster */
-  .sidebar:hover .sidebar-footer .sidebar-time,
   .sidebar:hover .sidebar-footer #gdrive-signin-panel,
   .sidebar:hover .sidebar-footer #gdrive-user-panel,
   .sidebar:hover .sidebar-footer .theme-toggle-btn {
@@ -6495,21 +6503,20 @@ window.addEventListener('load', placeMobProfilePanel);
         <div style="font-size:9px;color:var(--text3);margin-top:4px">Sadece bu cihazda saklanir</div>
       </div>
       <button onclick="gDriveSignIn()" id="gdrive-signin-btn" style="width:100%;padding:7px 10px;font-size:11px;font-weight:500;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:rgba(255,255,255,.65);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .18s;letter-spacing:.01em">
-        <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.5 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.9 6.1C12.8 13.1 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17z"/><path fill="#FBBC05" d="M10.9 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6L2.4 13.3A23.8 23.8 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l8.4-6.1z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.2-4.1-13.1-9.6l-8.4 6.1C6.9 42.6 14.8 48 24 48z"/></svg>
-        Google ile Giriş
+        <svg width="13" height="13" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.5 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.9 6.1C12.8 13.1 17.9 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17z"/><path fill="#FBBC05" d="M10.9 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6L2.4 13.3A23.8 23.8 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l8.4-6.1z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.2-4.1-13.1-9.6l-8.4 6.1C6.9 42.6 14.8 48 24 48z"/></svg>
+        <span style="opacity:.85">Google ile Giriş</span>
       </button>
     </div>
-    <div class="sidebar-time" id="sidebar-clock" style="text-align:center;letter-spacing:.08em">--:--</div>
-    <div style="padding:2px 8px 6px;display:flex;justify-content:center">
+    <div style="padding:0 8px 6px">
       <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()" style="
         display:flex;align-items:center;gap:6px;
-        padding:5px 10px;width:100%;justify-content:center;
+        padding:6px 10px;width:100%;justify-content:center;
         border-radius:7px;
-        font-size:11px;font-weight:600;letter-spacing:.03em;
+        font-size:11px;font-weight:500;letter-spacing:.02em;
         cursor:pointer;font-family:var(--sans);
         transition:all .18s ease;
       ">
-        <span id="theme-toggle-icon" style="font-size:13px">☀️</span>
+        <span id="theme-toggle-icon" style="font-size:12px">☀️</span>
         <span id="theme-toggle-label">Aydınlık Tema</span>
       </button>
     </div>
@@ -6533,8 +6540,6 @@ window.addEventListener('load', placeMobProfilePanel);
     </button>
     <span class="topbar-title" id="topbar-title" style="display:inline-flex;align-items:center;gap:7px"><span id="topbar-icon" style="font-size:13px;opacity:.7">⊹</span><span id="topbar-label">Finansal Özet</span></span>
     <div class="topbar-sep"></div>
-    <div class="topbar-dot"></div>
-    <span class="topbar-date" id="topbar-date"></span>
     <div class="topbar-profile-slot" id="topbar-profile-slot">
       <button class="topbar-profile-trigger" id="topbar-profile-trigger" onclick="toggleMobProfile(event)" aria-label="Profil">
         <img id="topbar-profile-avatar" src="" alt="" style="display:none">
@@ -6924,6 +6929,414 @@ window.addEventListener('load', placeMobProfilePanel);
   .tbk-aylik-table { font-size:10.5px; }
   .tbk-aylik-table th, .tbk-aylik-table td { padding:4px 5px; }
 }
+
+/* ═══════════════════════════════════════════════
+   ARAYÜZ İYİLEŞTİRMELERİ — override bloğu
+   ═══════════════════════════════════════════════ */
+
+/* ── 1. Page header küçültme ── */
+.page-header {
+  margin-bottom: 18px !important;
+  padding-bottom: 14px !important;
+  gap: 10px !important;
+}
+.page-header h1 {
+  font-size: 21px !important;
+  letter-spacing: -.02em !important;
+}
+.page-header p {
+  font-size: 10px !important;
+  margin-top: 3px !important;
+  letter-spacing: .05em !important;
+  opacity: .7;
+}
+
+/* ── 2. Topbar başlık — küçük caps yerine normal ── */
+.topbar-title {
+  font-size: 12px !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  opacity: .75;
+}
+
+/* ── 3. Card — daha kompakt ── */
+.card {
+  padding: 16px 18px !important;
+  margin-bottom: 10px !important;
+  border-radius: 14px !important;
+}
+
+/* ── 4. +Yeni buton — daha hafif ── */
+.page-header .btn-primary,
+.action-row .btn-primary {
+  background: rgba(79,110,247,.18) !important;
+  color: rgba(160,180,255,.95) !important;
+  box-shadow: inset 0 0 0 1px rgba(79,110,247,.35) !important;
+  font-weight: 600 !important;
+}
+.page-header .btn-primary:hover,
+.action-row .btn-primary:hover {
+  background: rgba(79,110,247,.28) !important;
+  color: #fff !important;
+  box-shadow: inset 0 0 0 1px rgba(79,110,247,.55) !important;
+  transform: none !important;
+}
+html[data-theme="light"] .page-header .btn-primary,
+html[data-theme="light"] .action-row .btn-primary {
+  background: rgba(63,93,231,.1) !important;
+  color: #3a5ce0 !important;
+  box-shadow: inset 0 0 0 1px rgba(63,93,231,.3) !important;
+}
+html[data-theme="light"] .page-header .btn-primary:hover,
+html[data-theme="light"] .action-row .btn-primary:hover {
+  background: rgba(63,93,231,.18) !important;
+  color: #2a4ad0 !important;
+}
+
+/* ── 5. İşlem satırı — date-card daha minimal ── */
+.islem-date-card {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
+  background: rgba(255,255,255,.045) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+html[data-theme="light"] .islem-date-card {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+.islem-date-day { font-size: 13px !important; font-weight: 700 !important; }
+.islem-date-mon { font-size: 8.5px !important; }
+.islem-row2 { gap: 9px !important; padding: 8px 4px !important; }
+.islem-row2-icon {
+  width: 33px !important;
+  height: 33px !important;
+  border-radius: 9px !important;
+  font-size: 15px !important;
+}
+.islem-row2-title { font-size: 13px !important; }
+.islem-row2-sub { font-size: 10.5px !important; margin-top: 1px !important; }
+.islem-row2-amount-val { font-size: 13px !important; }
+
+/* ── 6. Kart listesi ── */
+.kart-extre-footer {
+  margin-top: 10px !important;
+  gap: 8px !important;
+}
+.kart-extre-box {
+  padding: 8px 10px !important;
+  border-radius: 9px !important;
+}
+.kart-extre-label { font-size: 9.5px !important; }
+.kart-extre-val { font-size: 13px !important; }
+.kart-extre-sub { font-size: 10px !important; }
+
+/* ── 7. İstatistik kutuları (islemler sayfası) ── */
+.islem-stats .card {
+  padding: 12px 14px !important;
+}
+
+/* ── 8. Özet Net Varlık kutusu ── */
+.ozet-netvarlık-kart, .ozet-netvarlık-card,
+[id^="ozet-"] .card:first-child {
+  padding: 14px 16px !important;
+}
+
+/* ── 9. Stat kartlardaki label tipografisi ── */
+.islem-stat-label, .ozet-stat-label {
+  font-size: 10px !important;
+  letter-spacing: .04em !important;
+}
+
+/* ── 10. Filtre / dönem tab butonları ── */
+.islem-donem-tab {
+  font-size: 11.5px !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+}
+
+/* ── 11. Card header daha kompakt ── */
+.card-header {
+  margin-bottom: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+/* ── 12. Progress bar yüksekliği ── */
+.progress-bar {
+  height: 3px !important;
+  border-radius: 2px !important;
+}
+.progress-fill { border-radius: 2px !important; }
+
+/* ── 13. İşlem satırı list wrapper — satır arası çizgi ── */
+.islem-list > .islem-row2-wrap + .islem-row2-wrap {
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+html[data-theme="light"] .islem-list > .islem-row2-wrap + .islem-row2-wrap {
+  border-top-color: rgba(0,0,0,.05);
+}
+
+/* ── 14. Özet stat grid ── */
+.ozet-stat {
+  padding: 12px 14px 11px !important;
+  border-radius: 12px !important;
+}
+.ozet-stat-val { font-size: 17px !important; }
+.ozet-stat-label { font-size: 10px !important; margin-bottom: 4px !important; }
+.ozet-stat-icon {
+  width: 26px !important; height: 26px !important;
+  border-radius: 7px !important;
+}
+
+/* ── 15. Abonelik kartı ── */
+.ab-kart { border-radius: 12px !important; }
+
+/* ── 16. Nakit Avans butonu — daha soft ── */
+.action-row .btn-success {
+  background: rgba(22,163,148,.15) !important;
+  color: rgba(45,212,191,.9) !important;
+  box-shadow: inset 0 0 0 1px rgba(22,163,148,.3) !important;
+}
+.action-row .btn-success:hover {
+  background: rgba(22,163,148,.25) !important;
+  color: #2dd4bf !important;
+  box-shadow: inset 0 0 0 1px rgba(22,163,148,.5) !important;
+  transform: none !important;
+}
+
+/* ── 17. Bottom nav daha kompakt ── */
+.bottom-nav { height: 56px !important; padding: 0 4px !important; }
+.bottom-nav-btn { padding: 6px 4px 4px !important; min-width: 48px !important; }
+.bottom-nav-label { font-size: 9.5px !important; margin-top: 2px !important; }
+.bottom-nav-icon { font-size: 17px !important; }
+
+/* ── 18. Kart detay tab ── */
+.kd-tab { font-size: 12px !important; padding: 8px 14px !important; }
+
+/* ── 19. Mobilde page padding azalt ── */
+@media (max-width: 768px) {
+  .page { padding: 14px 12px 80px !important; }
+  .page-header { margin-bottom: 14px !important; padding-bottom: 12px !important; }
+  .card { padding: 14px 14px !important; margin-bottom: 8px !important; }
+}
+
+/* ── 20. btn-ghost ve btn-danger (aksiyonlar) biraz büyüt, netleştir ── */
+.btn-act {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  min-width: unset !important;
+  min-height: unset !important;
+}
+
+
+/* ── 21. Page subtitle — uppercase kaldır, daha okunaklı ── */
+.page-header p {
+  text-transform: none !important;
+  letter-spacing: .02em !important;
+  font-family: var(--sans) !important;
+  font-size: 11px !important;
+  opacity: .55;
+}
+
+/* ── 22. Arama kutusu — daha minimal ── */
+.islem-search, input[placeholder*="Açıklamada"], input[placeholder*="ara"] {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  padding: 9px 14px !important;
+}
+html[data-theme="light"] .islem-search,
+html[data-theme="light"] input[placeholder*="Açıklamada"],
+html[data-theme="light"] input[placeholder*="ara"] {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+
+/* ── 23. Stat kutu ikon renk azalt ── */
+.islem-stat-icon {
+  opacity: .75;
+}
+
+/* ── 24. "Bu Dönem / Önceki Dönem / Tümü" tab group ── */
+.islem-donem-tabs {
+  background: rgba(255,255,255,.03) !important;
+  border-radius: 10px !important;
+  padding: 3px !important;
+  gap: 2px !important;
+}
+.islem-donem-tab {
+  border-radius: 7px !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  font-weight: 500 !important;
+}
+.islem-donem-tab.active {
+  font-weight: 600 !important;
+}
+
+/* ── 25. Kart ekstre/ödeme footer kutuları daha entegre ── */
+.kart-extre-footer {
+  border-top: 1px solid rgba(255,255,255,.05) !important;
+  padding-top: 10px !important;
+}
+.kart-extre-box {
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+}
+html[data-theme="light"] .kart-extre-box {
+  background: rgba(0,0,0,.02) !important;
+  border-color: rgba(0,0,0,.06) !important;
+}
+html[data-theme="light"] .kart-extre-footer {
+  border-top-color: rgba(0,0,0,.06) !important;
+}
+
+/* ── 26. Card::before top line — daha ince, neredeyse görünmez ── */
+.card::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.05) 50%, transparent 100%) !important;
+}
+
+/* ── 27. Filtre butonu ── */
+.btn-ghost[onclick*="Filtre"], .btn-ghost[onclick*="filtre"] {
+  font-size: 12px !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+}
+
+/* ═══════════════════════════════════════════════
+   ARAYÜZ İYİLEŞTİRMELERİ — DALGA 2
+   ═══════════════════════════════════════════════ */
+
+/* ── 1. Tab-bar (Tanımlamalar gibi çok-sekmeli sayfalar):
+       yatay kaydırmalı, taşmayan, nowrap pill satırı ── */
+.tab-bar {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  scroll-snap-type: x proximate;
+}
+.tab-bar::-webkit-scrollbar { height: 4px; }
+.tab-bar::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
+.tab-bar .tab-btn {
+  flex-shrink: 0 !important;
+  scroll-snap-align: start;
+}
+/* Sağ tarafta hafif gradient ile "daha fazla sekme var" ipucu */
+#page-tanimlamalar .tab-bar {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent 100%);
+}
+
+/* ── 2. Modal — body/header daha kompakt, label ve input daha okunaklı ── */
+.modal-body {
+  padding: 18px 20px !important;
+}
+.modal-body label {
+  font-size: 12px !important;
+  margin-bottom: 5px !important;
+  color: var(--text2) !important;
+  font-weight: 500 !important;
+}
+.modal-body .form-row {
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+.modal-header {
+  padding: 16px 20px 14px !important;
+}
+.modal-header-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  font-size: 16px !important;
+}
+.modal-footer {
+  padding: 12px 20px !important;
+  gap: 8px !important;
+}
+.msec-label {
+  font-size: 9px !important;
+  margin-bottom: 12px !important;
+  padding-bottom: 8px !important;
+}
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.money-input):not(.date-fake-input),
+.modal-body textarea {
+  font-size: 13.5px !important;
+  padding: 9px 12px !important;
+  min-height: 40px !important;
+}
+/* money-input ve date-fake-input kendi özel padding'lerini korur (₺ simgesi / takvim ikonu için yer açar) */
+.modal-body input.money-input,
+.modal-body input.date-fake-input {
+  font-size: 13.5px !important;
+  min-height: 40px !important;
+}
+.modal-body select {
+  font-size: 13.5px !important;
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+  min-height: 40px !important;
+}
+/* select-wrap içindeki select'lerde sol/sağ padding ikonlarla çakışmasın */
+.modal-body .select-wrap select {
+  padding-left: 34px !important;
+  padding-right: 32px !important;
+}
+@media (max-width: 768px) {
+  .modal-body { padding: 14px 16px !important; }
+  .modal-header { padding: 14px 16px 12px !important; }
+  .modal-footer { padding: 12px 16px !important; }
+  .modal-footer .btn { min-height: 44px !important; font-size: 13.5px !important; flex: 1 1 auto !important; }
+}
+
+/* ── 3. Tanımlamalar tabloları — satır/hücre aralığı sıklaştırma ── */
+#page-tanimlamalar table th {
+  font-size: 10px !important;
+  padding: 8px 10px !important;
+  letter-spacing: .04em !important;
+}
+#page-tanimlamalar table td {
+  font-size: 12.5px !important;
+  padding: 9px 10px !important;
+}
+@media (max-width: 768px) {
+  #page-tanimlamalar table th { font-size: 9.5px !important; padding: 6px 8px !important; }
+  #page-tanimlamalar table td { font-size: 11.5px !important; padding: 7px 8px !important; }
+}
+
+/* ── 4. Kira / Mevduat tabloları — mobilde sıkışıklığı azalt ── */
+#page-kira table th, #page-mevduat table th {
+  font-size: 10px !important;
+  padding: 8px 9px !important;
+  white-space: nowrap;
+}
+#page-kira table td, #page-mevduat table td {
+  font-size: 12px !important;
+  padding: 9px 9px !important;
+}
+@media (max-width: 768px) {
+  #page-kira table th, #page-mevduat table th { font-size: 9.5px !important; padding: 6px 7px !important; }
+  #page-kira table td, #page-mevduat table td { font-size: 11px !important; padding: 7px 7px !important; }
+}
+
+/* ── 5. İşlem satırı aksiyon butonları: bu blok aşağıda
+       mobil media query düzeltmesiyle ele alınıyor (bkz. #8) ── */
+
+/* ── 6. Tanımlamalar aksiyon butonları (Düzenle/Sil) — boyut normalize ── */
+#page-tanimlamalar .btn-act {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+/* ── 7. Hesaplar sayfası stat kartları — üst renkli çizgi zaten mevcut,
+       ekstra ayrıştırma gerekmiyor ── */
+
 </style>
 
 <!-- İŞLEMLER FİLTRE MODAL -->
@@ -11004,6 +11417,11 @@ function showTab(id, btn) {
     const tabBtn = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
     if(tabBtn) tabBtn.classList.add('active');
   }
+  // Aktif sekmeyi yatay scroll alanında görünür yap
+  const activeBtn = document.querySelector('#page-tanimlamalar .tab-btn.active');
+  if(activeBtn && activeBtn.scrollIntoView) {
+    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
   // Hash'e tab bilgisini yaz
   _pushHashState('tanimlamalar', {tab: id});
   if(id==='tab-para-birimi' || id==='tab-para-birimi-yonetim') {
@@ -12030,11 +12448,11 @@ function renderKartlar() {
       </div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px">
         <div style="min-width:0;overflow:hidden">
-          <div style="font-size:10px;color:var(--text3)">${k.ortakLimitGrupId ? 'GRUP KULLANIMI' : 'KULLANIMDA'}</div>
+          <div style="font-size:10px;color:var(--text3)">${k.ortakLimitGrupId ? 'Grup Kullanımı' : 'Kullanımda'}</div>
           <div class="mono" style="font-size:16px;color:var(--warn);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(grupKullanimGosterim, k.paraBirimi)}</div>
           ${k.ortakLimitGrupId ? `<div style="font-size:9.5px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">bu kart: ${fmtCur(kullanim, k.paraBirimi)}</div>` : ''}
         </div>
-        <div style="text-align:right;min-width:0;overflow:hidden"><div style="font-size:10px;color:var(--text3)">KULLANILABİLİR LİMİT</div><div class="mono" style="font-size:16px;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(musait, k.paraBirimi)}</div></div>
+        <div style="text-align:right;min-width:0;overflow:hidden"><div style="font-size:10px;color:var(--text3)">Kullanılabilir Limit</div><div class="mono" style="font-size:16px;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmtCur(musait, k.paraBirimi)}</div></div>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pctColor}"></div></div>
       <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:2px">${k.ortakLimitGrupId ? 'Grup Limiti' : 'Toplam Limit'}: ${fmtCur(toplamLimit, k.paraBirimi)}</div>
@@ -19481,8 +19899,8 @@ function renderTanimlamalar() {
 
   document.getElementById('banka-tbody').innerHTML = (DB.bankalar||[]).map((b,i)=>`<tr>
     <td class="mono">${i+1}</td>
-    <td>${b.tam}</td>
-    <td>${b.kisa}</td>
+    <td>${b.tam || b.kisa || '—'}</td>
+    <td>${b.kisa || b.tam || '—'}</td>
     <td class="mono" style="letter-spacing:.05em;color:var(--accent)">${b.ibanKod||'<span style="color:var(--text3)">—</span>'}</td>
     <td style="font-size:11px;color:var(--text3)">${b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length ? DB.subeler[b.ibanKod].length + ' şube' : '—'}</td>
     <td style="white-space:nowrap">
@@ -24673,10 +25091,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
       if (h >= 8 && h <= 20) td.classList.add('today-mark');
       else td.classList.remove('today-mark');
     }
+    // sidebar-clock ve topbar-date kaldırıldı — saat/tarih gösterilmiyor
   }
   window.updateClockFn = updateClock;
-  updateClock();
-  setInterval(updateClock, 1000);
+  // updateClock(); // devre dışı
+  // setInterval(updateClock, 1000); // devre dışı
 });
 
 // ═══ MİNİ KİŞİ POPUP ══════════════════════════════════════
@@ -28081,19 +28500,14 @@ window.entegre = {
     const iconBtn = document.createElement('button');
     iconBtn.type = 'button';
     iconBtn.className = 'date-fake-icon-btn';
-    iconBtn.innerHTML = '&#x1F4C5;';
+    iconBtn.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 2v2.5M11 2v2.5M2 6.5h12"/></svg>';
     iconBtn.tabIndex = -1;
     iconBtn.title = 'Takvim aç';
 
     inp._dateFake = txtInp;
 
-    // Gizli gerçek date input — değer deposu
-    inp.style.position = 'absolute';
-    inp.style.opacity  = '0';
-    inp.style.width    = '0';
-    inp.style.height   = '0';
-    inp.style.pointerEvents = 'none';
-    inp.style.overflow = 'hidden';
+    // Gizli gerçek date input — değer deposu, sadece ikon bölgesinde tıklanabilir
+    // (boyut/opacity/pointer-events artık .date-wrap input[type="date"] CSS kuralından geliyor)
     inp.tabIndex = -1;
 
     // DOM yerleştir
@@ -28105,10 +28519,18 @@ window.entegre = {
     // İlk değeri göster
     updateFake(inp);
 
-    // Takvim ikonuna tıklayınca picker aç
+    // Takvim ikonu artık tamamen görsel (pointer-events:none); tıklamalar
+    // doğrudan üstündeki gerçek input[type=date]'e gidiyor ve tarayıcı
+    // native picker'ı kendi açıyor. Bu listener klavye/erişilebilirlik
+    // için ekstra güvenlik payı (iconBtn'e fiziksel olarak ulaşılamaz
+    // ama olası farklı render senaryolarına karşı bırakıldı).
     iconBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      try { inp.showPicker(); } catch(ex) { inp.click(); }
+      e.stopPropagation();
+      try {
+        if (typeof inp.showPicker === 'function') inp.showPicker();
+        else { inp.focus(); inp.click(); }
+      } catch(ex) { /* sessizce yoksay */ }
     });
 
     // Native picker'dan değer gelince text'i güncelle
