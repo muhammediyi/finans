@@ -8700,6 +8700,19 @@ html[data-theme="light"] .kart-extre-footer {
           <div><label>Yerel Format</label><input id="pb-locale" placeholder="de-DE" value="tr-TR"></div>
         </div>
       </div>
+      <div class="msec">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Kur Eşleştirme
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label>TCMB Kuru Kodu <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
+            <input id="pb-tcmb-kodu" placeholder="örn. USD" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+            <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa TCMB'den bu para birimiyle aynı kodla (yukarıdaki "Kod" alanı) eşleştirme yapılır. Kodunuz TCMB'nin resmi kodundan farklıysa (örn. özel/takma bir kod kullandıysanız) burada TCMB'nin gerçek kodunu yazın ki günlük kur doğru çekilsin. TCMB'de karşılığı olmayan birimler (örn. altın) için boş bırakın.</div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-para-birimi')">İptal</button>
@@ -10808,7 +10821,10 @@ function defaultData() {
     uiFiltreler: { islemler: { kart:'', ay:'', taksit:'', q:'' }, extreler: { kart:'', durum:'' } },
     navStats: {},  // sayfa ziyaret sayaçları (Drive'a kaydedilir, mobil footer dinamik slotlar için)
     // TCMB döviz kurları — her gün otomatik çekilir (bkz. tcmbKurlariniGuncelle)
-    tcmbKur: { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} }
+    tcmbKur: { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} },
+    // Günlük TCMB kur geçmişi: [{tarih:'YYYY-MM-DD', guncellendi, kurlar:{KOD:{alis,satis,isim}}}, ...]
+    // tarihe göre artan sırada — geçmişe dönük servet/dönüşüm hesaplarında kullanılır (bkz. getTcmbKur)
+    tcmbKurGecmis: []
   };
 }
 
@@ -10819,12 +10835,12 @@ let DB = loadData();
 // ========== PARA BİRİMİ ==========
 // Varsayılan para birimleri - DB'ye yüklenir
 var DEFAULT_CURRENCY_CONFIG = {
-  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷', icon: '💵' },
-  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸', icon: '💵' },
-  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺', icon: '💶' },
-  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴' },
-  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷' },
-  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇' },
+  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷', icon: '💵', tcmbKodu: null },
+  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸', icon: '💵', tcmbKodu: 'USD' },
+  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺', icon: '💶', tcmbKodu: 'EUR' },
+  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴', tcmbKodu: 'JPY' },
+  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷', tcmbKodu: 'GBP' },
+  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇', tcmbKodu: null },
 };
 
 // CURRENCY_CONFIG - DB'den yüklenen + varsayılan
@@ -10844,6 +10860,9 @@ function loadCurrencyConfig() {
         ad: pb.ad,
         flag: pb.bayrak || '💱',
         icon: pb.ikon || pb.bayrak || '💱',
+        // TCMB'nin yayınladığı resmi kur kodu — boşsa para birimi kodunun kendisi kullanılır.
+        // Bu sayede kod ile TCMB kodu farklı olan/özel tanımlı birimler de eşleştirilebilir.
+        tcmbKodu: pb.tcmbKodu || null,
         custom: true
       };
     });
@@ -20229,12 +20248,27 @@ async function tcmbKurlariniGuncelle(manuel = false) {
 
     if (!Object.keys(kurlar).length) throw new Error('XML içinde kur verisi bulunamadı');
 
+    const guncellendiTs = new Date().toISOString();
     DB.tcmbKur = {
       tarih: tarihIso,
-      guncellendi: new Date().toISOString(),
+      guncellendi: guncellendiTs,
       sonKontrol: localDateStr(new Date()),
       kurlar
     };
+
+    // ── Günlük geçmiş kayıt — tarihe göre artan sıralı liste, gün başına 1 kayıt ──
+    // Geçmişe dönük servet/dönüşüm hesaplarında kullanılmak üzere her TCMB bülten
+    // tarihi için ayrı bir satır biriktirilir (bkz. getTcmbKur). Aynı bültene ait
+    // ikinci bir çekim (örn. manuel tekrar tıklama) varsa üzerine yazılır, çift kayıt oluşmaz.
+    if (tarihIso) {
+      DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
+      const idx = DB.tcmbKurGecmis.findIndex(r => r.tarih === tarihIso);
+      const satir = { tarih: tarihIso, guncellendi: guncellendiTs, kurlar };
+      if (idx >= 0) DB.tcmbKurGecmis[idx] = satir;
+      else DB.tcmbKurGecmis.push(satir);
+      DB.tcmbKurGecmis.sort((a, b) => a.tarih.localeCompare(b.tarih));
+    }
+
     saveData();
     if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
 
@@ -20262,6 +20296,32 @@ function tcmbKurGunlukKontrolEt() {
   if (!DB.tcmbKur || DB.tcmbKur.sonKontrol !== bugun) {
     tcmbKurlariniGuncelle(false);
   }
+}
+
+/**
+ * Bir para birimi koduna karşılık gelen TCMB kurunu (alış/satış) döner.
+ * code: uygulamadaki para birimi kodu (örn. "USD", "EUR" veya kullanıcı tanımlı özel kod)
+ * tarihStr: 'YYYY-MM-DD' — verilmezse bugünün en güncel kuru döner
+ *
+ * Eşleştirme CURRENCY_CONFIG[code].tcmbKodu üzerinden yapılır; bu alan boşsa
+ * doğrudan `code` ile TCMB'nin yayınladığı kod aynı kabul edilir. Geçmiş kayıtlar
+ * arasında verilen tarihe ≤ en yakın bültenden değer alınır (resmi tatil/hafta
+ * sonu için ayrıca bir kontrol gerekmez — TCMB o günlerde yeni bülten yayınlamaz,
+ * dolayısıyla en son iş gününün kuru otomatik olarak kullanılır).
+ * Hiç kayıt yoksa veya o para birimi TCMB'de hiç bulunamadıysa null döner.
+ */
+function getTcmbKur(code, tarihStr) {
+  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
+  const tcmbKodu = cfg.tcmbKodu || code;
+  const gecmis = DB.tcmbKurGecmis || [];
+  if (!gecmis.length) return null;
+  const hedefTarih = tarihStr || localDateStr(new Date());
+  let secili = gecmis[0];
+  for (const row of gecmis) {
+    if (row.tarih <= hedefTarih) secili = row;
+    else break;
+  }
+  return (secili.kurlar && secili.kurlar[tcmbKodu]) || null;
 }
 
 
@@ -20494,12 +20554,14 @@ function renderTanimlamalar() {
       const gosteimBtn = isDefault
         ? '<span style="font-size:10px;font-weight:700;color:var(--accent2);background:rgba(16,185,129,.15);padding:2px 8px;border-radius:4px;white-space:nowrap">&#11088; Gösterim</span>'
         : `<button class="btn btn-ghost btn-sm btn-act" onclick="setGosterimParaBirimi('${code}')" title="Gösterim birimi yap">&#11088;</button>`;
-      const kur = tcmbKurlar[code];
+      const tcmbKodu = cfg.tcmbKodu || code;
+      const kur = tcmbKurlar[tcmbKodu];
+      const kurEtiket = (tcmbKodu !== code) ? `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">TCMB: ${tcmbKodu}</div>` : '';
       const kurHucresi = code === 'TRY'
         ? '<span style="color:var(--text3)">—</span>'
         : (kur
-            ? `<span class="mono" style="font-size:11.5px" title="Alış: ${kur.alis} · Satış: ${kur.satis}">${kur.satis ?? kur.alis}</span>`
-            : '<span style="color:var(--text3);font-size:11px">TCMB\u2019de yok</span>');
+            ? `<span class="mono" style="font-size:11.5px" title="Alış: ${kur.alis} · Satış: ${kur.satis}">${kur.satis ?? kur.alis}</span>${kurEtiket}`
+            : `<span style="color:var(--text3);font-size:11px">TCMB\u2019de yok</span>${kurEtiket}`);
       return `<tr${isDefault ? ' style="background:rgba(16,185,129,.06)"' : ''}>
         <td><span class="badge badge-blue mono">${code}</span></td>
         <td class="mono" style="font-size:16px">${cfg.symbol}</td>
@@ -21007,6 +21069,7 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-konum').value = cfg.position || 'prefix';
     document.getElementById('pb-ondalik').value = cfg.decimals !== undefined ? cfg.decimals : 2;
     document.getElementById('pb-locale').value = cfg.locale || 'tr-TR';
+    document.getElementById('pb-tcmb-kodu').value = cfg.tcmbKodu || '';
   } else {
     title.textContent = 'Para Birimi Ekle';
     document.getElementById('pb-kod').value = '';
@@ -21018,6 +21081,7 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-konum').value = 'prefix';
     document.getElementById('pb-ondalik').value = '2';
     document.getElementById('pb-locale').value = 'tr-TR';
+    document.getElementById('pb-tcmb-kodu').value = '';
   }
   document.getElementById('modal-para-birimi').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
@@ -21038,6 +21102,7 @@ function saveParaBirimi() {
   if(!editParaBirimiKod && CURRENCY_CONFIG[kod]) { showToast('Bu kod zaten mevcut, düzenlemek için ✏️ butonunu kullanın', 'error'); return; }
   if(!DB.paraBirimleri) DB.paraBirimleri = [];
   const existing = DB.paraBirimleri.findIndex(pb=>pb.kod===kod);
+  const tcmbKoduGirilen = document.getElementById('pb-tcmb-kodu').value.trim().toUpperCase();
   const pb = {
     kod,
     sembol,
@@ -21046,7 +21111,8 @@ function saveParaBirimi() {
     ikon: document.getElementById('pb-ikon').value.trim(),
     konum: document.getElementById('pb-konum').value,
     ondalik: parseInt(document.getElementById('pb-ondalik').value),
-    locale: document.getElementById('pb-locale').value.trim() || 'tr-TR'
+    locale: document.getElementById('pb-locale').value.trim() || 'tr-TR',
+    tcmbKodu: tcmbKoduGirilen || null
   };
   if(existing >= 0) DB.paraBirimleri[existing] = pb;
   else DB.paraBirimleri.push(pb);
@@ -27456,8 +27522,11 @@ document.addEventListener('click', function(e) {
     '+ Kredi Tipi Ekle':  '🔖',
     '+ Tatil Günü Ekle':  '📅',
     '+ Kategori Ekle':    '🏷️',
+    '+ İlk Kategorini Ekle': '🏷️',
     '+ Kişi Ekle':        '👤',
     '+ Para Birimi Ekle': '💱',
+    '+ Altyapı Ekle':     '🌐',
+    '+ Abonelik Ekle':    '🔄',
     '+ Ekle':             '＋',
     // Kaydetme / İşlem
     'Kaydet':        '✓',
