@@ -588,7 +588,7 @@ html[data-theme="light"] .close-btn {
 }
 html[data-theme="light"] .modal-bg { background: rgba(15,22,41,.45); }
 html[data-theme="light"] .msec { background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.09); }
-html[data-theme="light"] .modal-body { background: #f0f2f8; }
+html[data-theme="light"] .modal-body { background: transparent; }
 html[data-theme="light"] .modal-footer { background: rgba(0,0,0,.03); }
 html[data-theme="light"] .msec-label { color: rgba(15,22,41,.5); border-bottom-color: rgba(0,0,0,.07); }
 html[data-theme="light"] .msec-label.gold   { color: #c47a00; border-bottom-color: rgba(196,122,0,.2); }
@@ -6608,7 +6608,7 @@ window.addEventListener('load', placeMobProfilePanel);
           <button class="tbk-period-btn tbk-period-active" data-gun="365" onclick="tbkSetPeriod(365,this)">1 Yıl</button>
           <button class="tbk-period-btn" data-gun="730" onclick="tbkSetPeriod(730,this)">2 Yıl</button>
         </div>
-        <select id="tahmin-pb-secim" onchange="renderTahminBakiye()" class="tbk-pb-select" style="display:none"></select>
+        <div id="tahmin-pb-chips" class="tbk-pb-chips" style="display:none"></div>
       </div>
     </div>
     <div id="ozet-tahmin-bakiye"></div>
@@ -6895,7 +6895,21 @@ html[data-theme="light"] .tbk-uyari-bos { background: rgba(217, 119, 6, .08); bo
 #tahmin-pb-secim:hover { border-color:var(--border-active); background:var(--surface4); }
 #tahmin-pb-secim:focus { outline:none; border-color:var(--gold); }
 
-.tbk-pb-select { font-size:11.5px; padding:5px 10px; border-radius:8px; background:var(--surface3); border:1px solid var(--border2); color:var(--text); flex-shrink:0; max-width:140px; }
+.tbk-pb-chips { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.tbk-pb-chip {
+  font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px;
+  border:1px solid var(--border2); background:var(--surface3); color:var(--text2);
+  cursor:pointer; transition:all .15s; white-space:nowrap; user-select:none;
+  font-family:var(--mono);
+}
+.tbk-pb-chip:hover { border-color:var(--border-active); color:var(--text); background:var(--surface4); }
+.tbk-pb-chip.active {
+  background:var(--gold-glow); border-color:rgba(251,191,36,.45);
+  color:var(--gold); box-shadow:0 0 0 1px rgba(251,191,36,.15);
+}
+html[data-theme="light"] .tbk-pb-chip { background:var(--surface2); color:var(--text2); border-color:var(--border2); }
+html[data-theme="light"] .tbk-pb-chip:hover { background:var(--surface3); color:var(--text); }
+html[data-theme="light"] .tbk-pb-chip.active { background:rgba(196,122,0,.1); border-color:rgba(196,122,0,.4); color:var(--gold); }
 .tbk-card-header { flex-wrap:wrap; gap:8px 0; }
 .tbk-card-header .card-title { flex:1 1 auto; min-width:0; }
 .tbk-controls { display:flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
@@ -6940,7 +6954,7 @@ html[data-theme="light"] .tbk-uyari-bos { background: rgba(217, 119, 6, .08); bo
   .tbk-controls { order:2; margin-left:0; width:100%; }
   .tbk-period-group { flex:1; }
   .tbk-period-btn { flex:1; text-align:center; }
-  .tbk-pb-select { }
+  .tbk-pb-chips { flex-wrap:wrap; }
   .tbk-stat-val { font-size:14.5px; word-break:break-word; }
   .tbk-kalemler { grid-template-columns:1fr; }
   .tbk-aylik-table { font-size:10.5px; }
@@ -22153,7 +22167,7 @@ function renderOzet() {
         </div>
         <div class="kl-main">
           <div class="kl-top">
-            <span class="kl-name">${k.ad}${grupRozet}</span>
+            <span class="kl-name"><span class="kl-name-text">${k.ad}</span>${grupRozet}</span>
             <span class="kl-pct kl-pct-${seviye}">%${pctRound}</span>
           </div>
           <div class="kl-bar"><div class="kl-bar-fill" style="width:${Math.max(pct,1.5)}%;background:${renkVar}"></div></div>
@@ -22323,12 +22337,195 @@ function renderOzet() {
   });
   cashItems.sort((a,b)=>a.gun-b.gun);
 
-  document.getElementById('ozet-nakit').innerHTML = cashItems.length ?
-    cashItems.map(c=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(42,58,82,.4);font-size:12px">
-      <span style="color:var(--text3)">${c.gun}. gün · ${c.aciklama}</span>
-      <span class="mono ${c.tutar>=0?'green':'red'}">${fmt(c.tutar,true)}</span>
-    </div>`).join('') :
-    '<div style="color:var(--text3);font-size:12px;padding:12px">Bu ay nakit akışı yok</div>';
+  // ── NAKIT AKIŞ — Gelişmiş Görsel ─────────────────────────────────
+  (function renderNakitAkisGorsel() {
+    const el = document.getElementById('ozet-nakit');
+    if(!el) return;
+
+    if(!cashItems.length) {
+      el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:36px 16px;color:var(--text3)">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".4"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div style="font-size:12.5px">Bu ay planlanmış nakit hareketi yok</div>
+      </div>`;
+      return;
+    }
+
+    const todayGun = today.getDate();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const pb = defaultCurrency || 'TRY';
+
+    // Günlük kümülatif akış hesapla (tüm ay)
+    const gunlukMap = {};
+    cashItems.forEach(c => {
+      if(!gunlukMap[c.gun]) gunlukMap[c.gun] = { gelir: 0, gider: 0, items: [] };
+      if(c.tutar >= 0) gunlukMap[c.gun].gelir += c.tutar;
+      else gunlukMap[c.gun].gider += Math.abs(c.tutar);
+      gunlukMap[c.gun].items.push(c);
+    });
+
+    const toplamGelir = cashItems.reduce((s,c) => s + (c.tutar > 0 ? c.tutar : 0), 0);
+    const toplamGider = cashItems.reduce((s,c) => s + (c.tutar < 0 ? Math.abs(c.tutar) : 0), 0);
+    const netAkis = toplamGelir - toplamGider;
+
+    // SVG Bar Chart — ayın her günü için çubuk
+    const W = 520, H = 90, padL = 8, padR = 8, padT = 12, padB = 22;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const barW = Math.max(3, Math.floor(plotW / daysInMonth) - 2);
+    const barGap = plotW / daysInMonth;
+
+    const maxVal = Math.max(...Object.values(gunlukMap).map(g => Math.max(g.gelir, g.gider)), 1);
+
+    let bars = '';
+    let dayLabels = '';
+    const labelGun = daysInMonth <= 15 ? 1 : daysInMonth <= 20 ? 2 : 5;
+
+    for(let d = 1; d <= daysInMonth; d++) {
+      const cx = padL + (d - 0.5) * barGap;
+      const g = gunlukMap[d];
+      const isToday = d === todayGun;
+      const isPast = d < todayGun;
+      const isFuture = d > todayGun;
+
+      if(isToday) {
+        // Bugün: dikey referans çizgisi
+        bars += `<line x1="${cx.toFixed(1)}" y1="${padT}" x2="${cx.toFixed(1)}" y2="${H-padB}" stroke="var(--gold)" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>`;
+      }
+
+      if(g) {
+        const gelirH = (g.gelir / maxVal) * plotH;
+        const giderH = (g.gider / maxVal) * plotH;
+        const bx = cx - barW / 2;
+
+        if(g.gelir > 0) {
+          const gy = H - padB - gelirH;
+          const alpha = isFuture ? 0.45 : 0.9;
+          bars += `<rect class="nka-bar" x="${bx.toFixed(1)}" y="${gy.toFixed(1)}" width="${barW}" height="${gelirH.toFixed(1)}" rx="2" fill="var(--teal)" opacity="${alpha}" data-gun="${d}" data-gelir="${g.gelir.toFixed(0)}" data-gider="${g.gider.toFixed(0)}" data-items="${encodeURIComponent(JSON.stringify(g.items))}"/>`;
+        }
+        if(g.gider > 0) {
+          const gy = H - padB - giderH;
+          const alpha = isFuture ? 0.45 : 0.9;
+          bars += `<rect class="nka-bar" x="${bx.toFixed(1)}" y="${gy.toFixed(1)}" width="${barW}" height="${giderH.toFixed(1)}" rx="2" fill="var(--rose)" opacity="${alpha}" data-gun="${d}" data-gelir="${g.gelir.toFixed(0)}" data-gider="${g.gider.toFixed(0)}" data-items="${encodeURIComponent(JSON.stringify(g.items))}"/>`;
+        }
+
+        // Aktif gün için dot
+        if(isToday) {
+          const topY = g.gelir > 0 ? H - padB - (g.gelir/maxVal)*plotH : (g.gider > 0 ? H - padB - (g.gider/maxVal)*plotH : H - padB);
+          bars += `<circle cx="${cx.toFixed(1)}" cy="${(topY - 5).toFixed(1)}" r="3" fill="var(--gold)" stroke="var(--bg)" stroke-width="1.5"/>`;
+        }
+      }
+
+      if(d === 1 || d === todayGun || (d % labelGun === 0 && d !== 1)) {
+        const labelColor = isToday ? 'var(--gold)' : 'var(--text3)';
+        const labelText = isToday ? `${d}●` : `${d}`;
+        dayLabels += `<text x="${cx.toFixed(1)}" y="${H - 4}" font-size="8" font-family="var(--mono)" fill="${labelColor}" text-anchor="middle" font-weight="${isToday?'700':'400'}">${labelText}</text>`;
+      }
+    }
+
+    // Hover alanı (şeffaf üst rect)
+    const hoverRect = `<rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH + padB}" fill="transparent" id="nka-hover-rect" style="cursor:crosshair"/>`;
+
+    const svgHtml = `<svg id="nka-svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;overflow:visible" preserveAspectRatio="none">
+      <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--border)" stroke-width="0.8"/>
+      ${bars}
+      ${dayLabels}
+      ${hoverRect}
+    </svg>
+    <div id="nka-tooltip" style="position:absolute;pointer-events:none;z-index:5;background:rgba(8,10,16,.97);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.55);transition:opacity .1s;opacity:0;font-size:12px;left:0;top:0"></div>`;
+
+    // Satır listesi (olay bazlı)
+    const listHtml = cashItems.map(c => {
+      const isPast = c.gun < todayGun;
+      const isToday = c.gun === todayGun;
+      const tarihLabel = isToday ? 'Bugün' : `${c.gun}. gün`;
+      const icon = c.tutar >= 0 ? '💰' : '💸';
+      const renkClass = c.tutar >= 0 ? 'nka-gelir' : 'nka-gider';
+      return `<div class="nka-row${isToday?' nka-row-today':''}${isPast?' nka-row-past':''}">
+        <div class="nka-row-icon">${icon}</div>
+        <div class="nka-row-info">
+          <div class="nka-row-aciklama">${c.aciklama}</div>
+          <div class="nka-row-meta">${tarihLabel}</div>
+        </div>
+        <div class="nka-row-tutar ${renkClass}">${fmt(c.tutar, true)}</div>
+      </div>`;
+    }).join('');
+
+    const netRenk = netAkis >= 0 ? 'var(--teal)' : 'var(--rose)';
+    const netIcon = netAkis >= 0 ? '↑' : '↓';
+
+    el.innerHTML = `
+      <div class="nka-stats">
+        <div class="nka-stat">
+          <div class="nka-stat-label">Toplam Gelir</div>
+          <div class="nka-stat-val nka-gelir">+${fmt(toplamGelir)}</div>
+        </div>
+        <div class="nka-stat-divider"></div>
+        <div class="nka-stat">
+          <div class="nka-stat-label">Toplam Gider</div>
+          <div class="nka-stat-val nka-gider">-${fmt(toplamGider)}</div>
+        </div>
+        <div class="nka-stat-divider"></div>
+        <div class="nka-stat">
+          <div class="nka-stat-label">Net Akış</div>
+          <div class="nka-stat-val" style="color:${netRenk}">${netIcon}${fmt(Math.abs(netAkis))}</div>
+        </div>
+      </div>
+      <div class="nka-chart-wrap" style="position:relative">
+        ${svgHtml}
+      </div>
+      <div class="nka-legend">
+        <span class="nka-legend-item"><span class="nka-legend-dot" style="background:var(--teal)"></span>Gelir</span>
+        <span class="nka-legend-item"><span class="nka-legend-dot" style="background:var(--rose)"></span>Gider</span>
+        <span class="nka-legend-item"><span class="nka-legend-dot" style="background:var(--gold);border-radius:50%"></span>Bugün</span>
+        <span class="nka-legend-item" style="margin-left:auto;color:var(--text3);font-size:10px">${daysInMonth} günlük ay · şeffaf = gelecek</span>
+      </div>
+      <div class="nka-list">${listHtml}</div>
+    `;
+
+    // Hover etkileşimi
+    (function attachNkaHover() {
+      const svg = document.getElementById('nka-svg');
+      const hRect = document.getElementById('nka-hover-rect');
+      const tooltip = document.getElementById('nka-tooltip');
+      if(!svg || !hRect || !tooltip) return;
+
+      hRect.addEventListener('mousemove', function(evt) {
+        const rect = svg.getBoundingClientRect();
+        const relX = evt.clientX - rect.left;
+        const ratioX = relX / rect.width;
+        const svgX = ratioX * W;
+        const gun = Math.round((svgX - padL) / barGap + 0.5);
+        const d = Math.max(1, Math.min(daysInMonth, gun));
+        const g = gunlukMap[d];
+        const cx = padL + (d - 0.5) * barGap;
+        const px = (cx / W) * rect.width;
+
+        if(!g) { tooltip.style.opacity = '0'; return; }
+
+        const isToday = d === todayGun;
+        const gunLabel = isToday ? `${d}. gün (Bugün)` : `${d}. gün`;
+        const itemsHtml = g.items.map(i =>
+          `<div style="display:flex;justify-content:space-between;gap:12px;margin-top:4px">
+            <span style="color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">${i.aciklama}</span>
+            <span style="font-family:var(--mono);font-weight:700;color:${i.tutar>=0?'var(--teal)':'var(--rose)';}">${fmt(i.tutar,true)}</span>
+          </div>`
+        ).join('');
+
+        tooltip.innerHTML = `<div style="font-size:10px;color:var(--text3);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${gunLabel}</div>
+          ${g.gelir>0?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--text2)">Gelir</span><span style="font-family:var(--mono);color:var(--teal);font-weight:700">+${fmt(g.gelir)}</span></div>`:''}
+          ${g.gider>0?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--text2)">Gider</span><span style="font-family:var(--mono);color:var(--rose);font-weight:700">-${fmt(g.gider)}</span></div>`:''}
+          ${g.items.length > 1 ? `<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:4px">${itemsHtml}</div>` : ''}`;
+
+        let leftPx = px + 10;
+        const ttW = 190;
+        if(leftPx + ttW > rect.width) leftPx = px - ttW - 10;
+        tooltip.style.left = Math.max(0, leftPx) + 'px';
+        tooltip.style.top = '0px';
+        tooltip.style.opacity = '1';
+      });
+      hRect.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+    })();
+  })();
 
   // ── GELECEK 1 YIL TAHMİNİ BAKİYE ────────────────────────────────
   if(typeof renderTahminBakiye === 'function') renderTahminBakiye();
@@ -22571,8 +22768,8 @@ function tahminGelecekBakiyeHesapla(gunSayisi=365) {
 
 function renderTahminBakiye() {
   const elWrap = document.getElementById('ozet-tahmin-bakiye');
-  const elSel = document.getElementById('tahmin-pb-secim');
-  if(!elWrap || !elSel) return;
+  const elChips = document.getElementById('tahmin-pb-chips');
+  if(!elWrap || !elChips) return;
 
   const gunSayisi = window._tbkGunSayisi || 365;
   // Aktif period butonunu senkronize et (sayfa yenilemelerinde)
@@ -22586,21 +22783,29 @@ function renderTahminBakiye() {
       <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>
       <div style="font-size:12.5px">Hesap bulunamadı — önce bir hesap ekleyin.</div>
     </div>`;
-    elSel.style.display = 'none';
+    elChips.style.display = 'none';
     return;
   }
-  elSel.style.display = '';
 
-  // PB dropdown'u doldur (seçim korunur). _NAKIT etiketli olanlar "Nakit" olarak gösterilir.
-  const oncekiSecim = elSel.value;
-  elSel.innerHTML = pbList.map(pb=>{
-    const isNakit = pb.endsWith('_NAKIT');
-    const gercekPb = isNakit ? pb.replace('_NAKIT','') : pb;
-    const etiket = isNakit ? `💵 ${gercekPb} Nakit` : gercekPb;
-    return `<option value="${pb}">${etiket}</option>`;
-  }).join('');
-  elSel.value = pbList.includes(oncekiSecim) ? oncekiSecim : pbList[0];
-  const pb = elSel.value;
+  // Chip'leri oluştur (seçim korunur)
+  const oncekiSecim = window._tbkSeciliPb || null;
+  let aktifPb = pbList.includes(oncekiSecim) ? oncekiSecim : pbList[0];
+
+  if(pbList.length > 1) {
+    elChips.style.display = '';
+    elChips.innerHTML = pbList.map(pb=>{
+      const isNakit = pb.endsWith('_NAKIT');
+      const gercekPb = isNakit ? pb.replace('_NAKIT','') : pb;
+      const etiket = isNakit ? `💵 ${gercekPb}` : gercekPb;
+      const isActive = pb === aktifPb;
+      return `<button class="tbk-pb-chip${isActive?' active':''}" onclick="window._tbkSeciliPb='${pb}';renderTahminBakiye()">${etiket}</button>`;
+    }).join('');
+  } else {
+    elChips.style.display = 'none';
+  }
+
+  const pb = aktifPb;
+  window._tbkSeciliPb = pb;
   const pbGercek = pb.endsWith('_NAKIT') ? pb.replace('_NAKIT','') : pb;
   const safeId = pb.replace(/[^a-zA-Z0-9]/g,'');
 
@@ -22756,8 +22961,13 @@ function renderTahminBakiye() {
     markers += `<text x="${(lastPt.x-7).toFixed(1)}" y="${lastLabelY.toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="${cizgiRenk}" text-anchor="end" opacity="0.85">${fmtCurShort(sonBakiye, pbGercek)}</text>`;
   }
 
-  // Hover için tüm gerçek olay günleri
+  // Hover için tüm gerçek olay günleri + son sentetik nokta
   const olayNoktalari = gunler.map(g=>({x:xFor(g.tarih), y:yFor(g.bakiye), tarih:g.tarih, bakiye:g.bakiye, olaylar:g.olaylar}));
+  // Son sentetik noktayı (pts'in son elemanı) da hover listesine ekle
+  const _sonPt = pts[pts.length-1];
+  if(_sonPt && (!olayNoktalari.length || _sonPt.x > olayNoktalari[olayNoktalari.length-1].x + 1)) {
+    olayNoktalari.push(_sonPt);
+  }
 
   // ── Aylık Breakdown Hesabı ───────────────────────────────────────
   const AY_KISATR = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
@@ -22922,7 +23132,7 @@ function renderTahminBakiye() {
         ${ayEtiketleri}
         <line id="tbk-hoverline-${safeId}" x1="0" y1="${padT}" x2="0" y2="${H-padB}" stroke="var(--text2)" stroke-width="1" stroke-dasharray="2,3" opacity="0"/>
         <circle id="tbk-hoverdot-${safeId}" cx="0" cy="0" r="5" fill="${cizgiRenk}" stroke="var(--bg)" stroke-width="2" opacity="0"/>
-        <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="transparent" style="cursor:crosshair" id="tbk-hoverarea-${safeId}"/>
+        <rect x="${padL}" y="${padT}" width="${plotW + padR}" height="${plotH}" fill="transparent" style="cursor:crosshair" id="tbk-hoverarea-${safeId}"/>
       </svg>
       <div id="tbk-tooltip-${safeId}" class="tbk-tooltip" style="opacity:0"></div>
     </div>
@@ -29165,12 +29375,17 @@ function entAbonelikYansit(abId, ayKey, durum, tutar) {
       font-size: 13px;
       font-weight: 600;
       color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       display: inline-flex;
       align-items: center;
       gap: 5px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .kl-name-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
     .kl-grup-badge {
       display: inline-flex;
@@ -29321,7 +29536,34 @@ function entAbonelikYansit(abId, ayKey, durum, tutar) {
     .ring-row-val.pos { color: var(--teal); }
     .ring-row-val.neg { color: var(--rose); }
 
-    /* ── Borç durumu ── */
+    /* ── Nakit Akış (nka) stilleri ── */
+    .nka-stats { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:0; padding:14px 16px 12px; border-bottom:1px solid var(--border); }
+    .nka-stat { display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .nka-stat-label { font-size:9.5px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+    .nka-stat-val { font-family:var(--mono); font-size:15px; font-weight:700; white-space:nowrap; }
+    .nka-gelir { color:var(--teal); }
+    .nka-gider { color:var(--rose); }
+    .nka-stat-divider { width:1px; height:32px; background:var(--border); margin:0 8px; }
+    .nka-chart-wrap { padding:10px 14px 2px; }
+    .nka-legend { display:flex; align-items:center; gap:12px; padding:4px 14px 10px; flex-wrap:wrap; }
+    .nka-legend-item { display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--text2); }
+    .nka-legend-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+    .nka-list { border-top:1px solid var(--border); display:flex; flex-direction:column; }
+    .nka-row { display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); transition:background .12s; }
+    .nka-row:last-child { border-bottom:none; }
+    .nka-row:hover { background:var(--surface2); }
+    .nka-row-today { background:rgba(251,191,36,.04); border-left:2px solid var(--gold); }
+    .nka-row-today:hover { background:rgba(251,191,36,.07); }
+    .nka-row-past { opacity:.65; }
+    .nka-row-icon { font-size:16px; text-align:center; }
+    .nka-row-info { min-width:0; }
+    .nka-row-aciklama { font-size:12.5px; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .nka-row-meta { font-size:10.5px; color:var(--text3); margin-top:1px; }
+    .nka-row-tutar { font-family:var(--mono); font-size:13px; font-weight:700; white-space:nowrap; text-align:right; }
+    .nka-bar { transition:opacity .15s; }
+    .nka-bar:hover { opacity:1 !important; }
+    html[data-theme="light"] .nka-row-today { background:rgba(196,122,0,.05); }
+    @media(max-width:480px) { .nka-stat-val { font-size:13px; } .nka-stats { padding:12px 10px 10px; } .nka-legend { padding:4px 10px 8px; } .nka-row { padding:8px 10px; } }
     .debt-total { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--rose); margin-bottom: 10px; }
     .debt-bar { height: 8px; border-radius: 99px; background: rgba(251,113,133,.25); overflow:hidden; margin-bottom: 4px; }
     .debt-bar-fill { height: 100%; background: var(--rose); border-radius: 99px; }
@@ -29937,64 +30179,6 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
     if(DB.odLog) delete DB.odLog['ent:'+k];
     if(DB.entLog) delete DB.entLog[k];
   };
-})();
-
-// ══════════════════════════════════════════════════════════════════════════════
-// 7. OZET NAKIT AKIŞ SATIRLARINI GRAFİĞE DÖNÜŞTÜR
-// ══════════════════════════════════════════════════════════════════════════════
-(function(){
-  // renderOzet'teki nakit akış bölümünü override et
-  // Orijinal sadece satır listesiydi; şimdi mini görsel bar ekleyelim
-  const _patchNakit = function() {
-    const el = document.getElementById('ozet-nakit');
-    if(!el || !el.children.length) return;
-    // Mevcut içeriği koru ama başına mini bar chart ekle
-    const today = new Date();
-    const y = today.getFullYear(), m = today.getMonth();
-    // Günlük bakiye simülasyonu (basit)
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-    const pts = [];
-    let running = 0;
-    const _maasPayDates = (DB.maaslar||[]).filter(ms=>!ms.pasif).map(ms=>{
-      const og = getMaasOdemeGunu(ms, y, m);
-      const pd = og.sonraki ? new Date(y, m+1, og.gun) : new Date(y, m, og.gun);
-      return { ms, dStr: localDateStr(pd) };
-    });
-    for(let d=1; d<=daysInMonth; d++) {
-      const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      // Kira + maaş
-      (DB.kiralar||[]).filter(k=>!k.pasif).forEach(k=>{
-        const pd = kiraPayInMonth(k, y, m);
-        if(pd && localDateStr(pd)===dStr) running += k.tutar;
-      });
-      _maasPayDates.forEach(({ms, dStr:msDStr})=>{
-        if(msDStr===dStr) running += ms.tutar;
-      });
-      if(d <= today.getDate()) pts.push(running);
-    }
-    if(!pts.length) return;
-    // Küçük SVG sparkline
-    const minV = Math.min(...pts,0), maxV = Math.max(...pts,0.01);
-    const W=200, H=40, pad=4;
-    const xS = (W-2*pad)/(pts.length-1||1), yS=(H-2*pad)/(maxV-minV||1);
-    const path = pts.map((v,i)=>`${i?'L':'M'}${pad+i*xS},${H-pad-(v-minV)*yS}`).join(' ');
-    const zero = H-pad-(0-minV)*yS;
-    const sparkEl = document.createElement('div');
-    sparkEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;margin-bottom:8px">
-      <line x1="${pad}" y1="${zero}" x2="${W-pad}" y2="${zero}" stroke="var(--border)" stroke-width="0.5"/>
-      <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="${pad+(pts.length-1)*xS}" cy="${H-pad-(pts[pts.length-1]-minV)*yS}" r="3" fill="var(--teal)"/>
-    </svg>`;
-    el.insertBefore(sparkEl, el.firstChild);
-  };
-
-  const _origRenderOzet2 = window.renderOzet;
-  if(typeof _origRenderOzet2 === 'function') {
-    window.renderOzet = function() {
-      _origRenderOzet2.apply(this, arguments);
-      setTimeout(_patchNakit, 50);
-    };
-  }
 })();
 
 // İlk yüklemede renderAbonelik ve grafikleri de çalıştır
