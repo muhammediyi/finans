@@ -8065,6 +8065,7 @@ html[data-theme="light"] .kart-extre-footer {
     <div class="action-row">
       <button class="btn btn-primary btn-sm" onclick="openParaBirimiModal()">+ Para Birimi Ekle</button>
       <button class="btn btn-ghost btn-sm" id="btn-tcmb-guncelle" onclick="tcmbKurlariniGuncelle(true)" title="TCMB'den güncel kurları çek">🔄 TCMB Kurlarını Güncelle</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-tcmb-gecmis')" title="Geçmiş günlerin TCMB kurlarını görüntüle">📜 Geçmiş Kurlar</button>
       <span id="tcmb-guncelle-status" style="font-size:12px;color:var(--text3)"></span>
       <span id="tcmb-son-guncelleme" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
     </div>
@@ -8650,6 +8651,56 @@ html[data-theme="light"] .kart-extre-footer {
 </div>
 
 <!-- Para Birimi Modal -->
+<!-- Geçmiş TCMB Kurları Modal -->
+<div class="modal-bg" id="modal-tcmb-gecmis">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-header-icon" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2)">📜</div>
+        <div class="modal-header-text">
+          <div class="modal-title">Geçmiş TCMB Kurları</div>
+          <div class="modal-subtitle">Günlük olarak kaydedilen döviz kuru geçmişi</div>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modal-tcmb-gecmis')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-3" style="margin-bottom:12px">
+        <div>
+          <label>Para Birimi</label>
+          <select id="tg-pb-filtre" onchange="renderTcmbGecmis()"></select>
+        </div>
+        <div>
+          <label>Başlangıç</label>
+          <input type="date" id="tg-baslangic" data-no-reset onchange="renderTcmbGecmis()">
+        </div>
+        <div>
+          <label>Bitiş</label>
+          <input type="date" id="tg-bitis" data-no-reset onchange="renderTcmbGecmis()">
+        </div>
+      </div>
+      <div class="action-row" style="margin-bottom:10px;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="tgHizliAralik(7)">Son 7 gün</button>
+        <button class="btn btn-ghost btn-sm" onclick="tgHizliAralik(30)">Son 30 gün</button>
+        <button class="btn btn-ghost btn-sm" onclick="tgHizliAralik(90)">Son 90 gün</button>
+        <button class="btn btn-ghost btn-sm" onclick="tgHizliAralik(null)">Tümü</button>
+        <span id="tg-kayit-sayisi" style="font-size:11px;color:var(--text3);margin-left:auto;align-self:center"></span>
+      </div>
+      <div class="card" style="padding:0;max-height:52vh;overflow-y:auto">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Tarih</th><th>Kod</th><th>Alış (₺)</th><th>Satış (₺)</th></tr></thead>
+            <tbody id="tg-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tcmb-gecmis')">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-para-birimi">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
@@ -11936,6 +11987,7 @@ function openModal(id, onceSecimKartId) {
   if(id==='modal-islem') populateIslemModal(onceSecimKartId);
   if(id==='modal-mevduat') populateMevduatModal();
   if(id==='modal-eslestir') renderEkstreEslestir();
+  if(id==='modal-tcmb-gecmis') populateTcmbGecmisModal();
   // Money input binding — yeni açılan modalda da çalışsın
   const modalEl = document.getElementById(id);
   if(modalEl) setTimeout(()=>bindMoneyInputs(modalEl), 10);
@@ -20381,6 +20433,92 @@ function getTcmbKur(code, tarihStr) {
     else break;
   }
   return (secili.kurlar && secili.kurlar[tcmbKodu]) || null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GEÇMİŞ TCMB KURLARI MODALI
+// ═══════════════════════════════════════════════════════════
+// "modal-tcmb-gecmis" açıldığında çağrılır (bkz. openModal). Para birimi
+// ve tarih aralığı filtrelerine göre DB.tcmbKurGecmis kayıtlarını listeler.
+function populateTcmbGecmisModal() {
+  const sel = document.getElementById('tg-pb-filtre');
+  if (sel) {
+    // Yalnızca TCMB ile eşleşebilecek (tcmbKodu null olmayan) birimleri listele
+    const uygun = Object.keys(CURRENCY_CONFIG).filter(c => {
+      if (c === 'TRY') return false;
+      const cfg = CURRENCY_CONFIG[c];
+      return cfg.tcmbKodu !== null; // null = TCMB'de karşılığı yok (örn. altın)
+    });
+    const onceki = sel.value;
+    sel.innerHTML = uygun.map(c => {
+      const cfg = CURRENCY_CONFIG[c];
+      const tcmbKodu = cfg.tcmbKodu || c;
+      return `<option value="${c}">${cfg.flag || ''} ${c}${tcmbKodu !== c ? ' (TCMB: ' + tcmbKodu + ')' : ''}</option>`;
+    }).join('');
+    if (onceki && uygun.includes(onceki)) sel.value = onceki;
+    else if (uygun.includes('USD')) sel.value = 'USD';
+  }
+  // Varsayılan tarih aralığı: son 30 gün
+  const bitisEl = document.getElementById('tg-bitis');
+  const baslangicEl = document.getElementById('tg-baslangic');
+  if (bitisEl && !bitisEl.value) bitisEl.value = localDateStr(new Date());
+  if (baslangicEl && !baslangicEl.value) {
+    const d = new Date(); d.setDate(d.getDate() - 30);
+    baslangicEl.value = localDateStr(d);
+  }
+  renderTcmbGecmis();
+}
+
+// Hızlı aralık butonları: son N gün veya tümü (gun=null)
+function tgHizliAralik(gun) {
+  const baslangicEl = document.getElementById('tg-baslangic');
+  const bitisEl = document.getElementById('tg-bitis');
+  const gecmis = DB.tcmbKurGecmis || [];
+  if (!baslangicEl || !bitisEl) return;
+  bitisEl.value = localDateStr(new Date());
+  if (gun === null) {
+    baslangicEl.value = gecmis.length ? gecmis[0].tarih : '';
+  } else {
+    const d = new Date(); d.setDate(d.getDate() - gun);
+    baslangicEl.value = localDateStr(d);
+  }
+  renderTcmbGecmis();
+}
+
+function renderTcmbGecmis() {
+  const tbody = document.getElementById('tg-tbody');
+  if (!tbody) return;
+  const code = document.getElementById('tg-pb-filtre').value;
+  const baslangic = document.getElementById('tg-baslangic').value || '0000-01-01';
+  const bitis = document.getElementById('tg-bitis').value || '9999-12-31';
+  const cfg = CURRENCY_CONFIG[code] || {};
+  const tcmbKodu = cfg.tcmbKodu || code;
+
+  const gecmis = (DB.tcmbKurGecmis || [])
+    .filter(r => r.tarih >= baslangic && r.tarih <= bitis)
+    .slice()
+    .sort((a, b) => b.tarih.localeCompare(a.tarih)); // en yeni üstte
+
+  const sayacEl = document.getElementById('tg-kayit-sayisi');
+  if (sayacEl) sayacEl.textContent = `${gecmis.length} gün listeleniyor`;
+
+  if (!gecmis.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Seçilen aralıkta kayıt bulunamadı</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = gecmis.map(row => {
+    const kur = row.kurlar && row.kurlar[tcmbKodu];
+    const fmtKur = (v) => (v === null || v === undefined) ? '<span style="color:var(--text3)">—</span>' : ('₺' + v.toLocaleString('tr-TR', {minimumFractionDigits:4, maximumFractionDigits:4}));
+    const alis = fmtKur(kur && kur.alis);
+    const satis = fmtKur(kur && kur.satis);
+    return `<tr>
+      <td class="mono">${fmtDate(row.tarih)}</td>
+      <td><span class="badge badge-blue mono">${tcmbKodu}</span></td>
+      <td class="mono">${alis}</td>
+      <td class="mono">${satis}</td>
+    </tr>`;
+  }).join('');
 }
 
 
