@@ -22507,7 +22507,7 @@ function renderOzet() {
         const itemsHtml = g.items.map(i =>
           `<div style="display:flex;justify-content:space-between;gap:12px;margin-top:4px">
             <span style="color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">${i.aciklama}</span>
-            <span style="font-family:var(--mono);font-weight:700;color:${i.tutar>=0?'var(--teal)':'var(--rose)';}">${fmt(i.tutar,true)}</span>
+            <span style="font-family:var(--mono);font-weight:700;color:${i.tutar>=0?'var(--teal)':'var(--rose)'}">${fmt(i.tutar,true)}</span>
           </div>`
         ).join('');
 
