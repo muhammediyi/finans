@@ -13685,7 +13685,7 @@ function openKartDetayModal(kartId, tab) {
   if (iconEl) { iconEl.style.background = renk + '1a'; iconEl.style.borderColor = renk + '40'; }
   const bannerEl = document.getElementById('kd-header-banner');
   if (bannerEl) bannerEl.style.background = `linear-gradient(90deg, ${renk}, transparent)`;
-  openModal('modal-kart-detay');
+  openModal('modal-kart-detay', kartId);
   kdSwitchTab(tab || 'islem');
 }
 
@@ -13702,6 +13702,14 @@ function kdSwitchTab(tab) {
   activeEl.style.animation = 'kdTabFadeIn .1s ease';
   if (tab === 'islem') kdRenderIslemler();
   else kdRenderExtreler();
+  // Hash'e tab bilgisini yaz (restore için)
+  if(_kdKartId) {
+    const p = _currentHashParams();
+    if(p.modal === 'modal-kart-detay') {
+      p.modalTab = tab;
+      _pushHashState(_currentHashPage(), p);
+    }
+  }
 }
 
 // Bu karta ait işlemleri zenginleştirilmiş sekme olarak render et:
@@ -25657,12 +25665,52 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     // Modal geri yükle — sadece belirli "form dışı" / "okuma" modalleri restore et
     // (Yeni kayıt formları restore edilmez — kullanıcı formu yarıda bırakmış sayılır)
-    const RESTORABLE_MODALS = ['modal-kart-odeme','modal-hesap-log','modal-iban-popup'];
+    const RESTORABLE_MODALS = [
+      'modal-kart-odeme',
+      'modal-hesap-log',
+      'modal-iban-popup',
+      'modal-kategori-oneri',
+      'modal-kart-detay',
+      'modal-drive-revizyon',
+      'modal-islem-filtre',
+      'modal-extre-kart',
+      'modal-extre-durum',
+      'modal-extre-kategori',
+      'modal-ozel-extre',
+    ];
     if(params.modal && RESTORABLE_MODALS.includes(params.modal)) {
       setTimeout(() => {
         const modalEl = document.getElementById(params.modal);
-        if(modalEl) openModal(params.modal, params.modalKart || undefined);
-      }, 120);
+        if(!modalEl) return;
+        switch(params.modal) {
+          case 'modal-kategori-oneri':
+            openKategoriOneriModal();
+            break;
+          case 'modal-kart-detay':
+            if(params.modalKart) openKartDetayModal(params.modalKart, params.modalTab || 'islem');
+            break;
+          case 'modal-drive-revizyon':
+            if(typeof gDriveAcRevizyonModal === 'function') gDriveAcRevizyonModal();
+            break;
+          case 'modal-islem-filtre':
+            if(typeof openIslemFiltreModal === 'function') openIslemFiltreModal();
+            break;
+          case 'modal-extre-kart':
+            if(typeof openExtreKartModal === 'function') openExtreKartModal();
+            break;
+          case 'modal-extre-durum':
+            if(typeof openExtreDurumModal === 'function') openExtreDurumModal();
+            break;
+          case 'modal-extre-kategori':
+            if(typeof openExtreKategoriModal === 'function') openExtreKategoriModal();
+            break;
+          case 'modal-ozel-extre':
+            if(typeof openOzelExtreModal === 'function') openOzelExtreModal();
+            break;
+          default:
+            openModal(params.modal, params.modalKart || undefined);
+        }
+      }, 180);
     }
   }
 
