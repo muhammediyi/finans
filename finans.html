@@ -8761,6 +8761,7 @@ html[data-theme="light"] .kart-extre-footer {
             <label>Kur Nereden Çekilsin?</label>
             <select id="pb-kur-tip" onchange="pbKurTipDegisti()">
               <option value="tcmb">TCMB (resmi döviz bülteni)</option>
+              <option value="xau_yahoo">Yahoo Finance — Altın/GC=F (otomatik)</option>
               <option value="ozel">Özel API (kendi URL'ini gir)</option>
               <option value="manuel">Manuel (otomatik çekilmesin)</option>
             </select>
@@ -10944,9 +10945,9 @@ var DEFAULT_CURRENCY_CONFIG = {
   JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴', tcmbKodu: 'JPY', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'JPY' } },
   GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷', tcmbKodu: 'GBP', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'GBP' } },
   XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇', tcmbKodu: null,
-    // Varsayılan olarak Truncgil Finans API'sinden Gram Altın okur — kullanıcı isterse
-    // para birimi düzenleme ekranından farklı bir API'ye veya manuel'e çevirebilir.
-    kurKaynagi: { tip: 'ozel', url: 'https://finans.truncgil.com/v3/today.json', jsonPathAlis: 'Gram Altın.Alış', jsonPathSatis: 'Gram Altın.Satış', kurBirimi: 'TRY' }
+    // Yahoo Finance üzerinden XAU/USD spot fiyatı çekilir, TCMB USD/TRY kuru ile TRY'ye çevrilir.
+    // Kullanıcı isterse para birimi düzenleme ekranından farklı bir kaynağa çekebilir.
+    kurKaynagi: { tip: 'xau_yahoo' }
   },
 };
 
@@ -20279,12 +20280,20 @@ async function resmiTatilleriGuncelle() {
 // anahtar olarak denenir, bulunamazsa path parçalanıp adım adım inilir.
 function jsonPathOku(obj, path) {
   if (!obj || !path) return null;
+  // Önce tam key olarak dene (key içinde nokta olan durumlar için)
   if (Object.prototype.hasOwnProperty.call(obj, path)) return obj[path];
+  // Noktalı path parçalama
   const parcalar = path.split('.');
   let cur = obj;
   for (const p of parcalar) {
-    if (cur === null || cur === undefined) return null;
-    cur = cur[p];
+    if (cur === null || cur === undefined || typeof cur !== 'object') return null;
+    // Önce tam eşleşme
+    if (Object.prototype.hasOwnProperty.call(cur, p)) { cur = cur[p]; continue; }
+    // Büyük/küçük harf ve boşluk normalize edilmiş (trim) arama
+    const pNorm = p.trim().toLowerCase();
+    const found = Object.keys(cur).find(k => k.trim().toLowerCase() === pNorm);
+    if (found !== undefined) { cur = cur[found]; continue; }
+    return null; // bulunamadı
   }
   return cur === undefined ? null : cur;
 }
@@ -20305,12 +20314,46 @@ function paraSayiyaCevir(v) {
   return isNaN(n) ? null : n;
 }
 
+// Yahoo Finance üzerinden XAU/USD spot fiyatını çeker.
+// GC=F (gold futures front-month) kullanılır — API key gerektirmez, tarayıcıdan CORS açık çalışır.
+// Dönüş: { alis, satis } USD cinsinden (ons başına) veya null.
+async function xauYahooCek() {
+  // Yahoo Finance v8 chart API — genellikle CORS açık, key yok
+  const endpoints = [
+    'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d',
+    'https://query2.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d',
+    'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GC%3DF',
+    'https://query2.finance.yahoo.com/v7/finance/quote?symbols=GC%3DF',
+  ];
+  for (const url of endpoints) {
+    try {
+      const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) { console.warn('[xau-yahoo] HTTP', resp.status, url); continue; }
+      const j = await resp.json();
+      // v8 chart format
+      if (j?.chart?.result?.[0]?.meta?.regularMarketPrice) {
+        const price = j.chart.result[0].meta.regularMarketPrice;
+        return { alis: price, satis: price };
+      }
+      // v7 quote format
+      if (j?.quoteResponse?.result?.[0]?.regularMarketPrice) {
+        const price = j.quoteResponse.result[0].regularMarketPrice;
+        return { alis: price, satis: price };
+      }
+      console.warn('[xau-yahoo] beklenmedik yanıt formatı:', url, JSON.stringify(j).slice(0, 200));
+    } catch(err) { console.warn('[xau-yahoo] hata:', url, err.message); }
+  }
+  return null;
+}
+
 // Özel bir JSON API'sinden tek bir para biriminin kurunu çeker.
 // kurKaynagi: { url, jsonPathAlis, jsonPathSatis, kurBirimi }
 // Dönüş: { alis, satis } (kurBirimi cinsinden) veya null (başarısız).
 // Not: özel API'ler TCMB gibi tarihe göre arşiv sunmaz — her zaman "en güncel" değer döner.
 async function ozelApiKurCek(kurKaynagi) {
   if (!kurKaynagi || !kurKaynagi.url) return null;
+  // İlk deneme: direkt URL (bazı API'ler CORS başlığı gönderiyor; Truncgil gibi)
+  // Eğer direkt çalışırsa proxy yüküne girmeyiz.
   const endpoints = [
     { url: kurKaynagi.url, wrapped: false },
     { url: `https://proxy.corsfix.com/?${kurKaynagi.url}`, wrapped: false },
@@ -20474,24 +20517,24 @@ async function tcmbKurlariniGuncelle(manuel = false) {
   DB.tcmbKur.sonKontrol = localDateStr(new Date());
 
   if (!bugunVeriXml) {
-    saveData();
-    const msg = 'Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin';
-    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + msg; }
-    if (manuel && typeof showToast === 'function') showToast('TCMB kur güncelleme hatası: ' + msg, 'error');
-    if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
-    if (status) setTimeout(() => { status.textContent = ''; }, 6000);
-    return false;
+    // TCMB başarısızsa bile özel API (XAU vb.) birimleri bağımsız çekilmeye devam eder.
+    const tcmbMsg = 'TCMB bağlantısı başarısız; TCMB kaynaklı kurlar güncellenemedi';
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + tcmbMsg; }
+    if (manuel && typeof showToast === 'function') showToast(tcmbMsg, 'error');
   }
 
   // TCMB ham kurlarını (TCMB koduyla) uygulama koduna eşleştirip tek bir günlük kayda dönüştür.
-  const bugunVeri = { tarihIso: bugunVeriXml.tarihIso, kurlar: {} };
-  Object.keys(CURRENCY_CONFIG).forEach(code => {
-    const cfg = CURRENCY_CONFIG[code];
-    const kk = cfg.kurKaynagi;
-    if (kk && kk.tip === 'tcmb' && kk.tcmbKodu && bugunVeriXml.kurlar[kk.tcmbKodu]) {
-      bugunVeri.kurlar[code] = bugunVeriXml.kurlar[kk.tcmbKodu];
-    }
-  });
+  const bugunTarih = bugunVeriXml ? bugunVeriXml.tarihIso : localDateStr(new Date());
+  const bugunVeri = { tarihIso: bugunTarih, kurlar: {} };
+  if (bugunVeriXml) {
+    Object.keys(CURRENCY_CONFIG).forEach(code => {
+      const cfg = CURRENCY_CONFIG[code];
+      const kk = cfg.kurKaynagi;
+      if (kk && kk.tip === 'tcmb' && kk.tcmbKodu && bugunVeriXml.kurlar[kk.tcmbKodu]) {
+        bugunVeri.kurlar[code] = bugunVeriXml.kurlar[kk.tcmbKodu];
+      }
+    });
+  }
 
   // 1b) Özel API kaynaklı para birimleri (örn. XAU) — her biri kendi URL/path'inden çekilir.
   //     Özel API'nin döndürdüğü kur, kurKaynagi.kurBirimi cinsindendir; TRY değilse,
@@ -20500,7 +20543,25 @@ async function tcmbKurlariniGuncelle(manuel = false) {
   for (const code of Object.keys(CURRENCY_CONFIG)) {
     const cfg = CURRENCY_CONFIG[code];
     const kk = cfg.kurKaynagi;
-    if (!kk || kk.tip !== 'ozel') continue;
+    if (!kk) continue;
+
+    // Tip: xau_yahoo — Yahoo Finance GC=F (altın vadeli) üzerinden XAU/USD çekip TCMB USD/TRY ile çarpar
+    if (kk.tip === 'xau_yahoo') {
+      const sonuc = await xauYahooCek();
+      if (!sonuc) { ozelApiHatalari.push(code); console.warn('[kur] XAU Yahoo çekimi başarısız'); continue; }
+      // GC=F USD/oz cinsinden gelir; TCMB'den USD/TRY alarak TRY'ye çevir
+      const usdKur = bugunVeri.kurlar['USD'];
+      const usdTry = usdKur ? (usdKur.satis || usdKur.alis) : null;
+      if (!usdTry) { ozelApiHatalari.push(code); console.warn('[kur] XAU için USD/TRY kurunamadı'); continue; }
+      bugunVeri.kurlar[code] = {
+        alis:  sonuc.alis  !== null ? +(sonuc.alis  * usdTry).toFixed(4) : null,
+        satis: sonuc.satis !== null ? +(sonuc.satis * usdTry).toFixed(4) : null,
+        isim: cfg.ad || code
+      };
+      continue;
+    }
+
+    if (kk.tip !== 'ozel') continue;
     const sonuc = await ozelApiKurCek(kk);
     if (!sonuc) { ozelApiHatalari.push(code); continue; }
     const kurBirimi = kk.kurBirimi || 'TRY';
@@ -20996,6 +21057,7 @@ function renderTanimlamalar() {
       const kur = tcmbKurlar[code];
       let kaynakEtiket = '';
       if (kk.tip === 'tcmb') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">TCMB${kk.tcmbKodu && kk.tcmbKodu!==code ? ': '+kk.tcmbKodu : ''}</div>`;
+      else if (kk.tip === 'xau_yahoo') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">Yahoo Finance (GC=F)</div>`;
       else if (kk.tip === 'ozel') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px" title="${kk.url||''}">Özel API</div>`;
       else if (kk.tip === 'manuel' && code !== 'TRY') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">Manuel</div>`;
       const kurHucresi = code === 'TRY'
@@ -21499,9 +21561,19 @@ let editParaBirimiKod = null;
 
 function pbKurTipDegisti() {
   const tip = document.getElementById('pb-kur-tip').value;
-  document.getElementById('pb-kur-tcmb-alanlar').style.display  = tip === 'tcmb'   ? '' : 'none';
-  document.getElementById('pb-kur-ozel-alanlar').style.display   = tip === 'ozel'   ? '' : 'none';
-  document.getElementById('pb-kur-manuel-alanlar').style.display = tip === 'manuel' ? '' : 'none';
+  document.getElementById('pb-kur-tcmb-alanlar').style.display  = tip === 'tcmb'      ? '' : 'none';
+  document.getElementById('pb-kur-ozel-alanlar').style.display   = tip === 'ozel'      ? '' : 'none';
+  // xau_yahoo ve manuel için ek alan yok; manuel mesajı göster
+  document.getElementById('pb-kur-manuel-alanlar').style.display = (tip === 'manuel' || tip === 'xau_yahoo') ? '' : 'none';
+  // xau_yahoo açıklama metnini güncelle
+  const manuelKutu = document.getElementById('pb-kur-manuel-alanlar');
+  if (manuelKutu) {
+    if (tip === 'xau_yahoo') {
+      manuelKutu.innerHTML = '<div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Yahoo Finance üzerinden GC=F (altın vadeli kontratı) spot fiyatı USD cinsinden çekilir; TCMB USD/TRY kuru ile TRY\u2019ye çevrilir. API key gerekmez.</div>';
+    } else {
+      manuelKutu.innerHTML = '<div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez. Toplam varlık/tahmin hesaplarında bu birim için kur bulunamazsa tutar çevrilmeden (kendi cinsinden) kullanılır.</div>';
+    }
+  }
 }
 
 function openParaBirimiModal(kod=null) {
@@ -21574,6 +21646,8 @@ function saveParaBirimi() {
   if (kurTip === 'tcmb') {
     const tcmbKoduGirilen = document.getElementById('pb-tcmb-kodu').value.trim().toUpperCase();
     kurKaynagi = { tip: 'tcmb', tcmbKodu: tcmbKoduGirilen || kod };
+  } else if (kurTip === 'xau_yahoo') {
+    kurKaynagi = { tip: 'xau_yahoo' };
   } else if (kurTip === 'ozel') {
     const url = document.getElementById('pb-ozel-url').value.trim();
     if (!url) { showToast('Özel API için URL zorunlu', 'error'); return; }
