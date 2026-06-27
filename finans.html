@@ -21497,6 +21497,13 @@ if (document.readyState === 'loading') {
 // ========== PARA BİRİMİ YÖNETİMİ ==========
 let editParaBirimiKod = null;
 
+function pbKurTipDegisti() {
+  const tip = document.getElementById('pb-kur-tip').value;
+  document.getElementById('pb-kur-tcmb-alanlar').style.display  = tip === 'tcmb'   ? '' : 'none';
+  document.getElementById('pb-kur-ozel-alanlar').style.display   = tip === 'ozel'   ? '' : 'none';
+  document.getElementById('pb-kur-manuel-alanlar').style.display = tip === 'manuel' ? '' : 'none';
+}
+
 function openParaBirimiModal(kod=null) {
   editParaBirimiKod = kod;
   const title = document.getElementById('para-birimi-modal-title');
@@ -21512,7 +21519,15 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-konum').value = cfg.position || 'prefix';
     document.getElementById('pb-ondalik').value = cfg.decimals !== undefined ? cfg.decimals : 2;
     document.getElementById('pb-locale').value = cfg.locale || 'tr-TR';
-    document.getElementById('pb-tcmb-kodu').value = cfg.tcmbKodu || '';
+    // Kur kaynağı alanlarını doldur
+    const kk = cfg.kurKaynagi || (cfg.tcmbKodu ? { tip: 'tcmb', tcmbKodu: cfg.tcmbKodu } : { tip: 'manuel' });
+    document.getElementById('pb-kur-tip').value = kk.tip || 'manuel';
+    document.getElementById('pb-tcmb-kodu').value = (kk.tip === 'tcmb' ? (kk.tcmbKodu || '') : '');
+    document.getElementById('pb-ozel-url').value = kk.url || '';
+    document.getElementById('pb-ozel-path-alis').value = kk.jsonPathAlis || '';
+    document.getElementById('pb-ozel-path-satis').value = kk.jsonPathSatis || '';
+    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
+    if(kurBirimiSel) kurBirimiSel.value = kk.kurBirimi || 'TRY';
   } else {
     title.textContent = 'Para Birimi Ekle';
     document.getElementById('pb-kod').value = '';
@@ -21524,8 +21539,15 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-konum').value = 'prefix';
     document.getElementById('pb-ondalik').value = '2';
     document.getElementById('pb-locale').value = 'tr-TR';
+    document.getElementById('pb-kur-tip').value = 'manuel';
     document.getElementById('pb-tcmb-kodu').value = '';
+    document.getElementById('pb-ozel-url').value = '';
+    document.getElementById('pb-ozel-path-alis').value = '';
+    document.getElementById('pb-ozel-path-satis').value = '';
+    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
+    if(kurBirimiSel) kurBirimiSel.value = 'TRY';
   }
+  pbKurTipDegisti();
   document.getElementById('modal-para-birimi').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
 
@@ -21545,7 +21567,28 @@ function saveParaBirimi() {
   if(!editParaBirimiKod && CURRENCY_CONFIG[kod]) { showToast('Bu kod zaten mevcut, düzenlemek için ✏️ butonunu kullanın', 'error'); return; }
   if(!DB.paraBirimleri) DB.paraBirimleri = [];
   const existing = DB.paraBirimleri.findIndex(pb=>pb.kod===kod);
-  const tcmbKoduGirilen = document.getElementById('pb-tcmb-kodu').value.trim().toUpperCase();
+
+  // Kur kaynağı objesini oluştur
+  const kurTip = document.getElementById('pb-kur-tip').value || 'manuel';
+  let kurKaynagi;
+  if (kurTip === 'tcmb') {
+    const tcmbKoduGirilen = document.getElementById('pb-tcmb-kodu').value.trim().toUpperCase();
+    kurKaynagi = { tip: 'tcmb', tcmbKodu: tcmbKoduGirilen || kod };
+  } else if (kurTip === 'ozel') {
+    const url = document.getElementById('pb-ozel-url').value.trim();
+    if (!url) { showToast('Özel API için URL zorunlu', 'error'); return; }
+    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
+    kurKaynagi = {
+      tip: 'ozel',
+      url,
+      jsonPathAlis: document.getElementById('pb-ozel-path-alis').value.trim(),
+      jsonPathSatis: document.getElementById('pb-ozel-path-satis').value.trim(),
+      kurBirimi: kurBirimiSel ? kurBirimiSel.value : 'TRY'
+    };
+  } else {
+    kurKaynagi = { tip: 'manuel' };
+  }
+
   const pb = {
     kod,
     sembol,
@@ -21555,7 +21598,9 @@ function saveParaBirimi() {
     konum: document.getElementById('pb-konum').value,
     ondalik: parseInt(document.getElementById('pb-ondalik').value),
     locale: document.getElementById('pb-locale').value.trim() || 'tr-TR',
-    tcmbKodu: tcmbKoduGirilen || null
+    // Geriye dönük uyumluluk
+    tcmbKodu: kurKaynagi.tip === 'tcmb' ? (kurKaynagi.tcmbKodu || null) : null,
+    kurKaynagi
   };
   if(existing >= 0) DB.paraBirimleri[existing] = pb;
   else DB.paraBirimleri.push(pb);
