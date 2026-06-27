@@ -22140,16 +22140,34 @@ function renderOzet() {
       const limit = getKartToplamLimit(k.id);
       const kull  = k.ortakLimitGrupId ? getOrtakGrupKullanim(k.ortakLimitGrupId) : getKartKullanim(k.id);
       const pct   = limit>0 ? Math.min(100,(kull/limit)*100) : 0;
-      const color = pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--accent2)';
-      const grupRozet = k.ortakLimitGrupId ? ' <span style="font-size:9px;color:var(--violet)">🔗</span>' : '';
-      return `<div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span>${k.ad}${grupRozet}</span>
-          <span class="mono">${fmtCur(kull, k.paraBirimi)} / ${fmtCur(limit, k.paraBirimi)}</span>
+      const pctRound = Math.round(pct);
+      const seviye = pct>80?'danger':pct>50?'warn':'ok';
+      const renkVar = {danger:'var(--danger)', warn:'var(--warn)', ok:'var(--accent2)'}[seviye];
+      const kartRengi = (typeof getKartRenk === 'function') ? getKartRenk(k) : (k.renk || '#4f8ef7');
+      const grupRozet = k.ortakLimitGrupId ? `<span class="kl-grup-badge" title="Ortak limit grubu">
+        <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </span>` : '';
+      return `<div class="kl-row kl-${seviye}">
+        <div class="kl-chip" style="background:${kartRengi}1a;color:${kartRengi}">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><line x1="2" y1="9.5" x2="22" y2="9.5"/></svg>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="kl-main">
+          <div class="kl-top">
+            <span class="kl-name">${k.ad}${grupRozet}</span>
+            <span class="kl-pct kl-pct-${seviye}">%${pctRound}</span>
+          </div>
+          <div class="kl-bar"><div class="kl-bar-fill" style="width:${Math.max(pct,1.5)}%;background:${renkVar}"></div></div>
+          <div class="kl-bottom">
+            <span class="kl-used mono">${fmtCur(kull, k.paraBirimi)}</span>
+            <span class="kl-sep">/</span>
+            <span class="kl-limit mono">${fmtCur(limit, k.paraBirimi)}</span>
+          </div>
+        </div>
       </div>`;
-    }).join('') : '<div style="color:var(--text3);font-size:12px">Kart tanımlı değil</div>';
+    }).join('') : `<div class="kl-empty">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>Kart tanımlı değil</span>
+      </div>`;
 
   // Yaklaşan ödemeler (30 gün)
   const upcoming = [];
@@ -29115,6 +29133,98 @@ function entAbonelikYansit(abId, ayKey, durum, tutar) {
     .ozet-stat-wide { grid-column: span 2; }
     @media(max-width:1300px) { .ozet-stat-wide { grid-column: span 1; } }
     .ozet-stat .nb-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+
+    /* ── Kart Limit Kullanımı — yeniden tasarım ──────────────────── */
+    .kl-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 4px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .kl-row:last-child { border-bottom: none; padding-bottom: 4px; }
+    .kl-row:hover { background: rgba(255,255,255,.018); border-radius: 10px; }
+    html[data-theme="light"] .kl-row:hover { background: rgba(0,0,0,.015); }
+    .kl-chip {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .kl-main { flex: 1; min-width: 0; }
+    .kl-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+    .kl-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .kl-grup-badge {
+      display: inline-flex;
+      color: var(--violet);
+      opacity: .8;
+      flex-shrink: 0;
+    }
+    .kl-pct {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+    .kl-pct-ok     { color: var(--accent2); background: rgba(45,212,191,.12); }
+    .kl-pct-warn   { color: var(--warn);    background: rgba(251,191,36,.12); }
+    .kl-pct-danger { color: var(--danger);  background: rgba(251,113,133,.14); }
+    .kl-bar {
+      height: 6px;
+      border-radius: 99px;
+      background: var(--surface3);
+      overflow: hidden;
+      margin-bottom: 7px;
+    }
+    .kl-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .55s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .kl-bar-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.3), transparent);
+    }
+    .kl-bottom {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      font-size: 11.5px;
+    }
+    .kl-used { color: var(--text2); font-weight: 600; }
+    .kl-sep { color: var(--text3); opacity: .5; }
+    .kl-limit { color: var(--text3); }
+    .kl-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 32px 16px;
+      color: var(--text3);
+      font-size: 12.5px;
+    }
 
     /* ── Grafik kartları ── */
     #ozet-grafik-row { display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:16px;margin-bottom:18px; }
