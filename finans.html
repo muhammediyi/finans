@@ -22597,7 +22597,13 @@ function renderTahminBakiye() {
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStrLocal = localDateStr(today);
   const isMobile = window.innerWidth <= 640;
-  const W = isMobile ? 360 : 800, H = isMobile ? 220 : 250;
+  // viewBox genişliğini konteynerin gerçek piksel genişliğine sabitliyoruz.
+  // Aksi halde sabit 800 birimlik viewBox geniş ekranlarda (ör. 1200px+ kart)
+  // oranlı büyütülüyor (preserveAspectRatio="none" olsa da x/y aynı oranda
+  // büyür) ve font/çizgi kalınlığı diğer arayüz elemanlarına göre "zoomlu"
+  // görünüyordu. Gerçek genişliği kullanınca 1 viewBox birimi = 1 piksel olur.
+  const measuredW = elWrap.getBoundingClientRect().width;
+  const W = isMobile ? 360 : Math.max(640, Math.round(measuredW) || 800), H = isMobile ? 220 : 250;
   const yAxisW = isMobile ? 0 : 52;
   const padL = (isMobile ? 6 : 10) + yAxisW, padR = isMobile ? 10 : 14, padT = 26, padB = 30;
   const plotW = W - padL - padR, plotH = H - padT - padB;
@@ -22728,7 +22734,8 @@ function renderTahminBakiye() {
   markers += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="5" fill="${cizgiRenk}" opacity="0.18"><animate attributeName="r" values="5;9;5" dur="2.6s" repeatCount="indefinite"/></circle>`;
   markers += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="4" fill="${cizgiRenk}" stroke="var(--bg)" stroke-width="1.75"/>`;
   if(!isMobile) {
-    markers += `<text x="${(lastPt.x+6).toFixed(1)}" y="${(lastPt.y+4).toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="${cizgiRenk}" text-anchor="start" opacity="0.8">${fmtCurShort(sonBakiye, pbGercek)}</text>`;
+    const lastLabelY = lastPt.y < padT+14 ? lastPt.y+16 : lastPt.y-10;
+    markers += `<text x="${(lastPt.x-7).toFixed(1)}" y="${lastLabelY.toFixed(1)}" font-size="9.5" font-family="var(--mono)" fill="${cizgiRenk}" text-anchor="end" opacity="0.85">${fmtCurShort(sonBakiye, pbGercek)}</text>`;
   }
 
   // Hover için tüm gerçek olay günleri
@@ -22993,6 +23000,19 @@ function tbkSetPeriod(gun, btn) {
   if(btn) btn.classList.add('tbk-period-active');
   renderTahminBakiye();
 }
+
+// Pencere genişliği değişince grafiği gerçek piksel genişliğine göre
+// yeniden çiz (viewBox = konteyner genişliği mantığı için gerekli).
+let _tbkResizeT = null;
+window.addEventListener('resize', function () {
+  clearTimeout(_tbkResizeT);
+  _tbkResizeT = setTimeout(function () {
+    if (document.getElementById('ozet-tahmin-bakiye') && typeof renderTahminBakiye === 'function') {
+      renderTahminBakiye();
+    }
+  }, 200);
+});
+
 
 // Y ekseni etiketleri için kısa para gösterimi (1.250.000 -> 1,25Mn gibi sıkıştırma)
 function fmtCurShort(n, currency) {
