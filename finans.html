@@ -20318,30 +20318,32 @@ function paraSayiyaCevir(v) {
 // GC=F (gold futures front-month) kullanılır — API key gerektirmez, tarayıcıdan CORS açık çalışır.
 // Dönüş: { alis, satis } USD cinsinden (ons başına) veya null.
 async function xauYahooCek() {
-  // Yahoo Finance v8 chart API — genellikle CORS açık, key yok
-  const endpoints = [
-    'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d',
-    'https://query2.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d',
-    'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GC%3DF',
-    'https://query2.finance.yahoo.com/v7/finance/quote?symbols=GC%3DF',
+  // Yahoo Finance CORS açık değil — allorigins / corsproxy üzerinden geçiriyoruz.
+  const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d';
+  const proxied = [
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: true },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
+    { url: `https://cors-anywhere.herokuapp.com/${YAHOO_URL}`, wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(YAHOO_URL)}`, wrapped: false },
+    { url: `https://thingproxy.freeboard.io/fetch/${YAHOO_URL}`, wrapped: false },
   ];
-  for (const url of endpoints) {
+  for (const ep of proxied) {
     try {
-      const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) { console.warn('[xau-yahoo] HTTP', resp.status, url); continue; }
-      const j = await resp.json();
-      // v8 chart format
-      if (j?.chart?.result?.[0]?.meta?.regularMarketPrice) {
-        const price = j.chart.result[0].meta.regularMarketPrice;
-        return { alis: price, satis: price };
+      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) { console.warn('[xau-yahoo] proxy HTTP', resp.status, ep.url); continue; }
+      let text = await resp.text();
+      if (ep.wrapped) {
+        const outer = JSON.parse(text);
+        if (!outer?.contents) { console.warn('[xau-yahoo] wrap-no-contents', ep.url); continue; }
+        text = outer.contents;
       }
-      // v7 quote format
-      if (j?.quoteResponse?.result?.[0]?.regularMarketPrice) {
-        const price = j.quoteResponse.result[0].regularMarketPrice;
-        return { alis: price, satis: price };
-      }
-      console.warn('[xau-yahoo] beklenmedik yanıt formatı:', url, JSON.stringify(j).slice(0, 200));
-    } catch(err) { console.warn('[xau-yahoo] hata:', url, err.message); }
+      const j = JSON.parse(text);
+      const price = j?.chart?.result?.[0]?.meta?.regularMarketPrice
+                 ?? j?.quoteResponse?.result?.[0]?.regularMarketPrice;
+      if (price) return { alis: price, satis: price };
+      console.warn('[xau-yahoo] fiyat bulunamadı:', ep.url, JSON.stringify(j).slice(0, 150));
+    } catch(err) { console.warn('[xau-yahoo] hata:', ep.url, err.message); }
   }
   return null;
 }
@@ -20352,43 +20354,40 @@ async function xauYahooCek() {
 // Not: özel API'ler TCMB gibi tarihe göre arşiv sunmaz — her zaman "en güncel" değer döner.
 async function ozelApiKurCek(kurKaynagi) {
   if (!kurKaynagi || !kurKaynagi.url) return null;
-  // İlk deneme: direkt URL (bazı API'ler CORS başlığı gönderiyor; Truncgil gibi)
-  // Eğer direkt çalışırsa proxy yüküne girmeyiz.
+  const _u = kurKaynagi.url;
   const endpoints = [
-    { url: kurKaynagi.url, wrapped: false },
-    { url: `https://proxy.corsfix.com/?${kurKaynagi.url}`, wrapped: false },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
-    { url: `https://cors.x2u.in/${kurKaynagi.url}`, wrapped: false },
-    { url: `https://api.cors.lol/?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: true },
-    { url: `https://thingproxy.freeboard.io/fetch/${kurKaynagi.url}`, wrapped: false },
+    { url: _u, wrapped: false },
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(_u)}`, wrapped: true },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(_u)}`, wrapped: false },
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(_u)}`, wrapped: false },
+    { url: `https://cors-anywhere.herokuapp.com/${_u}`, wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(_u)}`, wrapped: false },
+    { url: `https://thingproxy.freeboard.io/fetch/${_u}`, wrapped: false },
+    { url: `https://proxy.corsfix.com/?${_u}`, wrapped: false },
+    { url: `https://api.cors.lol/?url=${encodeURIComponent(_u)}`, wrapped: false },
+    { url: `https://cors.x2u.in/${_u}`, wrapped: false },
   ];
-  for (const ep of endpoints) {
-    try {
-      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
-      if (!resp.ok) { console.warn('[ozel-api-kur] proxy HTTP', resp.status, ep.url); continue; }
-      let text = await resp.text();
-      if (ep.wrapped) {
-        let parsed;
-        try { parsed = JSON.parse(text); } catch(e) { console.warn('[ozel-api-kur] proxy sarmalı JSON değil:', ep.url); continue; }
-        if (!parsed || typeof parsed.contents !== 'string') { console.warn('[ozel-api-kur] proxy sarmalı geçersiz:', ep.url); continue; }
-        text = parsed.contents;
-      }
-      let json;
-      try { json = JSON.parse(text); } catch(e) { console.warn('[ozel-api-kur] yanıt JSON değil:', ep.url); continue; }
-      const alisRaw = kurKaynagi.jsonPathAlis ? jsonPathOku(json, kurKaynagi.jsonPathAlis) : null;
-      const satisRaw = kurKaynagi.jsonPathSatis ? jsonPathOku(json, kurKaynagi.jsonPathSatis) : null;
-      const alis = paraSayiyaCevir(alisRaw);
-      const satis = paraSayiyaCevir(satisRaw);
-      if (alis === null && satis === null) {
-        console.warn('[ozel-api-kur] path ile değer bulunamadı:', kurKaynagi.jsonPathAlis, kurKaynagi.jsonPathSatis, ep.url);
-        continue;
-      }
-      return { alis, satis };
-    } catch(err) { console.warn('[ozel-api-kur] proxy hata:', ep.url, err.message); }
+  async function tryOzelEp(ep) {
+    const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    let text = await resp.text();
+    if (ep.wrapped) {
+      const parsed = JSON.parse(text);
+      if (!parsed?.contents) throw new Error('wrap-no-contents');
+      text = parsed.contents;
+    }
+    const json = JSON.parse(text);
+    const alis = paraSayiyaCevir(kurKaynagi.jsonPathAlis ? jsonPathOku(json, kurKaynagi.jsonPathAlis) : null);
+    const satis = paraSayiyaCevir(kurKaynagi.jsonPathSatis ? jsonPathOku(json, kurKaynagi.jsonPathSatis) : null);
+    if (alis === null && satis === null) throw new Error('path-not-found');
+    return { alis, satis };
   }
-  return null;
+  return await Promise.any([
+    ...endpoints.slice(0, 3).map(ep => tryOzelEp(ep).catch(() => Promise.reject())),
+    new Promise(res => setTimeout(async () => {
+      try { res(await Promise.any(endpoints.slice(3).map(ep => tryOzelEp(ep)))); } catch { /* ignore */ }
+    }, 400))
+  ]).catch(() => null);
 }
 
 
@@ -20424,32 +20423,45 @@ async function tcmbKurXmlCek(targetDateIso) {
     TARGET = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
   }
   const endpoints = [
+    // Önce doğrudan dene (TCMB bazen CORS açık olabiliyor)
     { url: TARGET, wrapped: false },
-    { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
-    { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
-    { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-    // AllOrigins'in /raw ucu bazen boş/ham olmayan içerik döndürebiliyor; JSON-sarmalı /get ucu yedek olarak denenir.
+    // allOrigins en güvenilir — önce al
     { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+    // corsproxy.io — ücretsiz, güvenilir
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+    // cors-anywhere Heroku instance'ları
+    { url: `https://cors-anywhere.herokuapp.com/${TARGET}`, wrapped: false },
+    // Diğer yedekler
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
     { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
+    { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
+    { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
+    { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
+    // jsonp.afeld.me — XML için de çalışır
+    { url: `https://jsonp.afeld.me/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
   ];
-  for (const ep of endpoints) {
-    try {
-      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
-      if (!resp.ok) { console.warn('[tcmb-kur] proxy HTTP', resp.status, ep.url); continue; }
-      let text = await resp.text();
-      if (ep.wrapped) {
-        let parsed;
-        try { parsed = JSON.parse(text); } catch(e) { console.warn('[tcmb-kur] proxy sarmalı JSON değil:', ep.url); continue; }
-        if (!parsed || typeof parsed.contents !== 'string') { console.warn('[tcmb-kur] proxy sarmalı geçersiz:', ep.url); continue; }
-        text = parsed.contents;
-      }
-      if (text && text.includes('<Tarih_Date')) return text;
-      console.warn('[tcmb-kur] proxy boş/geçersiz veri döndü:', ep.url);
-    } catch(err) { console.warn('[tcmb-kur] proxy hata:', ep.url, err.message); }
+  // Tüm proxy'leri paralel dene — ilk geçerli yanıtı al (sıralı bekleme yok)
+  async function tryEp(ep) {
+    const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    let text = await resp.text();
+    if (ep.wrapped) {
+      const parsed = JSON.parse(text);
+      if (!parsed?.contents) throw new Error('wrap-no-contents');
+      text = parsed.contents;
+    }
+    if (!text || !text.includes('<Tarih_Date')) throw new Error('invalid-xml');
+    return text;
   }
-  return null;
+  // İlk 3'ü hemen, kalanları 400ms gecikmeli başlat (thundering herd önlemi)
+  const results = await Promise.any([
+    ...endpoints.slice(0, 3).map(ep => tryEp(ep).catch(() => Promise.reject())),
+    new Promise(res => setTimeout(async () => {
+      try { res(await Promise.any(endpoints.slice(3).map(ep => tryEp(ep)))); } catch { /* ignore */ }
+    }, 400))
+  ]).catch(() => null);
+  return results || null;
 }
 
 // Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
