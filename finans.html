@@ -6874,6 +6874,23 @@ window.addEventListener('load', placeMobProfilePanel);
 
 .tbk-footnote { font-size:10.5px; color:var(--text3); margin-top:12px; padding-top:10px; border-top:1px solid var(--border); line-height:1.55; }
 
+.tbk-uyari-bos {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  background: rgba(251, 191, 36, .08);
+  border: 1px solid rgba(251, 191, 36, .2);
+  color: var(--text2);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.tbk-uyari-bos svg { flex-shrink: 0; margin-top: 1px; color: var(--gold); }
+.tbk-uyari-bos strong { color: var(--text); font-weight: 600; }
+html[data-theme="light"] .tbk-uyari-bos { background: rgba(217, 119, 6, .08); border-color: rgba(217, 119, 6, .22); }
+
 #tahmin-pb-secim { transition:border-color .15s, background .15s; cursor:pointer; }
 #tahmin-pb-secim:hover { border-color:var(--border-active); background:var(--surface4); }
 #tahmin-pb-secim:focus { outline:none; border-color:var(--gold); }
@@ -22611,6 +22628,27 @@ function renderTahminBakiye() {
   pts.forEach((p,i)=>{ if(i>0) pathD += ` L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`; });
   const areaTop = `${pathD} L ${(W-padR).toFixed(1)} ${(H-padB).toFixed(1)} L ${padL} ${(H-padB).toFixed(1)} Z`;
 
+  // ── Son gerçek olaydan sonraki "düz uzantı" kısmını ayır ──────────
+  // Son gerçek olay günüyle 365. gün arasında hiçbir hareket yoksa, bu
+  // kısım sadece "veri/planlı işlem yok" demektir — gerçek bir hesaplama
+  // değil. Görsel olarak bunu soluk + kesik çizgi yaparak ayırt ediyoruz,
+  // aksi halde "grafik bozulmuş" gibi yanıltıcı bir izlenim oluşuyor.
+  const sonGercekIdx = pts.length - 2; // pts'in son elemanı zaten sentetik uzatma
+  const sonGercekPt = pts[sonGercekIdx];
+  const projeksiyonBitisTarihi = new Date(today.getFullYear(), today.getMonth(), today.getDate()+gunSayisi);
+  const bosGunSayisi = sonGercekPt && sonGercekPt.tarih
+    ? Math.round((projeksiyonBitisTarihi - new Date(sonGercekPt.tarih+'T00:00:00')) / 86400000)
+    : 0;
+  // "Anlamlı boşluk" eşiği: toplam aralığın en az %15'i ve en az 21 gün
+  const uzantiVarMi = sonGercekIdx >= 0 && bosGunSayisi >= Math.max(21, gunSayisi*0.15);
+  let pathDSolid = pathD, pathDUzanti = null;
+  if(uzantiVarMi) {
+    pathDSolid = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for(let i=1;i<=sonGercekIdx;i++) pathDSolid += ` L ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)}`;
+    pathDUzanti = `M ${sonGercekPt.x.toFixed(1)} ${sonGercekPt.y.toFixed(1)}`;
+    for(let i=sonGercekIdx+1;i<pts.length;i++) pathDUzanti += ` L ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)}`;
+  }
+
   // ── Y ekseni: 4 referans seviyesi + gerçek bakiye değerleri ─────
   const levelCount = isMobile ? 3 : 4;
   const gridLevels = Array.from({length:levelCount+1}, (_,i)=> minB + (i/levelCount)*range);
@@ -22852,7 +22890,9 @@ function renderTahminBakiye() {
         ${yLabels}
         ${sıfırGoster ? `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W-padR}" y2="${zeroY.toFixed(1)}" stroke="var(--rose)" stroke-width="1.1" stroke-dasharray="4,3" opacity="0.55"/>` : ''}
         <path d="${areaTop}" fill="url(#${gradId})" stroke="none"/>
-        <path d="${pathD}" fill="none" stroke="${cizgiRenk}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#${glowId})"/>
+        <path d="${pathDSolid}" fill="none" stroke="${cizgiRenk}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#${glowId})"/>
+        ${pathDUzanti ? `<path d="${pathDUzanti}" fill="none" stroke="${cizgiRenk}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6,5" opacity="0.4"/>` : ''}
+        ${uzantiVarMi ? `<circle cx="${sonGercekPt.x.toFixed(1)}" cy="${sonGercekPt.y.toFixed(1)}" r="3" fill="var(--bg)" stroke="${cizgiRenk}" stroke-width="1.5" opacity="0.7"/>` : ''}
         ${markers}
         ${ayEtiketleri}
         <line id="tbk-hoverline-${safeId}" x1="0" y1="${padT}" x2="0" y2="${H-padB}" stroke="var(--text2)" stroke-width="1" stroke-dasharray="2,3" opacity="0"/>
@@ -22866,8 +22906,14 @@ function renderTahminBakiye() {
       <span><span class="tbk-dot" style="background:var(--gold)"></span>Bugün</span>
       ${negatifeDusuyor ? `<span><span class="tbk-dot" style="background:var(--rose)"></span>Eksiye geçiş</span>` : ''}
       ${(dipNokta.tarih !== gunler[0].tarih) ? `<span><span class="tbk-dot" style="background:${dipNokta.bakiye<0?'var(--rose)':'var(--gold)'}"></span>En düşük (${fmtDate(new Date(dipNokta.tarih+'T00:00:00'))})</span>` : ''}
+      ${uzantiVarMi ? `<span style="display:inline-flex;align-items:center;gap:5px"><svg width="14" height="8" viewBox="0 0 14 8"><line x1="0" y1="4" x2="14" y2="4" stroke="${cizgiRenk}" stroke-width="2" stroke-dasharray="3,2.5" opacity="0.5"/></svg>Planlı işlem yok</span>` : ''}
       <span style="margin-left:auto;font-size:10px;color:var(--text3)">${gunSayisi} günlük projeksiyon</span>
     </div>
+
+    ${uzantiVarMi ? `<div class="tbk-uyari-bos">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span><strong>${fmtDate(new Date(sonGercekPt.tarih+'T00:00:00'))}</strong> sonrası için tanımlı bir gelir/gider bulunmuyor — çizgi bu noktadan sonra sabit kaldığı için kesik çizgiyle gösteriliyor. Maaş, kira veya abonelik ekleyerek tahmini güncelleyebilirsin.</span>
+    </div>` : ''}
 
     <div class="tbk-footnote">
       Maaş, kira, abonelik, kredi taksitleri, kredi kartı ekstre ödemeleri (son ödeme tarihinde tek kalem) ve kayıtlı elden işlemlere göre hesaplanır. Henüz girilmemiş yeni harcamalar tahmine yansımaz.
