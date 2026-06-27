@@ -7243,25 +7243,261 @@ html[data-theme="light"] .kart-extre-footer {
 
 /* ── 1. Tab-bar (Tanımlamalar gibi çok-sekmeli sayfalar):
        yatay kaydırmalı, taşmayan, nowrap pill satırı ── */
+/* ── Genel tab-bar: yatay scroll (diğer sayfalar için korunur) ── */
 .tab-bar {
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: thin !important;
+  scrollbar-width: none !important;
   max-width: 100% !important;
   width: 100% !important;
-  scroll-snap-type: x proximate;
 }
-.tab-bar::-webkit-scrollbar { height: 4px; }
-.tab-bar::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 99px; }
-.tab-bar .tab-btn {
-  flex-shrink: 0 !important;
-  scroll-snap-align: start;
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-bar .tab-btn { flex-shrink: 0 !important; }
+
+/* ════════════════════════════════════════════
+   SETTINGS NAV (snav) — Tanımlamalar sayfası
+   ════════════════════════════════════════════ */
+#page-tanimlamalar .page-header { display: none; }
+
+/* Shell: sidebar + content yan yana */
+.snav-shell {
+  display: flex;
+  gap: 0;
+  min-height: calc(100vh - 120px);
+  position: relative;
 }
-/* Sağ tarafta hafif gradient ile "daha fazla sekme var" ipucu */
-#page-tanimlamalar .tab-bar {
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent 100%);
-  mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent 100%);
+
+/* ── Sidebar ── */
+.snav-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-right: 1px solid var(--border);
+  padding: 10px 8px 24px;
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+.snav-sidebar::-webkit-scrollbar { width: 4px; }
+.snav-sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* Search */
+.snav-search-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+.snav-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: var(--text3);
+  pointer-events: none;
+  font-style: normal;
+}
+.snav-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 10px 7px 28px;
+  font-size: 12.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+.snav-search:focus { border-color: var(--accent); }
+
+/* Group */
+.snav-group { margin-bottom: 6px; }
+.snav-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 8px 10px 4px;
+}
+.snav-group[data-hidden="true"] { display: none; }
+
+/* Item */
+.snav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  padding: 7px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .13s, transform .1s;
+  color: var(--text2);
+  position: relative;
+}
+.snav-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+.snav-item.active {
+  background: var(--gold-glow);
+  color: var(--text);
+  border: 1px solid var(--border-active);
+}
+.snav-item[data-hidden="true"] { display: none; }
+.snav-icon {
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 26px;
+  text-align: center;
+}
+.snav-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.snav-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.snav-desc {
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.snav-item.active .snav-desc { color: var(--text2); }
+.snav-arrow {
+  font-size: 16px;
+  color: var(--text3);
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform .13s, color .13s;
+}
+.snav-item.active .snav-arrow {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+/* ── Content panel ── */
+.snav-content {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 24px;
+}
+.snav-content > div[id^="tab-"] {
+  animation: snavFadeIn .18s ease;
+}
+@keyframes snavFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mobile header (hidden on desktop) ── */
+.snav-mobile-header { display: none; }
+
+/* ── Mobile overlay ── */
+.snav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 800;
+  backdrop-filter: blur(2px);
+}
+.snav-overlay.open { display: block; }
+
+/* ── MOBILE ── */
+@media (max-width: 720px) {
+  #page-tanimlamalar .page-header { display: none !important; }
+
+  .snav-shell {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  /* Mobile sticky top bar */
+  .snav-mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .snav-mobile-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .snav-mobile-back {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--text2);
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .snav-mobile-menu {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Sidebar slides in from left */
+  .snav-sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 248px;
+    height: 100dvh;
+    max-height: none;
+    background: var(--surface);
+    z-index: 850;
+    border-right: 1px solid var(--border2);
+    transition: left .22s cubic-bezier(.25,.46,.45,.94);
+    padding: 16px 10px 32px;
+    box-shadow: 4px 0 24px rgba(0,0,0,.4);
+  }
+  .snav-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .snav-content {
+    padding: 14px 14px;
+  }
 }
 
 /* ── 2. Modal — body/header daha kompakt, label ve input daha okunaklı ── */
@@ -7623,22 +7859,107 @@ html[data-theme="light"] .kart-extre-footer {
 <!-- TANIMLAMALAR -->
 <div id="page-tanimlamalar" class="page">
   <div class="page-header"><h1>Tanımlamalar</h1><p>Bankalar, ürün tipleri ve sistem ayarları</p></div>
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('tab-bankalar',this)">🏦 Bankalar</button>
-    <button class="tab-btn" onclick="showTab('tab-hesap-turleri',this)">🏦 Hesap Türleri</button>
-    <button class="tab-btn" onclick="showTab('tab-urun-tipler',this)">🏷️ Ürün Tipleri</button>
-    <button class="tab-btn" onclick="showTab('tab-kredi-tipleri',this)">💳 Kredi Tipleri</button>
-    <button class="tab-btn" onclick="showTab('tab-kart-altyapilari',this)">🔖 Kart Altyapıları</button>
-    <button class="tab-btn" onclick="showTab('tab-tatiller',this)">📅 Resmi Tatiller</button>
-    <button class="tab-btn" onclick="showTab('tab-kategoriler',this)">🗂️ Kategoriler</button>
-    <button class="tab-btn" onclick="showTab('tab-kisiler',this)">👤 Kişiler / Karşı Taraflar</button>
-    <button class="tab-btn" onclick="showTab('tab-para-birimi-yonetim',this)">💱 Para Birimi Yönetimi</button>
-    <button class="tab-btn" onclick="showTab('tab-vergi-faiz',this)">📊 Vergi & Faiz Oranları</button>
-    <button class="tab-btn" onclick="showTab('tab-asgari-odeme',this)">💳 Asgari Ödeme Kuralları</button>
-    <button class="tab-btn" onclick="showTab('tab-goruntu-ayarlari',this)">🎨 Görüntü Ayarları</button>
-    <button class="tab-btn" onclick="showTab('tab-nakit-avans',this)">💵 Nakit Avans</button>
-    <button class="tab-btn" onclick="showTab('tab-veri-yonetimi',this)">💾 Veri Yönetimi</button>
-  </div>
+  <!-- ── Settings Nav ── -->
+  <div class="snav-shell">
+    <!-- LEFT: settings sidebar -->
+    <nav class="snav-sidebar" id="snav-sidebar">
+      <div class="snav-search-wrap">
+        <span class="snav-search-icon">⌕</span>
+        <input class="snav-search" type="text" placeholder="Ara…" oninput="snavFilter(this.value)" id="snav-search-input">
+      </div>
+
+      <div class="snav-group" data-group="finans">
+        <div class="snav-group-label">Finansal Altyapı</div>
+        <button class="snav-item active" data-tab="tab-bankalar" onclick="showTab('tab-bankalar',this)">
+          <span class="snav-icon">🏦</span>
+          <span class="snav-text"><span class="snav-name">Bankalar</span><span class="snav-desc">Banka ve şube bilgileri</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-hesap-turleri" onclick="showTab('tab-hesap-turleri',this)">
+          <span class="snav-icon">📂</span>
+          <span class="snav-text"><span class="snav-name">Hesap Türleri</span><span class="snav-desc">Mevduat, yatırım vb.</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-urun-tipler" onclick="showTab('tab-urun-tipler',this)">
+          <span class="snav-icon">🏷️</span>
+          <span class="snav-text"><span class="snav-name">Ürün Tipleri</span><span class="snav-desc">Finansal ürün sınıfları</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-kredi-tipleri" onclick="showTab('tab-kredi-tipleri',this)">
+          <span class="snav-icon">💳</span>
+          <span class="snav-text"><span class="snav-name">Kredi Tipleri</span><span class="snav-desc">Kredi sınıflandırmaları</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-kart-altyapilari" onclick="showTab('tab-kart-altyapilari',this)">
+          <span class="snav-icon">🔖</span>
+          <span class="snav-text"><span class="snav-name">Kart Altyapıları</span><span class="snav-desc">Visa, Mastercard vb.</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="snav-group" data-group="islem">
+        <div class="snav-group-label">İşlem & Kurallar</div>
+        <button class="snav-item" data-tab="tab-kategoriler" onclick="showTab('tab-kategoriler',this)">
+          <span class="snav-icon">🗂️</span>
+          <span class="snav-text"><span class="snav-name">Kategoriler</span><span class="snav-desc">İşlem kategori ağacı</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-kisiler" onclick="showTab('tab-kisiler',this)">
+          <span class="snav-icon">👤</span>
+          <span class="snav-text"><span class="snav-name">Kişiler</span><span class="snav-desc">Karşı taraf rehberi</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-tatiller" onclick="showTab('tab-tatiller',this)">
+          <span class="snav-icon">📅</span>
+          <span class="snav-text"><span class="snav-name">Resmi Tatiller</span><span class="snav-desc">Vade hesaplama takvimi</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-asgari-odeme" onclick="showTab('tab-asgari-odeme',this)">
+          <span class="snav-icon">📐</span>
+          <span class="snav-text"><span class="snav-name">Asgari Ödeme</span><span class="snav-desc">Kart ödeme kuralları</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-nakit-avans" onclick="showTab('tab-nakit-avans',this)">
+          <span class="snav-icon">💵</span>
+          <span class="snav-text"><span class="snav-name">Nakit Avans</span><span class="snav-desc">Avans limit & oran</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="snav-group" data-group="sistem">
+        <div class="snav-group-label">Sistem & Ayarlar</div>
+        <button class="snav-item" data-tab="tab-para-birimi-yonetim" onclick="showTab('tab-para-birimi-yonetim',this)">
+          <span class="snav-icon">💱</span>
+          <span class="snav-text"><span class="snav-name">Para Birimi</span><span class="snav-desc">Kur & birim yönetimi</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-vergi-faiz" onclick="showTab('tab-vergi-faiz',this)">
+          <span class="snav-icon">📊</span>
+          <span class="snav-text"><span class="snav-name">Vergi & Faiz</span><span class="snav-desc">Oran tabloları</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-goruntu-ayarlari" onclick="showTab('tab-goruntu-ayarlari',this)">
+          <span class="snav-icon">🎨</span>
+          <span class="snav-text"><span class="snav-name">Görünüm</span><span class="snav-desc">Tema & format tercihleri</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+        <button class="snav-item" data-tab="tab-veri-yonetimi" onclick="showTab('tab-veri-yonetimi',this)">
+          <span class="snav-icon">💾</span>
+          <span class="snav-text"><span class="snav-name">Veri Yönetimi</span><span class="snav-desc">Yedek, içe/dışa aktar</span></span>
+          <span class="snav-arrow">›</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- MOBILE: collapsed pill header -->
+    <div class="snav-mobile-header" id="snav-mobile-header">
+      <button class="snav-mobile-back" id="snav-mobile-back" onclick="snavMobileBack()" style="display:none">‹ Geri</button>
+      <span class="snav-mobile-title" id="snav-mobile-title">Bankalar</span>
+      <button class="snav-mobile-menu" onclick="snavMobileOpen()">☰ Menü</button>
+    </div>
+
+    <!-- RIGHT: content area -->
+    <div class="snav-content" id="snav-content">
   <div id="tab-bankalar">
     <div class="action-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="openBankaModal()">+ Banka Ekle</button>
@@ -8188,6 +8509,9 @@ html[data-theme="light"] .kart-extre-footer {
       </div>
     </div>
   </div>
+
+    </div><!-- /snav-content -->
+  </div><!-- /snav-shell -->
 
 </div>
 
@@ -11439,21 +11763,31 @@ function renderPage(id) {
 }
 
 function showTab(id, btn) {
-  document.querySelectorAll('#page-tanimlamalar > div[id^="tab-"]').forEach(d=>d.style.display='none');
-  document.getElementById(id).style.display='block';
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  else {
-    // btn verilmemişse tab butonunu id'den bul
-    const tabBtn = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
-    if(tabBtn) tabBtn.classList.add('active');
+  // Hide all tab content inside snav-content
+  document.querySelectorAll('#snav-content > div[id^="tab-"]').forEach(d=>d.style.display='none');
+  const tabEl = document.getElementById(id);
+  if(tabEl) tabEl.style.display='block';
+
+  // Update snav-item active state
+  document.querySelectorAll('.snav-item').forEach(b=>b.classList.remove('active'));
+  if(btn && btn.classList.contains('snav-item')) {
+    btn.classList.add('active');
+  } else {
+    const snavBtn = document.querySelector(`.snav-item[data-tab="${id}"]`);
+    if(snavBtn) snavBtn.classList.add('active');
   }
-  // Aktif sekmeyi yatay scroll alanında görünür yap
-  const activeBtn = document.querySelector('#page-tanimlamalar .tab-btn.active');
-  if(activeBtn && activeBtn.scrollIntoView) {
-    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+  // Update mobile header title
+  const activeItem = document.querySelector(`.snav-item[data-tab="${id}"]`);
+  const titleEl = document.getElementById('snav-mobile-title');
+  if(titleEl && activeItem) {
+    const name = activeItem.querySelector('.snav-name');
+    titleEl.textContent = name ? name.textContent : '';
   }
-  // Hash'e tab bilgisini yaz
+
+  // Close mobile sidebar if open
+  snavMobileClose();
+
   _pushHashState('tanimlamalar', {tab: id});
   if(id==='tab-para-birimi' || id==='tab-para-birimi-yonetim') {
     populateCurrencySelects();
@@ -32255,6 +32589,41 @@ function eeReset() {
   document.getElementById('ee-step-results').innerHTML = '';
   const fl = document.getElementById('ee-file-list');
   if (fl) { fl.style.display = 'none'; fl.innerHTML = ''; }
+}
+
+/* ── Settings Nav helpers ── */
+function snavMobileOpen() {
+  const sb = document.getElementById('snav-sidebar');
+  if(sb) sb.classList.add('mobile-open');
+  let ov = document.getElementById('snav-overlay');
+  if(!ov) {
+    ov = document.createElement('div');
+    ov.id = 'snav-overlay';
+    ov.className = 'snav-overlay';
+    ov.onclick = snavMobileClose;
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('open');
+}
+function snavMobileClose() {
+  const sb = document.getElementById('snav-sidebar');
+  if(sb) sb.classList.remove('mobile-open');
+  const ov = document.getElementById('snav-overlay');
+  if(ov) ov.classList.remove('open');
+}
+function snavMobileBack() { snavMobileOpen(); }
+
+function snavFilter(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('.snav-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.dataset.hidden = (term && !text.includes(term)) ? 'true' : 'false';
+  });
+  // Hide group labels if all items hidden
+  document.querySelectorAll('.snav-group').forEach(grp => {
+    const visible = [...grp.querySelectorAll('.snav-item')].some(i => i.dataset.hidden !== 'true');
+    grp.dataset.hidden = visible ? 'false' : 'true';
+  });
 }
 </script>
 </body>
