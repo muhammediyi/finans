@@ -20158,23 +20158,39 @@ async function resmiTatilleriGuncelle() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TCMB DÖVİZ KURLARI — her gün otomatik çekme
+// TCMB DÖVİZ KURLARI — her gün otomatik çekme + eksik günleri tamamlama
 // ═══════════════════════════════════════════════════════════
 // TCMB'nin today.xml ucu güncel günün (hafta sonu/resmi tatilse en son
 // yayınlanan iş gününün) bültenini döner; bu yüzden tarih kontrolü
 // TCMB bülten tarihine göre değil, "bugün bu kontrolü zaten yaptık mı"
 // bilgisine göre yapılır (bkz. DB.tcmbKur.sonKontrol). Böylece hafta
 // sonu/tatil günlerinde de günde bir defa kontrol edilir, gereksiz
-// tekrar istek atılmaz; aynı zamanda resmi tatil güncellemesindeki gibi
-// CORS proxy zincirine düşülür (TCMB sunucusu doğrudan tarayıcıdan
-// isteklere CORS izni vermeyebiliyor).
-async function tcmbKurlariniGuncelle(manuel = false) {
-  const btn = document.getElementById('btn-tcmb-guncelle');
-  const status = document.getElementById('tcmb-guncelle-status');
-  if (manuel && btn) { btn.disabled = true; btn.textContent = '⏳ Çekiliyor...'; }
-  if (status) status.textContent = '';
+// tekrar istek atılmaz. Kullanıcı uygulamayı bir süre (örn. 1 hafta)
+// açmadıysa, son kayıtlı kur tarihinden bugüne kadar olan eksik iş
+// günleri TCMB'nin arşiv ucundan (kurlar/YYYYMM/DDMMYYYY.xml) tek tek
+// otomatik tamamlanır — hepsi resmi tatil güncellemesindeki gibi CORS
+// proxy zincirine düşülerek (TCMB sunucusu doğrudan tarayıcıdan
+// isteklere her zaman CORS izni vermeyebiliyor).
 
-  const TARGET = 'https://www.tcmb.gov.tr/kurlar/today.xml';
+// Çok uzun süre kapalı kalmış bir uygulamada geriye dönük doldurma
+// isteklerinin sınırsız büyümesini önlemek için güvenlik sınırı (gün).
+const TCMB_BACKFILL_GUN_LIMIT = 90;
+
+function tcmbHaftaSonuMu(d) {
+  const g = d.getDay();
+  return g === 0 || g === 6;
+}
+
+// targetDateIso verilirse o günün arşiv bültenini, verilmezse today.xml'i
+// (en güncel bülten) proxy zinciriyle çekip ham XML metnini döner; başarısızsa null.
+async function tcmbKurXmlCek(targetDateIso) {
+  let TARGET;
+  if (!targetDateIso) {
+    TARGET = 'https://www.tcmb.gov.tr/kurlar/today.xml';
+  } else {
+    const [yyyy, mm, dd] = targetDateIso.split('-');
+    TARGET = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
+  }
   const endpoints = [
     { url: TARGET, wrapped: false },
     { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
@@ -20186,8 +20202,6 @@ async function tcmbKurlariniGuncelle(manuel = false) {
     { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
     { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
   ];
-
-  let xmlText = null;
   for (const ep of endpoints) {
     try {
       const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
@@ -20199,29 +20213,18 @@ async function tcmbKurlariniGuncelle(manuel = false) {
         if (!parsed || typeof parsed.contents !== 'string') { console.warn('[tcmb-kur] proxy sarmalı geçersiz:', ep.url); continue; }
         text = parsed.contents;
       }
-      if (text && text.includes('<Tarih_Date')) { xmlText = text; break; }
+      if (text && text.includes('<Tarih_Date')) return text;
       console.warn('[tcmb-kur] proxy boş/geçersiz veri döndü:', ep.url);
     } catch(err) { console.warn('[tcmb-kur] proxy hata:', ep.url, err.message); }
   }
+  return null;
+}
 
-  // Her durumda "bugün kontrol edildi" işaretini koy — başarısızsa bile aynı gün
-  // içinde her sayfa yüklemesinde proxy zincirinin baştan denenmesini önler.
-  DB.tcmbKur = DB.tcmbKur || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
-  DB.tcmbKur.sonKontrol = localDateStr(new Date());
-
-  if (!xmlText) {
-    const msg = 'Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin';
-    saveData();
-    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + msg; }
-    if (manuel && typeof showToast === 'function') showToast('TCMB kur güncelleme hatası: ' + msg, 'error');
-    if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
-    if (status) setTimeout(() => { status.textContent = ''; }, 6000);
-    return false;
-  }
-
+// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
+function tcmbKurXmlParse(xmlText) {
   try {
     const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-    if (xml.querySelector('parsererror')) throw new Error('XML ayrıştırılamadı');
+    if (xml.querySelector('parsererror')) return null;
 
     const root = xml.querySelector('Tarih_Date');
     const tarihAttr = root ? root.getAttribute('Tarih') : null; // "27.06.2026" biçiminde
@@ -20230,6 +20233,7 @@ async function tcmbKurlariniGuncelle(manuel = false) {
       const [gg, aa, yyyy] = tarihAttr.split('.');
       if (gg && aa && yyyy) tarihIso = `${yyyy}-${aa.padStart(2,'0')}-${gg.padStart(2,'0')}`;
     }
+    if (!tarihIso) return null;
 
     const kurlar = {};
     xml.querySelectorAll('Currency').forEach(node => {
@@ -20245,52 +20249,107 @@ async function tcmbKurlariniGuncelle(manuel = false) {
         isim: node.querySelector('Isim')?.textContent || kod
       };
     });
+    if (!Object.keys(kurlar).length) return null;
 
-    if (!Object.keys(kurlar).length) throw new Error('XML içinde kur verisi bulunamadı');
+    return { tarihIso, kurlar };
+  } catch(e) { return null; }
+}
 
-    const guncellendiTs = new Date().toISOString();
-    DB.tcmbKur = {
-      tarih: tarihIso,
-      guncellendi: guncellendiTs,
-      sonKontrol: localDateStr(new Date()),
-      kurlar
-    };
+// Tek bir günün kur verisini DB.tcmbKurGecmis listesine ekler/üzerine yazar (tarihe göre artan sıralı).
+function tcmbKurGecmiseKaydet(tarihIso, kurlar) {
+  DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
+  const idx = DB.tcmbKurGecmis.findIndex(r => r.tarih === tarihIso);
+  const satir = { tarih: tarihIso, guncellendi: new Date().toISOString(), kurlar };
+  if (idx >= 0) DB.tcmbKurGecmis[idx] = satir;
+  else DB.tcmbKurGecmis.push(satir);
+  DB.tcmbKurGecmis.sort((a, b) => a.tarih.localeCompare(b.tarih));
+}
 
-    // ── Günlük geçmiş kayıt — tarihe göre artan sıralı liste, gün başına 1 kayıt ──
-    // Geçmişe dönük servet/dönüşüm hesaplarında kullanılmak üzere her TCMB bülten
-    // tarihi için ayrı bir satır biriktirilir (bkz. getTcmbKur). Aynı bültene ait
-    // ikinci bir çekim (örn. manuel tekrar tıklama) varsa üzerine yazılır, çift kayıt oluşmaz.
-    if (tarihIso) {
-      DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
-      const idx = DB.tcmbKurGecmis.findIndex(r => r.tarih === tarihIso);
-      const satir = { tarih: tarihIso, guncellendi: guncellendiTs, kurlar };
-      if (idx >= 0) DB.tcmbKurGecmis[idx] = satir;
-      else DB.tcmbKurGecmis.push(satir);
-      DB.tcmbKurGecmis.sort((a, b) => a.tarih.localeCompare(b.tarih));
-    }
+async function tcmbKurlariniGuncelle(manuel = false) {
+  const btn = document.getElementById('btn-tcmb-guncelle');
+  const status = document.getElementById('tcmb-guncelle-status');
+  if (manuel && btn) { btn.disabled = true; btn.textContent = '⏳ Çekiliyor...'; }
+  if (status) status.textContent = '';
 
+  DB.tcmbKur = DB.tcmbKur || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
+  DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
+
+  // 1) Bugünün (en güncel) bültenini çek
+  const bugunXml = await tcmbKurXmlCek(null);
+  const bugunVeri = bugunXml ? tcmbKurXmlParse(bugunXml) : null;
+
+  // Her durumda "bugün kontrol edildi" işaretini koy — başarısızsa bile aynı gün
+  // içinde her sayfa yüklemesinde proxy zincirinin baştan denenmesini önler.
+  DB.tcmbKur.sonKontrol = localDateStr(new Date());
+
+  if (!bugunVeri) {
     saveData();
-    if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
-
-    if (status) {
-      status.style.color = 'var(--teal)';
-      status.textContent = `✓ ${Object.keys(kurlar).length} kur güncellendi (${tarihAttr || tarihIso || ''})`;
-    }
-    if (manuel && typeof showToast === 'function') showToast(`TCMB kurları güncellendi (${tarihAttr || tarihIso || ''})`, 'success');
-    return true;
-  } catch (e) {
-    saveData();
-    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ Veri işleme hatası: ' + e.message; }
-    if (manuel && typeof showToast === 'function') showToast('TCMB kur verisi işlenemedi: ' + e.message, 'error');
-    return false;
-  } finally {
+    const msg = 'Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin';
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + msg; }
+    if (manuel && typeof showToast === 'function') showToast('TCMB kur güncelleme hatası: ' + msg, 'error');
     if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
     if (status) setTimeout(() => { status.textContent = ''; }, 6000);
+    return false;
   }
+
+  tcmbKurGecmiseKaydet(bugunVeri.tarihIso, bugunVeri.kurlar);
+  DB.tcmbKur = { tarih: bugunVeri.tarihIso, guncellendi: new Date().toISOString(), sonKontrol: localDateStr(new Date()), kurlar: bugunVeri.kurlar };
+  saveData();
+  if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
+
+  // 2) Geriye dönük eksik günleri tamamla — daha önceden kayıtlı en eski tarih ile
+  //    bugünün bülten tarihi arasında, henüz kaydı olmayan her iş gününü
+  //    (hafta sonu ve bilinen resmi tatiller hariç) TCMB arşivinden tek tek çeker.
+  //    Hiç eski kayıt yoksa (ilk kullanım) doldurulacak bir boşluk olmadığından atlanır.
+  let dolduralan = 0;
+  try {
+    if (DB.tcmbKurGecmis.length > 1) {
+      const enEskiKayit = DB.tcmbKurGecmis[0].tarih;
+      const mevcutTarihler = new Set(DB.tcmbKurGecmis.map(r => r.tarih));
+      const tatilSet = typeof getTatilSet === 'function' ? getTatilSet() : new Set();
+
+      const limitTarih = new Date(); limitTarih.setDate(limitTarih.getDate() - TCMB_BACKFILL_GUN_LIMIT);
+      const enEskiDt = new Date(enEskiKayit + 'T00:00:00'); enEskiDt.setDate(enEskiDt.getDate() + 1);
+      const baslangic = enEskiDt > limitTarih ? enEskiDt : limitTarih;
+      const bitis = new Date(bugunVeri.tarihIso + 'T00:00:00');
+
+      for (let d = baslangic; d <= bitis; d.setDate(d.getDate() + 1)) {
+        const iso = localDateStr(d);
+        if (mevcutTarihler.has(iso) || tcmbHaftaSonuMu(d) || tatilSet.has(iso)) continue;
+
+        const xml = await tcmbKurXmlCek(iso);
+        if (xml) {
+          const veri = tcmbKurXmlParse(xml);
+          if (veri && !mevcutTarihler.has(veri.tarihIso)) {
+            tcmbKurGecmiseKaydet(veri.tarihIso, veri.kurlar);
+            mevcutTarihler.add(veri.tarihIso);
+            dolduralan++;
+          }
+        }
+        // TCMB ve ücretsiz CORS proxy'lerine art arda çok hızlı istek atmamak için kısa bekleme
+        await new Promise(r => setTimeout(r, 250));
+      }
+      if (dolduralan) { saveData(); if (typeof renderTanimlamalar === 'function') renderTanimlamalar(); }
+    }
+  } catch(e) {
+    console.warn('[tcmb-kur] geçmiş doldurma hatası:', e.message);
+  }
+
+  if (status) {
+    status.style.color = 'var(--teal)';
+    status.textContent = `✓ Kurlar güncellendi (${bugunVeri.tarihIso})${dolduralan ? ` · ${dolduralan} eksik gün tamamlandı` : ''}`;
+  }
+  if (manuel && typeof showToast === 'function') {
+    showToast(`TCMB kurları güncellendi${dolduralan ? ` — ${dolduralan} eksik günün kuru da çekildi` : ''}`, 'success');
+  }
+  if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
+  if (status) setTimeout(() => { status.textContent = ''; }, 6000);
+  return true;
 }
 
 // Uygulama her açıldığında (Drive verisi yüklendiğinde) çağrılır — bugün için
-// kur kontrolü zaten yapılmadıysa sessizce (manuel=false) günceller.
+// kur kontrolü zaten yapılmadıysa sessizce (manuel=false) günceller; bu sırada
+// eksik geçmiş günler de otomatik olarak tamamlanır (yukarıya bkz.).
 function tcmbKurGunlukKontrolEt() {
   const bugun = localDateStr(new Date());
   if (!DB.tcmbKur || DB.tcmbKur.sonKontrol !== bugun) {
