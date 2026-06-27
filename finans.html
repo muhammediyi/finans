@@ -8754,14 +8754,59 @@ html[data-theme="light"] .kart-extre-footer {
       <div class="msec">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Kur Eşleştirme
+          Kur Kaynağı
         </div>
-        <div class="form-row" style="margin-bottom:0">
+        <div class="form-row" style="margin-bottom:10px">
+          <div>
+            <label>Kur Nereden Çekilsin?</label>
+            <select id="pb-kur-tip" onchange="pbKurTipDegisti()">
+              <option value="tcmb">TCMB (resmi döviz bülteni)</option>
+              <option value="ozel">Özel API (kendi URL'ini gir)</option>
+              <option value="manuel">Manuel (otomatik çekilmesin)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pb-kur-tcmb-alanlar" class="form-row" style="margin-bottom:0">
           <div>
             <label>TCMB Kuru Kodu <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
             <input id="pb-tcmb-kodu" placeholder="örn. USD" maxlength="6" oninput="this.value=this.value.toUpperCase()">
-            <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa TCMB'den bu para birimiyle aynı kodla (yukarıdaki "Kod" alanı) eşleştirme yapılır. Kodunuz TCMB'nin resmi kodundan farklıysa (örn. özel/takma bir kod kullandıysanız) burada TCMB'nin gerçek kodunu yazın ki günlük kur doğru çekilsin. TCMB'de karşılığı olmayan birimler (örn. altın) için boş bırakın.</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa TCMB'den bu para birimiyle aynı kodla (yukarıdaki "Kod" alanı) eşleştirme yapılır. Kodunuz TCMB'nin resmi kodundan farklıysa burada TCMB'nin gerçek kodunu yazın.</div>
           </div>
+        </div>
+
+        <div id="pb-kur-ozel-alanlar" style="display:none">
+          <div class="form-row" style="margin-bottom:10px">
+            <div>
+              <label>API URL <span style="color:var(--danger)">*</span></label>
+              <input id="pb-ozel-url" placeholder="https://finans.truncgil.com/v3/today.json">
+            </div>
+          </div>
+          <div class="form-row cols-2" style="margin-bottom:10px">
+            <div>
+              <label>JSON Path — Alış <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
+              <input id="pb-ozel-path-alis" placeholder="örn. Gram Altın.Alış">
+            </div>
+            <div>
+              <label>JSON Path — Satış</label>
+              <input id="pb-ozel-path-satis" placeholder="örn. Gram Altın.Satış">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div>
+              <label>Bu Kur Hangi Para Biriminden?</label>
+              <select id="pb-ozel-kur-birimi">
+                <option value="TRY">TRY — API doğrudan TL karşılığını veriyor</option>
+                <option value="USD">USD — API dolar cinsinden veriyor (TRY'ye TCMB ile çevrilir)</option>
+                <option value="EUR">EUR — API euro cinsinden veriyor (TRY'ye TCMB ile çevrilir)</option>
+              </select>
+              <div style="font-size:11px;color:var(--text3);margin-top:5px">JSON path'ler API'nin döndürdüğü alanın iç içe konumunu gösterir; nokta ile ayrılır (örn. <code>Gram Altın.Satış</code> şu yapıyı okur: <code>{"Gram Altın": {"Satış": 6130.13}}</code>). API yanıtı buna uymuyorsa "🔄 Kurları Güncelle" sonrası "Henüz çekilemedi" görürsünüz — path'i kontrol edin.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="pb-kur-manuel-alanlar" style="display:none">
+          <div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez. Toplam varlık/tahmin hesaplarında bu birim için kur bulunamazsa tutar çevrilmeden (kendi cinsinden) kullanılır.</div>
         </div>
       </div>
     </div>
@@ -10885,13 +10930,24 @@ let DB = loadData();
 
 // ========== PARA BİRİMİ ==========
 // Varsayılan para birimleri - DB'ye yüklenir
+//
+// kurKaynagi: her para biriminin kurunun NEREDEN çekileceğini belirler.
+//   { tip: 'tcmb', tcmbKodu: 'USD' }                                  → TCMB günlük bülteni
+//   { tip: 'ozel', url: '...', jsonPathAlis: '...', jsonPathSatis: '...', kurBirimi: 'TRY' } → herhangi bir JSON API
+//   { tip: 'manuel' }                                                 → otomatik çekilmez, kur girilmez/sabit kalır
+// (Not: 'tcmbKodu' alanı eski sürümlerle uyumluluk için ayrıca tutulur — loadCurrencyConfig içinde
+//  kurKaynagi yoksa otomatik olarak {tip:'tcmb', tcmbKodu} biçimine çevrilir.)
 var DEFAULT_CURRENCY_CONFIG = {
-  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷', icon: '💵', tcmbKodu: null },
-  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸', icon: '💵', tcmbKodu: 'USD' },
-  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺', icon: '💶', tcmbKodu: 'EUR' },
-  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴', tcmbKodu: 'JPY' },
-  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷', tcmbKodu: 'GBP' },
-  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇', tcmbKodu: null },
+  TRY: { symbol: '₺',  locale: 'tr-TR', position: 'prefix', ad: 'Türk Lirası',      flag: '🇹🇷', icon: '💵', tcmbKodu: null, kurKaynagi: { tip: 'manuel' } },
+  USD: { symbol: '$',  locale: 'en-US', position: 'prefix', ad: 'Amerikan Doları',  flag: '🇺🇸', icon: '💵', tcmbKodu: 'USD', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'USD' } },
+  EUR: { symbol: '€',  locale: 'de-DE', position: 'suffix', ad: 'Euro',             flag: '🇪🇺', icon: '💶', tcmbKodu: 'EUR', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'EUR' } },
+  JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴', tcmbKodu: 'JPY', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'JPY' } },
+  GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷', tcmbKodu: 'GBP', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'GBP' } },
+  XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇', tcmbKodu: null,
+    // Varsayılan olarak Truncgil Finans API'sinden Gram Altın okur — kullanıcı isterse
+    // para birimi düzenleme ekranından farklı bir API'ye veya manuel'e çevirebilir.
+    kurKaynagi: { tip: 'ozel', url: 'https://finans.truncgil.com/v3/today.json', jsonPathAlis: 'Gram Altın.Alış', jsonPathSatis: 'Gram Altın.Satış', kurBirimi: 'TRY' }
+  },
 };
 
 // CURRENCY_CONFIG - DB'den yüklenen + varsayılan
@@ -10903,6 +10959,12 @@ function loadCurrencyConfig() {
   // DB'deki özel para birimlerini ekle/override
   if(DB.paraBirimleri) {
     DB.paraBirimleri.forEach(pb => {
+      // Geriye dönük uyumluluk: eski kayıtlarda kurKaynagi yoktu, sadece tcmbKodu vardı.
+      // kurKaynagi tanımlıysa onu kullan; değilse tcmbKodu'ndan otomatik üret.
+      let kurKaynagi = pb.kurKaynagi;
+      if(!kurKaynagi) {
+        kurKaynagi = pb.tcmbKodu ? { tip: 'tcmb', tcmbKodu: pb.tcmbKodu } : { tip: 'manuel' };
+      }
       CURRENCY_CONFIG[pb.kod] = {
         symbol: pb.sembol,
         locale: pb.locale || 'tr-TR',
@@ -10911,9 +10973,9 @@ function loadCurrencyConfig() {
         ad: pb.ad,
         flag: pb.bayrak || '💱',
         icon: pb.ikon || pb.bayrak || '💱',
-        // TCMB'nin yayınladığı resmi kur kodu — boşsa para birimi kodunun kendisi kullanılır.
-        // Bu sayede kod ile TCMB kodu farklı olan/özel tanımlı birimler de eşleştirilebilir.
-        tcmbKodu: pb.tcmbKodu || null,
+        // Eski alan — yalnızca geriye dönük uyumluluk amaçlı tutulur (kurKaynagi.tip==='tcmb' ise kurKaynagi.tcmbKodu ile aynı).
+        tcmbKodu: kurKaynagi.tip === 'tcmb' ? (kurKaynagi.tcmbKodu || null) : null,
+        kurKaynagi,
         custom: true
       };
     });
@@ -20210,8 +20272,83 @@ async function resmiTatilleriGuncelle() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// TCMB DÖVİZ KURLARI — her gün otomatik çekme + eksik günleri tamamlama
+// GENEL KUR KAYNAĞI ALTYAPISI — her para birimi kendi kaynağından çekilebilir
 // ═══════════════════════════════════════════════════════════
+// Bir objeden nokta-ayraçlı path ile değer okur (örn. "Gram Altın.Satış").
+// Anahtar adında nokta geçiyorsa (TCMB-tarzı nadir durumlar için) önce tam
+// anahtar olarak denenir, bulunamazsa path parçalanıp adım adım inilir.
+function jsonPathOku(obj, path) {
+  if (!obj || !path) return null;
+  if (Object.prototype.hasOwnProperty.call(obj, path)) return obj[path];
+  const parcalar = path.split('.');
+  let cur = obj;
+  for (const p of parcalar) {
+    if (cur === null || cur === undefined) return null;
+    cur = cur[p];
+  }
+  return cur === undefined ? null : cur;
+}
+
+// "1.234,56" / "1234.56" / "1,234.56" gibi farklı yazımları sayıya çevirir.
+function paraSayiyaCevir(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim();
+  if (!s) return null;
+  // Türkçe format (1.234,56) -> önce binlik noktaları sil, virgülü noktaya çevir
+  if (/,\d{1,6}$/.test(s) && s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else {
+    s = s.replace(/,/g, ''); // İngilizce binlik virgülü
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+// Özel bir JSON API'sinden tek bir para biriminin kurunu çeker.
+// kurKaynagi: { url, jsonPathAlis, jsonPathSatis, kurBirimi }
+// Dönüş: { alis, satis } (kurBirimi cinsinden) veya null (başarısız).
+// Not: özel API'ler TCMB gibi tarihe göre arşiv sunmaz — her zaman "en güncel" değer döner.
+async function ozelApiKurCek(kurKaynagi) {
+  if (!kurKaynagi || !kurKaynagi.url) return null;
+  const endpoints = [
+    { url: kurKaynagi.url, wrapped: false },
+    { url: `https://proxy.corsfix.com/?${kurKaynagi.url}`, wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
+    { url: `https://cors.x2u.in/${kurKaynagi.url}`, wrapped: false },
+    { url: `https://api.cors.lol/?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: false },
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(kurKaynagi.url)}`, wrapped: true },
+    { url: `https://thingproxy.freeboard.io/fetch/${kurKaynagi.url}`, wrapped: false },
+  ];
+  for (const ep of endpoints) {
+    try {
+      const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
+      if (!resp.ok) { console.warn('[ozel-api-kur] proxy HTTP', resp.status, ep.url); continue; }
+      let text = await resp.text();
+      if (ep.wrapped) {
+        let parsed;
+        try { parsed = JSON.parse(text); } catch(e) { console.warn('[ozel-api-kur] proxy sarmalı JSON değil:', ep.url); continue; }
+        if (!parsed || typeof parsed.contents !== 'string') { console.warn('[ozel-api-kur] proxy sarmalı geçersiz:', ep.url); continue; }
+        text = parsed.contents;
+      }
+      let json;
+      try { json = JSON.parse(text); } catch(e) { console.warn('[ozel-api-kur] yanıt JSON değil:', ep.url); continue; }
+      const alisRaw = kurKaynagi.jsonPathAlis ? jsonPathOku(json, kurKaynagi.jsonPathAlis) : null;
+      const satisRaw = kurKaynagi.jsonPathSatis ? jsonPathOku(json, kurKaynagi.jsonPathSatis) : null;
+      const alis = paraSayiyaCevir(alisRaw);
+      const satis = paraSayiyaCevir(satisRaw);
+      if (alis === null && satis === null) {
+        console.warn('[ozel-api-kur] path ile değer bulunamadı:', kurKaynagi.jsonPathAlis, kurKaynagi.jsonPathSatis, ep.url);
+        continue;
+      }
+      return { alis, satis };
+    } catch(err) { console.warn('[ozel-api-kur] proxy hata:', ep.url, err.message); }
+  }
+  return null;
+}
+
+
 // TCMB'nin today.xml ucu güncel günün (hafta sonu/resmi tatilse en son
 // yayınlanan iş gününün) bültenini döner; bu yüzden tarih kontrolü
 // TCMB bülten tarihine göre değil, "bugün bu kontrolü zaten yaptık mı"
@@ -20326,15 +20463,17 @@ async function tcmbKurlariniGuncelle(manuel = false) {
   DB.tcmbKur = DB.tcmbKur || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
   DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
 
-  // 1) Bugünün (en güncel) bültenini çek
+  // 1) Bugünün (en güncel) TCMB bültenini çek — TCMB kaynaklı para birimleri buradan gelir.
+  //    Anahtarlar TCMB kodu yerine UYGULAMA para birimi koduyla saklanır (bkz. aşağıdaki eşleştirme),
+  //    böylece kullanıcı tanımlı özel kodlarla TCMB kodu farklı olsa da doğru eşleşir.
   const bugunXml = await tcmbKurXmlCek(null);
-  const bugunVeri = bugunXml ? tcmbKurXmlParse(bugunXml) : null;
+  const bugunVeriXml = bugunXml ? tcmbKurXmlParse(bugunXml) : null;
 
   // Her durumda "bugün kontrol edildi" işaretini koy — başarısızsa bile aynı gün
   // içinde her sayfa yüklemesinde proxy zincirinin baştan denenmesini önler.
   DB.tcmbKur.sonKontrol = localDateStr(new Date());
 
-  if (!bugunVeri) {
+  if (!bugunVeriXml) {
     saveData();
     const msg = 'Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin';
     if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + msg; }
@@ -20342,6 +20481,45 @@ async function tcmbKurlariniGuncelle(manuel = false) {
     if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
     if (status) setTimeout(() => { status.textContent = ''; }, 6000);
     return false;
+  }
+
+  // TCMB ham kurlarını (TCMB koduyla) uygulama koduna eşleştirip tek bir günlük kayda dönüştür.
+  const bugunVeri = { tarihIso: bugunVeriXml.tarihIso, kurlar: {} };
+  Object.keys(CURRENCY_CONFIG).forEach(code => {
+    const cfg = CURRENCY_CONFIG[code];
+    const kk = cfg.kurKaynagi;
+    if (kk && kk.tip === 'tcmb' && kk.tcmbKodu && bugunVeriXml.kurlar[kk.tcmbKodu]) {
+      bugunVeri.kurlar[code] = bugunVeriXml.kurlar[kk.tcmbKodu];
+    }
+  });
+
+  // 1b) Özel API kaynaklı para birimleri (örn. XAU) — her biri kendi URL/path'inden çekilir.
+  //     Özel API'nin döndürdüğü kur, kurKaynagi.kurBirimi cinsindendir; TRY değilse,
+  //     yukarıda çekilen TCMB kurlarıyla çapraz kur hesaplanıp TRY karşılığına çevrilir.
+  const ozelApiHatalari = [];
+  for (const code of Object.keys(CURRENCY_CONFIG)) {
+    const cfg = CURRENCY_CONFIG[code];
+    const kk = cfg.kurKaynagi;
+    if (!kk || kk.tip !== 'ozel') continue;
+    const sonuc = await ozelApiKurCek(kk);
+    if (!sonuc) { ozelApiHatalari.push(code); continue; }
+    const kurBirimi = kk.kurBirimi || 'TRY';
+    if (kurBirimi === 'TRY') {
+      bugunVeri.kurlar[code] = { alis: sonuc.alis, satis: sonuc.satis, isim: cfg.ad || code };
+    } else {
+      // Çapraz kur: önce kurBirimi'nin TRY karşılığını (aynı güncellemedeki TCMB verisinden) bul.
+      const araKur = bugunVeri.kurlar[kurBirimi];
+      const araOran = araKur && (araKur.satis || araKur.alis);
+      if (araOran) {
+        bugunVeri.kurlar[code] = {
+          alis: sonuc.alis !== null ? +(sonuc.alis * araOran).toFixed(6) : null,
+          satis: sonuc.satis !== null ? +(sonuc.satis * araOran).toFixed(6) : null,
+          isim: cfg.ad || code
+        };
+      } else {
+        ozelApiHatalari.push(code); // kurBirimi'nin TRY karşılığı bulunamadı, çapraz kur hesaplanamadı
+      }
+    }
   }
 
   tcmbKurGecmiseKaydet(bugunVeri.tarihIso, bugunVeri.kurlar);
@@ -20353,6 +20531,8 @@ async function tcmbKurlariniGuncelle(manuel = false) {
   //    bugünün bülten tarihi arasında, henüz kaydı olmayan her iş gününü
   //    (hafta sonu ve bilinen resmi tatiller hariç) TCMB arşivinden tek tek çeker.
   //    Hiç eski kayıt yoksa (ilk kullanım) doldurulacak bir boşluk olmadığından atlanır.
+  //    NOT: Özel API'ler (Truncgil vb.) geçmişe dönük arşiv sunmadığından backfill sadece
+  //    TCMB kaynaklı para birimleri için yapılır; özel API'li birimler sadece "bugün" değeriyle kaydedilir.
   let dolduralan = 0;
   try {
     if (DB.tcmbKurGecmis.length > 1) {
@@ -20365,16 +20545,26 @@ async function tcmbKurlariniGuncelle(manuel = false) {
       const baslangic = enEskiDt > limitTarih ? enEskiDt : limitTarih;
       const bitis = new Date(bugunVeri.tarihIso + 'T00:00:00');
 
+      const tcmbKaynakliKodlar = Object.keys(CURRENCY_CONFIG).filter(code => {
+        const kk = CURRENCY_CONFIG[code].kurKaynagi;
+        return kk && kk.tip === 'tcmb' && kk.tcmbKodu;
+      });
+
       for (let d = baslangic; d <= bitis; d.setDate(d.getDate() + 1)) {
         const iso = localDateStr(d);
         if (mevcutTarihler.has(iso) || tcmbHaftaSonuMu(d) || tatilSet.has(iso)) continue;
 
         const xml = await tcmbKurXmlCek(iso);
         if (xml) {
-          const veri = tcmbKurXmlParse(xml);
-          if (veri && !mevcutTarihler.has(veri.tarihIso)) {
-            tcmbKurGecmiseKaydet(veri.tarihIso, veri.kurlar);
-            mevcutTarihler.add(veri.tarihIso);
+          const veriXml = tcmbKurXmlParse(xml);
+          if (veriXml && !mevcutTarihler.has(veriXml.tarihIso)) {
+            const kurlarEslesmis = {};
+            tcmbKaynakliKodlar.forEach(code => {
+              const tcmbKodu = CURRENCY_CONFIG[code].kurKaynagi.tcmbKodu;
+              if (veriXml.kurlar[tcmbKodu]) kurlarEslesmis[code] = veriXml.kurlar[tcmbKodu];
+            });
+            tcmbKurGecmiseKaydet(veriXml.tarihIso, kurlarEslesmis);
+            mevcutTarihler.add(veriXml.tarihIso);
             dolduralan++;
           }
         }
@@ -20387,12 +20577,13 @@ async function tcmbKurlariniGuncelle(manuel = false) {
     console.warn('[tcmb-kur] geçmiş doldurma hatası:', e.message);
   }
 
+  const ozelApiHataMsg = ozelApiHatalari.length ? ` · ${ozelApiHatalari.join(', ')} için kur çekilemedi` : '';
   if (status) {
-    status.style.color = 'var(--teal)';
-    status.textContent = `✓ Kurlar güncellendi (${bugunVeri.tarihIso})${dolduralan ? ` · ${dolduralan} eksik gün tamamlandı` : ''}`;
+    status.style.color = ozelApiHatalari.length ? 'var(--warn)' : 'var(--teal)';
+    status.textContent = `✓ Kurlar güncellendi (${bugunVeri.tarihIso})${dolduralan ? ` · ${dolduralan} eksik gün tamamlandı` : ''}${ozelApiHataMsg}`;
   }
   if (manuel && typeof showToast === 'function') {
-    showToast(`TCMB kurları güncellendi${dolduralan ? ` — ${dolduralan} eksik günün kuru da çekildi` : ''}`, 'success');
+    showToast(`TCMB kurları güncellendi${dolduralan ? ` — ${dolduralan} eksik günün kuru da çekildi` : ''}${ozelApiHataMsg}`, ozelApiHatalari.length ? 'warn' : 'success');
   }
   if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
   if (status) setTimeout(() => { status.textContent = ''; }, 6000);
@@ -20410,29 +20601,27 @@ function tcmbKurGunlukKontrolEt() {
 }
 
 /**
- * Bir para birimi koduna karşılık gelen TCMB kurunu (alış/satış) döner.
- * code: uygulamadaki para birimi kodu (örn. "USD", "EUR" veya kullanıcı tanımlı özel kod)
+ * Bir para birimi koduna karşılık gelen günlük kuru (alış/satış) döner.
+ * code: uygulamadaki para birimi kodu (örn. "USD", "EUR", "XAU" veya kullanıcı tanımlı özel kod)
  * tarihStr: 'YYYY-MM-DD' — verilmezse bugünün en güncel kuru döner
  *
- * Eşleştirme CURRENCY_CONFIG[code].tcmbKodu üzerinden yapılır; bu alan boşsa
- * doğrudan `code` ile TCMB'nin yayınladığı kod aynı kabul edilir. Geçmiş kayıtlar
- * arasında verilen tarihe ≤ en yakın bültenden değer alınır (resmi tatil/hafta
- * sonu için ayrıca bir kontrol gerekmez — TCMB o günlerde yeni bülten yayınlamaz,
- * dolayısıyla en son iş gününün kuru otomatik olarak kullanılır).
- * Hiç kayıt yoksa veya o para birimi TCMB'de hiç bulunamadıysa null döner.
+ * DB.tcmbKurGecmis kayıtları artık kaynağı ne olursa olsun (TCMB veya özel API) UYGULAMA
+ * para birimi koduyla saklanır (bkz. tcmbKurlariniGuncelle) — bu fonksiyon da doğrudan `code`
+ * ile arar. Verilen tarihe ≤ en yakın kayıt arasında, o `code`'u GERÇEKTEN içeren en yeni kayıt
+ * seçilir; bu, özel API'li (örn. XAU) birimlerin geçmişe dönük arşivi olmadığı için bazı eski
+ * günlerde hiç kaydı olmayabileceği durumda en son bilinen değerin kullanılmasını sağlar.
+ * Hiç kayıt yoksa veya o para birimi hiçbir kaynaktan hiç çekilememişse null döner.
  */
 function getTcmbKur(code, tarihStr) {
-  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
-  const tcmbKodu = cfg.tcmbKodu || code;
   const gecmis = DB.tcmbKurGecmis || [];
   if (!gecmis.length) return null;
   const hedefTarih = tarihStr || localDateStr(new Date());
-  let secili = gecmis[0];
+  let secili = null;
   for (const row of gecmis) {
-    if (row.tarih <= hedefTarih) secili = row;
-    else break;
+    if (row.tarih > hedefTarih) break;
+    if (row.kurlar && row.kurlar[code]) secili = row;
   }
-  return (secili.kurlar && secili.kurlar[tcmbKodu]) || null;
+  return (secili && secili.kurlar && secili.kurlar[code]) || null;
 }
 
 /**
@@ -20495,17 +20684,18 @@ function paraBirimiCevirGuvenli(tutar, kaynakPb, hedefPb, tarihStr) {
 function populateTcmbGecmisModal() {
   const sel = document.getElementById('tg-pb-filtre');
   if (sel) {
-    // Yalnızca TCMB ile eşleşebilecek (tcmbKodu null olmayan) birimleri listele
+    // Otomatik bir kaynaktan (TCMB veya özel API) kuru çekilebilen birimleri listele — manuel hariç.
     const uygun = Object.keys(CURRENCY_CONFIG).filter(c => {
       if (c === 'TRY') return false;
-      const cfg = CURRENCY_CONFIG[c];
-      return cfg.tcmbKodu !== null; // null = TCMB'de karşılığı yok (örn. altın)
+      const kk = CURRENCY_CONFIG[c].kurKaynagi;
+      return kk && (kk.tip === 'tcmb' || kk.tip === 'ozel');
     });
     const onceki = sel.value;
     sel.innerHTML = uygun.map(c => {
       const cfg = CURRENCY_CONFIG[c];
-      const tcmbKodu = cfg.tcmbKodu || c;
-      return `<option value="${c}">${cfg.flag || ''} ${c}${tcmbKodu !== c ? ' (TCMB: ' + tcmbKodu + ')' : ''}</option>`;
+      const kk = cfg.kurKaynagi || {};
+      const kaynakLabel = kk.tip === 'tcmb' ? 'TCMB' : kk.tip === 'ozel' ? 'Özel API' : '';
+      return `<option value="${c}">${cfg.flag || ''} ${c}${kaynakLabel ? ' (' + kaynakLabel + ')' : ''}</option>`;
     }).join('');
     if (onceki && uygun.includes(onceki)) sel.value = onceki;
     else if (uygun.includes('USD')) sel.value = 'USD';
@@ -20543,9 +20733,8 @@ function renderTcmbGecmis() {
   const code = document.getElementById('tg-pb-filtre').value;
   const baslangic = document.getElementById('tg-baslangic').value || '0000-01-01';
   const bitis = document.getElementById('tg-bitis').value || '9999-12-31';
-  const cfg = CURRENCY_CONFIG[code] || {};
-  const tcmbKodu = cfg.tcmbKodu || code;
 
+  // Kayıtlar artık doğrudan uygulama koduyla saklanıyor (bkz. tcmbKurlariniGuncelle) — tcmbKodu çevirisi gerekmez.
   const gecmis = (DB.tcmbKurGecmis || [])
     .filter(r => r.tarih >= baslangic && r.tarih <= bitis)
     .slice()
@@ -20560,13 +20749,13 @@ function renderTcmbGecmis() {
   }
 
   tbody.innerHTML = gecmis.map(row => {
-    const kur = row.kurlar && row.kurlar[tcmbKodu];
+    const kur = row.kurlar && row.kurlar[code];
     const fmtKur = (v) => (v === null || v === undefined) ? '<span style="color:var(--text3)">—</span>' : ('₺' + v.toLocaleString('tr-TR', {minimumFractionDigits:4, maximumFractionDigits:4}));
     const alis = fmtKur(kur && kur.alis);
     const satis = fmtKur(kur && kur.satis);
     return `<tr>
       <td class="mono">${fmtDate(row.tarih)}</td>
-      <td><span class="badge badge-blue mono">${tcmbKodu}</span></td>
+      <td><span class="badge badge-blue mono">${code}</span></td>
       <td class="mono">${alis}</td>
       <td class="mono">${satis}</td>
     </tr>`;
@@ -20803,14 +20992,19 @@ function renderTanimlamalar() {
       const gosteimBtn = isDefault
         ? '<span style="font-size:10px;font-weight:700;color:var(--accent2);background:rgba(16,185,129,.15);padding:2px 8px;border-radius:4px;white-space:nowrap">&#11088; Gösterim</span>'
         : `<button class="btn btn-ghost btn-sm btn-act" onclick="setGosterimParaBirimi('${code}')" title="Gösterim birimi yap">&#11088;</button>`;
-      const tcmbKodu = cfg.tcmbKodu || code;
-      const kur = tcmbKurlar[tcmbKodu];
-      const kurEtiket = (tcmbKodu !== code) ? `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">TCMB: ${tcmbKodu}</div>` : '';
+      const kk = cfg.kurKaynagi || { tip: 'manuel' };
+      const kur = tcmbKurlar[code];
+      let kaynakEtiket = '';
+      if (kk.tip === 'tcmb') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">TCMB${kk.tcmbKodu && kk.tcmbKodu!==code ? ': '+kk.tcmbKodu : ''}</div>`;
+      else if (kk.tip === 'ozel') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px" title="${kk.url||''}">Özel API</div>`;
+      else if (kk.tip === 'manuel' && code !== 'TRY') kaynakEtiket = `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">Manuel</div>`;
       const kurHucresi = code === 'TRY'
         ? '<span style="color:var(--text3)">—</span>'
         : (kur
-            ? `<span class="mono" style="font-size:11.5px" title="Alış: ${kur.alis} · Satış: ${kur.satis}">${kur.satis ?? kur.alis}</span>${kurEtiket}`
-            : `<span style="color:var(--text3);font-size:11px">TCMB\u2019de yok</span>${kurEtiket}`);
+            ? `<span class="mono" style="font-size:11.5px" title="Alış: ${kur.alis} · Satış: ${kur.satis}">${kur.satis ?? kur.alis}</span>${kaynakEtiket}`
+            : (kk.tip === 'manuel'
+                ? `<span style="color:var(--text3);font-size:11px">Otomatik çekilmiyor</span>${kaynakEtiket}`
+                : `<span style="color:var(--text3);font-size:11px">Henüz çekilemedi</span>${kaynakEtiket}`));
       return `<tr${isDefault ? ' style="background:rgba(16,185,129,.06)"' : ''}>
         <td><span class="badge badge-blue mono">${code}</span></td>
         <td class="mono" style="font-size:16px">${cfg.symbol}</td>
@@ -20833,8 +21027,8 @@ function renderTanimlamalar() {
     const sonGuncEl = document.getElementById('tcmb-son-guncelleme');
     if(sonGuncEl) {
       sonGuncEl.textContent = (DB.tcmbKur && DB.tcmbKur.tarih)
-        ? `TCMB bülten tarihi: ${fmtDate(DB.tcmbKur.tarih)}`
-        : 'TCMB kurları henüz çekilmedi';
+        ? `Son güncelleme: ${fmtDate(DB.tcmbKur.tarih)}`
+        : 'Kurlar henüz çekilmedi';
     }
   }
 }
