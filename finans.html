@@ -946,6 +946,14 @@ html[data-theme="light"] select:focus {
   background-size: auto, 10px 6px !important;
 }
 input[type=checkbox] { width: auto; accent-color: var(--gold); }
+/* IBAN inputları: sabit uzunluklu mono metin (TR00 0000 0000 0000 0000 0000 00 — 32 karakter)
+   dar ekranlarda sığması için biraz daha küçük font + dar padding kullanır. */
+.iban-input {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  font-size: 12.5px;
+  letter-spacing: .02em;
+}
 select option { background: var(--surface3); }
 /* Placeholder select — boş değer seçiliyken gri göster */
 select.ph { color: var(--text2); }
@@ -7659,6 +7667,25 @@ html[data-theme="light"] .kart-extre-footer {
 /* ── 7. Hesaplar sayfası stat kartları — üst renkli çizgi zaten mevcut,
        ekstra ayrıştırma gerekmiyor ── */
 
+/* ── 8. IBAN inputları — dosyada birden çok yerde tekrarlanan genel
+       "input,select,textarea {font-size:16px !important}" (mobil dokunma-
+       hedefi) kuralları 32 karakterlik IBAN placeholder'ını taşırıyordu.
+       Bu blok bilerek bu <style> etiketinin EN SONUNA konuldu ki kaynak
+       sırası itibarıyla hiçbir önceki !important kuralı bunu ezemesin. ── */
+input.iban-input {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  font-size: 12.5px !important;
+  letter-spacing: 0 !important;
+  padding: 9px 10px !important;
+}
+@media (max-width: 480px) {
+  input.iban-input {
+    font-size: 11px !important;
+    padding: 8px 8px !important;
+  }
+}
+
 </style>
 
 <!-- İŞLEMLER FİLTRE MODAL -->
@@ -9710,7 +9737,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field" id="kira-iban-field" style="display:none">
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
-                  <input id="kira-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="kira-karsi-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -9731,7 +9758,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field">
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
-                  <input id="kira-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="kira-karsi-iban-manuel" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="syncKiraManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('kira-karsi-iban-manuel')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -9953,7 +9980,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field" id="maas-iban-field" style="display:none">
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
-                  <input id="maas-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="maas-karsi-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -9973,7 +10000,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field">
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
-                  <input id="maas-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="maas-karsi-iban-manuel" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="syncMaasManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban-manuel')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -10083,7 +10110,7 @@ html[data-theme="light"] .kart-extre-footer {
         <div class="form-row" style="margin-bottom:0">
           <div>
             <label>IBAN <span style="color:var(--text3);font-size:10px">(TR ile başlayan 26 hane — otomatik çözümlenir)</span></label>
-            <input id="hesap-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" oninput="onIbanInput()" style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase">
+            <input id="hesap-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" oninput="onIbanInput()" >
             <div id="hesap-iban-status" style="font-size:11px;margin-top:4px"></div>
           </div>
         </div>
@@ -10273,12 +10300,12 @@ html[data-theme="light"] .kart-extre-footer {
       <!-- ── Yeni IBAN giriş ── -->
       <div style="padding:0 20px 18px">
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="form-row cols-2" style="gap:8px;margin-bottom:0">
             <div>
               <label style="font-size:10.5px;color:var(--text3);display:block;margin-bottom:4px;font-weight:600">IBAN</label>
-              <input id="kisi-yeni-iban"
+              <input id="kisi-yeni-iban" class="iban-input"
                 placeholder="TR00 0000 0000 0000 0000 0000 00"
-                style="font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;width:100%;box-sizing:border-box"
+                style="width:100%;box-sizing:border-box"
                 autocomplete="off"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();kisiIbanEkle()}">
             </div>
@@ -10333,8 +10360,8 @@ html[data-theme="light"] .kart-extre-footer {
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
         <div>
           <label>IBAN</label>
-          <input id="iban-popup-iban" placeholder="TR00 0000 0000 0000 0000 0000 00"
-            style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase"
+          <input id="iban-popup-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00"
+            
             autocomplete="off"
             onkeydown="if(event.key==='Enter'){event.preventDefault();_ibanPopupEkle()}">
           <div id="iban-popup-status" class="iban-status-wrap"></div>
@@ -10453,7 +10480,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field" id="elden-iban-field" style="display:none">
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
-                  <input id="elden-karsi-iban" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="elden-karsi-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="onEldenKarsiIbanInput()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -10473,7 +10500,7 @@ html[data-theme="light"] .kart-extre-footer {
               <div class="kt-field">
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
-                  <input id="elden-karsi-iban-manuel" placeholder="TR00 0000 0000 0000 0000 0000 00" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em"
+                  <input id="elden-karsi-iban-manuel" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
                     oninput="onEldenKarsiIbanInput();syncEldenManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyEldenKarsiIban()" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -20272,46 +20299,134 @@ async function resmiTatilleriGuncelle() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MERKEZİ CORS PROXY ZİNCİRİ — uygulamadaki TÜM dış API çağrıları
-// (TCMB kuru, resmi tatil API'si, özel kur kaynakları, test butonu)
-// bu tek listeden geçer. Worker varsa HER ZAMAN ilk denenen olur;
-// Worker yoksa veya başarısız olursa ücretsiz yedek proxy'lere düşülür.
+// MERKEZİ CORS PROXY ZİNCİRİ v2 — paralel + akıllı önbellek
+// ─────────────────────────────────────────────────────────
+// • Worker varsa tek başına önce denenir (en hızlı, en güvenilir)
+// • Worker başarısız/yoksa: ücretsiz proxy'ler PARALEL denenir
+//   → ilk başarılı yanıt hemen döner, diğerleri iptal edilir
+// • Her proxy için session-bazlı başarısızlık sayacı tutulur;
+//   art arda 2 kez başarısız olan proxy o oturumda atlanır
+// • Sonuçlar 5 dk boyunca URL bazlı bellekte önbelleğe alınır
+//   → aynı XML'e aynı oturumda tekrar istek atılmaz
 // ═══════════════════════════════════════════════════════════
+
+// ── Proxy sağlık durumu (session bazlı) ─────────────────
+const _proxyHealth = {}; // ad -> { hataSayisi }
+function _proxyHataKaydet(ad) {
+  _proxyHealth[ad] = _proxyHealth[ad] || { hataSayisi: 0 };
+  _proxyHealth[ad].hataSayisi++;
+}
+function _proxySagliklimi(ad) {
+  return (_proxyHealth[ad]?.hataSayisi || 0) < 2;
+}
+function _proxyBasariKaydet(ad) {
+  if (_proxyHealth[ad]) _proxyHealth[ad].hataSayisi = 0;
+}
+
+// ── URL önbelleği (5 dk TTL) ────────────────────────────
+const _urlCache = new Map(); // url -> { text, kaynak, ts }
+const _URL_CACHE_TTL = 5 * 60 * 1000; // 5 dakika
+function _cacheGet(url) {
+  const c = _urlCache.get(url);
+  if (!c) return null;
+  if (Date.now() - c.ts > _URL_CACHE_TTL) { _urlCache.delete(url); return null; }
+  return c;
+}
+function _cacheSet(url, text, kaynak) {
+  _urlCache.set(url, { text, kaynak, ts: Date.now() });
+}
+
+// ── Proxy listesi ────────────────────────────────────────
 function corsProxyZinciriOlustur(hedefUrl) {
   const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
+  const enc = encodeURIComponent(hedefUrl);
   return [
-    ...(workerUrl ? [{ url: `${workerUrl}?url=${encodeURIComponent(hedefUrl)}`, ad: 'Worker', wrapped: false }] : []),
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins', wrapped: true },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins (raw)', wrapped: false },
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`, ad: 'CorsProxy', wrapped: false },
-    { url: `https://thingproxy.freeboard.io/fetch/${hedefUrl}`, ad: 'ThingProxy', wrapped: false },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(hedefUrl)}`, ad: 'CodeTabs', wrapped: false },
-    { url: hedefUrl, ad: 'Doğrudan', wrapped: false },
+    ...(workerUrl ? [{ url: `${workerUrl}?url=${enc}`, ad: 'Worker', wrapped: false, onlySelf: true }] : []),
+    { url: `https://api.allorigins.win/get?url=${enc}`,            ad: 'AllOrigins',      wrapped: true  },
+    { url: `https://api.allorigins.win/raw?url=${enc}`,            ad: 'AllOriginsRaw',   wrapped: false },
+    { url: `https://corsproxy.io/?url=${enc}`,                     ad: 'CorsProxyIO',     wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${enc}`,      ad: 'CodeTabs',        wrapped: false },
+    { url: `https://thingproxy.freeboard.io/fetch/${hedefUrl}`,    ad: 'ThingProxy',      wrapped: false },
+    { url: `https://cors-anywhere.herokuapp.com/${hedefUrl}`,      ad: 'CorsAnywhere',    wrapped: false },
+    { url: hedefUrl,                                                ad: 'Doğrudan',        wrapped: false },
   ];
 }
 
-// Hedef URL'i merkezi proxy zinciriyle dener, ilk başarılı metni
-// { text, kaynak } olarak döner. JSON parse etmez — ham metin döner
-// (XML/JSON her ikisi için de kullanılabilsin diye).
+// ── Paralel proxy denemesi (Worker hariç) ───────────────
+async function _parallelDene(denemeler, { timeoutMs, validator }) {
+  return new Promise((resolve) => {
+    let kalan = denemeler.length;
+    if (!kalan) { resolve(null); return; }
+    const controllers = denemeler.map(() => new AbortController());
+
+    denemeler.forEach((d, i) => {
+      if (!_proxySagliklimi(d.ad)) { kalan--; if (!kalan) resolve(null); return; }
+
+      fetch(d.url, { signal: controllers[i].signal })
+        .then(async (resp) => {
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          let text = await resp.text();
+          if (d.wrapped) {
+            const o = JSON.parse(text);
+            if (typeof o?.contents !== 'string') throw new Error('wrapped boş');
+            text = o.contents;
+          }
+          if (validator && !validator(text)) throw new Error('validator başarısız');
+          // Başarılı → diğerlerini iptal et
+          controllers.forEach((c, j) => { if (j !== i) try { c.abort(); } catch(e){} });
+          _proxyBasariKaydet(d.ad);
+          resolve({ text, kaynak: d.ad });
+        })
+        .catch(() => {
+          _proxyHataKaydet(d.ad);
+          kalan--;
+          if (!kalan) resolve(null);
+        });
+    });
+
+    // Genel timeout
+    setTimeout(() => {
+      controllers.forEach(c => { try { c.abort(); } catch(e){} });
+      resolve(null);
+    }, timeoutMs + 500);
+  });
+}
+
+// ── Ana fonksiyon: önbellek → Worker → paralel proxy ────
 async function corsProxyZinciriDene(hedefUrl, { timeoutMs = 8000, validator = null } = {}) {
-  const denemeler = corsProxyZinciriOlustur(hedefUrl);
-  for (const d of denemeler) {
-    try {
-      const resp = await fetch(d.url, { signal: AbortSignal.timeout(timeoutMs) });
-      if (!resp.ok) continue;
-      let text = await resp.text();
-      if (d.wrapped) {
-        try {
-          const o = JSON.parse(text);
-          if (typeof o?.contents !== 'string') continue;
-          text = o.contents;
-        } catch(e) { continue; }
-      }
-      if (validator && !validator(text)) continue;
-      return { text, kaynak: d.ad };
-    } catch(e) { /* sıradakini dene */ }
+  // 1) Önbellek kontrolü
+  const cached = _cacheGet(hedefUrl);
+  if (cached && (!validator || validator(cached.text))) {
+    return { text: cached.text, kaynak: cached.kaynak + ' (önbellek)' };
   }
-  return null;
+
+  const denemeler = corsProxyZinciriOlustur(hedefUrl);
+
+  // 2) Worker varsa tek başına önce dene (güvenilir, kendi altyapımız)
+  const workerGiris = denemeler.find(d => d.ad === 'Worker');
+  if (workerGiris) {
+    try {
+      const resp = await fetch(workerGiris.url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (resp.ok) {
+        const text = await resp.text();
+        if (!validator || validator(text)) {
+          _cacheSet(hedefUrl, text, 'Worker');
+          _proxyBasariKaydet('Worker');
+          return { text, kaynak: 'Worker' };
+        }
+      }
+    } catch(e) { _proxyHataKaydet('Worker'); }
+  }
+
+  // 3) Worker yoksa/başarısızsa → ücretsiz proxy'leri paralel dene
+  const yedekler = denemeler.filter(d => d.ad !== 'Worker');
+  const sonuc = await _parallelDene(yedekler, { timeoutMs, validator });
+  if (sonuc) {
+    _cacheSet(hedefUrl, sonuc.text, sonuc.kaynak);
+    return sonuc;
+  }
+
+  return null; // hepsi başarısız
 }
 
 
@@ -20380,222 +20495,335 @@ async function xauSpotCek() {
 }
 
 
+// TCMB XML'ini çeker.
+// targetDateIso null → today.xml + hata durumunda son 3 iş gününü dene
+// targetDateIso verilmişse → sadece o günün arşiv URL'i denenir
 async function tcmbKurXmlCek(targetDateIso) {
-  let TARGET;
-  if (!targetDateIso) {
-    TARGET = 'https://www.tcmb.gov.tr/kurlar/today.xml';
-  } else {
+  const VALIDATOR = (text) => !!text && text.includes('<Tarih_Date');
+
+  if (targetDateIso) {
+    // Geçmiş tarih: sadece arşiv URL'i
     const [yyyy, mm, dd] = targetDateIso.split('-');
-    TARGET = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
+    const url = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
+    const sonuc = await corsProxyZinciriDene(url, { timeoutMs: 10000, validator: VALIDATOR });
+    if (!sonuc) { console.warn('[tcmb-kur] Arşiv çekilemedi:', targetDateIso); return null; }
+    return sonuc.text;
   }
-  const sonuc = await corsProxyZinciriDene(TARGET, {
-    timeoutMs: 8000,
-    validator: (text) => !!text && text.includes('<Tarih_Date')
-  });
-  if (!sonuc) { console.warn('[tcmb-kur] Worker ve tüm yedek proxy\u2019ler başarısız'); return null; }
-  return sonuc.text;
+
+  // Bugünkü kur: today.xml + fallback olarak son 3 iş gününü sırayla dene
+  const todayUrl = 'https://www.tcmb.gov.tr/kurlar/today.xml';
+  const todaySonuc = await corsProxyZinciriDene(todayUrl, { timeoutMs: 10000, validator: VALIDATOR });
+  if (todaySonuc) return todaySonuc.text;
+
+  // today.xml başarısız → son 3 iş gününü arşivden dene (hafta sonu/tatil geçişleri için)
+  console.warn('[tcmb-kur] today.xml başarısız, arşivden son 3 iş günü deneniyor...');
+  const tatilSet = typeof getTatilSet === 'function' ? getTatilSet() : new Set();
+  let denenen = 0;
+  const dt = new Date();
+  for (let i = 1; i <= 10 && denenen < 3; i++) {
+    dt.setDate(dt.getDate() - 1);
+    const gun = dt.getDay();
+    if (gun === 0 || gun === 6) continue; // hafta sonu
+    const iso = localDateStr(dt);
+    if (tatilSet.has(iso)) continue;
+    denenen++;
+    const [yyyy, mm, dd] = iso.split('-');
+    const url = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
+    const sonuc = await corsProxyZinciriDene(url, { timeoutMs: 8000, validator: VALIDATOR });
+    if (sonuc) { console.log('[tcmb-kur] Arşivden bulundu:', iso); return sonuc.text; }
+  }
+  console.warn('[tcmb-kur] Tüm denemeler başarısız');
+  return null;
 }
 
-// Ham TCMB XML metnini// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
+// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
+// ForexBuying/Selling boşsa BanknoteBuying/BanknoteSelling yedek olarak kullanılır.
 function tcmbKurXmlParse(xmlText) {
+  if (!xmlText || !xmlText.includes('<Tarih_Date')) return null;
   try {
     const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
     if (xml.querySelector('parsererror')) return null;
 
     const root = xml.querySelector('Tarih_Date');
-    const tarihAttr = root ? root.getAttribute('Tarih') : null; // "27.06.2026" biçiminde
+    const tarihAttr = root ? root.getAttribute('Tarih') : null; // "27.06.2026"
     let tarihIso = null;
     if (tarihAttr) {
-      const [gg, aa, yyyy] = tarihAttr.split('.');
-      if (gg && aa && yyyy) tarihIso = `${yyyy}-${aa.padStart(2,'0')}-${gg.padStart(2,'0')}`;
+      const parts = tarihAttr.split('.');
+      if (parts.length === 3) {
+        const [gg, aa, yyyy] = parts;
+        if (gg && aa && yyyy) tarihIso = `${yyyy}-${aa.padStart(2,'0')}-${gg.padStart(2,'0')}`;
+      }
+    }
+    // Tarih attribute yoksa Date attribute'u dene (MM/DD/YYYY)
+    if (!tarihIso) {
+      const dateAttr = root?.getAttribute('Date');
+      if (dateAttr) {
+        const parts = dateAttr.split('/');
+        if (parts.length === 3) {
+          const [mm, dd, yyyy] = parts;
+          if (mm && dd && yyyy) tarihIso = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+        }
+      }
     }
     if (!tarihIso) return null;
 
     const kurlar = {};
     xml.querySelectorAll('Currency').forEach(node => {
-      const kod = node.getAttribute('Kod');
+      const kod = node.getAttribute('Kod') || node.getAttribute('CurrencyCode');
       if (!kod) return;
       const unit = parseFloat(node.querySelector('Unit')?.textContent) || 1;
-      const alisRaw = parseFloat(node.querySelector('ForexBuying')?.textContent);
-      const satisRaw = parseFloat(node.querySelector('ForexSelling')?.textContent);
+      // Alış: ForexBuying → BanknoteBuying yedek
+      const alisRaw  = parseFloat(node.querySelector('ForexBuying')?.textContent)
+                    || parseFloat(node.querySelector('BanknoteBuying')?.textContent) || 0;
+      const satisRaw = parseFloat(node.querySelector('ForexSelling')?.textContent)
+                    || parseFloat(node.querySelector('BanknoteSelling')?.textContent) || 0;
       if (!alisRaw && !satisRaw) return;
       kurlar[kod] = {
-        alis: alisRaw ? +(alisRaw / unit).toFixed(6) : null,
+        alis:  alisRaw  ? +(alisRaw  / unit).toFixed(6) : null,
         satis: satisRaw ? +(satisRaw / unit).toFixed(6) : null,
-        isim: node.querySelector('Isim')?.textContent || kod
+        isim:  node.querySelector('Isim')?.textContent || node.querySelector('CurrencyName')?.textContent || kod,
+        unit,
       };
     });
     if (!Object.keys(kurlar).length) return null;
-
     return { tarihIso, kurlar };
-  } catch(e) { return null; }
+  } catch(e) {
+    console.warn('[tcmb-parse] XML parse hatası:', e.message);
+    return null;
+  }
 }
 
 // Tek bir günün kur verisini DB.tcmbKurGecmis listesine ekler/üzerine yazar (tarihe göre artan sıralı).
+// Mevcut kayıtla birleştirme (merge) yapar — sadece yeni gelen kodları günceller,
+// diğer kaynakların (özel API vb.) verilerini silmez.
 function tcmbKurGecmiseKaydet(tarihIso, kurlar) {
   DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
   const idx = DB.tcmbKurGecmis.findIndex(r => r.tarih === tarihIso);
-  const satir = { tarih: tarihIso, guncellendi: new Date().toISOString(), kurlar };
-  if (idx >= 0) DB.tcmbKurGecmis[idx] = satir;
-  else DB.tcmbKurGecmis.push(satir);
-  DB.tcmbKurGecmis.sort((a, b) => a.tarih.localeCompare(b.tarih));
+  if (idx >= 0) {
+    // Mevcut kaydı güncelle: gelen kurları mevcutla birleştir (merge)
+    DB.tcmbKurGecmis[idx] = {
+      tarih: tarihIso,
+      guncellendi: new Date().toISOString(),
+      kurlar: { ...DB.tcmbKurGecmis[idx].kurlar, ...kurlar }
+    };
+  } else {
+    DB.tcmbKurGecmis.push({ tarih: tarihIso, guncellendi: new Date().toISOString(), kurlar });
+    // Eklendikten sonra sırala (push sıradışı olabilir)
+    DB.tcmbKurGecmis.sort((a, b) => a.tarih.localeCompare(b.tarih));
+  }
 }
 
+// Hafta sonu kontrolü (TCMB Cumartesi/Pazar yayınlamaz)
+function tcmbHaftaSonuMu(dt) {
+  const g = dt.getDay();
+  return g === 0 || g === 6;
+}
+
+// Backfill için gün sayısı limiti
+const TCMB_BACKFILL_GUN_LIMIT = 90;
+
+// ── Çalışma kilidi: aynı anda 2 güncelleme başlamaması için ───
+let _tcmbGuncellemeSuruyor = false;
+
 async function tcmbKurlariniGuncelle(manuel = false) {
-  const btn = document.getElementById('btn-tcmb-guncelle');
+  // Zaten çalışıyorsa yeni istek atma
+  if (_tcmbGuncellemeSuruyor) {
+    if (manuel && typeof showToast === 'function') showToast('Kur güncellemesi zaten devam ediyor...', 'info');
+    return false;
+  }
+  _tcmbGuncellemeSuruyor = true;
+
+  const btn    = document.getElementById('btn-tcmb-guncelle');
   const status = document.getElementById('tcmb-guncelle-status');
+  const sonGun = document.getElementById('tcmb-son-guncelleme');
   if (manuel && btn) { btn.disabled = true; btn.textContent = '⏳ Çekiliyor...'; }
   if (status) status.textContent = '';
 
-  DB.tcmbKur = DB.tcmbKur || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
+  DB.tcmbKur     = DB.tcmbKur     || { tarih: null, guncellendi: null, sonKontrol: null, kurlar: {} };
   DB.tcmbKurGecmis = DB.tcmbKurGecmis || [];
 
-  // 1) Bugünün (en güncel) TCMB bültenini çek — TCMB kaynaklı para birimleri buradan gelir.
-  //    Anahtarlar TCMB kodu yerine UYGULAMA para birimi koduyla saklanır (bkz. aşağıdaki eşleştirme),
-  //    böylece kullanıcı tanımlı özel kodlarla TCMB kodu farklı olsa da doğru eşleşir.
-  const bugunXml = await tcmbKurXmlCek(null);
-  const bugunVeriXml = bugunXml ? tcmbKurXmlParse(bugunXml) : null;
-
-  // Her durumda "bugün kontrol edildi" işaretini koy — başarısızsa bile aynı gün
-  // içinde her sayfa yüklemesinde proxy zincirinin baştan denenmesini önler.
-  DB.tcmbKur.sonKontrol = localDateStr(new Date());
-
-  if (!bugunVeriXml) {
-    // TCMB başarısızsa bile özel API (XAU vb.) birimleri bağımsız çekilmeye devam eder.
-    const tcmbMsg = 'TCMB bağlantısı başarısız; TCMB kaynaklı kurlar güncellenemedi';
-    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + tcmbMsg; }
-    if (manuel && typeof showToast === 'function') showToast(tcmbMsg, 'error');
-  }
-
-  // TCMB ham kurlarını (TCMB koduyla) uygulama koduna eşleştirip tek bir günlük kayda dönüştür.
-  const bugunTarih = bugunVeriXml ? bugunVeriXml.tarihIso : localDateStr(new Date());
-  const bugunVeri = { tarihIso: bugunTarih, kurlar: {} };
-  if (bugunVeriXml) {
-    Object.keys(CURRENCY_CONFIG).forEach(code => {
-      const cfg = CURRENCY_CONFIG[code];
-      const kk = cfg.kurKaynagi;
-      if (kk && kk.tip === 'tcmb' && kk.tcmbKodu && bugunVeriXml.kurlar[kk.tcmbKodu]) {
-        bugunVeri.kurlar[code] = bugunVeriXml.kurlar[kk.tcmbKodu];
-      }
-    });
-  }
-
-  // 1b) Özel API kaynaklı para birimleri (örn. XAU) — her biri kendi URL/path'inden çekilir.
-  //     Özel API'nin döndürdüğü kur, kurKaynagi.kurBirimi cinsindendir; TRY değilse,
-  //     yukarıda çekilen TCMB kurlarıyla çapraz kur hesaplanıp TRY karşılığına çevrilir.
-  const ozelApiHatalari = [];
-  for (const code of Object.keys(CURRENCY_CONFIG)) {
-    const cfg = CURRENCY_CONFIG[code];
-    const kk = cfg.kurKaynagi;
-    if (!kk) continue;
-
-    // Tip: xau_yahoo — Yahoo Finance GC=F (altın vadeli) üzerinden XAU/USD çekip TCMB USD/TRY ile çarpar
-    if (kk.tip !== 'ozel') continue;
-
-    // Kaynak listesi — eski tek-url formatını da destekle
-    const kaynaklar = Array.isArray(kk.kaynaklar) && kk.kaynaklar.length
-      ? kk.kaynaklar
-      : (kk.url ? [{ url: kk.url, jsonPathAlis: kk.jsonPathAlis, jsonPathSatis: kk.jsonPathSatis, kurBirimi: kk.kurBirimi || 'TRY' }] : []);
-
-    if (!kaynaklar.length) { ozelApiHatalari.push(code); continue; }
-
-    const sonuc = await ozelKaynaklarKurCek(kaynaklar);
-    if (!sonuc) { ozelApiHatalari.push(code); continue; }
-
-    const kurBirimi = sonuc.kurBirimi || 'TRY';
-    if (kurBirimi === 'TRY') {
-      bugunVeri.kurlar[code] = { alis: sonuc.alis, satis: sonuc.satis, isim: cfg.ad || code };
-    } else {
-      const araKur = bugunVeri.kurlar[kurBirimi];
-      const araOran = araKur ? (araKur.satis || araKur.alis) : null;
-      if (araOran) {
-        bugunVeri.kurlar[code] = {
-          alis:  sonuc.alis  !== null ? +(sonuc.alis  * araOran).toFixed(6) : null,
-          satis: sonuc.satis !== null ? +(sonuc.satis * araOran).toFixed(6) : null,
-          isim: cfg.ad || code
-        };
-      } else {
-        ozelApiHatalari.push(code);
-      }
-    }
-  }
-
-  tcmbKurGecmiseKaydet(bugunVeri.tarihIso, bugunVeri.kurlar);
-  DB.tcmbKur = { tarih: bugunVeri.tarihIso, guncellendi: new Date().toISOString(), sonKontrol: localDateStr(new Date()), kurlar: bugunVeri.kurlar };
-  saveData();
-  if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
-
-  // 2) Geriye dönük eksik günleri tamamla — daha önceden kayıtlı en eski tarih ile
-  //    bugünün bülten tarihi arasında, henüz kaydı olmayan her iş gününü
-  //    (hafta sonu ve bilinen resmi tatiller hariç) TCMB arşivinden tek tek çeker.
-  //    Hiç eski kayıt yoksa (ilk kullanım) doldurulacak bir boşluk olmadığından atlanır.
-  //    NOT: Özel API'ler (Truncgil vb.) geçmişe dönük arşiv sunmadığından backfill sadece
-  //    TCMB kaynaklı para birimleri için yapılır; özel API'li birimler sadece "bugün" değeriyle kaydedilir.
-  let dolduralan = 0;
   try {
-    if (DB.tcmbKurGecmis.length > 1) {
-      const enEskiKayit = DB.tcmbKurGecmis[0].tarih;
-      const mevcutTarihler = new Set(DB.tcmbKurGecmis.map(r => r.tarih));
-      const tatilSet = typeof getTatilSet === 'function' ? getTatilSet() : new Set();
+    // ── 1) Bugünkü TCMB bültenini çek (today.xml + fallback) ──────────
+    const bugunXml    = await tcmbKurXmlCek(null);
+    const bugunVeriXml = bugunXml ? tcmbKurXmlParse(bugunXml) : null;
 
-      const limitTarih = new Date(); limitTarih.setDate(limitTarih.getDate() - TCMB_BACKFILL_GUN_LIMIT);
-      const enEskiDt = new Date(enEskiKayit + 'T00:00:00'); enEskiDt.setDate(enEskiDt.getDate() + 1);
-      const baslangic = enEskiDt > limitTarih ? enEskiDt : limitTarih;
-      const bitis = new Date(bugunVeri.tarihIso + 'T00:00:00');
+    DB.tcmbKur.sonKontrol = localDateStr(new Date());
 
-      const tcmbKaynakliKodlar = Object.keys(CURRENCY_CONFIG).filter(code => {
+    if (!bugunVeriXml) {
+      const tcmbMsg = 'TCMB bağlantısı başarısız; TCMB kaynaklı kurlar güncellenemedi';
+      if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ ' + tcmbMsg; }
+      if (manuel && typeof showToast === 'function') showToast(tcmbMsg, 'error');
+      // Özel API'leri yine de dene
+    }
+
+    // ── 2) TCMB XML kurlarını uygulama kodlarına eşleştir ─────────────
+    const bugunTarih = bugunVeriXml ? bugunVeriXml.tarihIso : localDateStr(new Date());
+    const bugunKurlar = {};
+
+    if (bugunVeriXml) {
+      Object.keys(CURRENCY_CONFIG).forEach(code => {
         const kk = CURRENCY_CONFIG[code].kurKaynagi;
-        return kk && kk.tip === 'tcmb' && kk.tcmbKodu;
+        if (kk?.tip === 'tcmb' && kk.tcmbKodu && bugunVeriXml.kurlar[kk.tcmbKodu]) {
+          bugunKurlar[code] = bugunVeriXml.kurlar[kk.tcmbKodu];
+        }
       });
+    }
 
-      for (let d = baslangic; d <= bitis; d.setDate(d.getDate() + 1)) {
-        const iso = localDateStr(d);
-        if (mevcutTarihler.has(iso) || tcmbHaftaSonuMu(d) || tatilSet.has(iso)) continue;
+    // ── 3) Özel API kaynakları — PARALEL çek ──────────────────────────
+    const ozelApiHatalari = [];
+    const ozelCodes = Object.keys(CURRENCY_CONFIG).filter(code => {
+      const kk = CURRENCY_CONFIG[code].kurKaynagi;
+      return kk?.tip === 'ozel';
+    });
 
-        const xml = await tcmbKurXmlCek(iso);
-        if (xml) {
-          const veriXml = tcmbKurXmlParse(xml);
-          if (veriXml && !mevcutTarihler.has(veriXml.tarihIso)) {
-            const kurlarEslesmis = {};
-            tcmbKaynakliKodlar.forEach(code => {
-              const tcmbKodu = CURRENCY_CONFIG[code].kurKaynagi.tcmbKodu;
-              if (veriXml.kurlar[tcmbKodu]) kurlarEslesmis[code] = veriXml.kurlar[tcmbKodu];
-            });
-            tcmbKurGecmiseKaydet(veriXml.tarihIso, kurlarEslesmis);
-            mevcutTarihler.add(veriXml.tarihIso);
-            dolduralan++;
+    if (ozelCodes.length) {
+      const ozelSonuclar = await Promise.allSettled(
+        ozelCodes.map(async (code) => {
+          const cfg = CURRENCY_CONFIG[code];
+          const kk = cfg.kurKaynagi;
+          const kaynaklar = Array.isArray(kk.kaynaklar) && kk.kaynaklar.length
+            ? kk.kaynaklar
+            : (kk.url ? [{ url: kk.url, jsonPathAlis: kk.jsonPathAlis, jsonPathSatis: kk.jsonPathSatis, kurBirimi: kk.kurBirimi || 'TRY' }] : []);
+          if (!kaynaklar.length) throw new Error('kaynak yok');
+          const sonuc = await ozelKaynaklarKurCek(kaynaklar);
+          if (!sonuc) throw new Error('çekilemedi');
+          return { code, cfg, sonuc };
+        })
+      );
+
+      ozelSonuclar.forEach((res, i) => {
+        const code = ozelCodes[i];
+        if (res.status === 'rejected') { ozelApiHatalari.push(code); return; }
+        const { cfg, sonuc } = res.value;
+        const kurBirimi = sonuc.kurBirimi || 'TRY';
+        if (kurBirimi === 'TRY') {
+          bugunKurlar[code] = { alis: sonuc.alis, satis: sonuc.satis, isim: cfg.ad || code };
+        } else {
+          const araKur = bugunKurlar[kurBirimi];
+          const araOran = araKur ? (araKur.satis || araKur.alis) : null;
+          if (araOran) {
+            bugunKurlar[code] = {
+              alis:  sonuc.alis  !== null ? +(sonuc.alis  * araOran).toFixed(6) : null,
+              satis: sonuc.satis !== null ? +(sonuc.satis * araOran).toFixed(6) : null,
+              isim: cfg.ad || code
+            };
+          } else { ozelApiHatalari.push(code); }
+        }
+      });
+    }
+
+    // ── 4) Bugünkü veriyi kaydet ───────────────────────────────────────
+    tcmbKurGecmiseKaydet(bugunTarih, bugunKurlar);
+    DB.tcmbKur = {
+      tarih: bugunTarih,
+      guncellendi: new Date().toISOString(),
+      sonKontrol: localDateStr(new Date()),
+      kurlar: bugunKurlar
+    };
+    saveData();
+    if (typeof renderTanimlamalar === 'function') renderTanimlamalar();
+    if (sonGun) sonGun.textContent = 'Son: ' + bugunTarih;
+
+    // ── 5) Geçmiş backfill — eksik iş günlerini TOPLU paralel doldur ──
+    // En fazla TCMB_BACKFILL_GUN_LIMIT gün geriye gider.
+    // Backfill aynı anda en fazla 3 istek paralel çalışır (proxy aşırı yüklenmesin).
+    let dolduralan = 0;
+    try {
+      if (DB.tcmbKurGecmis.length > 1) {
+        const mevcutTarihler = new Set(DB.tcmbKurGecmis.map(r => r.tarih));
+        const tatilSet = typeof getTatilSet === 'function' ? getTatilSet() : new Set();
+        const tcmbKodlar = Object.keys(CURRENCY_CONFIG).filter(code => {
+          const kk = CURRENCY_CONFIG[code].kurKaynagi;
+          return kk?.tip === 'tcmb' && kk.tcmbKodu;
+        });
+
+        const limitTarih = new Date();
+        limitTarih.setDate(limitTarih.getDate() - TCMB_BACKFILL_GUN_LIMIT);
+        const enEskiKayit = DB.tcmbKurGecmis[0].tarih;
+        const enEskiDt = new Date(enEskiKayit + 'T00:00:00');
+        enEskiDt.setDate(enEskiDt.getDate() + 1);
+        const baslangicDt = enEskiDt > limitTarih ? enEskiDt : limitTarih;
+        const bitisDt = new Date(bugunTarih + 'T00:00:00');
+
+        // Eksik iş günlerini listele
+        const eksikGunler = [];
+        for (let d = new Date(baslangicDt); d <= bitisDt; d.setDate(d.getDate() + 1)) {
+          const iso = localDateStr(d);
+          if (!mevcutTarihler.has(iso) && !tcmbHaftaSonuMu(d) && !tatilSet.has(iso)) {
+            eksikGunler.push(iso);
           }
         }
-        // TCMB ve ücretsiz CORS proxy'lerine art arda çok hızlı istek atmamak için kısa bekleme
-        await new Promise(r => setTimeout(r, 250));
-      }
-      if (dolduralan) { saveData(); if (typeof renderTanimlamalar === 'function') renderTanimlamalar(); }
-    }
-  } catch(e) {
-    console.warn('[tcmb-kur] geçmiş doldurma hatası:', e.message);
-  }
 
-  const ozelApiHataMsg = ozelApiHatalari.length ? ` · ${ozelApiHatalari.join(', ')} için kur çekilemedi` : '';
-  if (status) {
-    status.style.color = ozelApiHatalari.length ? 'var(--warn)' : 'var(--teal)';
-    status.textContent = `✓ Kurlar güncellendi (${bugunVeri.tarihIso})${dolduralan ? ` · ${dolduralan} eksik gün tamamlandı` : ''}${ozelApiHataMsg}`;
+        // Paralel batch (3'erli) olarak çek
+        const BATCH = 3;
+        for (let i = 0; i < eksikGunler.length; i += BATCH) {
+          const batch = eksikGunler.slice(i, i + BATCH);
+          const batchSonuclar = await Promise.allSettled(
+            batch.map(iso => tcmbKurXmlCek(iso).then(xml => ({ iso, xml })))
+          );
+          for (const res of batchSonuclar) {
+            if (res.status !== 'fulfilled' || !res.value.xml) continue;
+            const { iso, xml } = res.value;
+            const veri = tcmbKurXmlParse(xml);
+            if (!veri || mevcutTarihler.has(veri.tarihIso)) continue;
+            const eslesmis = {};
+            tcmbKodlar.forEach(code => {
+              const tk = CURRENCY_CONFIG[code].kurKaynagi.tcmbKodu;
+              if (veri.kurlar[tk]) eslesmis[code] = veri.kurlar[tk];
+            });
+            tcmbKurGecmiseKaydet(veri.tarihIso, eslesmis);
+            mevcutTarihler.add(veri.tarihIso);
+            dolduralan++;
+          }
+          // Batch'ler arası küçük bekleme (proxy rate-limit)
+          if (i + BATCH < eksikGunler.length) await new Promise(r => setTimeout(r, 400));
+        }
+        if (dolduralan) { saveData(); if (typeof renderTanimlamalar === 'function') renderTanimlamalar(); }
+      }
+    } catch(e) {
+      console.warn('[tcmb-kur] geçmiş doldurma hatası:', e.message);
+    }
+
+    // ── 6) Kullanıcı bildirim ─────────────────────────────────────────
+    const ozelHataMsg = ozelApiHatalari.length ? ` · ${ozelApiHatalari.join(', ')} için kur çekilemedi` : '';
+    const basarili = !!bugunVeriXml;
+    if (status) {
+      status.style.color = !basarili ? 'var(--danger)' : ozelApiHatalari.length ? 'var(--warn)' : 'var(--teal)';
+      if (basarili) {
+        status.textContent = `✓ Güncellendi (${bugunTarih})${dolduralan ? ` · ${dolduralan} eksik gün eklendi` : ''}${ozelHataMsg}`;
+      }
+    }
+    if (manuel && typeof showToast === 'function' && basarili) {
+      showToast(
+        `TCMB kurları güncellendi${dolduralan ? ` — ${dolduralan} eksik gün eklendi` : ''}${ozelHataMsg}`,
+        ozelApiHatalari.length ? 'warn' : 'success'
+      );
+    }
+
+  } catch(e) {
+    console.error('[tcmb-kur] beklenmedik hata:', e);
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = '✗ Hata: ' + e.message; }
+  } finally {
+    _tcmbGuncellemeSuruyor = false;
+    if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
+    if (status) setTimeout(() => { if(status) status.textContent = ''; }, 7000);
   }
-  if (manuel && typeof showToast === 'function') {
-    showToast(`TCMB kurları güncellendi${dolduralan ? ` — ${dolduralan} eksik günün kuru da çekildi` : ''}${ozelApiHataMsg}`, ozelApiHatalari.length ? 'warn' : 'success');
-  }
-  if (manuel && btn) { btn.disabled = false; btn.textContent = '🔄 TCMB Kurlarını Güncelle'; }
-  if (status) setTimeout(() => { status.textContent = ''; }, 6000);
   return true;
 }
 
-// Uygulama her açıldığında (Drive verisi yüklendiğinde) çağrılır — bugün için
-// kur kontrolü zaten yapılmadıysa sessizce (manuel=false) günceller; bu sırada
-// eksik geçmiş günler de otomatik olarak tamamlanır (yukarıya bkz.).
+// Uygulama açıldığında çağrılır — bugün kontrol edilmediyse otomatik günceller.
+// Ayrıca son güncellemeden bu yana > 12 saat geçtiyse de yeniden çeker
+// (uzun süre açık kalan sekmeler için güncel kur garantisi).
 function tcmbKurGunlukKontrolEt() {
   const bugun = localDateStr(new Date());
-  if (!DB.tcmbKur || DB.tcmbKur.sonKontrol !== bugun) {
-    tcmbKurlariniGuncelle(false);
-  }
+  const sonKontrol = DB.tcmbKur?.sonKontrol;
+  if (sonKontrol === bugun) return; // Bugün zaten çekildi
+
+  // Hafta sonu ise: son kayıtlı verisi varsa çekme (TCMB yayınlamaz)
+  const bugunDt = new Date();
+  if (tcmbHaftaSonuMu(bugunDt) && DB.tcmbKurGecmis?.length) return;
+
+  tcmbKurlariniGuncelle(false);
 }
 
 /**
