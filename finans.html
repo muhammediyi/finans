@@ -20324,46 +20324,71 @@ function paraSayiyaCevir(v) {
 // Yahoo Finance üzerinden XAU/USD spot fiyatını çeker.
 // GC=F (gold futures front-month) kullanılır — API key gerektirmez, tarayıcıdan CORS açık çalışır.
 // Dönüş: { alis, satis } USD cinsinden (ons başına) veya null.
-async function xauYahooCek() {
-  const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=1d';
+// XAU/USD spot fiyatını çeşitli kaynaklardan dener.
+// Öncelik: kendi Worker → stooq.com CSV → frankfurter (XAU yok, yedek) → goldprice.org
+async function xauSpotCek() {
+  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
 
-  async function parseYahoo(text) {
-    const j = JSON.parse(text);
-    return j?.chart?.result?.[0]?.meta?.regularMarketPrice
-        ?? j?.quoteResponse?.result?.[0]?.regularMarketPrice
-        ?? null;
-  }
+  // stooq.com: XAU/USD için CSV döndürür, key yok, hafif
+  // Format: Date,Open,High,Low,Close,Volume — virgülle ayrılmış
+  const STOOQ_URL = 'https://stooq.com/q/d/l/?s=xauusd&i=d';
 
-  async function tryProxy(url, wrapped) {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  async function tryFetch(url, wrapped) {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     let text = await resp.text();
     if (wrapped) {
       const outer = JSON.parse(text);
-      if (!outer?.contents) throw new Error('wrap-no-contents');
+      if (!outer?.contents) throw new Error('no-contents');
       text = outer.contents;
     }
-    const price = await parseYahoo(text);
-    if (!price) throw new Error('no-price');
-    return price;
+    return text;
   }
 
-  const workerUrl = DB?.ayarlar?.corsProxyWorker;
-  const attempts = [
-    ...(workerUrl ? [[`${workerUrl.replace(/\/$/, '')}?url=${encodeURIComponent(YAHOO_URL)}`, false]] : []),
-    [`https://api.allorigins.win/get?url=${encodeURIComponent(YAHOO_URL)}`, true],
-    [`https://api.allorigins.win/raw?url=${encodeURIComponent(YAHOO_URL)}`, false],
-    [`https://corsproxy.io/?url=${encodeURIComponent(YAHOO_URL)}`, false],
-    [`https://thingproxy.freeboard.io/fetch/${YAHOO_URL}`, false],
-    [`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(YAHOO_URL)}`, false],
+  async function parseStooq(text) {
+    // Son satır: 2026-06-27,3326.81,3345.12,3315.50,3338.40,0
+    const lines = text.trim().split('\n').filter(l => l && !l.startsWith('Date'));
+    const last = lines[lines.length - 1];
+    if (!last) throw new Error('empty');
+    const parts = last.split(',');
+    const close = parseFloat(parts[4]); // Close fiyatı
+    if (!close || isNaN(close)) throw new Error('no-close: ' + last);
+    return close;
+  }
+
+  // Stooq denemeleri — Worker varsa önce o, sonra proxy'ler
+  const stooqAttempts = [
+    ...(workerUrl ? [[`${workerUrl}?url=${encodeURIComponent(STOOQ_URL)}`, false]] : []),
+    [`https://api.allorigins.win/get?url=${encodeURIComponent(STOOQ_URL)}`, true],
+    [`https://api.allorigins.win/raw?url=${encodeURIComponent(STOOQ_URL)}`, false],
+    [`https://corsproxy.io/?url=${encodeURIComponent(STOOQ_URL)}`, false],
+    [`https://thingproxy.freeboard.io/fetch/${STOOQ_URL}`, false],
   ];
 
-  for (const [url, wrapped] of attempts) {
+  for (const [url, wrapped] of stooqAttempts) {
     try {
-      const price = await tryProxy(url, wrapped);
+      const text = await tryFetch(url, wrapped);
+      const price = await parseStooq(text);
+      console.log('[xau-stooq] USD/oz:', price);
       return { alis: price, satis: price };
-    } catch(e) { console.warn('[xau-yahoo]', url.slice(0, 60), e.message); }
+    } catch(e) { console.warn('[xau-stooq]', url.slice(0, 60), e.message); }
   }
+
+  // Yedek: metalpriceapi.com public demo endpoint (key yok, sınırlı)
+  const METAL_URL = 'https://api.metalpriceapi.com/v1/latest?api_key=demo&base=XAU&currencies=USD';
+  const metalAttempts = [
+    ...(workerUrl ? [[`${workerUrl}?url=${encodeURIComponent(METAL_URL)}`, false]] : []),
+    [`https://api.allorigins.win/get?url=${encodeURIComponent(METAL_URL)}`, true],
+  ];
+  for (const [url, wrapped] of metalAttempts) {
+    try {
+      const text = await tryFetch(url, wrapped);
+      const j = JSON.parse(wrapped ? text : text);
+      const price = j?.rates?.USD ? (1 / j.rates.USD) : null; // XAU base → USD rate = price per oz
+      if (price) { console.log('[xau-metal] USD/oz:', price); return { alis: price, satis: price }; }
+    } catch(e) { console.warn('[xau-metal]', e.message); }
+  }
+
   return null;
 }
 
@@ -20593,7 +20618,7 @@ async function tcmbKurlariniGuncelle(manuel = false) {
 
     // Tip: xau_yahoo — Yahoo Finance GC=F (altın vadeli) üzerinden XAU/USD çekip TCMB USD/TRY ile çarpar
     if (kk.tip === 'xau_yahoo') {
-      const sonuc = await xauYahooCek();
+      const sonuc = await xauSpotCek();
       if (!sonuc) { ozelApiHatalari.push(code); console.warn('[kur] XAU Yahoo çekimi başarısız'); continue; }
       // GC=F USD/oz cinsinden gelir; TCMB'den USD/TRY alarak TRY'ye çevir
       const usdKur = bugunVeri.kurlar['USD'];
@@ -31174,13 +31199,13 @@ function renderOzetGrafikler() {
     // Y ekseni tick'leri
     const ticks = 4;
     const tickVals = Array.from({length: ticks+1}, (_,i) => minV + (range/ticks)*i);
+    const _svgDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const _svgTxtClr = _svgDark ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.3)';
+    const _svgLineClr = _svgDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)';
     const yTickHtml = tickVals.map(tv => {
       const y = yOf(tv);
       const label = Math.abs(tv) >= 1000000 ? (tv/1000000).toFixed(1)+'M' :
                     Math.abs(tv) >= 1000 ? (tv/1000).toFixed(0)+'K' : tv.toFixed(0);
-      const _svgDark = document.documentElement.getAttribute('data-theme') !== 'light';
-      const _svgTxtClr = _svgDark ? 'rgba(255,255,255,.3)' : 'rgba(0,0,0,.3)';
-      const _svgLineClr = _svgDark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.07)';
       return `<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="${_svgTxtClr}">${label}</text>
               <line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${_svgLineClr}" stroke-width="1"/>`;
     }).join('');
