@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Finans Yöneticisi v38</title>
+<script>
+// Sayfa render olmadan ÖNCE temayı belirler — yanlış temanın bir anlığına
+// görünüp sonra değişmesini (flash) engeller. iOS/Android/Windows/macOS/
+// Linux'taki tüm tarayıcılar prefers-color-scheme'i standart destekler.
+(function() {
+  try {
+    var manuel = localStorage.getItem('finans-theme-manuel') === '1';
+    var saved  = localStorage.getItem('finans-theme');
+    var sistem = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    var tema = (manuel && saved) ? saved : sistem;
+    document.documentElement.setAttribute('data-theme', tema);
+  } catch(e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -6539,6 +6555,11 @@ window.addEventListener('load', placeMobProfilePanel);
         <span id="theme-toggle-icon" style="font-size:12px">☀️</span>
         <span id="theme-toggle-label">Aydınlık Tema</span>
       </button>
+      <button id="theme-system-link" onclick="temaSistemeDondur()" style="
+        display:none;width:100%;margin-top:4px;background:none;border:none;
+        font-size:9.5px;color:var(--text3);cursor:pointer;text-align:center;
+        font-family:var(--sans);padding:2px;letter-spacing:.01em;
+      ">↻ Sistemle eşleştir</button>
     </div>
   </div>
 </aside>
@@ -20211,41 +20232,19 @@ async function resmiTatilleriGuncelle() {
     const mevcutTarihler = new Set(DB.tatiller.map(t => t.tarih));
 
     for (const yil of yillar) {
-      // Nager.Date API'si artık CORS'u doğrudan destekliyor (resmi dokümantasyonda
-      // "Browser ready / CORS Enabled" yazıyor — muhtemelen bu proxy zinciri yazıldığı
-      // tarihte API henüz CORS desteklemiyordu, sonradan eklendi). Bu yüzden önce
-      // DOĞRUDAN isteği deniyoruz; üçüncü taraf proxy'lerin hiçbiri çalışmazsa (kapanma,
-      // rate-limit, geçici kesinti vb. her zaman olabilir) eski proxy zincirine düşüyoruz.
+      // Nager.Date API'si CORS destekliyor olsa da, kapanma/rate-limit gibi
+      // geçici kesintilere karşı merkezi proxy zincirinden geçiyoruz
+      // (Worker varsa önce o denenir, sonra ücretsiz yedekler).
       const TARGET = `https://date.nager.at/api/v3/PublicHolidays/${yil}/TR`;
-      const endpoints = [
-        { url: TARGET, wrapped: false },
-        { url: `https://proxy.corsfix.com/?${TARGET}`, wrapped: false },
-        { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, wrapped: false },
-        { url: `https://cors.x2u.in/${TARGET}`, wrapped: false },
-        // Düzeltme: cors.lol'da parametre öncesi '?' eksikti (api.cors.lol/url=...), bu yüzden hep hata veriyordu.
-        { url: `https://api.cors.lol/?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-        { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, wrapped: false },
-        // AllOrigins'in /raw ucu bazen boş/ham olmayan içerik döndürebiliyor; JSON-sarmalı /get ucu yedek olarak denenir.
-        { url: `https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, wrapped: true },
-        { url: `https://thingproxy.freeboard.io/fetch/${TARGET}`, wrapped: false },
-      ];
-      let data = null;
-      for (const ep of endpoints) {
-        try {
-          const resp = await fetch(ep.url, { signal: AbortSignal.timeout(6000) });
-          if (!resp.ok) { console.warn('[tatil-api] proxy HTTP', resp.status, ep.url); continue; }
-          const text = await resp.text();
-          let parsed = JSON.parse(text);
-          if (ep.wrapped) {
-            // AllOrigins /get: { contents: "<hedef API'nin ham JSON metni>" }
-            if (!parsed || typeof parsed.contents !== 'string') { console.warn('[tatil-api] proxy sarmalı geçersiz:', ep.url); continue; }
-            parsed = JSON.parse(parsed.contents);
-          }
-          if (Array.isArray(parsed) && parsed.length) { data = parsed; break; }
-          console.warn('[tatil-api] proxy boş/geçersiz veri döndü:', ep.url);
-        } catch(err) { console.warn('[tatil-api] proxy hata:', ep.url, err.message); }
-      }
-      if (!data) throw new Error('Doğrudan istek ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin');
+      const sonuc = await corsProxyZinciriDene(TARGET, {
+        timeoutMs: 6000,
+        validator: (text) => {
+          try { const p = JSON.parse(text); return Array.isArray(p) && p.length > 0; }
+          catch(e) { return false; }
+        }
+      });
+      const data = sonuc ? JSON.parse(sonuc.text) : null;
+      if (!data) throw new Error('Worker ve tüm yedek proxy\u2019ler başarısız — internet bağlantısını kontrol edin');
 
       for (const h of data) {
         if (mevcutTarihler.has(h.date)) { atlanan++; continue; }
@@ -20271,6 +20270,50 @@ async function resmiTatilleriGuncelle() {
     setTimeout(() => { status.textContent = ''; }, 6000);
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+// MERKEZİ CORS PROXY ZİNCİRİ — uygulamadaki TÜM dış API çağrıları
+// (TCMB kuru, resmi tatil API'si, özel kur kaynakları, test butonu)
+// bu tek listeden geçer. Worker varsa HER ZAMAN ilk denenen olur;
+// Worker yoksa veya başarısız olursa ücretsiz yedek proxy'lere düşülür.
+// ═══════════════════════════════════════════════════════════
+function corsProxyZinciriOlustur(hedefUrl) {
+  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
+  return [
+    ...(workerUrl ? [{ url: `${workerUrl}?url=${encodeURIComponent(hedefUrl)}`, ad: 'Worker', wrapped: false }] : []),
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins', wrapped: true },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins (raw)', wrapped: false },
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`, ad: 'CorsProxy', wrapped: false },
+    { url: `https://thingproxy.freeboard.io/fetch/${hedefUrl}`, ad: 'ThingProxy', wrapped: false },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(hedefUrl)}`, ad: 'CodeTabs', wrapped: false },
+    { url: hedefUrl, ad: 'Doğrudan', wrapped: false },
+  ];
+}
+
+// Hedef URL'i merkezi proxy zinciriyle dener, ilk başarılı metni
+// { text, kaynak } olarak döner. JSON parse etmez — ham metin döner
+// (XML/JSON her ikisi için de kullanılabilsin diye).
+async function corsProxyZinciriDene(hedefUrl, { timeoutMs = 8000, validator = null } = {}) {
+  const denemeler = corsProxyZinciriOlustur(hedefUrl);
+  for (const d of denemeler) {
+    try {
+      const resp = await fetch(d.url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!resp.ok) continue;
+      let text = await resp.text();
+      if (d.wrapped) {
+        try {
+          const o = JSON.parse(text);
+          if (typeof o?.contents !== 'string') continue;
+          text = o.contents;
+        } catch(e) { continue; }
+      }
+      if (validator && !validator(text)) continue;
+      return { text, kaynak: d.ad };
+    } catch(e) { /* sıradakini dene */ }
+  }
+  return null;
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // GENEL KUR KAYNAĞI ALTYAPISI — her para birimi kendi kaynağından çekilebilir
@@ -20345,61 +20388,12 @@ async function tcmbKurXmlCek(targetDateIso) {
     const [yyyy, mm, dd] = targetDateIso.split('-');
     TARGET = `https://www.tcmb.gov.tr/kurlar/${yyyy}${mm}/${dd}${mm}${yyyy}.xml`;
   }
-
-  async function tryFetch(url, wrapped) {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    let text = await resp.text();
-    if (wrapped) {
-      const parsed = JSON.parse(text);
-      if (!parsed?.contents) throw new Error('wrap-no-contents');
-      text = parsed.contents;
-    }
-    if (!text || !text.includes('<Tarih_Date')) throw new Error('invalid-xml');
-    return text;
-  }
-
-  // 1) Kullanıcının kendi Cloudflare Worker'ı varsa önce onu dene
-  const workerUrl = DB?.ayarlar?.corsProxyWorker;
-  if (workerUrl) {
-    try {
-      const text = await tryFetch(`${workerUrl.replace(/\/$/, '')}?url=${encodeURIComponent(TARGET)}`, false);
-      if (text) return text;
-    } catch(e) { console.warn('[tcmb-kur] worker hata:', e.message); }
-  }
-
-  // 2) allorigins — en güvenilir ücretsiz proxy
-  try {
-    const text = await tryFetch(`https://api.allorigins.win/get?url=${encodeURIComponent(TARGET)}`, true);
-    if (text) return text;
-  } catch(e) { console.warn('[tcmb-kur] allorigins/get:', e.message); }
-
-  try {
-    const text = await tryFetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET)}`, false);
-    if (text) return text;
-  } catch(e) { console.warn('[tcmb-kur] allorigins/raw:', e.message); }
-
-  // 3) corsproxy.io
-  try {
-    const text = await tryFetch(`https://corsproxy.io/?url=${encodeURIComponent(TARGET)}`, false);
-    if (text) return text;
-  } catch(e) { console.warn('[tcmb-kur] corsproxy.io:', e.message); }
-
-  // 4) Diğer yedekler sırayla
-  const fallbacks = [
-    [`https://thingproxy.freeboard.io/fetch/${TARGET}`, false],
-    [`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TARGET)}`, false],
-    [`https://cors-anywhere.herokuapp.com/${TARGET}`, false],
-    [`https://proxy.corsfix.com/?${TARGET}`, false],
-    [TARGET, false], // direkt son çare
-  ];
-  for (const [url, wrapped] of fallbacks) {
-    try {
-      const text = await tryFetch(url, wrapped);
-      if (text) return text;
-    } catch(e) { console.warn('[tcmb-kur] fallback hata:', url.slice(0, 60), e.message); }
-  }
-  return null;
+  const sonuc = await corsProxyZinciriDene(TARGET, {
+    timeoutMs: 8000,
+    validator: (text) => !!text && text.includes('<Tarih_Date')
+  });
+  if (!sonuc) { console.warn('[tcmb-kur] Worker ve tüm yedek proxy\u2019ler başarısız'); return null; }
+  return sonuc.text;
 }
 
 // Ham TCMB XML metnini// Ham TCMB XML metnini { tarihIso, kurlar } biçimine ayrıştırır; geçersizse null döner.
@@ -21546,62 +21540,25 @@ function pbKaynakListesiRender() {
   }).join('');
 }
 
-// URL'i proxy zinciriyle dener, ilk başarılı JSON'u { json, kaynak } olarak döner.
+// URL'i merkezi proxy zinciriyle dener, ilk başarılı JSON'u { json, kaynak } olarak döner.
 async function pbFetchJsonDenemeli(hedefUrl) {
-  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
-  const denemeler = [
-    ...(workerUrl ? [{ url: `${workerUrl}?url=${encodeURIComponent(hedefUrl)}`, ad: 'Worker', wrapped: false }] : []),
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins', wrapped: true },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins (raw)', wrapped: false },
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`, ad: 'CorsProxy', wrapped: false },
-    { url: `https://thingproxy.freeboard.io/fetch/${hedefUrl}`, ad: 'ThingProxy', wrapped: false },
-    { url: hedefUrl, ad: 'Doğrudan', wrapped: false },
-  ];
-  for (const d of denemeler) {
-    try {
-      const resp = await fetch(d.url, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) continue;
-      let text = await resp.text();
-      if (d.wrapped) {
-        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) { continue; }
-      }
-      const json = JSON.parse(text);
-      return { json, kaynak: d.ad };
-    } catch(e) { /* sıradakini dene */ }
-  }
-  return null;
+  const sonuc = await corsProxyZinciriDene(hedefUrl, {
+    timeoutMs: 8000,
+    validator: (text) => { try { JSON.parse(text); return true; } catch(e) { return false; } }
+  });
+  if (!sonuc) return null;
+  try { return { json: JSON.parse(sonuc.text), kaynak: sonuc.kaynak }; }
+  catch(e) { return null; }
 }
 
 // Tek bir kaynaktan (url + jsonPath) kur çeker; {alis, satis} veya null döner.
 async function tekKaynakKurCek(kaynak) {
-  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
   const hedefUrl = kaynak.url.trim();
-
-  // proxy zinciri: Worker varsa önce o, sonra allorigins, corsproxy
-  const proxyler = [
-    ...(workerUrl ? [`${workerUrl}?url=${encodeURIComponent(hedefUrl)}`] : []),
-    `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`,
-    `https://thingproxy.freeboard.io/fetch/${hedefUrl}`,
-    hedefUrl, // direkt son çare
-  ];
-
-  for (const proxyUrl of proxyler) {
-    try {
-      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) continue;
-      let text = await resp.text();
-      // allorigins /get → wrapped JSON
-      if (proxyUrl.includes('allorigins.win/get')) {
-        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) {}
-      }
-      const json = JSON.parse(text);
-      const alis  = paraSayiyaCevir(kaynak.jsonPathAlis  ? jsonPathOku(json, kaynak.jsonPathAlis)  : null);
-      const satis = paraSayiyaCevir(kaynak.jsonPathSatis ? jsonPathOku(json, kaynak.jsonPathSatis) : null);
-      if (alis !== null || satis !== null) return { alis, satis, kurBirimi: kaynak.kurBirimi || 'TRY' };
-    } catch(e) { /* sessiz */ }
-  }
+  const sonuc = await pbFetchJsonDenemeli(hedefUrl);
+  if (!sonuc) return null;
+  const alis  = paraSayiyaCevir(kaynak.jsonPathAlis  ? jsonPathOku(sonuc.json, kaynak.jsonPathAlis)  : null);
+  const satis = paraSayiyaCevir(kaynak.jsonPathSatis ? jsonPathOku(sonuc.json, kaynak.jsonPathSatis) : null);
+  if (alis !== null || satis !== null) return { alis, satis, kurBirimi: kaynak.kurBirimi || 'TRY' };
   return null;
 }
 
@@ -27655,6 +27612,9 @@ function applyTheme(theme) {
   }
   // Mobil tema butonu sync
   updateMobThemeBtn();
+  // "Sistemle eşleştir" linkini sadece kullanıcı manuel seçim yaptıysa göster
+  const sysLink = document.getElementById('theme-system-link');
+  if (sysLink) sysLink.style.display = _temaManuelSecildi ? '' : 'none';
 }
 function updateMobThemeBtn() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -27665,13 +27625,54 @@ function updateMobThemeBtn() {
 }
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  // Kullanıcı artık elle seçim yaptı — bundan sonra sistem temasını takip etme
+  _temaManuelSecildi = true;
+  localStorage.setItem('finans-theme-manuel', '1');
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
-// Sayfa açılışında kayıtlı temayı uygula
+
+// Sistemin o anki tercihini okur: 'dark' veya 'light'.
+function sistemTemasiniOku() {
+  try {
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  } catch(e) {
+    return 'dark';
+  }
+}
+
+let _temaManuelSecildi = localStorage.getItem('finans-theme-manuel') === '1';
+
+// Sayfa açılışında: kullanıcı daha önce elle seçim yaptıysa onu kullan,
+// yapmadıysa iOS/Android/Windows/macOS/Linux farketmeksizin işletim
+// sisteminin o anki aydınlık/karanlık tercihini otomatik uygula.
 (function() {
-  const saved = localStorage.getItem('finans-theme') || 'dark';
-  applyTheme(saved);
+  const saved = localStorage.getItem('finans-theme');
+  const tema = _temaManuelSecildi && saved ? saved : sistemTemasiniOku();
+  applyTheme(tema);
 })();
+
+// Sistem teması canlı değişirse (örn. telefon gece moduna otomatik geçti,
+// Windows/macOS'ta saatle tema değişti) ve kullanıcı hiç elle seçim
+// yapmadıysa, uygulama temasını da anında günceller.
+(function() {
+  if (!window.matchMedia) return;
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const handler = (e) => {
+    if (_temaManuelSecildi) return; // kullanıcı tercihi varsa sistemi takip etme
+    applyTheme(e.matches ? 'dark' : 'light');
+  };
+  if (mq.addEventListener) mq.addEventListener('change', handler);
+  else if (mq.addListener) mq.addListener(handler); // eski Safari/WebView desteği
+})();
+
+// Ayarlar ekranındaki "Sistemle Eşleştir" seçeneği için: manuel kilidi
+// kaldırıp o anki sistem temasına geri döner.
+function temaSistemeDondur() {
+  _temaManuelSecildi = false;
+  localStorage.removeItem('finans-theme-manuel');
+  applyTheme(sistemTemasiniOku());
+  showToast('Tema artık sistemle otomatik eşleşiyor');
+}
 
 /* ═══ UX İYİLEŞTİRMELERİ v36 ════════════════════════════ */
 
