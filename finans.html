@@ -8786,7 +8786,7 @@ html[data-theme="light"] .kart-extre-footer {
         <!-- Çoklu kaynak listesi — tip=ozel ise göster -->
         <div id="pb-kur-ozel-alanlar" style="display:none">
           <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
-            Her kaynak <b>paralel</b> denenir — ilk başarılı yanıt kullanılır. CORS proxy veya Worker URL'i de ekleyebilirsiniz.
+            Her kaynak <b>paralel</b> denenir — ilk başarılı yanıt kullanılır. URL'i girip <b>Test Et</b>'e basın, JSON içindeki tüm alanlar otomatik bulunup listelenir — Alış/Satış'a tıklayıp seçin, path kutuları kendisi dolsun.
           </div>
           <div id="pb-kaynak-listesi" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
           <button type="button" class="btn btn-ghost btn-sm" onclick="pbKaynakEkle()" style="width:100%">+ Kaynak Ekle</button>
@@ -21524,21 +21524,235 @@ function pbKaynakListesiRender() {
         <input placeholder="URL (https://...)" value="${(k.url||'').replace(/"/g,'&quot;')}"
           oninput="_pbKaynaklar[${i}].url=this.value"
           style="flex:1;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
+        <button type="button" onclick="pbKaynakTestEt(${i})" id="pb-test-btn-${i}"
+          style="background:var(--accent-glow2);border:1px solid var(--border-active);color:var(--gold);cursor:pointer;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;flex-shrink:0;white-space:nowrap">🧪 Test Et</button>
         <button type="button" onclick="_pbKaynaklar.splice(${i},1);pbKaynakListesiRender()"
           style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 6px;flex-shrink:0">✕</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center">
         <input placeholder="JSON Path Alış" value="${(k.jsonPathAlis||'').replace(/"/g,'&quot;')}"
+          id="pb-path-alis-${i}"
           oninput="_pbKaynaklar[${i}].jsonPathAlis=this.value"
           style="font-size:11px;padding:4px 7px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
         <input placeholder="JSON Path Satış" value="${(k.jsonPathSatis||'').replace(/"/g,'&quot;')}"
+          id="pb-path-satis-${i}"
           oninput="_pbKaynaklar[${i}].jsonPathSatis=this.value"
           style="font-size:11px;padding:4px 7px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
         <select onchange="_pbKaynaklar[${i}].kurBirimi=this.value"
           style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">${opts}</select>
       </div>
+      <div id="pb-test-sonuc-${i}"></div>
     </div>`;
   }).join('');
+}
+
+// URL'i proxy zinciriyle dener, ilk başarılı JSON'u { json, kaynak } olarak döner.
+async function pbFetchJsonDenemeli(hedefUrl) {
+  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
+  const denemeler = [
+    ...(workerUrl ? [{ url: `${workerUrl}?url=${encodeURIComponent(hedefUrl)}`, ad: 'Worker', wrapped: false }] : []),
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins', wrapped: true },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`, ad: 'AllOrigins (raw)', wrapped: false },
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`, ad: 'CorsProxy', wrapped: false },
+    { url: `https://thingproxy.freeboard.io/fetch/${hedefUrl}`, ad: 'ThingProxy', wrapped: false },
+    { url: hedefUrl, ad: 'Doğrudan', wrapped: false },
+  ];
+  for (const d of denemeler) {
+    try {
+      const resp = await fetch(d.url, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      let text = await resp.text();
+      if (d.wrapped) {
+        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) { continue; }
+      }
+      const json = JSON.parse(text);
+      return { json, kaynak: d.ad };
+    } catch(e) { /* sıradakini dene */ }
+  }
+  return null;
+}
+
+// Tek bir kaynaktan (url + jsonPath) kur çeker; {alis, satis} veya null döner.
+async function tekKaynakKurCek(kaynak) {
+  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
+  const hedefUrl = kaynak.url.trim();
+
+  // proxy zinciri: Worker varsa önce o, sonra allorigins, corsproxy
+  const proxyler = [
+    ...(workerUrl ? [`${workerUrl}?url=${encodeURIComponent(hedefUrl)}`] : []),
+    `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`,
+    `https://thingproxy.freeboard.io/fetch/${hedefUrl}`,
+    hedefUrl, // direkt son çare
+  ];
+
+  for (const proxyUrl of proxyler) {
+    try {
+      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      let text = await resp.text();
+      // allorigins /get → wrapped JSON
+      if (proxyUrl.includes('allorigins.win/get')) {
+        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) {}
+      }
+      const json = JSON.parse(text);
+      const alis  = paraSayiyaCevir(kaynak.jsonPathAlis  ? jsonPathOku(json, kaynak.jsonPathAlis)  : null);
+      const satis = paraSayiyaCevir(kaynak.jsonPathSatis ? jsonPathOku(json, kaynak.jsonPathSatis) : null);
+      if (alis !== null || satis !== null) return { alis, satis, kurBirimi: kaynak.kurBirimi || 'TRY' };
+    } catch(e) { /* sessiz */ }
+  }
+  return null;
+}
+
+// Birden fazla kaynağı paralel dener, ilk başarılıyı döner.
+async function ozelKaynaklarKurCek(kaynaklar) {
+  if (!kaynaklar || !kaynaklar.length) return null;
+  return new Promise(resolve => {
+    let kalan = kaynaklar.length;
+    let bitti = false;
+    kaynaklar.forEach(kaynak => {
+      tekKaynakKurCek(kaynak).then(sonuc => {
+        if (sonuc && !bitti) { bitti = true; resolve(sonuc); }
+        else if (!sonuc) { kalan--; if (kalan === 0 && !bitti) resolve(null); }
+      }).catch(() => { kalan--; if (kalan === 0 && !bitti) resolve(null); });
+    });
+  });
+}
+
+// ── Bir kaynak URL'ini test eder: proxy zinciriyle çekip JSON'u tarar,
+//    tüm leaf path'leri tıklanabilir liste olarak gösterir. ──────────
+let _pbTestJsonCache = {};
+
+async function pbKaynakTestEt(i) {
+  const kaynak = _pbKaynaklar[i];
+  const sonucEl = document.getElementById('pb-test-sonuc-' + i);
+  const btn = document.getElementById('pb-test-btn-' + i);
+  if (!kaynak || !kaynak.url || !kaynak.url.trim()) {
+    if (sonucEl) sonucEl.innerHTML = pbTestMesaj('Önce bir URL girin.', 'error');
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Deneniyor...'; }
+  if (sonucEl) sonucEl.innerHTML = pbTestMesaj('Kaynak deneniyor (proxy zinciri sırayla deneniyor)...', 'info');
+
+  const sonuc = await pbFetchJsonDenemeli(kaynak.url.trim());
+
+  if (btn) { btn.disabled = false; btn.textContent = '🧪 Test Et'; }
+
+  if (!sonuc || !sonuc.json) {
+    if (sonucEl) sonucEl.innerHTML = pbTestMesaj('Hiçbir yöntemle veri çekilemedi. URL\'i kontrol edin veya kaynak CORS/proxy ile uyumlu olmayabilir.', 'error');
+    return;
+  }
+
+  _pbTestJsonCache[i] = sonuc.json;
+  const yollar = pbJsonYollariBul(sonuc.json);
+
+  if (!yollar.length) {
+    if (sonucEl) sonucEl.innerHTML = pbTestMesaj('Bağlantı başarılı ama JSON içinde sayısal/metinsel bir alan bulunamadı.', 'error');
+    return;
+  }
+
+  if (sonucEl) sonucEl.innerHTML = pbTestSonucRender(i, sonuc.kaynak, yollar);
+}
+
+// JSON'u recursive tarar, her sayısal/sayıya-çevrilebilir-string leaf değeri
+// için { path, value, label } döner. Dizi elemanları için index kullanılır,
+// objede 'ad/isim/code/kod/name' gibi bir alan varsa etiket olarak eklenir.
+function pbJsonYollariBul(obj, maxDepth) {
+  maxDepth = maxDepth || 6;
+  const sonuclar = [];
+  const ETIKET_ANAHTAR = /^(ad|isim|name|kod|code|currency|symbol|sembol|birim|unit)$/i;
+
+  function gez(node, path, depth, ebeveynEtiket) {
+    if (depth > maxDepth || sonuclar.length > 400) return;
+    if (node === null || node === undefined) return;
+
+    if (typeof node === 'number') {
+      sonuclar.push({ path, value: node, label: ebeveynEtiket });
+      return;
+    }
+    if (typeof node === 'string') {
+      const n = paraSayiyaCevir(node);
+      if (n !== null && node.trim() !== '') {
+        sonuclar.push({ path, value: node, numericValue: n, label: ebeveynEtiket });
+      }
+      return;
+    }
+    if (Array.isArray(node)) {
+      node.forEach((item, idx) => {
+        let etiket = null;
+        if (item && typeof item === 'object') {
+          for (const k of Object.keys(item)) {
+            if (ETIKET_ANAHTAR.test(k) && (typeof item[k] === 'string' || typeof item[k] === 'number')) {
+              etiket = String(item[k]); break;
+            }
+          }
+        }
+        gez(item, path ? `${path}.${idx}` : String(idx), depth + 1, etiket);
+      });
+      return;
+    }
+    if (typeof node === 'object') {
+      for (const k of Object.keys(node)) {
+        if (ETIKET_ANAHTAR.test(k)) continue; // etiket alanlarını ayrı path olarak listelemeye gerek yok
+        gez(node[k], path ? `${path}.${k}` : k, depth + 1, ebeveynEtiket);
+      }
+      return;
+    }
+  }
+  gez(obj, '', 0, null);
+  return sonuclar;
+}
+
+// Bulunan path listesini HTML olarak render eder — her satıra Alış/Satış butonu.
+function pbTestSonucRender(i, kaynakAdi, yollar) {
+  const MAKS_GOSTER = 60;
+  const gosterilecek = yollar.slice(0, MAKS_GOSTER);
+  const satirlar = gosterilecek.map((y, idx) => {
+    const pathEsc = y.path.replace(/'/g, "\\'");
+    const etiketHtml = y.label ? `<span style="color:var(--text3);font-size:10px;margin-left:4px">(${escapeHtml(y.label)})</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;font-size:11px" onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='transparent'">
+      <code style="flex:1;color:var(--text2);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(y.path)}">${escapeHtml(y.path) || '(kök)'}${etiketHtml}</code>
+      <span style="color:var(--accent);font-weight:600;font-family:var(--mono);white-space:nowrap">${escapeHtml(String(y.value))}</span>
+      <button type="button" onclick="pbPathSec(${i}, 'alis', '${pathEsc}')"
+        style="background:var(--teal-glow);border:1px solid var(--teal);color:var(--teal);font-size:10px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;flex-shrink:0">Alış</button>
+      <button type="button" onclick="pbPathSec(${i}, 'satis', '${pathEsc}')"
+        style="background:var(--rose-glow);border:1px solid var(--rose);color:var(--rose);font-size:10px;font-weight:600;padding:3px 7px;border-radius:5px;cursor:pointer;flex-shrink:0">Satış</button>
+    </div>`;
+  }).join('');
+  const fazlaUyari = yollar.length > MAKS_GOSTER
+    ? `<div style="font-size:10.5px;color:var(--text3);padding:4px 6px">+ ${yollar.length - MAKS_GOSTER} alan daha (filtrelemek için path'i elle yazabilirsiniz)</div>` : '';
+  return `<div style="background:var(--surface1);border:1px solid var(--teal);border-radius:7px;padding:8px;margin-top:2px">
+    <div style="font-size:10.5px;color:var(--teal);font-weight:600;margin-bottom:6px">✓ ${escapeHtml(kaynakAdi)} ile bağlandı — ${yollar.length} alan bulundu, Alış/Satış için tıklayın:</div>
+    <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:1px">${satirlar}</div>
+    ${fazlaUyari}
+  </div>`;
+}
+
+function pbTestMesaj(msg, tip) {
+  const renk = tip === 'error' ? 'var(--danger)' : (tip === 'info' ? 'var(--text2)' : 'var(--teal)');
+  const bg = tip === 'error' ? 'var(--rose-glow)' : 'var(--surface1)';
+  const border = tip === 'error' ? 'var(--rose)' : 'var(--border2)';
+  return `<div style="font-size:11px;color:${renk};background:${bg};border:1px solid ${border};border-radius:7px;padding:8px 10px;margin-top:2px">${escapeHtml(msg)}</div>`;
+}
+
+// Bir path'i Alış veya Satış kutusuna yazar.
+function pbPathSec(i, tur, path) {
+  if (!_pbKaynaklar[i]) return;
+  if (tur === 'alis') {
+    _pbKaynaklar[i].jsonPathAlis = path;
+    const inp = document.getElementById('pb-path-alis-' + i);
+    if (inp) inp.value = path;
+  } else {
+    _pbKaynaklar[i].jsonPathSatis = path;
+    const inp = document.getElementById('pb-path-satis-' + i);
+    if (inp) inp.value = path;
+  }
+  showToast((tur === 'alis' ? 'Alış' : 'Satış') + ' alanı seçildi: ' + (path || '(kök)'));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function pbKaynakEkle() {
@@ -21548,6 +21762,7 @@ function pbKaynakEkle() {
 
 function openParaBirimiModal(kod=null) {
   editParaBirimiKod = kod;
+  _pbTestJsonCache = {};
   const title = document.getElementById('para-birimi-modal-title');
   const setBase = (cfg, k) => {
     document.getElementById('pb-sembol').value = cfg.symbol || '';
@@ -33625,50 +33840,4 @@ function snavFilter(q) {
 </div>
 
 </body>
-</html>// Tek bir kaynaktan (url + jsonPath) kur çeker; {alis, satis} veya null döner.
-async function tekKaynakKurCek(kaynak) {
-  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
-  const hedefUrl = kaynak.url.trim();
-
-  // proxy zinciri: Worker varsa önce o, sonra allorigins, corsproxy
-  const proxyler = [
-    ...(workerUrl ? [`${workerUrl}?url=${encodeURIComponent(hedefUrl)}`] : []),
-    `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`,
-    `https://thingproxy.freeboard.io/fetch/${hedefUrl}`,
-    hedefUrl, // direkt son çare
-  ];
-
-  for (const proxyUrl of proxyler) {
-    try {
-      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) continue;
-      let text = await resp.text();
-      // allorigins /get → wrapped JSON
-      if (proxyUrl.includes('allorigins.win/get')) {
-        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) {}
-      }
-      const json = JSON.parse(text);
-      const alis  = paraSayiyaCevir(kaynak.jsonPathAlis  ? jsonPathOku(json, kaynak.jsonPathAlis)  : null);
-      const satis = paraSayiyaCevir(kaynak.jsonPathSatis ? jsonPathOku(json, kaynak.jsonPathSatis) : null);
-      if (alis !== null || satis !== null) return { alis, satis, kurBirimi: kaynak.kurBirimi || 'TRY' };
-    } catch(e) { /* sessiz */ }
-  }
-  return null;
-}
-
-// Birden fazla kaynağı paralel dener, ilk başarılıyı döner.
-async function ozelKaynaklarKurCek(kaynaklar) {
-  if (!kaynaklar || !kaynaklar.length) return null;
-  return new Promise(resolve => {
-    let kalan = kaynaklar.length;
-    let bitti = false;
-    kaynaklar.forEach(kaynak => {
-      tekKaynakKurCek(kaynak).then(sonuc => {
-        if (sonuc && !bitti) { bitti = true; resolve(sonuc); }
-        else if (!sonuc) { kalan--; if (kalan === 0 && !bitti) resolve(null); }
-      }).catch(() => { kalan--; if (kalan === 0 && !bitti) resolve(null); });
-    });
-  });
-}
+</html>
