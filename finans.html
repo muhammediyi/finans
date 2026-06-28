@@ -8768,53 +8768,33 @@ html[data-theme="light"] .kart-extre-footer {
             <label>Kur Nereden Çekilsin?</label>
             <select id="pb-kur-tip" onchange="pbKurTipDegisti()">
               <option value="tcmb">TCMB (resmi döviz bülteni)</option>
-              <option value="xau_yahoo">Yahoo Finance — Altın/GC=F (otomatik)</option>
-              <option value="ozel">Özel API (kendi URL'ini gir)</option>
+              <option value="ozel">Özel API — birden fazla kaynak paralel denenir</option>
               <option value="manuel">Manuel (otomatik çekilmesin)</option>
             </select>
           </div>
         </div>
 
-        <div id="pb-kur-tcmb-alanlar" class="form-row" style="margin-bottom:0">
+        <!-- TCMB kodu satırı — tip=tcmb ise göster -->
+        <div id="pb-kur-tcmb-alanlar" class="form-row" style="margin-bottom:10px">
           <div>
             <label>TCMB Kuru Kodu <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
             <input id="pb-tcmb-kodu" placeholder="örn. USD" maxlength="6" oninput="this.value=this.value.toUpperCase()">
-            <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa TCMB'den bu para birimiyle aynı kodla (yukarıdaki "Kod" alanı) eşleştirme yapılır. Kodunuz TCMB'nin resmi kodundan farklıysa burada TCMB'nin gerçek kodunu yazın.</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa bu para biriminin kodu kullanılır.</div>
           </div>
         </div>
 
+        <!-- Çoklu kaynak listesi — tip=ozel ise göster -->
         <div id="pb-kur-ozel-alanlar" style="display:none">
-          <div class="form-row" style="margin-bottom:10px">
-            <div>
-              <label>API URL <span style="color:var(--danger)">*</span></label>
-              <input id="pb-ozel-url" placeholder="https://finans.truncgil.com/v3/today.json">
-            </div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+            Her kaynak <b>paralel</b> denenir — ilk başarılı yanıt kullanılır. CORS proxy veya Worker URL'i de ekleyebilirsiniz.
           </div>
-          <div class="form-row cols-2" style="margin-bottom:10px">
-            <div>
-              <label>JSON Path — Alış <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
-              <input id="pb-ozel-path-alis" placeholder="örn. Gram Altın.Alış">
-            </div>
-            <div>
-              <label>JSON Path — Satış</label>
-              <input id="pb-ozel-path-satis" placeholder="örn. Gram Altın.Satış">
-            </div>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <div>
-              <label>Bu Kur Hangi Para Biriminden?</label>
-              <select id="pb-ozel-kur-birimi">
-                <option value="TRY">TRY — API doğrudan TL karşılığını veriyor</option>
-                <option value="USD">USD — API dolar cinsinden veriyor (TRY'ye TCMB ile çevrilir)</option>
-                <option value="EUR">EUR — API euro cinsinden veriyor (TRY'ye TCMB ile çevrilir)</option>
-              </select>
-              <div style="font-size:11px;color:var(--text3);margin-top:5px">JSON path'ler API'nin döndürdüğü alanın iç içe konumunu gösterir; nokta ile ayrılır (örn. <code>Gram Altın.Satış</code> şu yapıyı okur: <code>{"Gram Altın": {"Satış": 6130.13}}</code>). API yanıtı buna uymuyorsa "🔄 Kurları Güncelle" sonrası "Henüz çekilemedi" görürsünüz — path'i kontrol edin.</div>
-            </div>
-          </div>
+          <div id="pb-kaynak-listesi" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="pbKaynakEkle()" style="width:100%">+ Kaynak Ekle</button>
         </div>
 
+        <!-- Manuel -->
         <div id="pb-kur-manuel-alanlar" style="display:none">
-          <div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez. Toplam varlık/tahmin hesaplarında bu birim için kur bulunamazsa tutar çevrilmeden (kendi cinsinden) kullanılır.</div>
+          <div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez.</div>
         </div>
       </div>
     </div>
@@ -10952,9 +10932,7 @@ var DEFAULT_CURRENCY_CONFIG = {
   JPY: { symbol: '¥',  locale: 'ja-JP', position: 'prefix', decimals: 0, ad: 'Japon Yeni', flag: '🇯🇵', icon: '💴', tcmbKodu: 'JPY', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'JPY' } },
   GBP: { symbol: '£',  locale: 'en-GB', position: 'prefix', ad: 'İngiliz Sterlini', flag: '🇬🇧', icon: '💷', tcmbKodu: 'GBP', kurKaynagi: { tip: 'tcmb', tcmbKodu: 'GBP' } },
   XAU: { symbol: 'XAU',locale: 'tr-TR', position: 'suffix', decimals: 4, ad: 'Altın (Troy Ons)', flag: '🥇', icon: '🥇', tcmbKodu: null,
-    // Yahoo Finance üzerinden XAU/USD spot fiyatı çekilir, TCMB USD/TRY kuru ile TRY'ye çevrilir.
-    // Kullanıcı isterse para birimi düzenleme ekranından farklı bir kaynağa çekebilir.
-    kurKaynagi: { tip: 'xau_yahoo' }
+    kurKaynagi: { tip: 'ozel', kaynaklar: [] }
   },
 };
 
@@ -10962,6 +10940,21 @@ var DEFAULT_CURRENCY_CONFIG = {
 var CURRENCY_CONFIG = {};
 
 function loadCurrencyConfig() {
+  // Eski xau_yahoo / tek-url ozel kayıtlarını yeni kaynaklar[] formatına migrate et
+  if (DB.paraBirimleri) {
+    DB.paraBirimleri.forEach(pb => {
+      if (pb.kurKaynagi?.tip === 'xau_yahoo') {
+        const w = (DB?.ayarlar?.corsProxyWorker||'').replace(/\/$/,'');
+        pb.kurKaynagi = { tip: 'ozel', kaynaklar: w
+          ? [{ url: `${w}/xau`, jsonPathAlis: 'alis', jsonPathSatis: 'satis', kurBirimi: 'TRY' }]
+          : [] };
+        pb.tcmbKodu = null;
+      } else if (pb.kurKaynagi?.tip === 'ozel' && pb.kurKaynagi.url && !Array.isArray(pb.kurKaynagi.kaynaklar)) {
+        const kk = pb.kurKaynagi;
+        pb.kurKaynagi = { tip: 'ozel', kaynaklar: [{ url: kk.url, jsonPathAlis: kk.jsonPathAlis||'', jsonPathSatis: kk.jsonPathSatis||'', kurBirimi: kk.kurBirimi||'TRY' }] };
+      }
+    });
+  }
   // Önce varsayılanları yükle
   CURRENCY_CONFIG = {...DEFAULT_CURRENCY_CONFIG};
   // DB'deki özel para birimlerini ekle/override
@@ -20324,140 +20317,26 @@ function paraSayiyaCevir(v) {
 // Yahoo Finance üzerinden XAU/USD spot fiyatını çeker.
 // GC=F (gold futures front-month) kullanılır — API key gerektirmez, tarayıcıdan CORS açık çalışır.
 // Dönüş: { alis, satis } USD cinsinden (ons başına) veya null.
-// XAU/USD spot fiyatını çeşitli kaynaklardan dener.
-// Öncelik: kendi Worker → stooq.com CSV → frankfurter (XAU yok, yedek) → goldprice.org
+// XAU/TRY fiyatını Worker'ın /xau endpoint'inden çeker.
+// Worker içinde Binance/KuCoin/Gate/Bybit'ten XAU/USD alıp TCMB USD/TRY ile çarpıyor.
 async function xauSpotCek() {
   const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
-
-  // stooq.com: XAU/USD için CSV döndürür, key yok, hafif
-  // Format: Date,Open,High,Low,Close,Volume — virgülle ayrılmış
-  const STOOQ_URL = 'https://stooq.com/q/d/l/?s=xauusd&i=d';
-
-  async function tryFetch(url, wrapped) {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!workerUrl) { console.warn('[xau] Worker URL tanımlı değil'); return null; }
+  try {
+    const resp = await fetch(`${workerUrl}/xau`, { signal: AbortSignal.timeout(10000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    let text = await resp.text();
-    if (wrapped) {
-      const outer = JSON.parse(text);
-      if (!outer?.contents) throw new Error('no-contents');
-      text = outer.contents;
-    }
-    return text;
+    const j = await resp.json();
+    if (j.error) throw new Error(j.error);
+    if (!j.alis || !j.satis) throw new Error('geçersiz yanıt: ' + JSON.stringify(j));
+    console.log('[xau] Worker/xau:', j);
+    return { alis: j.alis, satis: j.satis, _tryDirect: true };
+  } catch(e) {
+    console.warn('[xau] Worker/xau hata:', e.message);
+    return null;
   }
-
-  async function parseStooq(text) {
-    // Son satır: 2026-06-27,3326.81,3345.12,3315.50,3338.40,0
-    const lines = text.trim().split('\n').filter(l => l && !l.startsWith('Date'));
-    const last = lines[lines.length - 1];
-    if (!last) throw new Error('empty');
-    const parts = last.split(',');
-    const close = parseFloat(parts[4]); // Close fiyatı
-    if (!close || isNaN(close)) throw new Error('no-close: ' + last);
-    return close;
-  }
-
-  // Stooq denemeleri — Worker varsa önce o, sonra proxy'ler
-  const stooqAttempts = [
-    ...(workerUrl ? [[`${workerUrl}?url=${encodeURIComponent(STOOQ_URL)}`, false]] : []),
-    [`https://api.allorigins.win/get?url=${encodeURIComponent(STOOQ_URL)}`, true],
-    [`https://api.allorigins.win/raw?url=${encodeURIComponent(STOOQ_URL)}`, false],
-    [`https://corsproxy.io/?url=${encodeURIComponent(STOOQ_URL)}`, false],
-    [`https://thingproxy.freeboard.io/fetch/${STOOQ_URL}`, false],
-  ];
-
-  for (const [url, wrapped] of stooqAttempts) {
-    try {
-      const text = await tryFetch(url, wrapped);
-      const price = await parseStooq(text);
-      console.log('[xau-stooq] USD/oz:', price);
-      return { alis: price, satis: price };
-    } catch(e) { console.warn('[xau-stooq]', url.slice(0, 60), e.message); }
-  }
-
-  // Yedek: metalpriceapi.com public demo endpoint (key yok, sınırlı)
-  const METAL_URL = 'https://api.metalpriceapi.com/v1/latest?api_key=demo&base=XAU&currencies=USD';
-  const metalAttempts = [
-    ...(workerUrl ? [[`${workerUrl}?url=${encodeURIComponent(METAL_URL)}`, false]] : []),
-    [`https://api.allorigins.win/get?url=${encodeURIComponent(METAL_URL)}`, true],
-  ];
-  for (const [url, wrapped] of metalAttempts) {
-    try {
-      const text = await tryFetch(url, wrapped);
-      const j = JSON.parse(wrapped ? text : text);
-      const price = j?.rates?.USD ? (1 / j.rates.USD) : null; // XAU base → USD rate = price per oz
-      if (price) { console.log('[xau-metal] USD/oz:', price); return { alis: price, satis: price }; }
-    } catch(e) { console.warn('[xau-metal]', e.message); }
-  }
-
-  return null;
-}
-
-// Özel bir JSON API'sinden tek bir para biriminin kurunu çeker.
-// kurKaynagi: { url, jsonPathAlis, jsonPathSatis, kurBirimi }
-// Dönüş: { alis, satis } (kurBirimi cinsinden) veya null (başarısız).
-// Not: özel API'ler TCMB gibi tarihe göre arşiv sunmaz — her zaman "en güncel" değer döner.
-async function ozelApiKurCek(kurKaynagi) {
-  if (!kurKaynagi || !kurKaynagi.url) return null;
-  const _u = kurKaynagi.url;
-  const endpoints = [
-    { url: _u, wrapped: false },
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(_u)}`, wrapped: true },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(_u)}`, wrapped: false },
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(_u)}`, wrapped: false },
-    { url: `https://cors-anywhere.herokuapp.com/${_u}`, wrapped: false },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(_u)}`, wrapped: false },
-    { url: `https://thingproxy.freeboard.io/fetch/${_u}`, wrapped: false },
-    { url: `https://proxy.corsfix.com/?${_u}`, wrapped: false },
-    { url: `https://api.cors.lol/?url=${encodeURIComponent(_u)}`, wrapped: false },
-    { url: `https://cors.x2u.in/${_u}`, wrapped: false },
-  ];
-  async function tryOzelEp(ep) {
-    const resp = await fetch(ep.url, { signal: AbortSignal.timeout(8000) });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    let text = await resp.text();
-    if (ep.wrapped) {
-      const parsed = JSON.parse(text);
-      if (!parsed?.contents) throw new Error('wrap-no-contents');
-      text = parsed.contents;
-    }
-    const json = JSON.parse(text);
-    const alis = paraSayiyaCevir(kurKaynagi.jsonPathAlis ? jsonPathOku(json, kurKaynagi.jsonPathAlis) : null);
-    const satis = paraSayiyaCevir(kurKaynagi.jsonPathSatis ? jsonPathOku(json, kurKaynagi.jsonPathSatis) : null);
-    if (alis === null && satis === null) throw new Error('path-not-found');
-    return { alis, satis };
-  }
-  return await Promise.any([
-    ...endpoints.slice(0, 3).map(ep => tryOzelEp(ep).catch(() => Promise.reject())),
-    new Promise(res => setTimeout(async () => {
-      try { res(await Promise.any(endpoints.slice(3).map(ep => tryOzelEp(ep)))); } catch { /* ignore */ }
-    }, 400))
-  ]).catch(() => null);
 }
 
 
-// TCMB'nin today.xml ucu güncel günün (hafta sonu/resmi tatilse en son
-// yayınlanan iş gününün) bültenini döner; bu yüzden tarih kontrolü
-// TCMB bülten tarihine göre değil, "bugün bu kontrolü zaten yaptık mı"
-// bilgisine göre yapılır (bkz. DB.tcmbKur.sonKontrol). Böylece hafta
-// sonu/tatil günlerinde de günde bir defa kontrol edilir, gereksiz
-// tekrar istek atılmaz. Kullanıcı uygulamayı bir süre (örn. 1 hafta)
-// açmadıysa, son kayıtlı kur tarihinden bugüne kadar olan eksik iş
-// günleri TCMB'nin arşiv ucundan (kurlar/YYYYMM/DDMMYYYY.xml) tek tek
-// otomatik tamamlanır — hepsi resmi tatil güncellemesindeki gibi CORS
-// proxy zincirine düşülerek (TCMB sunucusu doğrudan tarayıcıdan
-// isteklere her zaman CORS izni vermeyebiliyor).
-
-// Çok uzun süre kapalı kalmış bir uygulamada geriye dönük doldurma
-// isteklerinin sınırsız büyümesini önlemek için güvenlik sınırı (gün).
-const TCMB_BACKFILL_GUN_LIMIT = 90;
-
-function tcmbHaftaSonuMu(d) {
-  const g = d.getDay();
-  return g === 0 || g === 6;
-}
-
-// targetDateIso verilirse o günün arşiv bültenini, verilmezse today.xml'i
-// (en güncel bülten) proxy zinciriyle çekip ham XML metnini döner; başarısızsa null.
 async function tcmbKurXmlCek(targetDateIso) {
   let TARGET;
   if (!targetDateIso) {
@@ -20617,39 +20496,32 @@ async function tcmbKurlariniGuncelle(manuel = false) {
     if (!kk) continue;
 
     // Tip: xau_yahoo — Yahoo Finance GC=F (altın vadeli) üzerinden XAU/USD çekip TCMB USD/TRY ile çarpar
-    if (kk.tip === 'xau_yahoo') {
-      const sonuc = await xauSpotCek();
-      if (!sonuc) { ozelApiHatalari.push(code); console.warn('[kur] XAU Yahoo çekimi başarısız'); continue; }
-      // GC=F USD/oz cinsinden gelir; TCMB'den USD/TRY alarak TRY'ye çevir
-      const usdKur = bugunVeri.kurlar['USD'];
-      const usdTry = usdKur ? (usdKur.satis || usdKur.alis) : null;
-      if (!usdTry) { ozelApiHatalari.push(code); console.warn('[kur] XAU için USD/TRY kurunamadı'); continue; }
-      bugunVeri.kurlar[code] = {
-        alis:  sonuc.alis  !== null ? +(sonuc.alis  * usdTry).toFixed(4) : null,
-        satis: sonuc.satis !== null ? +(sonuc.satis * usdTry).toFixed(4) : null,
-        isim: cfg.ad || code
-      };
-      continue;
-    }
-
     if (kk.tip !== 'ozel') continue;
-    const sonuc = await ozelApiKurCek(kk);
+
+    // Kaynak listesi — eski tek-url formatını da destekle
+    const kaynaklar = Array.isArray(kk.kaynaklar) && kk.kaynaklar.length
+      ? kk.kaynaklar
+      : (kk.url ? [{ url: kk.url, jsonPathAlis: kk.jsonPathAlis, jsonPathSatis: kk.jsonPathSatis, kurBirimi: kk.kurBirimi || 'TRY' }] : []);
+
+    if (!kaynaklar.length) { ozelApiHatalari.push(code); continue; }
+
+    const sonuc = await ozelKaynaklarKurCek(kaynaklar);
     if (!sonuc) { ozelApiHatalari.push(code); continue; }
-    const kurBirimi = kk.kurBirimi || 'TRY';
+
+    const kurBirimi = sonuc.kurBirimi || 'TRY';
     if (kurBirimi === 'TRY') {
       bugunVeri.kurlar[code] = { alis: sonuc.alis, satis: sonuc.satis, isim: cfg.ad || code };
     } else {
-      // Çapraz kur: önce kurBirimi'nin TRY karşılığını (aynı güncellemedeki TCMB verisinden) bul.
       const araKur = bugunVeri.kurlar[kurBirimi];
-      const araOran = araKur && (araKur.satis || araKur.alis);
+      const araOran = araKur ? (araKur.satis || araKur.alis) : null;
       if (araOran) {
         bugunVeri.kurlar[code] = {
-          alis: sonuc.alis !== null ? +(sonuc.alis * araOran).toFixed(6) : null,
+          alis:  sonuc.alis  !== null ? +(sonuc.alis  * araOran).toFixed(6) : null,
           satis: sonuc.satis !== null ? +(sonuc.satis * araOran).toFixed(6) : null,
           isim: cfg.ad || code
         };
       } else {
-        ozelApiHatalari.push(code); // kurBirimi'nin TRY karşılığı bulunamadı, çapraz kur hesaplanamadı
+        ozelApiHatalari.push(code);
       }
     }
   }
@@ -21631,31 +21503,53 @@ if (document.readyState === 'loading') {
 // ========== PARA BİRİMİ YÖNETİMİ ==========
 let editParaBirimiKod = null;
 
+// --- Çoklu Kaynak Yönetimi ---
+let _pbKaynaklar = [];
+
 function pbKurTipDegisti() {
   const tip = document.getElementById('pb-kur-tip').value;
-  document.getElementById('pb-kur-tcmb-alanlar').style.display  = tip === 'tcmb'      ? '' : 'none';
-  document.getElementById('pb-kur-ozel-alanlar').style.display   = tip === 'ozel'      ? '' : 'none';
-  // xau_yahoo ve manuel için ek alan yok; manuel mesajı göster
-  document.getElementById('pb-kur-manuel-alanlar').style.display = (tip === 'manuel' || tip === 'xau_yahoo') ? '' : 'none';
-  // xau_yahoo açıklama metnini güncelle
-  const manuelKutu = document.getElementById('pb-kur-manuel-alanlar');
-  if (manuelKutu) {
-    if (tip === 'xau_yahoo') {
-      manuelKutu.innerHTML = '<div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Yahoo Finance üzerinden GC=F (altın vadeli kontratı) spot fiyatı USD cinsinden çekilir; TCMB USD/TRY kuru ile TRY\u2019ye çevrilir. API key gerekmez.</div>';
-    } else {
-      manuelKutu.innerHTML = '<div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez. Toplam varlık/tahmin hesaplarında bu birim için kur bulunamazsa tutar çevrilmeden (kendi cinsinden) kullanılır.</div>';
-    }
-  }
+  document.getElementById('pb-kur-tcmb-alanlar').style.display  = tip === 'tcmb'   ? '' : 'none';
+  document.getElementById('pb-kur-ozel-alanlar').style.display   = tip === 'ozel'   ? '' : 'none';
+  document.getElementById('pb-kur-manuel-alanlar').style.display = tip === 'manuel' ? '' : 'none';
+}
+
+function pbKaynakListesiRender() {
+  const el = document.getElementById('pb-kaynak-listesi');
+  if (!el) return;
+  const kurCodes = Object.keys(CURRENCY_CONFIG);
+  el.innerHTML = _pbKaynaklar.map((k, i) => {
+    const opts = kurCodes.map(c => `<option value="${c}"${k.kurBirimi===c?' selected':''}>${c}</option>`).join('');
+    return `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input placeholder="URL (https://...)" value="${(k.url||'').replace(/"/g,'&quot;')}"
+          oninput="_pbKaynaklar[${i}].url=this.value"
+          style="flex:1;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
+        <button type="button" onclick="_pbKaynaklar.splice(${i},1);pbKaynakListesiRender()"
+          style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 6px;flex-shrink:0">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center">
+        <input placeholder="JSON Path Alış" value="${(k.jsonPathAlis||'').replace(/"/g,'&quot;')}"
+          oninput="_pbKaynaklar[${i}].jsonPathAlis=this.value"
+          style="font-size:11px;padding:4px 7px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
+        <input placeholder="JSON Path Satış" value="${(k.jsonPathSatis||'').replace(/"/g,'&quot;')}"
+          oninput="_pbKaynaklar[${i}].jsonPathSatis=this.value"
+          style="font-size:11px;padding:4px 7px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">
+        <select onchange="_pbKaynaklar[${i}].kurBirimi=this.value"
+          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--surface1);color:var(--text1)">${opts}</select>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function pbKaynakEkle() {
+  _pbKaynaklar.push({ url: '', jsonPathAlis: '', jsonPathSatis: '', kurBirimi: 'TRY' });
+  pbKaynakListesiRender();
 }
 
 function openParaBirimiModal(kod=null) {
   editParaBirimiKod = kod;
   const title = document.getElementById('para-birimi-modal-title');
-  if(kod) {
-    title.textContent = 'Para Birimi Düzenle';
-    const cfg = CURRENCY_CONFIG[kod];
-    document.getElementById('pb-kod').value = kod;
-    document.getElementById('pb-kod').readOnly = true;
+  const setBase = (cfg, k) => {
     document.getElementById('pb-sembol').value = cfg.symbol || '';
     document.getElementById('pb-ad').value = cfg.ad || '';
     document.getElementById('pb-bayrak').value = cfg.flag || '';
@@ -21663,36 +21557,49 @@ function openParaBirimiModal(kod=null) {
     document.getElementById('pb-konum').value = cfg.position || 'prefix';
     document.getElementById('pb-ondalik').value = cfg.decimals !== undefined ? cfg.decimals : 2;
     document.getElementById('pb-locale').value = cfg.locale || 'tr-TR';
-    // Kur kaynağı alanlarını doldur
+    // Kur kaynağı
+    const tip = k.tip || 'manuel';
+    // xau_yahoo / eski tek-url ozel → normalize
+    const normalTip = (tip === 'xau_yahoo') ? 'ozel' : tip;
+    document.getElementById('pb-kur-tip').value = normalTip;
+    document.getElementById('pb-tcmb-kodu').value = tip === 'tcmb' ? (k.tcmbKodu || '') : '';
+    // Çoklu kaynak listesi
+    if (normalTip === 'ozel') {
+      if (Array.isArray(k.kaynaklar) && k.kaynaklar.length) {
+        _pbKaynaklar = k.kaynaklar.map(s => ({...s}));
+      } else if (k.url) {
+        // Eski tek-kaynak formatından migrate
+        _pbKaynaklar = [{ url: k.url, jsonPathAlis: k.jsonPathAlis||'', jsonPathSatis: k.jsonPathSatis||'', kurBirimi: k.kurBirimi||'TRY' }];
+      } else if (tip === 'xau_yahoo') {
+        // Worker endpoint'ini kaynak olarak ekle
+        const w = (DB?.ayarlar?.corsProxyWorker||'').replace(/\/$/,'');
+        _pbKaynaklar = w ? [{ url: `${w}/xau`, jsonPathAlis: 'alis', jsonPathSatis: 'satis', kurBirimi: 'TRY' }] : [];
+      } else {
+        _pbKaynaklar = [];
+      }
+    } else {
+      _pbKaynaklar = [];
+    }
+    pbKaynakListesiRender();
+  };
+  if (kod) {
+    title.textContent = 'Para Birimi Düzenle';
+    const cfg = CURRENCY_CONFIG[kod];
+    document.getElementById('pb-kod').value = kod;
+    document.getElementById('pb-kod').readOnly = true;
     const kk = cfg.kurKaynagi || (cfg.tcmbKodu ? { tip: 'tcmb', tcmbKodu: cfg.tcmbKodu } : { tip: 'manuel' });
-    document.getElementById('pb-kur-tip').value = kk.tip || 'manuel';
-    document.getElementById('pb-tcmb-kodu').value = (kk.tip === 'tcmb' ? (kk.tcmbKodu || '') : '');
-    document.getElementById('pb-ozel-url').value = kk.url || '';
-    document.getElementById('pb-ozel-path-alis').value = kk.jsonPathAlis || '';
-    document.getElementById('pb-ozel-path-satis').value = kk.jsonPathSatis || '';
-    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
-    if(kurBirimiSel) kurBirimiSel.value = kk.kurBirimi || 'TRY';
+    setBase(cfg, kk);
   } else {
     title.textContent = 'Para Birimi Ekle';
     document.getElementById('pb-kod').value = '';
     document.getElementById('pb-kod').readOnly = false;
-    document.getElementById('pb-sembol').value = '';
-    document.getElementById('pb-ad').value = '';
-    document.getElementById('pb-bayrak').value = '';
-    document.getElementById('pb-ikon').value = '';
-    document.getElementById('pb-konum').value = 'prefix';
-    document.getElementById('pb-ondalik').value = '2';
-    document.getElementById('pb-locale').value = 'tr-TR';
-    document.getElementById('pb-kur-tip').value = 'manuel';
-    document.getElementById('pb-tcmb-kodu').value = '';
-    document.getElementById('pb-ozel-url').value = '';
-    document.getElementById('pb-ozel-path-alis').value = '';
-    document.getElementById('pb-ozel-path-satis').value = '';
-    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
-    if(kurBirimiSel) kurBirimiSel.value = 'TRY';
+    _pbKaynaklar = [];
+    setBase({ symbol:'', ad:'', flag:'', icon:'', position:'prefix', decimals:2, locale:'tr-TR' }, { tip:'manuel' });
   }
   pbKurTipDegisti();
-  document.getElementById('modal-para-birimi').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
+  document.getElementById('modal-para-birimi').classList.add('open');
+  document.body.classList.add('modal-open');
+  _sidebarDim(true);
 }
 
 function setGosterimParaBirimi(code) {
@@ -21718,19 +21625,10 @@ function saveParaBirimi() {
   if (kurTip === 'tcmb') {
     const tcmbKoduGirilen = document.getElementById('pb-tcmb-kodu').value.trim().toUpperCase();
     kurKaynagi = { tip: 'tcmb', tcmbKodu: tcmbKoduGirilen || kod };
-  } else if (kurTip === 'xau_yahoo') {
-    kurKaynagi = { tip: 'xau_yahoo' };
   } else if (kurTip === 'ozel') {
-    const url = document.getElementById('pb-ozel-url').value.trim();
-    if (!url) { showToast('Özel API için URL zorunlu', 'error'); return; }
-    const kurBirimiSel = document.getElementById('pb-ozel-kur-birimi');
-    kurKaynagi = {
-      tip: 'ozel',
-      url,
-      jsonPathAlis: document.getElementById('pb-ozel-path-alis').value.trim(),
-      jsonPathSatis: document.getElementById('pb-ozel-path-satis').value.trim(),
-      kurBirimi: kurBirimiSel ? kurBirimiSel.value : 'TRY'
-    };
+    const gecerliKaynaklar = _pbKaynaklar.filter(k => k.url && k.url.trim());
+    if (!gecerliKaynaklar.length) { showToast('En az bir URL giriniz', 'error'); return; }
+    kurKaynagi = { tip: 'ozel', kaynaklar: gecerliKaynaklar };
   } else {
     kurKaynagi = { tip: 'manuel' };
   }
@@ -33727,4 +33625,50 @@ function snavFilter(q) {
 </div>
 
 </body>
-</html>
+</html>// Tek bir kaynaktan (url + jsonPath) kur çeker; {alis, satis} veya null döner.
+async function tekKaynakKurCek(kaynak) {
+  const workerUrl = (DB?.ayarlar?.corsProxyWorker || '').replace(/\/$/, '');
+  const hedefUrl = kaynak.url.trim();
+
+  // proxy zinciri: Worker varsa önce o, sonra allorigins, corsproxy
+  const proxyler = [
+    ...(workerUrl ? [`${workerUrl}?url=${encodeURIComponent(hedefUrl)}`] : []),
+    `https://api.allorigins.win/get?url=${encodeURIComponent(hedefUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(hedefUrl)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(hedefUrl)}`,
+    `https://thingproxy.freeboard.io/fetch/${hedefUrl}`,
+    hedefUrl, // direkt son çare
+  ];
+
+  for (const proxyUrl of proxyler) {
+    try {
+      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      let text = await resp.text();
+      // allorigins /get → wrapped JSON
+      if (proxyUrl.includes('allorigins.win/get')) {
+        try { const o = JSON.parse(text); text = o.contents || text; } catch(e) {}
+      }
+      const json = JSON.parse(text);
+      const alis  = paraSayiyaCevir(kaynak.jsonPathAlis  ? jsonPathOku(json, kaynak.jsonPathAlis)  : null);
+      const satis = paraSayiyaCevir(kaynak.jsonPathSatis ? jsonPathOku(json, kaynak.jsonPathSatis) : null);
+      if (alis !== null || satis !== null) return { alis, satis, kurBirimi: kaynak.kurBirimi || 'TRY' };
+    } catch(e) { /* sessiz */ }
+  }
+  return null;
+}
+
+// Birden fazla kaynağı paralel dener, ilk başarılıyı döner.
+async function ozelKaynaklarKurCek(kaynaklar) {
+  if (!kaynaklar || !kaynaklar.length) return null;
+  return new Promise(resolve => {
+    let kalan = kaynaklar.length;
+    let bitti = false;
+    kaynaklar.forEach(kaynak => {
+      tekKaynakKurCek(kaynak).then(sonuc => {
+        if (sonuc && !bitti) { bitti = true; resolve(sonuc); }
+        else if (!sonuc) { kalan--; if (kalan === 0 && !bitti) resolve(null); }
+      }).catch(() => { kalan--; if (kalan === 0 && !bitti) resolve(null); });
+    });
+  });
+}
