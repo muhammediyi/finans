@@ -1483,7 +1483,418 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .cur-chip.selected { border-color: var(--gold); background: var(--gold-glow); color: var(--gold); }
 .cur-chip.default-mark { border-color: var(--teal); background: var(--teal-glow); color: var(--teal); }
 .cur-chip .cur-star { font-size: 9px; }
+
+/* ─── SELECT CHIP SİSTEMİ ────────────────────────────── */
+/* select'lerin yerine geçen kompakt chip/pill seçim menüsü */
+.sc-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+.sc-wrap.sc-col { flex-direction: column; align-items: stretch; gap: 4px; }
+/* Para birimi chip'leri için gap biraz daha geniş — flag+sym+code triosu nefes alabilsin */
+.sc-wrap:has(.sc-cur) { gap: 6px; }
+
+/* Form-row içinde para birimi chip'i olan hücre → tam genişliğe yay.
+   Böylece cols-2 / cols-3 içinde 6 chip sıkışıp dikeye dönmez;
+   her zaman yeterli yatay alanı olur.                               */
+.form-row > div:has(.sc-wrap .sc-cur),
+.form-row > div:has(.sc-wrap.sc-col .sc-cur) {
+  grid-column: 1 / -1;
+}
+
+/* Para birimi alanı tam genişlikte olduğunda label + chip'ler yanyana dizilir */
+.form-row > div:has(.sc-wrap .sc-cur) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Chip wrap'i içindeki sc-cur'lar için max genişlik — çok geniş ekranda aşırı uzamasın */
+.sc-wrap:has(.sc-cur) .sc-chip.sc-cur {
+  flex-shrink: 0;
+}
+
+/* Tek seçimli chip (radio benzeri) */
+.sc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--sans);
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .13s, background .13s, color .13s, box-shadow .13s;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.sc-chip:hover {
+  border-color: var(--gold);
+  color: var(--text);
+  background: var(--surface3);
+}
+.sc-chip.sc-active {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+  color: var(--gold);
+  font-weight: 600;
+}
+/* İkon variant */
+.sc-chip .sc-icon { font-size: 13px; line-height: 1; }
+/* Renk swatch chip */
+.sc-chip .sc-swatch {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,.15);
+}
+/* Teal (pozitif) varyant */
+.sc-chip.sc-teal.sc-active { border-color: var(--teal); background: var(--teal-glow); color: var(--teal); }
+/* Danger varyant */
+.sc-chip.sc-danger.sc-active { border-color: var(--danger); background: var(--danger-glow); color: var(--danger); }
+/* Ayraç / mono chip */
+.sc-chip.sc-mono { font-family: var(--mono); font-size: 13px; padding: 4px 10px; }
+/* Küçük varyant */
+.sc-chip.sc-sm { padding: 3px 9px; font-size: 11px; border-radius: 16px; }
+/* Büyük/tam genişlik satır varyant (≥4 char seçenek) */
+.sc-chip.sc-row {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  justify-content: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sc-chip.sc-row.sc-active {
+  box-shadow: inset 0 0 0 1px rgba(251,191,36,.2);
+}
+/* Gizli gerçek select (değer saklar, erişilebilirlik) */
+.sc-hidden-select {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0; height: 0;
+}
+
+/* Light tema */
+html[data-theme="light"] .sc-chip {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(15,22,41,.55);
+}
+html[data-theme="light"] .sc-chip:hover {
+  border-color: rgba(196,122,0,.45);
+  color: rgba(15,22,41,.9);
+  background: rgba(196,122,0,.05);
+}
+html[data-theme="light"] .sc-chip.sc-active {
+  border-color: rgba(196,122,0,.55);
+  background: rgba(196,122,0,.09);
+  color: #b36b00;
+}
+html[data-theme="light"] .sc-chip.sc-teal.sc-active {
+  border-color: rgba(13,148,136,.5);
+  background: rgba(13,148,136,.08);
+  color: #0d9488;
+}
+html[data-theme="light"] .sc-chip.sc-danger.sc-active {
+  border-color: rgba(225,29,72,.4);
+  background: rgba(225,29,72,.07);
+  color: #be123c;
+}
+
+/* ── Para birimi chip'leri ─────────────────────────────────── */
+.sc-chip.sc-cur {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  padding: 5px 10px;
+  gap: 4px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.1);
+  color: var(--text2);
+}
+.sc-chip.sc-cur .cur-flag {
+  font-size: 13px;
+  line-height: 1;
+  filter: saturate(.7);
+  transition: filter .13s;
+}
+.sc-chip.sc-cur .cur-sym {
+  font-size: 10px;
+  opacity: .55;
+  font-weight: 400;
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+.sc-chip.sc-cur .cur-code {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.sc-chip.sc-cur:hover {
+  border-color: rgba(251,191,36,.35);
+  background: rgba(251,191,36,.07);
+  color: var(--text);
+}
+.sc-chip.sc-cur:hover .cur-flag { filter: saturate(1.1); }
+
+/* Aktif: altın vurgu (default) */
+.sc-chip.sc-cur.sc-active {
+  border-color: rgba(251,191,36,.6);
+  background: rgba(251,191,36,.12);
+  color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(251,191,36,.15), inset 0 0 8px rgba(251,191,36,.07);
+}
+.sc-chip.sc-cur.sc-active .cur-flag { filter: saturate(1.2); }
+.sc-chip.sc-cur.sc-active .cur-sym { opacity: .7; color: inherit; }
+
+/* TRY → teal */
+.sc-chip.sc-cur[data-cur-code="TRY"].sc-active {
+  border-color: rgba(45,212,191,.6);
+  background: rgba(45,212,191,.1);
+  color: var(--teal);
+  box-shadow: 0 0 0 1px rgba(45,212,191,.15), inset 0 0 8px rgba(45,212,191,.06);
+}
+/* XAU → gerçek altın tonu, biraz daha sarı */
+.sc-chip.sc-cur[data-cur-code="XAU"].sc-active {
+  border-color: rgba(234,179,8,.65);
+  background: rgba(234,179,8,.13);
+  color: #f0c419;
+  box-shadow: 0 0 0 1px rgba(234,179,8,.2), inset 0 0 8px rgba(234,179,8,.07);
+}
+/* GBP → mor ton */
+.sc-chip.sc-cur[data-cur-code="GBP"].sc-active {
+  border-color: rgba(139,92,246,.55);
+  background: rgba(139,92,246,.1);
+  color: #a78bfa;
+  box-shadow: 0 0 0 1px rgba(139,92,246,.15);
+}
+/* EUR → mavi ton */
+.sc-chip.sc-cur[data-cur-code="EUR"].sc-active {
+  border-color: rgba(59,130,246,.55);
+  background: rgba(59,130,246,.1);
+  color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(59,130,246,.15);
+}
+/* JPY → kırmızı ton */
+.sc-chip.sc-cur[data-cur-code="JPY"].sc-active {
+  border-color: rgba(239,68,68,.5);
+  background: rgba(239,68,68,.09);
+  color: #f87171;
+  box-shadow: 0 0 0 1px rgba(239,68,68,.15);
+}
+
+/* Light tema sc-cur */
+html[data-theme="light"] .sc-chip.sc-cur {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.1);
+  color: rgba(15,22,41,.55);
+}
+html[data-theme="light"] .sc-chip.sc-cur:hover {
+  border-color: rgba(196,122,0,.4);
+  background: rgba(196,122,0,.06);
+  color: rgba(15,22,41,.9);
+}
+html[data-theme="light"] .sc-chip.sc-cur.sc-active {
+  border-color: rgba(196,122,0,.6);
+  background: rgba(196,122,0,.1);
+  color: #9a6000;
+  box-shadow: 0 0 0 1px rgba(196,122,0,.15);
+}
+html[data-theme="light"] .sc-chip.sc-cur[data-cur-code="TRY"].sc-active {
+  border-color: rgba(13,148,136,.55);
+  background: rgba(13,148,136,.08);
+  color: #0d9488;
+  box-shadow: 0 0 0 1px rgba(13,148,136,.15);
+}
+html[data-theme="light"] .sc-chip.sc-cur[data-cur-code="EUR"].sc-active {
+  border-color: rgba(37,99,235,.5);
+  background: rgba(37,99,235,.08);
+  color: #1d4ed8;
+  box-shadow: 0 0 0 1px rgba(37,99,235,.12);
+}
+html[data-theme="light"] .sc-chip.sc-cur[data-cur-code="GBP"].sc-active {
+  border-color: rgba(109,40,217,.5);
+  background: rgba(109,40,217,.08);
+  color: #6d28d9;
+  box-shadow: 0 0 0 1px rgba(109,40,217,.12);
+}
+html[data-theme="light"] .sc-chip.sc-cur[data-cur-code="JPY"].sc-active {
+  border-color: rgba(220,38,38,.5);
+  background: rgba(220,38,38,.07);
+  color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220,38,38,.12);
+}
+html[data-theme="light"] .sc-chip.sc-cur[data-cur-code="XAU"].sc-active {
+  border-color: rgba(161,116,0,.6);
+  background: rgba(161,116,0,.09);
+  color: #92600a;
+  box-shadow: 0 0 0 1px rgba(161,116,0,.15);
+}
 .cur-default-row { margin-top: 12px; }
+
+/* ── Kart/Hesap seçim chip'i (islem-kart, na-kart) ────────────── */
+.sc-chip.sc-kart {
+  border-radius: 9px;
+  padding: 7px 12px;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.09);
+  color: var(--text2);
+}
+.sc-chip.sc-kart .kc-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px currentColor;
+}
+.sc-chip.sc-kart .kc-name {
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sc-chip.sc-kart:hover {
+  border-color: rgba(251,191,36,.3);
+  background: rgba(251,191,36,.06);
+  color: var(--text);
+}
+.sc-chip.sc-kart.sc-active {
+  border-color: rgba(251,191,36,.5);
+  background: rgba(251,191,36,.1);
+  color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(251,191,36,.15);
+}
+/* Kart chip'inin dot rengi aktifken parlasın */
+.sc-chip.sc-kart.sc-active .kc-dot {
+  box-shadow: 0 0 7px currentColor;
+}
+html[data-theme="light"] .sc-chip.sc-kart {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.09);
+  color: rgba(15,22,41,.6);
+}
+html[data-theme="light"] .sc-chip.sc-kart:hover {
+  border-color: rgba(196,122,0,.4);
+  background: rgba(196,122,0,.06);
+  color: rgba(15,22,41,.9);
+}
+html[data-theme="light"] .sc-chip.sc-kart.sc-active {
+  border-color: rgba(196,122,0,.55);
+  background: rgba(196,122,0,.09);
+  color: #9a6000;
+  box-shadow: 0 0 0 1px rgba(196,122,0,.15);
+}
+
+/* ── Kart altyapısı logo badge (Visa/MC/Troy/AMEX) ─────────────── */
+.sc-chip.sc-altyapi {
+  border-radius: 7px;
+  padding: 5px 11px;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  font-family: var(--mono);
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.1);
+  color: var(--text2);
+}
+.sc-chip.sc-altyapi .altyapi-logo {
+  width: 22px; height: 14px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+/* VISA */
+.sc-chip.sc-altyapi[data-altyapi-kod="VISA"] .altyapi-logo {
+  background: #1a1f71; color: #fff; font-style: italic;
+}
+.sc-chip.sc-altyapi[data-altyapi-kod="VISA"].sc-active {
+  border-color: rgba(26,31,113,.7); background: rgba(26,31,113,.15); color: #6b83f0;
+  box-shadow: 0 0 0 1px rgba(26,31,113,.2);
+}
+/* MASTERCARD */
+.sc-chip.sc-altyapi[data-altyapi-kod="MASTERCARD"] .altyapi-logo {
+  background: linear-gradient(90deg,#eb001b 40%,#f79e1b 60%); color: transparent;
+  font-size: 0; /* sadece renk göster */
+  position: relative; overflow: hidden;
+}
+.sc-chip.sc-altyapi[data-altyapi-kod="MASTERCARD"].sc-active {
+  border-color: rgba(235,0,27,.5); background: rgba(235,0,27,.08); color: #f87171;
+  box-shadow: 0 0 0 1px rgba(235,0,27,.15);
+}
+/* TROY */
+.sc-chip.sc-altyapi[data-altyapi-kod="TROY"] .altyapi-logo {
+  background: #e30613; color: #fff;
+}
+.sc-chip.sc-altyapi[data-altyapi-kod="TROY"].sc-active {
+  border-color: rgba(227,6,19,.5); background: rgba(227,6,19,.09); color: #f87171;
+  box-shadow: 0 0 0 1px rgba(227,6,19,.15);
+}
+/* AMEX */
+.sc-chip.sc-altyapi[data-altyapi-kod="AMEX"] .altyapi-logo {
+  background: #007bc1; color: #fff; font-size: 7px;
+}
+.sc-chip.sc-altyapi[data-altyapi-kod="AMEX"].sc-active {
+  border-color: rgba(0,123,193,.5); background: rgba(0,123,193,.09); color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(0,123,193,.15);
+}
+/* Bilinmeyen altyapı — genel aktif */
+.sc-chip.sc-altyapi.sc-active {
+  border-color: var(--gold); background: var(--gold-glow); color: var(--gold);
+}
+html[data-theme="light"] .sc-chip.sc-altyapi {
+  background: rgba(0,0,0,.03); border-color: rgba(0,0,0,.1); color: rgba(15,22,41,.55);
+}
+html[data-theme="light"] .sc-chip.sc-altyapi:hover {
+  border-color: rgba(196,122,0,.35); background: rgba(196,122,0,.05); color: rgba(15,22,41,.85);
+}
+
+/* ── Banka / ürün tipi row chip özelleştirmesi ──────────────────── */
+.sc-wrap.sc-col .sc-chip.sc-row.sc-banka,
+.sc-wrap.sc-col .sc-chip.sc-row.sc-tip {
+  padding: 8px 14px;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.sc-chip.sc-row.sc-banka .bank-icon,
+.sc-chip.sc-row.sc-tip .tip-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── form-row içinde kart chip hücresi tam genişlik ─────────────── */
+.form-row > div:has(.sc-wrap .sc-kart),
+.form-row > div:has(.sc-wrap .sc-altyapi) {
+  grid-column: 1 / -1;
+}
+.form-row > div:has(.sc-wrap .sc-banka-row),
+.form-row > div:has(.sc-wrap .sc-tip-row) {
+  grid-column: 1 / -1;
+}
 /* ─── KATEGORİLER ─────────────────────────────────────── */
 .kat-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
@@ -1655,7 +2066,7 @@ html[data-theme="light"] .kat-card-actions { background: #fff; }
 #modal-islem .modal-body { padding: 18px 22px; }
 #modal-islem label { font-size: 11.5px; display: block; margin-bottom: 4px; color: var(--text3); font-weight: 600; }
 #modal-islem input, #modal-islem select { padding: 8px 12px; font-size: 13px; }
-@media(max-width:520px) { #modal-islem .form-row[style*="84px"] { grid-template-columns: 1fr !important; } }
+@media(max-width:520px) { #modal-islem .form-row[style*="88px"] { grid-template-columns: 1fr !important; } }
 /* Tüm modallerde label ve form-row tutarlı görünsün */
 .modal-body label { font-size: 11.5px; display: block; margin-bottom: 4px; color: var(--text3); font-weight: 600; }
 .modal-body .form-row { gap: 10px; margin-bottom: 10px; }
@@ -4807,6 +5218,74 @@ html[data-theme="light"] .afr-pill button:hover { background: rgba(196,122,0,.28
 html[data-theme="light"] .chip-select-opt { border-color: rgba(0,0,0,.1); background: rgba(0,0,0,.025); color: rgba(15,22,41,.6); }
 html[data-theme="light"] .chip-select-opt:hover { border-color: rgba(0,0,0,.2); background: rgba(0,0,0,.05); }
 html[data-theme="light"] .chip-select-opt.active { border-color: rgba(196,122,0,.4); background: rgba(196,122,0,.1); color: #c47a00; }
+
+/* ── Chip Pill Select — dar alanlar için (toolbar vb.) kapalı pill + açılır popover ── */
+.chip-pill-select { position: relative; display: inline-block; }
+.cps-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 11px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.03);
+  color: var(--text2); font-size: 12.5px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: var(--transition); white-space: nowrap;
+  max-width: 100%;
+}
+.cps-trigger:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.06); }
+.chip-pill-select.open .cps-trigger { border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.08); color: var(--gold); }
+.cps-trigger-label { overflow: hidden; text-overflow: ellipsis; }
+.cps-trigger-chevron { width: 9px; height: 9px; flex-shrink: 0; transition: transform .18s; opacity: .6; }
+.chip-pill-select.open .cps-trigger-chevron { transform: rotate(180deg); }
+.cps-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 5000;
+  min-width: 190px; max-width: min(86vw, 320px); max-height: 280px; overflow-y: auto;
+  background: var(--card-bg, #14182a); border: 1px solid rgba(255,255,255,.1); border-radius: 13px;
+  padding: 6px; box-shadow: 0 18px 44px rgba(0,0,0,.45);
+  backdrop-filter: blur(20px);
+  display: none; flex-direction: column; gap: 2px;
+  animation: cpsPanelIn .15s cubic-bezier(.34,1.2,.64,1);
+}
+.chip-pill-select.open .cps-panel { display: flex; }
+.chip-pill-select.align-right .cps-panel { left: auto; right: 0; }
+@keyframes cpsPanelIn { from { opacity: 0; transform: translateY(-4px) scale(.97); } to { opacity: 1; transform: none; } }
+.cps-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 9px; border: none; background: none;
+  color: var(--text2); font-size: 12.5px; font-weight: 500; font-family: inherit;
+  cursor: pointer; text-align: left; transition: background .12s, color .12s;
+  width: 100%;
+}
+.cps-opt:hover { background: rgba(255,255,255,.06); }
+.cps-opt.active { background: rgba(251,191,36,.1); color: var(--gold); font-weight: 700; }
+.cps-opt .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+.cps-group-label {
+  font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em;
+  padding: 8px 10px 4px; margin-top: 2px;
+}
+.cps-group-label:first-child { margin-top: 0; }
+html[data-theme="light"] .cps-trigger { border-color: rgba(0,0,0,.12); background: rgba(0,0,0,.025); color: rgba(15,22,41,.65); }
+html[data-theme="light"] .cps-trigger:hover { border-color: rgba(0,0,0,.22); background: rgba(0,0,0,.05); }
+html[data-theme="light"] .chip-pill-select.open .cps-trigger { border-color: rgba(196,122,0,.4); background: rgba(196,122,0,.1); color: #c47a00; }
+html[data-theme="light"] .cps-panel { background: #fff; border-color: rgba(0,0,0,.1); box-shadow: 0 18px 44px rgba(0,0,0,.16); }
+html[data-theme="light"] .cps-opt { color: rgba(15,22,41,.7); }
+html[data-theme="light"] .cps-opt:hover { background: rgba(0,0,0,.05); }
+html[data-theme="light"] .cps-opt.active { background: rgba(196,122,0,.1); color: #c47a00; }
+html[data-theme="light"] .cps-group-label { color: var(--text3); }
+
+/* ── Chip Pill Select — form alanı varyantı (form-row içinde native input/select görünümüne uyar) ── */
+.chip-pill-select.field-style { display: block; width: 100%; }
+.chip-pill-select.field-style .cps-trigger {
+  display: flex; width: 100%; justify-content: space-between;
+  padding: 10px 13px; border-radius: var(--radius-sm);
+  background: var(--surface2); border-color: var(--border);
+  font-size: 13px; font-weight: 400; color: var(--text);
+}
+.chip-pill-select.field-style .cps-trigger:hover { background: var(--surface3); border-color: rgba(255,255,255,.15); }
+.chip-pill-select.field-style.open .cps-trigger { background: var(--surface3); border-color: rgba(251,191,36,.55); box-shadow: 0 0 0 3px rgba(251,191,36,.1), 0 2px 8px rgba(0,0,0,.2); color: var(--text); }
+.chip-pill-select.field-style .cps-trigger-label { flex: 1; text-align: left; }
+.chip-pill-select.field-style .cps-panel { left: 0; right: 0; width: 100%; max-width: none; min-width: 0; }
+html[data-theme="light"] .chip-pill-select.field-style .cps-trigger { background: var(--surface2); border-color: var(--border); color: var(--text); }
+html[data-theme="light"] .chip-pill-select.field-style.open .cps-trigger { border-color: rgba(196,122,0,.55); color: var(--text); }
+
 /* ── 11. PROGRESS — Labeled ─────────────────────────────── */
 .progress-labeled {
   display: flex; align-items: center; gap: 10px;
@@ -6731,7 +7210,7 @@ window.addEventListener('load', placeMobProfilePanel);
           <input id="kd2-islem-arama" type="text" placeholder="İşlem veya kategori ara..." oninput="kd2IslemAramaDegisti(this.value)">
           <button class="kd-islem-search-clear" id="kd2-islem-arama-temizle" onclick="kd2IslemAramaTemizle()" style="display:none">✕</button>
         </div>
-        <select id="kd2-islem-sirala" class="kd-islem-sort" onchange="kd2IslemSiralamaDegisti(this.value)">
+        <select id="kd2-islem-sirala" class="kd-islem-sort" onchange="kd2IslemSiralamaDegisti(this.value)" style="display:none">
           <option value="tarih-yeni">Yeni → Eski</option>
           <option value="tarih-eski">Eski → Yeni</option>
           <option value="tutar-yuksek">Tutar ↓</option>
@@ -8295,7 +8774,7 @@ input.iban-input {
         </div>
         <div>
           <label style="font-size:11px;color:var(--text2);margin-bottom:4px;display:block">Para Birimi</label>
-          <select id="asgari-prev-pb" onchange="asgariOnizle()" style="min-width:120px"></select>
+          <select id="asgari-prev-pb" onchange="asgariOnizle()"></select>
         </div>
       </div>
       <div id="asgari-prev-sonuc" style="padding:14px;background:var(--surface2);border-radius:var(--radius-sm);font-size:13px;color:var(--text3)">
@@ -8720,11 +9199,13 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-tcmb-gecmis')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-row cols-3" style="margin-bottom:12px">
+      <div class="form-row" style="margin-bottom:8px">
         <div>
           <label>Para Birimi</label>
           <select id="tg-pb-filtre" onchange="renderTcmbGecmis()"></select>
         </div>
+      </div>
+      <div class="form-row cols-2" style="margin-bottom:12px">
         <div>
           <label>Başlangıç</label>
           <input type="date" id="tg-baslangic" data-no-reset onchange="renderTcmbGecmis()">
@@ -9028,15 +9509,17 @@ input.iban-input {
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Kart Bilgileri
         </div>
-        <div class="form-row cols-2">
+        <div class="form-row">
           <div><label>Banka <span style="color:var(--danger)">*</span></label><select id="kart-banka"></select></div>
+        </div>
+        <div class="form-row">
           <div><label>Ürün Tipi <span style="color:var(--danger)">*</span></label><select id="kart-tip"></select></div>
         </div>
         <div class="form-row cols-2">
           <div><label>Kart/Hesap Adı <span style="color:var(--danger)">*</span></label><input id="kart-ad" placeholder="örn. Garanti BBVA Bonus"></div>
           <div><label>Son 4 Hane <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><input id="kart-no" placeholder="1234" maxlength="4"></div>
         </div>
-        <div class="form-row cols-2" style="margin-bottom:0">
+        <div class="form-row" style="margin-bottom:0">
           <div><label>Kart Altyapısı <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><select id="kart-altyapi"></select></div>
         </div>
       </div>
@@ -9106,7 +9589,7 @@ input.iban-input {
         <div class="cur-grid" id="kart-cur-grid"></div>
         <div class="cur-default-row" id="kart-cur-default-row" style="display:none;margin-top:12px">
           <label>Varsayılan Para Birimi</label>
-          <select id="kart-varsayilan-pb" style="margin-top:4px;max-width:280px"></select>
+          <select id="kart-varsayilan-pb" style="margin-top:4px"></select>
         </div>
       </div>
 
@@ -9272,7 +9755,7 @@ input.iban-input {
             <input id="kd-islem-arama" type="text" placeholder="İşlem veya kategori ara..." oninput="kdIslemAramaDegisti(this.value)">
             <button class="kd-islem-search-clear" id="kd-islem-arama-temizle" onclick="kdIslemAramaTemizle()" style="display:none">✕</button>
           </div>
-          <select id="kd-islem-sirala" class="kd-islem-sort" onchange="kdIslemSiralamaDegisti(this.value)">
+          <select id="kd-islem-sirala" class="kd-islem-sort" onchange="kdIslemSiralamaDegisti(this.value)" style="display:none">
             <option value="tarih-yeni">Yeni → Eski</option>
             <option value="tarih-eski">Eski → Yeni</option>
             <option value="tutar-yuksek">Tutar ↓</option>
@@ -9327,10 +9810,12 @@ input.iban-input {
             </div>
           </div>
         </div>
-        <div class="form-row" style="margin-bottom:0;grid-template-columns:84px 1fr 88px">
-          <div><label>Birim</label>
+        <div class="form-row" style="margin-bottom:8px">
+          <div><label>Para Birimi</label>
             <select id="islem-para-birimi" onchange="updateModalMoneyWraps('modal-islem', this.value)"></select>
           </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0;grid-template-columns:1fr 88px">
           <div><label>Toplam Tutar <span style="color:var(--text3);font-size:10px;font-weight:400" title="Kampanya indirimi, iade gibi borç azaltan işlemler için tutarın başına eksi (-) işareti koyabilirsiniz.">(iade için "-" kullanın)</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="islem-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcTaksit(false)"></div></div>
           <div><label>Taksit</label><input id="islem-taksit" type="number" min="1" max="60" value="1" oninput="calcTaksit(false)"></div>
         </div>
@@ -9369,11 +9854,13 @@ input.iban-input {
           <div><label class="has-required">Kart</label><select id="na-kart" onchange="onNaKartChange()"></select></div>
           <div><label class="has-required">İşlem Tarihi</label><input id="na-tarih" type="date" onchange="onNaTarihChange()"></div>
         </div>
-        <div class="form-row cols-2">
+        <div class="form-row">
           <div>
             <label>Para Birimi</label>
             <select id="na-para-birimi" onchange="onNaPbChange()"></select>
           </div>
+        </div>
+        <div class="form-row">
           <div>
             <label class="has-required">Çekilecek Tutar</label>
             <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="na-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcNakitAvans()"></div>
@@ -9566,11 +10053,13 @@ input.iban-input {
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Finansal Detaylar
         </div>
-        <div class="form-row cols-3">
+        <div class="form-row" style="margin-bottom:8px">
           <div>
             <label>Para Birimi <span style="color:var(--danger)">*</span></label>
             <select id="mev-para-birimi" onchange="calcMevduat();updateModalMoneyWraps('modal-mevduat', this.value)"></select>
           </div>
+        </div>
+        <div class="form-row cols-2">
           <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat()"></div></div>
           <div><label>Vade (Gün) <span style="color:var(--danger)">*</span></label><input id="mev-vade" type="number" oninput="calcMevduat()"></div>
         </div>
@@ -9672,7 +10161,7 @@ input.iban-input {
           </div>
           <div id="kira-gun-kisa-ay-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
         </div>
-        <div class="form-row cols-2" style="margin-bottom:0">
+        <div class="form-row" style="margin-bottom:0">
           <div>
             <label>Para Birimi</label>
             <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange();updateModalMoneyWraps('modal-kira', this.value)"></select>
@@ -9790,15 +10279,18 @@ input.iban-input {
           </label>
         </div>
         <div id="kira-depozito-panel" style="display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px">
+          <div class="form-row" style="margin-bottom:8px">
+            <div>
+              <label>Para Birimi</label>
+              <select id="kira-depozito-pb"></select>
+            </div>
+          </div>
           <div class="form-row cols-2">
             <div>
               <label>Depozito Tutarı <span style="color:var(--danger)">*</span></label>
               <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="kira-depozito-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
             </div>
-            <div>
-              <label>Para Birimi</label>
-              <select id="kira-depozito-pb"></select>
-            </div>
+            <div></div>
           </div>
           <div class="form-row cols-2">
             <div>
@@ -10146,18 +10638,20 @@ input.iban-input {
             <input id="hesap-ad" placeholder="örn. Maaş Hesabı, Ana Hesap...">
           </div>
         </div>
-        <div class="form-row cols-3" style="margin-bottom:0">
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Hesap Türü</label>
             <select id="hesap-tur"></select>
           </div>
           <div>
-            <label>Para Birimi <span style="color:var(--danger)">*</span></label>
-            <select id="hesap-para-birimi" onchange="updateModalMoneyWraps('modal-hesap', this.value)"></select>
-          </div>
-          <div>
             <label>Mevcut Bakiye</label>
             <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-bakiye" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0;margin-top:10px">
+          <div>
+            <label>Para Birimi <span style="color:var(--danger)">*</span></label>
+            <select id="hesap-para-birimi" onchange="updateModalMoneyWraps('modal-hesap', this.value)"></select>
           </div>
         </div>
       </div>
@@ -10416,15 +10910,17 @@ input.iban-input {
             <select id="elden-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
         </div>
-        <div class="form-row cols-2" style="margin-bottom:0">
-          <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div></div>
+        <div class="form-row" style="margin-bottom:8px">
           <div id="elden-pb-wrap">
             <label>Para Birimi</label>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <select id="elden-para-birimi" style="flex:1" onchange="updateModalMoneyWraps('modal-elden', this.value)"></select>
               <span id="elden-para-birimi-badge" style="display:none;font-family:var(--mono);font-size:12px;color:var(--accent2);background:var(--teal-glow);border:1px solid rgba(45,212,191,.25);border-radius:6px;padding:5px 10px;white-space:nowrap"></span>
             </div>
           </div>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:0">
+          <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div></div>
         </div>
       </div>
 
@@ -12044,6 +12540,10 @@ function showTab(id, btn) {
     renderVeriYonetimiOzet();
     renderYerelYedekDurumu();
   }
+  // Tab içeriği render edildikten sonra chip dönüşümünü uygula (ga-*, asgari-kosul-op, nakit-avans-limit-tip vb.)
+  if (typeof applyChipsToContainer === 'function' && tabEl) {
+    setTimeout(() => applyChipsToContainer(tabEl), 30);
+  }
 }
 
 // ========== MODAL ==========
@@ -12111,6 +12611,104 @@ function openModal(id, onceSecimKartId) {
   _pushHashState(curPage, curParams);
 }
 
+// ── Chip Pill Select — genel motor ──────────────────────────────────────
+// Dar toolbar alanlarındaki native <select>'leri kompakt, tıklanınca açılan
+// chip popover'a dönüştürür. Gerçek <select> "data-no-reset" ile saklı kalır,
+// state kaynağı olarak görev görür; pill bunu görselleştirir ve onchange tetikler.
+let _cpsOpenId = null;
+
+function cpsInit(selectId, opts) {
+  // opts: { renderLabel(value, opt) -> string, dot(value) -> color|null, alignRight: bool, fieldStyle: bool }
+  opts = opts || {};
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.setAttribute('data-no-reset', '');
+  if (sel.style.display !== 'none') sel.style.display = 'none';
+
+  let wrap = document.getElementById('cps-wrap-' + selectId);
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'cps-wrap-' + selectId;
+    wrap.className = 'chip-pill-select' + (opts.alignRight ? ' align-right' : '') + (opts.fieldStyle ? ' field-style' : '');
+    wrap.innerHTML =
+      '<button type="button" class="cps-trigger" onclick="cpsToggle(\'' + selectId + '\')">' +
+        '<span class="cps-trigger-label"></span>' +
+        '<svg class="cps-trigger-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</button>' +
+      '<div class="cps-panel"></div>';
+    sel.insertAdjacentElement('afterend', wrap);
+  }
+  sel._cpsOpts = opts;
+  cpsSync(selectId);
+}
+
+function cpsSync(selectId) {
+  const sel = document.getElementById(selectId);
+  const wrap = document.getElementById('cps-wrap-' + selectId);
+  if (!sel || !wrap) return;
+  const opts = sel._cpsOpts || {};
+  const panel = wrap.querySelector('.cps-panel');
+  const labelEl = wrap.querySelector('.cps-trigger-label');
+  const options = Array.from(sel.options);
+  const current = options.find(o => o.value === sel.value) || options[0];
+
+  labelEl.textContent = current ? (opts.shortLabel ? opts.shortLabel(current.value, current) : current.textContent) : '';
+
+  function optHtml(o) {
+    const isActive = o.value === sel.value;
+    const dotColor = opts.dot ? opts.dot(o.value, o) : null;
+    const dotHtml = dotColor ? '<span class="chip-dot" style="background:' + dotColor + '"></span>' : '';
+    return '<button type="button" class="cps-opt' + (isActive ? ' active' : '') + '" data-val="' + o.value.replace(/"/g, '&quot;') + '">' + dotHtml + o.textContent + '</button>';
+  }
+
+  // optgroup'lar varsa grup başlıklarıyla render et, yoksa düz liste
+  const hasGroups = Array.from(sel.children).some(c => c.tagName === 'OPTGROUP');
+  if (hasGroups) {
+    panel.innerHTML = Array.from(sel.children).map(child => {
+      if (child.tagName === 'OPTGROUP') {
+        const groupOpts = Array.from(child.children).map(optHtml).join('');
+        return '<div class="cps-group-label">' + child.label + '</div>' + groupOpts;
+      }
+      return optHtml(child);
+    }).join('');
+  } else {
+    panel.innerHTML = options.map(optHtml).join('');
+  }
+
+  panel.querySelectorAll('.cps-opt').forEach(btn => {
+    btn.onclick = () => {
+      sel.value = btn.dataset.val;
+      cpsClose();
+      cpsSync(selectId);
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+  });
+}
+
+function cpsToggle(selectId) {
+  const wrap = document.getElementById('cps-wrap-' + selectId);
+  if (!wrap) return;
+  if (_cpsOpenId === selectId) { cpsClose(); return; }
+  cpsClose();
+  wrap.classList.add('open');
+  _cpsOpenId = selectId;
+}
+
+function cpsClose() {
+  if (!_cpsOpenId) return;
+  const wrap = document.getElementById('cps-wrap-' + _cpsOpenId);
+  if (wrap) wrap.classList.remove('open');
+  _cpsOpenId = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (!_cpsOpenId) return;
+  const wrap = document.getElementById('cps-wrap-' + _cpsOpenId);
+  if (wrap && !wrap.contains(e.target)) cpsClose();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cpsClose(); });
+// ── /Chip Pill Select ────────────────────────────────────────────────────
+
 function closeModal(id) {
   const modalBg = document.getElementById(id);
   if (!modalBg) return;
@@ -12132,6 +12730,16 @@ function closeModal(id) {
     }
     // date-fake-input (overlay) sıfırla
     if (el._dateFake) el._dateFake.value = '';
+  });
+
+  // 1b) Chip-pill-select'e bağlı select'ler "data-no-reset" yüzünden yukarıda atlandı —
+  // value'larını native "selected" özniteliğine göre sıfırlayıp pill görselini senkronize et.
+  modal.querySelectorAll('select[data-no-reset]').forEach(function(el) {
+    if (el._cpsOpts) {
+      const defOpt = Array.from(el.options).find(o => o.defaultSelected) || el.options[0];
+      el.value = defOpt ? defOpt.value : '';
+      cpsSync(el.id);
+    }
   });
 
   // date-wrap içindeki görsel input'ları da temizle
@@ -13809,7 +14417,11 @@ function kd2RenderIslemler() {
   const temizleBtn = document.getElementById('kd2-islem-arama-temizle');
   if (temizleBtn) temizleBtn.style.display = _kd2IslemArama ? 'flex' : 'none';
   const siraSelect = document.getElementById('kd2-islem-sirala');
-  if (siraSelect && siraSelect.value !== _kd2IslemSiralama) siraSelect.value = _kd2IslemSiralama;
+  if (siraSelect) {
+    if (siraSelect.value !== _kd2IslemSiralama) siraSelect.value = _kd2IslemSiralama;
+    if (!siraSelect._cpsOpts) cpsInit('kd2-islem-sirala', { alignRight: true });
+    else cpsSync('kd2-islem-sirala');
+  }
   let filtered = tumIslemler.filter(function(i) {
     if (_kd2IslemKatFiltre && i.kategori !== _kd2IslemKatFiltre) return false;
     if (_kd2IslemArama) {
@@ -13976,7 +14588,11 @@ function kdRenderIslemler() {
   const temizleBtn = document.getElementById('kd-islem-arama-temizle');
   if (temizleBtn) temizleBtn.style.display = _kdIslemArama ? 'flex' : 'none';
   const siraSelect = document.getElementById('kd-islem-sirala');
-  if (siraSelect && siraSelect.value !== _kdIslemSiralama) siraSelect.value = _kdIslemSiralama;
+  if (siraSelect) {
+    if (siraSelect.value !== _kdIslemSiralama) siraSelect.value = _kdIslemSiralama;
+    if (!siraSelect._cpsOpts) cpsInit('kd-islem-sirala', { alignRight: true });
+    else cpsSync('kd-islem-sirala');
+  }
 
   if (!tumIslemler.length) {
     list.innerHTML = `<div class="islem-empty">
@@ -22116,9 +22732,7 @@ function openParaBirimiModal(kod=null) {
     setBase({ symbol:'', ad:'', flag:'', icon:'', position:'prefix', decimals:2, locale:'tr-TR' }, { tip:'manuel' });
   }
   pbKurTipDegisti();
-  document.getElementById('modal-para-birimi').classList.add('open');
-  document.body.classList.add('modal-open');
-  _sidebarDim(true);
+  openModal('modal-para-birimi');
 }
 
 function setGosterimParaBirimi(code) {
@@ -27962,6 +28576,10 @@ function applyTheme(theme) {
   // "Sistemle eşleştir" linkini sadece kullanıcı manuel seçim yaptıysa göster
   const sysLink = document.getElementById('theme-system-link');
   if (sysLink) sysLink.style.display = _temaManuelSecildi ? '' : 'none';
+  // Tarih input overlay'leri (fake input) ilk oluşturulduğunda o anki temayı
+  // donduruyor — tema değişiminde bunları tazele (yoksa örn. dark mode'a
+  // geçince eski açık tema arka planı kalır).
+  if (typeof window._refreshDateOverlayStyles === 'function') window._refreshDateOverlayStyles();
 }
 function updateMobThemeBtn() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -30487,6 +31105,14 @@ window.entegre = {
     'textAlign','verticalAlign',
     'boxSizing','flex','flexGrow','flexShrink','flexBasis',
   ];
+  // Tema değişiminde yenilenecek alt küme — boyut/layout özelliklerine
+  // DOKUNMAZ (real input .date-wrap içinde width:32px'e sabitlendiği için
+  // tüm COPY_PROPS'u tekrar kopyalamak fake input'u o küçük genişliğe düşürür).
+  const THEME_PROPS = [
+    'color', 'background', 'backgroundColor', 'backgroundImage',
+    'border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft',
+    'borderColor', 'boxShadow', 'outline', 'outlineOffset',
+  ];
 
   function copyStyles(src, dst) {
     const cs = getComputedStyle(src);
@@ -30496,6 +31122,15 @@ window.entegre = {
     // opacity ve color'ı gerçek değeriyle al
     dst.style.opacity = '1';
     dst.style.position = 'relative';
+  }
+
+  // Sadece renk/arka plan/kenarlık gibi temaya bağlı özellikleri yeniler;
+  // genişlik/yükseklik gibi layout özelliklerini olduğu gibi bırakır.
+  function copyThemeStyles(src, dst) {
+    const cs = getComputedStyle(src);
+    THEME_PROPS.forEach(p => {
+      try { dst.style[p] = cs[p]; } catch(e) {}
+    });
   }
 
   function getDisplayText(inp) {
@@ -30789,6 +31424,20 @@ window.entegre = {
     });
   };
 
+  // Tema değişince (dark/light), copyStyles ilk sarmalamada donduğu için
+  // fake input'ların arka plan/yazı rengi eski temada kalır — bunu yeniden
+  // senkronize eder. Tema toggle fonksiyonundan çağrılır.
+  // NOT: copyThemeStyles kullanılır (copyStyles değil) — gerçek input bu
+  // noktada .date-wrap içinde width:32px'e sabitlenmiş durumda, tam
+  // COPY_PROPS listesini tekrar kopyalamak fake input'u da 32px'e küçültür.
+  window._refreshDateOverlayStyles = function() {
+    document.querySelectorAll('.date-wrap').forEach(wrap => {
+      const realInp = wrap.querySelector('input[type="date"]');
+      const fakeInp = wrap.querySelector('.date-fake-input');
+      if (realInp && fakeInp) copyThemeStyles(realInp, fakeInp);
+    });
+  };
+
   window._parseDateInput = v => v; // value zaten yyyy-MM-dd
 
 })();
@@ -30838,21 +31487,19 @@ window.entegre = {
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:12px">
-        <div style="flex:1">
-          <label class="has-required">Tutar</label>
-          <div class="money-wrap" data-symbol="₺" data-code="TRY">
-            <input id="ab-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
-          </div>
+      <div>
+        <label class="has-required">Tutar</label>
+        <div class="money-wrap" data-symbol="₺" data-code="TRY">
+          <input id="ab-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
         </div>
-        <div style="flex:1">
-          <label>Para Birimi</label>
-          <select id="ab-para-birimi" onchange="(function(){const w=document.querySelector('#modal-abonelik .money-wrap');if(w){const cfg=(typeof CURRENCY_CONFIG!=='undefined'&&CURRENCY_CONFIG[this.value])||{};w.dataset.symbol=cfg.symbol||(this.value==='TRY'?'₺':this.value);w.dataset.code=this.value;}}).call(this)">
+      </div>
+      <div>
+        <label>Para Birimi</label>
+        <select id="ab-para-birimi" onchange="(function(){const w=document.querySelector('#modal-abonelik .money-wrap');if(w){const cfg=(typeof CURRENCY_CONFIG!=='undefined'&&CURRENCY_CONFIG[this.value])||{};w.dataset.symbol=cfg.symbol||(this.value==='TRY'?'₺':this.value);w.dataset.code=this.value;}}).call(this)">
             <option value="TRY">TRY ₺</option>
             <option value="USD">USD $</option>
             <option value="EUR">EUR €</option>
           </select>
-        </div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:160px">
@@ -34124,6 +34771,282 @@ function eeReset() {
   const fl = document.getElementById('ee-file-list');
   if (fl) { fl.style.display = 'none'; fl.innerHTML = ''; }
 }
+
+// ═══════════════════════════════════════════════════════════
+// SELECT → CHIP SİSTEMİ
+// Bir <select> elemanını inline chip grubuna dönüştürür.
+// Kullanım: selectToChips(selectEl, options?)
+// options: { variant: 'auto'|'row'|'pill', colorSwatch: bool, teal: [val,...], danger: [val,...] }
+// ═══════════════════════════════════════════════════════════
+function selectToChips(sel, opts) {
+  if (!sel || sel._chipsApplied) return;
+  sel._chipsApplied = true;
+  opts = opts || {};
+
+  // Wrapper — bir kere oluşturulur, içeriği _renderScChips ile (yeniden) doldurulur
+  const wrap = document.createElement('div');
+  wrap.dataset.scFor = sel.id || '';
+
+  function getCurrentVal() {
+    return sel.value;
+  }
+
+  function setVal(val) {
+    sel.value = val;
+    wrap.querySelectorAll('.sc-chip').forEach(c => {
+      c.classList.toggle('sc-active', c.dataset.val === val);
+    });
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function render() {
+    const options = [...sel.options].filter(o => !o.disabled || o.value !== '');
+    const realOptions = options.filter(o => !o.disabled);
+    if (!realOptions.length) { wrap.innerHTML = ''; return; }
+
+    const getLabel = (o) => (opts.labelFn ? opts.labelFn(o) : o.text.trim());
+    const count = realOptions.length;
+    const maxLabelLen = Math.max(...realOptions.map(o => getLabel(o).length));
+    const variant = opts.variant || (
+      (maxLabelLen > 22 && count <= 5) ? 'row' :
+      (count <= 8 && maxLabelLen <= 20) ? 'pill' : 'row'
+    );
+
+    wrap.className = 'sc-wrap' + (variant === 'row' ? ' sc-col' : '');
+
+    const tealVals   = new Set(opts.teal   || []);
+    const dangerVals = new Set(opts.danger || []);
+
+    wrap.innerHTML = '';
+    realOptions.forEach(o => {
+      const val = o.value;
+      const label = getLabel(o);
+      const chip = document.createElement('span');
+      chip.className = 'sc-chip' + (variant === 'row' ? ' sc-row' : '');
+      if (opts.mono || /^[\/\.\-\s,]$/.test(label)) chip.classList.add('sc-mono');
+      if (opts.sm) chip.classList.add('sc-sm');
+      if (opts.curChip)    { chip.classList.add('sc-cur');    chip.dataset.curCode    = val; }
+      if (opts.kartChip)   { chip.classList.add('sc-kart');   }
+      if (opts.altyapiChip){ chip.classList.add('sc-altyapi'); }
+      if (tealVals.has(val))  chip.classList.add('sc-teal');
+      if (dangerVals.has(val)) chip.classList.add('sc-danger');
+      if (getCurrentVal() === val) chip.classList.add('sc-active');
+      chip.dataset.val = val;
+
+      if (opts.htmlFn) {
+        chip.innerHTML = opts.htmlFn(o);
+        // altyapi chip'lerinde iç span'dan data-kod'u chip'e taşı (CSS selector için)
+        if (opts.altyapiChip) {
+          const logoSpan = chip.querySelector('.altyapi-logo[data-kod]');
+          if (logoSpan) chip.dataset.altyapiKod = logoSpan.dataset.kod;
+        }
+      } else if (opts.colorSwatch && /^#[0-9a-f]{6}$/i.test(val)) {
+        const sw = document.createElement('span');
+        sw.className = 'sc-swatch';
+        sw.style.background = val;
+        chip.appendChild(sw);
+        chip.appendChild(document.createTextNode(label));
+      } else {
+        chip.appendChild(document.createTextNode(label));
+      }
+
+      chip.addEventListener('click', () => setVal(val));
+      wrap.appendChild(chip);
+    });
+  }
+
+  render();
+  if (!wrap.children.length && !opts.allowEmpty) {
+    // Hiç seçenek yoksa (geçici boş state) chip alanı boş kalır, sorun değil —
+    // select'in innerHTML'i sonradan değişince observer render()'ı tekrar çağırır.
+  }
+
+  // Orijinal select'i gizle (değeri saklasın ama görünmesin)
+  sel.classList.add('sc-hidden-select');
+  sel.insertAdjacentElement('afterend', wrap);
+
+  // Select bir .select-wrap içindeyse, artık anlamsız kalan sol ikonu (sel-icon) kaldır —
+  // chip'ler kendi emoji ikonlarını taşıyor, ayrı select ikonuna gerek yok.
+  const selWrapParent = sel.closest('.select-wrap');
+  if (selWrapParent) {
+    const leftoverIcon = selWrapParent.querySelector('.sel-icon');
+    if (leftoverIcon) leftoverIcon.remove();
+    selWrapParent.classList.add('select-wrap-chipified');
+  }
+
+  // Select değişirse chip'leri de güncelle (programatik set için)
+  sel.addEventListener('change', () => {
+    wrap.querySelectorAll('.sc-chip').forEach(c => {
+      c.classList.toggle('sc-active', c.dataset.val === sel.value);
+    });
+  });
+
+  // Select'in option listesi sonradan JS ile değiştirilirse (örn. kart değişince
+  // para birimi listesi yeniden dolduruluyor) chip'leri de otomatik yeniden çiz.
+  // (kat-tur gibi statik select'lerde de zararsız — innerHTML hiç değişmez.)
+  new MutationObserver(() => render()).observe(sel, { childList: true, characterData: true, subtree: true });
+}
+
+// Para birimi select'leri için güzel chip HTML'i üretir.
+// Bayrak emoji + monospace sembol (soluk) + kalın kod → "🇺🇸 $ USD" formatı.
+function _currencyChipHtml(o) {
+  const code = o.value;
+  const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[code]) || {};
+  const sym  = cfg.symbol || '';
+  const flag = cfg.flag   || '';
+  const showSym = sym && sym !== code;
+  return (flag ? `<span class="cur-flag">${flag}</span>` : '')
+       + (showSym ? `<span class="cur-sym">${sym}</span>` : '')
+       + `<span class="cur-code">${code}</span>`;
+}
+// labelFn varyantı (maxLabelLen hesabı için kullanılıyor — 4 char sabit, variant her zaman pill)
+function _currencyChipLabel(o) { return o.value; }
+
+// ── Kart/Hesap seçim chip HTML'i: renkli dot + kart adı ──────────────
+// DB.kartlar listesinden kartın rengini bulup .kc-dot ile gösterir.
+function _kartChipHtml(o) {
+  const id = o.value;
+  const kart = (typeof DB !== 'undefined' && DB.kartlar || []).find(k => k.id === id);
+  const renk = (kart && kart.renk) ? kart.renk : 'rgba(255,255,255,.3)';
+  const ad = kart ? kart.ad : o.text.trim();
+  return `<span class="kc-dot" style="background:${renk};color:${renk}"></span>`
+       + `<span class="kc-name">${ad}</span>`;
+}
+function _kartChipLabel(o) {
+  const kart = (typeof DB !== 'undefined' && DB.kartlar || []).find(k => k.id === o.value);
+  return kart ? kart.ad : o.text.trim();
+}
+
+// ── Kart altyapısı chip HTML'i: logo badge + ad ──────────────────────
+// DB.kartAltyapilari'ndan kod bilgisini çeker; kod CSS data attribute'una yazılır.
+function _altyapiChipHtml(o) {
+  const id = o.value;
+  const altyapi = (typeof DB !== 'undefined' && DB.kartAltyapilari || []).find(a => a.id === id);
+  const kod = altyapi ? altyapi.kod : '';
+  const ad  = altyapi ? altyapi.ad  : o.text.trim();
+  // Lokal chip data-altyapi-kod attribute'unu chip.dataset ile değil, parent üzerinden
+  // okuyacağız; ancak htmlFn sonrası chip.dataset.altyapiKod atama için opts.afterRender var.
+  // Alternatif: data-kod'u data-altyapi-kod olarak span'a gömek — JS ile chip'e ekleyeceğiz.
+  const logoText = { VISA: 'VISA', MASTERCARD: 'MC', TROY: 'TROY', AMEX: 'AMEX' };
+  const logo = logoText[kod] || (kod.slice(0,4));
+  return `<span class="altyapi-logo" data-kod="${kod}">${logo}</span>`
+       + `<span>${ad}</span>`;
+}
+function _altyapiChipLabel(o) {
+  const altyapi = (typeof DB !== 'undefined' && DB.kartAltyapilari || []).find(a => a.id === o.value);
+  return altyapi ? altyapi.ad : o.text.trim();
+}
+
+// ── Banka chip HTML'i: banka kısa adı ──────────────────────────────
+// Sadece kısa ad; varsa ikon emoji ilerleyen sürümde eklenebilir.
+function _bankaChipHtml(o) {
+  const id = o.value;
+  const banka = (typeof DB !== 'undefined' && DB.bankalar || []).find(b => b.id === id);
+  const ad = banka ? banka.kisa : o.text.trim();
+  return `<span class="bank-icon">🏦</span><span>${ad}</span>`;
+}
+function _bankaChipLabel(o) {
+  const banka = (typeof DB !== 'undefined' && DB.bankalar || []).find(b => b.id === o.value);
+  return banka ? banka.kisa : o.text.trim();
+}
+
+// Belirli bir container içindeki uygun select'leri chip'e çevirir
+function applyChipsToContainer(root) {
+  root = root || document;
+
+  // ── Basit 2 seçenekli (gelir/gider, aktif/pasif gibi) ──
+  [
+    { id: 'kira-tur',    opts: { teal: ['gelir'], danger: ['gider'] } },
+    { id: 'elden-tur',   opts: { teal: ['gelir'], danger: ['gider'] } },
+    { id: 'maas-tur',    opts: {} },
+    { id: 'kat-tur',     opts: { teal: ['gelir'], danger: ['gider'] } },
+    { id: 'hesap-durum', opts: { teal: ['aktif'], danger: ['kapali'] } },
+    { id: 'kart-extre-tip', opts: {} },
+    // Ödeme yöntemi
+    { id: 'kira-yontem',  opts: {} },
+    { id: 'maas-yontem',  opts: {} },
+    { id: 'elden-yontem', opts: {} },
+    // Depozito
+    { id: 'kira-depozito-durum', opts: { teal: ['alindi'], danger: ['kesildi'] } },
+    // Mevduat
+    { id: 'maas-tur', opts: {} },
+    { id: 'nakit-avans-limit-tip', opts: {} },
+    // Ayraçlar (mono)
+    { id: 'ga-tarih-ayrac',   opts: { mono: true } },
+    { id: 'ga-ondalik-ayrac', opts: { mono: true } },
+    { id: 'ga-binlik-ayrac',  opts: { mono: true } },
+    { id: 'ga-ondalik-basamak', opts: { mono: true } },
+    // Para birimi ayarları
+    { id: 'pb-konum',   opts: {} },
+    { id: 'pb-ondalik', opts: { mono: true } },
+    { id: 'pb-kur-tip', opts: { variant: 'row' } },
+    // Kategori tür
+    // İş günü kaydırma (row variant — uzun label)
+    { id: 'kart-odeme-gun-tip',    opts: { variant: 'row', sm: false } },
+    { id: 'kredi-odeme-gun-tip',   opts: { variant: 'row' } },
+    { id: 'kmhkredi-odeme-gun-tip',opts: { variant: 'row' } },
+    // Abonelik periyot
+    { id: 'ab-periyot', opts: {} },
+    // Kira kısa ay davranışı
+    { id: 'kira-gun-kisa-ay-davranis', opts: { variant: 'row' } },
+    { id: 'maas-gun-kisa-ay-davranis', opts: { variant: 'row' } },
+    // Kart renk (swatch)
+    { id: 'kart-renk', opts: { colorSwatch: true } },
+    // Mevduat strateji
+    { id: 'mev-strateji', opts: { variant: 'row' } },
+    // Asgari ödeme koşul operatörü
+    { id: 'asgari-kosul-op', opts: { mono: true } },
+    // Asgari ödeme koşul alanı (uzun label → row)
+    { id: 'asgari-kosul-alan', opts: { variant: 'row' } },
+    // Saat ayracı (ga-tarih-ayrac ile aynı grup, unutulmuştu)
+    { id: 'ga-saat-ayrac', opts: { mono: true } },
+    // Kart ekstre haftası / gün
+    { id: 'kart-extre-hafta',    opts: {} },
+    { id: 'kart-extre-haftagun', opts: {} },
+    // Hesap defteri (log) işlem türü filtresi
+    { id: 'hesap-log-tur', opts: { teal: ['gelir'], danger: ['gider'] } },
+    // Para birimi (tekli seçim) — bayrak + sembol + kod, özel sc-cur görünümü
+    { id: 'islem-para-birimi',        opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'na-para-birimi',           opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'mev-para-birimi',          opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'kira-para-birimi-manual',  opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'maas-para-birimi-manual',  opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'hesap-para-birimi',        opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'elden-para-birimi',        opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'ab-para-birimi',           opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'kira-depozito-pb',         opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'kart-varsayilan-pb',       opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'asgari-prev-pb',           opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    { id: 'tg-pb-filtre',             opts: { labelFn: _currencyChipLabel, htmlFn: _currencyChipHtml, curChip: true } },
+    // Kart / Hesap seçimi — renkli dot + kart adı (row, tam genişlik)
+    { id: 'islem-kart', opts: { variant: 'row', labelFn: _kartChipLabel, htmlFn: _kartChipHtml, kartChip: true } },
+    { id: 'na-kart',    opts: { variant: 'row', labelFn: _kartChipLabel, htmlFn: _kartChipHtml, kartChip: true } },
+    // Kart altyapısı — logo badge pill'lar (Visa/MC/Troy/AMEX + kullanıcı eklentileri)
+    { id: 'kart-altyapi', opts: { labelFn: _altyapiChipLabel, htmlFn: _altyapiChipHtml, altyapiChip: true } },
+    // Banka seçimi — row variant, kısa ad + 🏦 ikon
+    { id: 'kart-banka',  opts: { variant: 'row', labelFn: _bankaChipLabel, htmlFn: _bankaChipHtml } },
+    { id: 'kredi-banka', opts: { variant: 'row', labelFn: _bankaChipLabel, htmlFn: _bankaChipHtml } },
+    { id: 'hesap-banka', opts: { variant: 'row', labelFn: _bankaChipLabel, htmlFn: _bankaChipHtml } },
+    // Ürün/hesap/kredi tipi — row variant
+    { id: 'kart-tip',  opts: { variant: 'row' } },
+    { id: 'kredi-tur', opts: { variant: 'row' } },
+    { id: 'hesap-tur', opts: { variant: 'row' } },
+  ].forEach(({ id, opts }) => {
+    const el = root.getElementById ? root.getElementById(id) : root.querySelector('#' + id);
+    if (el && !el._chipsApplied) selectToChips(el, opts);
+  });
+}
+
+// Modal açıldığında da chip'leri uygula (modal içindeki select'ler için)
+(function patchOpenModal() {
+  const _orig = window.openModal;
+  if (typeof _orig !== 'function') return;
+  window.openModal = function(id) {
+    _orig.apply(this, arguments);
+    const modal = document.getElementById(id);
+    if (modal) setTimeout(() => applyChipsToContainer(modal), 30);
+  };
+})();
 
 /* ── Settings Nav helpers ── */
 function snavMobileOpen() {
