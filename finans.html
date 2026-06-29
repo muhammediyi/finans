@@ -1443,6 +1443,12 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .mev-step-panel.is-active { display: block; }
 @keyframes mevStepIn { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: translateX(0); } }
 .mev-step-footer-label { font-size: 11px; color: var(--text3); font-weight: 600; margin-right: auto; white-space: nowrap; }
+/* ── Mevduat modalı: kompakt & minimal görünüm (sadece bu modal) ── */
+#modal-mevduat .msec { padding: 14px 15px; margin-bottom: 12px; border-radius: 12px; }
+#modal-mevduat .msec-label { margin-bottom: 11px !important; padding-bottom: 8px !important; }
+#modal-mevduat .modal-toggle-row { padding: 9px 12px; margin-bottom: 8px; }
+#modal-mevduat .mev-steps-bar { margin-bottom: 16px; }
+#modal-mevduat .mev-step-panel .msec:last-child { margin-bottom: 0; }
 .msec:last-child { margin-bottom: 0; }
 .msec-highlight { border-color: var(--sky) !important; box-shadow: 0 0 0 3px rgba(56,189,248,.18); animation: msecHighlightPulse 1.6s ease-out; }
 @keyframes msecHighlightPulse {
@@ -5100,6 +5106,10 @@ input.money-input:focus::placeholder { opacity: .2; }
 /* Pozitif / negatif renk göstergesi */
 input.money-input.val-positive { color: var(--teal); }
 input.money-input.val-negative { color: var(--rose); }
+/* Mevduat — Bakiyenin Tümünü Kullan butonu */
+#mev-tutar-tum-btn { transition: transform .15s ease, box-shadow .2s ease, filter .15s ease; }
+#mev-tutar-tum-btn:hover { filter: brightness(1.1); box-shadow: 0 5px 16px rgba(45,212,191,.28); }
+#mev-tutar-tum-btn:active { transform: scale(.96); filter: brightness(.97); }
 /* ══ Mevduat tutar hero input ══════════════════════════════════ */
 #mev-tutar-wrap {
   border-radius: 18px;
@@ -10202,7 +10212,7 @@ input.iban-input {
         </div>
       </div>
 
-      <!-- ══ BÖLÜM 1: Banka & Hesap ══ -->
+      <!-- ══ BÖLÜM 1: Banka, Hesap & Tutar ══ -->
       <div class="mev-step-panel is-active" data-step-panel="1">
       <div class="msec">
         <div class="msec-label teal">
@@ -10227,7 +10237,7 @@ input.iban-input {
           <select id="mev-kaynak-hesap-id" style="width:100%" onchange="onMevKaynakHesapChange()">
             <option value="" disabled hidden>— Hesap seçin —</option>
           </select>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Seçilen vadesiz hesaptan vadeli hesaba otomatik para aktarımı yapılır.</div>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Bu hesaptan vadeli hesaba otomatik para aktarılır.</div>
           <!-- Banka algılandı pill -->
           <div id="mev-banka-display" style="display:none;margin-top:6px;padding:7px 11px;background:rgba(45,212,191,.07);border-radius:8px;border:1px solid rgba(45,212,191,.2);display:flex;align-items:center;gap:8px">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
@@ -10252,31 +10262,20 @@ input.iban-input {
         <div id="mev-mevcut-hesap-wrap">
           <select id="mev-hesap-id" onchange="onMevHesapChange()"><option value="" disabled hidden>— Mevcut hesap seçin (zorunlu) —</option></select>
         </div>
-      </div>
 
-      <!-- Tutar (Adım 1 altı) -->
-      <div class="msec" style="margin-top:12px">
-        <div class="msec-label gold">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Tutar
-        </div>
-        <div class="form-row" style="margin-bottom:14px">
+        <!-- Tutar — aynı kart içinde, ince ayraçla bölünmüş, kompakt -->
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
           <div>
-            <label>Para Birimi <span style="color:var(--danger)">*</span></label>
             <select id="mev-para-birimi" onchange="calcMevduat();updateModalMoneyWraps('modal-mevduat', this.value);_fillMevHesapSel('');_fillMevKaynakSel('')"></select>
           </div>
-        </div>
-        <div class="form-row">
-          <div style="margin-top:2px">
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
-              <div style="text-align:center;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);opacity:.55">Yatırılacak Tutar</div>
-              <button type="button" id="mev-tutar-tum-btn" onclick="mevTutarTumunuKullan()" style="display:none;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:6px;border:1px solid rgba(45,212,191,.3);background:rgba(45,212,191,.08);color:var(--teal);cursor:pointer;white-space:nowrap">Bakiyenin Tümünü Kullan</button>
-            </div>
-            <div class="money-wrap" id="mev-tutar-wrap" data-symbol="₺" data-code="TRY" style="display:block">
-              <input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat();_updateMevTutarBakiyeHint()">
-            </div>
-            <div id="mev-tutar-bakiye-hint" style="display:none;text-align:center;font-size:11px;margin-top:6px;color:var(--text3)"></div>
+          <div class="money-wrap" id="mev-tutar-wrap" data-symbol="₺" data-code="TRY" style="display:block;margin-top:10px">
+            <input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat();_updateMevTutarBakiyeHint()">
           </div>
+          <button type="button" id="mev-tutar-tum-btn" onclick="mevTutarTumunuKullan()" style="display:none;width:100%;align-items:center;justify-content:center;gap:7px;margin-top:9px;font-size:12px;font-weight:700;padding:9px 14px;border-radius:11px;border:1px solid rgba(45,212,191,.4);background:linear-gradient(135deg,rgba(45,212,191,.22) 0%,rgba(16,185,129,.16) 100%);color:var(--accent2);cursor:pointer;letter-spacing:.2px;box-shadow:0 3px 10px rgba(45,212,191,.15)">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+            Bakiyenin Tümünü Kullan
+          </button>
+          <div id="mev-tutar-bakiye-hint" style="display:none;text-align:center;font-size:11px;margin-top:8px;color:var(--text3)"></div>
         </div>
       </div>
 
@@ -17959,6 +17958,7 @@ function _fillMevKaynakSel(bankaId) {
   sel.innerHTML = hesaplar.map(h => `<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   const bosMsg = secilenPb ? `— ${secilenPb} cinsinden vadesiz hesap bulunamadı —` : '— Vadesiz hesap bulunamadı —';
   phSet(sel, 'Seçin (isteğe bağlı)…', '', bosMsg);
+  _updateMevTutarBakiyeHint();
 }
 
 
@@ -18043,7 +18043,7 @@ function _updateMevTutarBakiyeHint() {
     hint.style.display = 'none';
     return;
   }
-  btn.style.display = 'inline-block';
+  btn.style.display = 'flex';
   hint.style.display = 'block';
   const bakiye = hesap.bakiye || 0;
   const tutar = getMoneyInput('mev-tutar') || 0;
