@@ -1795,38 +1795,38 @@ html[data-theme="light"] .sc-empty-hint {
 }
 .sc-popup-panel {
   width: 100%;
-  max-width: 420px;
-  max-height: 78vh;
+  max-width: 400px;
+  max-height: 66vh;
   display: flex;
   flex-direction: column;
   background: var(--surface1);
   border: 1px solid var(--border2);
-  border-radius: var(--radius);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.02) inset;
 }
 .sc-popup-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px 10px;
+  gap: 7px;
+  padding: 10px 10px 9px;
   border-bottom: 1px solid var(--border2);
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
-.sc-popup-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-right: 2px; white-space: nowrap; }
+.sc-popup-title { font-size: 13px; font-weight: 700; color: var(--text); margin-right: 1px; white-space: nowrap; letter-spacing: -.01em; }
 .sc-popup-search-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
 .sc-popup-search {
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 30px 8px 11px;
-  font-size: 13px;
+  padding: 7px 28px 7px 10px;
+  font-size: 12.5px;
   font-family: var(--sans);
   color: var(--text);
   background: var(--surface2);
   border: 1px solid var(--border2);
-  border-radius: 9px;
+  border-radius: 8px;
   outline: none;
   transition: border-color .13s;
 }
@@ -1852,44 +1852,48 @@ html[data-theme="light"] .sc-empty-hint {
 .sc-popup-search-wrap.has-value .sc-popup-clear-btn { display: flex; }
 .sc-popup-close {
   flex-shrink: 0;
-  width: 30px; height: 30px;
+  width: 26px; height: 26px;
   display: flex; align-items: center; justify-content: center;
   border: none; background: var(--surface2); color: var(--text2);
-  border-radius: 8px; cursor: pointer; font-size: 15px;
-  transition: background .12s, color .12s;
+  border-radius: 50%; cursor: pointer; font-size: 12px;
+  transition: background .12s, color .12s, transform .1s;
 }
-.sc-popup-close:hover { background: var(--surface3); color: var(--text); }
+.sc-popup-close:hover { background: var(--surface3); color: var(--text); transform: scale(1.06); }
 .sc-popup-count {
-  padding: 7px 12px 0;
-  font-size: 11px;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 12px;
+  font-size: 10.5px;
   color: var(--text3);
   flex-shrink: 0;
+  transition: max-height .12s ease, padding .12s ease;
 }
+.sc-popup-count.show { max-height: 20px; padding: 6px 12px 0; }
 .sc-popup-list {
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .sc-popup-group-hdr {
-  padding: 10px 8px 4px;
-  font-size: 10.5px;
+  padding: 8px 7px 3px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--text3);
 }
-.sc-popup-group-hdr:first-child { padding-top: 2px; }
+.sc-popup-group-hdr:first-child { padding-top: 1px; }
 .sc-popup-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 9px;
+  gap: 9px;
+  padding: 7.5px 9px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--text2);
   border: 1px solid transparent;
@@ -37558,12 +37562,12 @@ function _renderScSearchPopupList(query) {
   const listEl = document.getElementById('sc-search-popup-list');
   const countEl = document.getElementById('sc-search-popup-count');
 
-  countEl.textContent = q
-    ? `${filtered.length} sonuç`
-    : `${options.length} seçenek`;
+  countEl.textContent = q ? `${filtered.length} sonuç` : '';
+  countEl.classList.toggle('show', !!q);
 
   if (!filtered.length) {
     listEl.innerHTML = '<div class="sc-popup-empty">Sonuç bulunamadı</div>';
+    countEl.classList.toggle('show', !!q);
     _scPopupRenderList = [];
     _scPopupFocusIdx = -1;
     return;
@@ -37605,8 +37609,9 @@ function _renderScSearchPopupList(query) {
   listEl.querySelectorAll('.sc-popup-item').forEach(item => {
     item.addEventListener('click', () => {
       const val = item.dataset.val;
+      const onSelect = _scPopupState && _scPopupState.onSelect;
       _closeScSearchPopup();
-      if (_scPopupState && _scPopupState.onSelect) _scPopupState.onSelect(val);
+      if (onSelect) onSelect(val);
     });
     item.addEventListener('mouseenter', () => {
       _scPopupSetFocus(parseInt(item.dataset.idx, 10), false);
@@ -37649,8 +37654,9 @@ function _scPopupSelectFocused() {
   const el = listEl && listEl.querySelector(`.sc-popup-item[data-idx="${_scPopupFocusIdx}"]`);
   if (!el) return;
   const val = el.dataset.val;
+  const onSelect = _scPopupState && _scPopupState.onSelect;
   _closeScSearchPopup();
-  if (_scPopupState && _scPopupState.onSelect) _scPopupState.onSelect(val);
+  if (onSelect) onSelect(val);
 }
 
 function _scLockBodyScroll() {
