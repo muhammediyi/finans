@@ -910,6 +910,16 @@ html[data-theme="light"] .iban-muted { color: rgba(15,22,41,.4); }
 .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 @media(max-width:700px) { .form-row.cols-2,.form-row.cols-3,.form-row.cols-4 { grid-template-columns:1fr; } }
+/* Banka / hesap / kart seçim alanları (popup-trigger butonu ya da picker chip grid'i)
+   mobilde de yan yana (yatay) kalsın — bu alanlar kompakt tasarlandığı için tek
+   sütuna düşüp formu gereksiz uzatmasına gerek yok. */
+@media(max-width:700px) {
+  .form-row.cols-2:has(.sc-popup-wrap),
+  .form-row.cols-2:has(.sc-wrap.sc-picker) {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
 input, select, textarea {
   width: 100%;
   background: var(--surface2);
@@ -1685,6 +1695,33 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .sc-picker-grid .sc-chip {
   font-size: 12px;
   padding: 4px 10px;
+  position: relative;
+}
+/* Seçili chip için belirgin checkmark rozeti — sadece renk/kenarlık değişimi
+   bazı chip tiplerinde (logo/ikon ağırlıklı: altyapı, kart) çok zayıf hissettiriyor
+   ve "seçim gösterilmiyor" izlenimi veriyordu. Rozet, seçim durumunu logo/renk
+   ne olursa olsun her zaman net şekilde belli eder. */
+.sc-picker-grid .sc-chip.sc-active::after {
+  content: '✓';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #1a1408;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 15px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface2), 0 1px 3px rgba(0,0,0,.35);
+  animation: scCheckPop .18s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+@keyframes scCheckPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
 }
 /* Kart chip'i picker içinde min genişlik alsın, ad taşmasın */
 .sc-picker-grid .sc-chip.sc-kart {
@@ -1759,6 +1796,32 @@ html[data-theme="light"] .sc-empty-hint {
   transition: transform .15s;
 }
 .sc-popup-trigger-btn .bank-logo { width: 26px; height: 18px; }
+.sc-popup-trigger-btn .sc-chip-label,
+.sc-popup-trigger-btn > span:not(.bank-logo):not(.bank-icon):not(.sc-popup-trigger-chevron) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+/* Yan yana (yatay) kısıtlı genişlikte banka/hesap butonu — içerik taşmasın,
+   ikon/logo küçülmesin, metin kırpılsın. */
+.sc-popup-wrap { min-width: 0; }
+.form-row.cols-2 .sc-popup-trigger-btn,
+.form-row.cols-3 .sc-popup-trigger-btn {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .form-row.cols-2 .sc-popup-trigger-btn {
+    padding: 8px 9px;
+    gap: 7px;
+    font-size: 12.5px;
+  }
+  .form-row.cols-2 .sc-popup-trigger-btn .bank-logo { width: 22px; height: 15px; flex-shrink: 0; }
+  .form-row.cols-2 .sc-popup-trigger-btn .bank-icon { flex-shrink: 0; }
+  .form-row.cols-2 .sc-popup-trigger-btn .sc-popup-trigger-chevron { width: 13px; height: 13px; }
+  .form-row.cols-2 .hc-main .hc-name { font-size: 12.5px; }
+  .form-row.cols-2 .hc-main .hc-sub { font-size: 10px; }
+}
 
 .sc-popup-overlay {
   display: none;
@@ -3506,6 +3569,13 @@ select option { background: #0d1120; color: #f0f4ff; }
     grid-template-columns: 1fr !important;
     gap: 10px !important;
   }
+  /* İstisna: banka/hesap/kart seçim alanları (popup-trigger / picker chip grid'i)
+     kompakt oldukları için mobilde de yan yana kalsın. */
+  .form-row.cols-2:has(.sc-popup-wrap),
+  .form-row.cols-2:has(.sc-wrap.sc-picker) {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
 
   /* Inputs: bigger touch targets */
   input, select, textarea {
@@ -4663,6 +4733,12 @@ html[data-theme="light"] .ortak-limit-hint { background: rgba(124,58,237,.05); b
 
   /* ── Forms: single column ── */
   .form-row.cols-2, .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr !important; gap: 10px !important; }
+  /* İstisna: banka/hesap/kart seçim alanları yan yana kalsın (bkz. yukarıdaki not) */
+  .form-row.cols-2:has(.sc-popup-wrap),
+  .form-row.cols-2:has(.sc-wrap.sc-picker) {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
 
   /* ── Inputs: bigger touch targets — prevent iOS zoom ── */
   input, select, textarea {
@@ -11457,10 +11533,14 @@ input.iban-input {
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Banka
         </div>
-        <div class="form-row" style="margin-bottom:0">
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Banka <span style="color:var(--danger)">*</span></label>
             <select id="hesap-banka"></select>
+          </div>
+          <div>
+            <label>Hesap Türü</label>
+            <select id="hesap-tur"></select>
           </div>
         </div>
       </div>
@@ -11473,14 +11553,10 @@ input.iban-input {
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Hesap Bilgileri
         </div>
-        <div class="form-row cols-2">
+        <div class="form-row" style="margin-bottom:0">
           <div>
             <label>Hesap Adı / Takma Ad <span style="color:var(--text3);font-size:10px">(boş = otomatik)</span></label>
             <input id="hesap-ad" placeholder="örn. Maaş Hesabı, Ana Hesap...">
-          </div>
-          <div>
-            <label>Hesap Türü</label>
-            <select id="hesap-tur"></select>
           </div>
         </div>
         <div class="form-row cols-2" style="margin-bottom:0">
@@ -37487,6 +37563,37 @@ function selectToChips(sel, opts) {
     clearTimeout(_renderTimer);
     _renderTimer = setTimeout(render, 0);
   }).observe(sel, { childList: true, characterData: true, subtree: true });
+
+  // ── BUG FİX: programatik "sel.value = ..." ataması senkron/garanti güncelleme ──
+  // Önceden chip/trigger görünümü sadece 'change' event'i (manuel dispatch) veya
+  // option listesi mutasyonuna (MutationObserver, debounce'lu) bağlıydı. Bu, çağrı
+  // sırasına duyarlıydı — bazı akışlarda chip/buton eski değeri göstermeye devam
+  // edebiliyordu ("seçtikten/düzenledikten sonra seçim inputa/butona yansımıyor").
+  // Çözüm: sel.value setter'ını intercept edip HER atamadan sonra senkron olarak
+  // render()'ı (ya da aktif chip sınıflarını) tetikliyoruz — artık çağrı sırası
+  // önemli değil, select'in value'su nasıl değişirse değişsin chip/buton görünümü
+  // HER ZAMAN anında senkron kalır.
+  try {
+    const nativeDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    if (nativeDesc && nativeDesc.set) {
+      Object.defineProperty(sel, 'value', {
+        get() { return nativeDesc.get.call(sel); },
+        set(v) {
+          nativeDesc.set.call(sel, v);
+          if (opts.popup) { render(); }
+          else {
+            wrap.querySelectorAll('.sc-chip').forEach(c => {
+              c.classList.toggle('sc-active', c.dataset.val === sel.value);
+            });
+          }
+        },
+        configurable: true
+      });
+    }
+  } catch (e) { /* eski tarayıcı desteği yoksa sessizce yut, mevcut mekanizmalar devrede kalır */ }
+
+  // Dışarıdan zorla senkronize etmek isteyen kod için (ör. toplu/özel akışlar)
+  sel._scRender = render;
 }
 
 // ── Genel arama popup'ı (banka vb. seçimler için) ─────────────────────
@@ -37898,7 +38005,7 @@ function _bankaChipHtml(o) {
   const ikonHtml = ikon && ikon.svg
     ? `<span class="bank-logo">${ikon.svg}</span>`
     : `<span class="bank-icon">${ikon ? ikon.emoji : '🏦'}</span>`;
-  return `${ikonHtml}<span>${ad}</span>`;
+  return `${ikonHtml}<span class="sc-chip-label">${ad}</span>`;
 }
 function _bankaChipLabel(o) {
   const banka = (typeof DB !== 'undefined' && DB.bankalar || []).find(b => b.id === o.value);
