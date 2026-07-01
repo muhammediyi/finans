@@ -1443,6 +1443,29 @@ tbody tr:hover td { background: rgba(251,191,36,.025); }
 .mev-step-panel.is-active { display: block; }
 @keyframes mevStepIn { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: translateX(0); } }
 .mev-step-footer-label { font-size: 11px; color: var(--text3); font-weight: 600; margin-right: auto; white-space: nowrap; }
+/* ── Genel Step Wizard (Kart/Hesap/Kart-Ödeme modalları için, mevduat ile aynı görsel dil) ── */
+.swiz-steps-bar { display: flex; align-items: center; gap: 0; margin-bottom: 20px; padding: 0 2px; }
+.swiz-step-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.swiz-step-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  background: var(--surface3); border: 1.5px solid var(--border2); color: var(--text3);
+  transition: background .25s, border-color .25s, color .25s, transform .25s;
+}
+.swiz-step-dot-label { font-size: 9px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; text-align: center; max-width: 64px; line-height: 1.3; }
+.swiz-step-line { flex: 1; height: 1.5px; background: var(--border2); margin: 0 4px; margin-bottom: 20px; transition: background .3s; min-width: 12px; }
+.swiz-step-dot-wrap.is-active .swiz-step-dot { background: var(--gold); border-color: var(--gold); color: #1a1200; transform: scale(1.12); }
+.swiz-step-dot-wrap.is-active .swiz-step-dot-label { color: var(--gold); }
+.swiz-step-dot-wrap.is-done .swiz-step-dot { background: rgba(45,212,191,.18); border-color: var(--teal); color: var(--teal); }
+.swiz-step-line.is-done { background: var(--teal); }
+.swiz-step-panel { display: none; animation: mevStepIn .18s ease-out; }
+.swiz-step-panel.is-active { display: block; }
+#modal-kart .msec, #modal-hesap .msec, #modal-kart-odeme .msec { padding: 14px 15px; margin-bottom: 12px; border-radius: 12px; }
+#modal-kart .msec-label, #modal-hesap .msec-label, #modal-kart-odeme .msec-label { margin-bottom: 11px !important; padding-bottom: 8px !important; }
+#modal-kart .modal-toggle-row, #modal-hesap .modal-toggle-row, #modal-kart-odeme .modal-toggle-row { padding: 9px 12px; margin-bottom: 8px; }
+#modal-kart .swiz-steps-bar, #modal-hesap .swiz-steps-bar, #modal-kart-odeme .swiz-steps-bar { margin-bottom: 16px; }
+#modal-kart .swiz-step-panel .msec:last-child, #modal-hesap .swiz-step-panel .msec:last-child, #modal-kart-odeme .swiz-step-panel .msec:last-child { margin-bottom: 0; }
 /* ── Mevduat modalı: kompakt & minimal görünüm (sadece bu modal) ── */
 #modal-mevduat .msec { padding: 14px 15px; margin-bottom: 12px; border-radius: 12px; }
 #modal-mevduat .msec-label { margin-bottom: 11px !important; padding-bottom: 8px !important; }
@@ -1990,7 +2013,8 @@ html[data-theme="light"] .sc-chip.sc-altyapi:hover {
   background: var(--gold-glow);
   color: var(--gold);
 }
-.altyapi-logo-picker-item svg {
+.altyapi-logo-picker-item svg,
+.altyapi-logo-picker-item img {
   width: 40px;
   height: 24px;
 }
@@ -2012,6 +2036,19 @@ html[data-theme="light"] .sc-chip.sc-altyapi:hover {
   line-height: 1;
   flex-shrink: 0;
 }
+.sc-chip.sc-row.sc-banka .bank-logo,
+.bank-logo {
+  width: 30px; height: 20px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: rgba(255,255,255,.07);
+}
+.bank-logo svg, .bank-logo img { width: 100%; height: 100%; object-fit: contain; display:block; }
+.bank-logo-picker-lg .bank-logo { width: 40px; height: 24px; border-radius: 6px; }
 
 /* ── form-row içinde kart chip hücresi tam genişlik ─────────────── */
 .form-row > div:has(.sc-wrap .sc-kart),
@@ -8730,6 +8767,7 @@ input.iban-input {
   <div id="tab-bankalar">
     <div class="action-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="openBankaModal()">+ Banka Ekle</button>
+      <button class="btn btn-ghost btn-sm" onclick="seedPresetBankalar()" title="Türkiye'deki 16 büyük bankayı logolarıyla birlikte tek tıkla ekle">🏦 Hazır 16 Bankayı Ekle</button>
       <button class="btn btn-ghost btn-sm" onclick="exportBankalarJSON()" title="Bankalar tablosunu JSON dosyası olarak indir">↗ JSON Dışa Aktar</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('banka-import-file').click()" title="JSON dosyasından banka içe aktar">↙ JSON İçe Aktar</button>
       <input type="file" id="banka-import-file" accept=".json,application/json" style="display:none" onchange="importBankalarJSON(event)">
@@ -9456,7 +9494,28 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-para-birimi')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="msec">
+
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="pb-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Kimlik</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Format</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Kur Kaynağı</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Kimlik ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label sky">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
           Kimlik
@@ -9471,7 +9530,11 @@ input.iban-input {
           <div><label>İkon Emoji</label><input id="pb-ikon" placeholder="💶" maxlength="4" title="Dropdown'larda görünecek ikon"></div>
         </div>
       </div>
-      <div class="msec">
+      </div>
+
+      <!-- ══ ADIM 2: Format Ayarları ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           Format Ayarları
@@ -9493,7 +9556,11 @@ input.iban-input {
           <div><label>Yerel Format</label><input id="pb-locale" placeholder="de-DE" value="tr-TR"></div>
         </div>
       </div>
-      <div class="msec">
+      </div>
+
+      <!-- ══ ADIM 3: Kur Kaynağı ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Kur Kaynağı
@@ -9508,8 +9575,6 @@ input.iban-input {
             </select>
           </div>
         </div>
-
-        <!-- TCMB kodu satırı — tip=tcmb ise göster -->
         <div id="pb-kur-tcmb-alanlar" class="form-row" style="margin-bottom:10px">
           <div>
             <label>TCMB Kuru Kodu <span style="color:var(--text3);font-weight:400">(opsiyonel)</span></label>
@@ -9517,8 +9582,6 @@ input.iban-input {
             <div style="font-size:11px;color:var(--text3);margin-top:5px">Boş bırakılırsa bu para biriminin kodu kullanılır.</div>
           </div>
         </div>
-
-        <!-- Çoklu kaynak listesi — tip=ozel ise göster -->
         <div id="pb-kur-ozel-alanlar" style="display:none">
           <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
             Her kaynak <b>paralel</b> denenir — ilk başarılı yanıt kullanılır. URL'i girip <b>Test Et</b>'e basın, JSON içindeki tüm alanlar otomatik bulunup listelenir — Alış/Satış'a tıklayıp seçin, path kutuları kendisi dolsun.
@@ -9526,16 +9589,18 @@ input.iban-input {
           <div id="pb-kaynak-listesi" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
           <button type="button" class="btn btn-ghost btn-sm" onclick="pbKaynakEkle()" style="width:100%">+ Kaynak Ekle</button>
         </div>
-
-        <!-- Manuel -->
         <div id="pb-kur-manuel-alanlar" style="display:none">
           <div style="font-size:11.5px;color:var(--text3);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px">Bu para biriminin kuru otomatik çekilmez.</div>
         </div>
       </div>
+      </div>
+
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-para-birimi')">İptal</button>
-      <button class="btn btn-primary" onclick="saveParaBirimi()">Kaydet</button>
+      <button class="btn btn-ghost" id="pb-step-cancel-btn" onclick="closeModal('modal-para-birimi')">İptal</button>
+      <button class="btn btn-ghost" id="pb-step-back-btn" onclick="pbStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="pb-step-next-btn" onclick="pbStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="pb-step-save-btn" onclick="saveParaBirimi()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -9556,7 +9621,32 @@ input.iban-input {
     <div class="modal-body">
       <div class="info-box" style="margin-bottom:18px">💡 KMH (Kredili Mevduat Hesabı) üzerinden kullanılan nakit kredi. Seçtiğiniz KMH hesabının <b>ek limitini</b> kullanır.</div>
 
-      <div class="msec">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="kmhkredi-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Hesap</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Kredi Koşulları</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Tatil Ayarı</div>
+        </div>
+        <div class="swiz-step-line" data-line="3"></div>
+        <div class="swiz-step-dot-wrap" data-step="4">
+          <div class="swiz-step-dot">4</div>
+          <div class="swiz-step-dot-label">Taksit Planı</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Hesap ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label warn">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Hesap
@@ -9565,8 +9655,11 @@ input.iban-input {
           <div><label>KMH Hesabı <span style="color:var(--danger)">*</span></label><select id="kmhkredi-kmh"></select></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec">
+      <!-- ══ ADIM 2: Kredi Koşulları ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Kredi Koşulları
@@ -9582,8 +9675,11 @@ input.iban-input {
           <div><label>BSMV Oranı (%)</label><input id="kmhkredi-bsmv" type="number" step="0.01" value="0" placeholder="0" oninput="calcKmhKredi()"></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec">
+      <!-- ══ ADIM 3: Tatil Ayarı ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Tatil Ayarı
@@ -9598,7 +9694,10 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
+      <!-- ══ ADIM 4: Taksit Planı & Özet ══ -->
+      <div class="swiz-step-panel" data-step-panel="4">
       <div class="info-box" id="kmhkredi-preview" style="margin-bottom:14px">Değerleri girin, taksit otomatik hesaplanacak.</div>
       <div id="kmhkredi-taksit-plani" style="display:none;margin-bottom:4px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -9607,10 +9706,13 @@ input.iban-input {
         </div>
         <div id="kmhkredi-taksit-rows" style="max-height:260px;overflow-y:auto"></div>
       </div>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-kmhkredi')">İptal</button>
-      <button class="btn btn-primary" onclick="saveKmhKredi()">Kaydet</button>
+      <button class="btn btn-ghost" id="kmhkredi-step-cancel-btn" onclick="closeModal('modal-kmhkredi')">İptal</button>
+      <button class="btn btn-ghost" id="kmhkredi-step-back-btn" onclick="kmhKrediStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="kmhkredi-step-next-btn" onclick="kmhKrediStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="kmhkredi-step-save-btn" onclick="saveKmhKredi()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -9631,7 +9733,32 @@ input.iban-input {
     <div class="modal-body">
       <div class="info-box" style="margin-bottom:18px">💳 İhtiyaç, konut, taşıt vb. bireysel banka kredileri. Eşit taksitli (annüite) hesaplama yapılır.</div>
 
-      <div class="msec">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="kredi-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Banka &amp; Tür</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Kredi Koşulları</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Tatil Ayarı</div>
+        </div>
+        <div class="swiz-step-line" data-line="3"></div>
+        <div class="swiz-step-dot-wrap" data-step="4">
+          <div class="swiz-step-dot">4</div>
+          <div class="swiz-step-dot-label">Taksit Planı</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Banka & Kredi Türü ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label violet">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Banka &amp; Kredi Türü
@@ -9646,8 +9773,11 @@ input.iban-input {
           <div><label>Açıklama</label><input id="kredi-aciklama" placeholder="örn. Araç Kredisi..."></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec">
+      <!-- ══ ADIM 2: Kredi Koşulları ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Kredi Koşulları
@@ -9663,8 +9793,11 @@ input.iban-input {
           <div><label>BSMV Oranı (%)</label><input id="kredi-bsmv" type="number" step="0.01" value="0" placeholder="0" oninput="calcKredi()"></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec">
+      <!-- ══ ADIM 3: Tatil Ayarı ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Tatil Ayarı
@@ -9679,7 +9812,10 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
+      <!-- ══ ADIM 4: Taksit Planı & Özet ══ -->
+      <div class="swiz-step-panel" data-step-panel="4">
       <div class="info-box" id="kredi-preview" style="margin-bottom:14px">Değerleri girin, taksit otomatik hesaplanacak.</div>
       <div id="kredi-taksit-plani" style="display:none;margin-bottom:4px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -9688,10 +9824,13 @@ input.iban-input {
         </div>
         <div id="kredi-taksit-rows" style="max-height:260px;overflow-y:auto"></div>
       </div>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-kredi')">İptal</button>
-      <button class="btn btn-primary" onclick="saveKredi()">Kaydet</button>
+      <button class="btn btn-ghost" id="kredi-step-cancel-btn" onclick="closeModal('modal-kredi')">İptal</button>
+      <button class="btn btn-ghost" id="kredi-step-back-btn" onclick="krediStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="kredi-step-next-btn" onclick="krediStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="kredi-step-save-btn" onclick="saveKredi()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -9710,15 +9849,48 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-kart')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="msec">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="kart-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Kart Bilgileri</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Limit</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Ortak Limit</div>
+        </div>
+        <div class="swiz-step-line" data-line="3"></div>
+        <div class="swiz-step-dot-wrap" data-step="4">
+          <div class="swiz-step-dot">4</div>
+          <div class="swiz-step-dot-label">Para Birimi</div>
+        </div>
+        <div class="swiz-step-line" data-line="4"></div>
+        <div class="swiz-step-dot-wrap" data-step="5">
+          <div class="swiz-step-dot">5</div>
+          <div class="swiz-step-dot-label">Ekstre &amp; Ödeme</div>
+        </div>
+        <div class="swiz-step-line" data-line="5"></div>
+        <div class="swiz-step-dot-wrap" data-step="6">
+          <div class="swiz-step-dot">6</div>
+          <div class="swiz-step-dot-label">Özet</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Kart Bilgileri ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label sky">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Kart Bilgileri
         </div>
-        <div class="form-row">
+        <div class="form-row cols-2">
           <div><label>Banka <span style="color:var(--danger)">*</span></label><select id="kart-banka"></select></div>
-        </div>
-        <div class="form-row">
           <div><label>Ürün Tipi <span style="color:var(--danger)">*</span></label><select id="kart-tip"></select></div>
         </div>
         <div class="form-row cols-2">
@@ -9729,8 +9901,11 @@ input.iban-input {
           <div><label>Kart Altyapısı <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label><select id="kart-altyapi"></select></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec" id="msec-toplam-limit">
+      <!-- ══ ADIM 2: Limit ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" id="msec-toplam-limit" style="margin-bottom:0">
         <div class="msec-label sky">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Toplam Limit
@@ -9744,7 +9919,7 @@ input.iban-input {
           <span style="font-size:10px;color:var(--text3);font-style:italic">Sistem tarafından otomatik tutulur</span>
         </div>
         <div id="kart-limit-gecmis-liste" style="max-height:180px;overflow-y:auto"></div>
-        <div class="form-row" style="margin-bottom:0">
+        <div class="form-row" style="margin-bottom:0;margin-top:12px">
           <div><label>Renk</label>
             <select id="kart-renk">
               <option value="">— Otomatik —</option>
@@ -9759,8 +9934,11 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
-      <div class="msec" id="msec-ortak-limit">
+      <!-- ══ ADIM 3: Ortak Limit Grubu ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" id="msec-ortak-limit" style="margin-bottom:0">
         <div class="msec-label violet">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Ortak Limit Grubu
@@ -9785,8 +9963,11 @@ input.iban-input {
           <div id="ortak-grup-yonetim-satiri"></div>
         </div>
       </div>
+      </div>
 
-      <div class="msec">
+      <!-- ══ ADIM 4: Para Birimleri ══ -->
+      <div class="swiz-step-panel" data-step-panel="4">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/></svg>
           Desteklenen Para Birimleri
@@ -9798,7 +9979,10 @@ input.iban-input {
           <select id="kart-varsayilan-pb" style="margin-top:4px"></select>
         </div>
       </div>
+      </div>
 
+      <!-- ══ ADIM 5: Ekstre & Ödeme Ayarları ══ -->
+      <div class="swiz-step-panel" data-step-panel="5">
       <div class="msec">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -9866,10 +10050,26 @@ input.iban-input {
         </div>
         <div id="kart-ayar-gecmis-liste" style="max-height:160px;overflow-y:auto"></div>
       </div>
+      </div>
+
+      <!-- ══ ADIM 6: Özet & Onay ══ -->
+      <div class="swiz-step-panel" data-step-panel="6">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Özet &amp; Onay
+        </div>
+        <div id="kart-ozet-icerik">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-kart')">İptal</button>
-      <button class="btn btn-primary" onclick="saveKart()">Kaydet</button>
+      <button class="btn btn-ghost" id="kart-step-cancel-btn" onclick="closeModal('modal-kart')">İptal</button>
+      <button class="btn btn-ghost" id="kart-step-back-btn" onclick="kartStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="kart-step-next-btn" onclick="kartStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="kart-step-save-btn" onclick="saveKart()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -10050,8 +10250,27 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-nakit-avans')">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Kart & Tarih -->
-      <div class="msec">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="na-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">İşlem Bilgileri</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Faiz &amp; Taksit</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Taksit Planı</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Kart, Tarih, Tutar ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           İşlem Bilgileri
@@ -10073,13 +10292,15 @@ input.iban-input {
             <div id="na-tutar-warn" style="display:none;font-size:11px;color:var(--danger);margin-top:4px"></div>
           </div>
         </div>
-        <div class="form-row">
+        <div class="form-row" style="margin-bottom:0">
           <div><label>Açıklama <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label><input id="na-aciklama" placeholder="Nakit avans..."></div>
         </div>
       </div>
+      </div>
 
-      <!-- Faiz & Taksit -->
-      <div class="msec">
+      <!-- ══ ADIM 2: Faiz, Vergi & Taksit ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Faiz, Vergi &amp; Taksit
@@ -10108,7 +10329,7 @@ input.iban-input {
             </div>
           </div>
         </div>
-        <div class="form-row cols-2">
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Taksit Sayısı <span style="color:var(--text3);font-size:10px">(max 12)</span></label>
             <input id="na-taksit" type="number" min="1" max="12" value="1" oninput="calcNakitAvans()">
@@ -10116,19 +10337,24 @@ input.iban-input {
           <div id="na-limit-info" style="font-size:11px;color:var(--text3);align-self:end;padding-bottom:8px"></div>
         </div>
       </div>
+      </div>
 
-      <!-- Sonuç & Taksit Planı -->
-      <div id="na-sonuc-wrap" style="display:none">
+      <!-- ══ ADIM 3: Sonuç & Taksit Planı ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div id="na-sonuc-wrap">
         <div class="msec" style="margin-bottom:0">
           <div class="msec-label violet">📋 Taksit Planı</div>
           <div id="na-ozet" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
           <div id="na-taksit-alanlari"></div>
         </div>
       </div>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-nakit-avans')">İptal</button>
-      <button class="btn btn-primary" style="background:var(--gold);color:#000" onclick="saveNakitAvans()">💾 Kaydet</button>
+      <button class="btn btn-ghost" id="na-step-cancel-btn" onclick="closeModal('modal-nakit-avans')">İptal</button>
+      <button class="btn btn-ghost" id="na-step-back-btn" onclick="naStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="na-step-next-btn" onclick="naStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="na-step-save-btn" style="background:var(--gold);color:#000;display:none" onclick="saveNakitAvans()">💾 Kaydet</button>
     </div>
   </div>
 </div>
@@ -10231,42 +10457,33 @@ input.iban-input {
           </label>
         </div>
 
-        <!-- Paranın alınacağı hesap (toggle AÇIK) -->
-        <div id="mev-kaynak-hesap-wrap" style="display:none;margin-bottom:8px">
-          <label style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Paranın Alınacağı Hesap <span style="color:var(--danger)">*</span></label>
-          <select id="mev-kaynak-hesap-id" style="width:100%" onchange="onMevKaynakHesapChange()">
-            <option value="" disabled hidden>— Hesap seçin —</option>
-          </select>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">Bu hesaptan vadeli hesaba otomatik para aktarılır.</div>
+        <!-- Hesap seçimi — her iki modda da kullanılır; liste moda göre değişir -->
+        <div id="mev-mevcut-hesap-wrap">
+          <label id="mev-hesap-label" style="font-size:11px;color:var(--text2);margin-bottom:5px;display:block">Vadeli Hesap <span style="color:var(--danger)">*</span></label>
+          <select id="mev-hesap-id" onchange="onMevHesapChange()" style="width:100%"><option value="" disabled hidden>— Vadeli hesap seçin (zorunlu) —</option></select>
           <!-- Banka algılandı pill -->
-          <div id="mev-banka-display" style="display:none;margin-top:6px;padding:7px 11px;background:rgba(45,212,191,.07);border-radius:8px;border:1px solid rgba(45,212,191,.2);display:flex;align-items:center;gap:8px">
+          <div id="mev-banka-display" style="display:none;margin-top:6px;padding:7px 11px;background:rgba(45,212,191,.07);border-radius:8px;border:1px solid rgba(45,212,191,.2);align-items:center;gap:8px">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
             <span id="mev-banka-ad-text" style="font-size:12px;color:var(--teal);font-weight:600"></span>
             <span style="font-size:10.5px;color:var(--text3);margin-left:auto">Hesaptan algılandı</span>
           </div>
         </div>
         <input type="hidden" id="mev-banka-hidden">
+        <!-- Kaynak hesap wrap (artık kullanılmıyor, uyumluluk için gizli) -->
+        <div id="mev-kaynak-hesap-wrap" style="display:none"></div>
 
-        <!-- IBAN readonly (mevcut hesap seçilince) -->
-        <div id="mev-iban-mevcut-wrap" style="display:none;margin-bottom:8px">
-          <input id="mev-iban-mevcut-val" readonly placeholder="—"
-            style="font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;width:100%;background:var(--surface2);color:var(--teal);cursor:default;border-color:rgba(45,212,191,.2)">
-        </div>
-
-        <!-- Yeni hesap adı (toggle AÇIK) -->
+        <!-- Yeni hesap adı + Manuel IBAN (toggle AÇIK) -->
         <div id="mev-oto-hesap-wrap" style="display:none;margin-top:8px">
           <input id="mev-oto-hesap-ad" placeholder="Hesap adı — boş bırakılırsa otomatik oluşturulur">
-        </div>
-
-        <!-- Mevcut hesap seçimi (toggle KAPALI) -->
-        <div id="mev-mevcut-hesap-wrap">
-          <select id="mev-hesap-id" onchange="onMevHesapChange()"><option value="" disabled hidden>— Mevcut hesap seçin (zorunlu) —</option></select>
+          <div style="margin-top:8px">
+            <input id="mev-iban-manuel" class="iban-input" placeholder="IBAN — opsiyonel (TR00 0000 …)" style="width:100%" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})/g,'$1 ').trim()">
+          </div>
         </div>
 
         <!-- Tutar — aynı kart içinde, ince ayraçla bölünmüş, kompakt -->
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
           <div>
-            <select id="mev-para-birimi" onchange="calcMevduat();updateModalMoneyWraps('modal-mevduat', this.value);_fillMevHesapSel('');_fillMevKaynakSel('')"></select>
+            <select id="mev-para-birimi" onchange="calcMevduat();updateModalMoneyWraps('modal-mevduat', this.value);_fillMevHesapSel('');"></select>
           </div>
           <div class="money-wrap" id="mev-tutar-wrap" data-symbol="₺" data-code="TRY" style="display:block;margin-top:10px">
             <input id="mev-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00" oninput="calcMevduat();_updateMevTutarBakiyeHint()">
@@ -10396,9 +10613,32 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-kira')">✕</button>
     </div>
     <div class="modal-body">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="kira-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Kontrat Bilgileri</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Ödeme Yöntemi</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Depozito</div>
+        </div>
+        <div class="swiz-step-line" data-line="3"></div>
+        <div class="swiz-step-dot-wrap" data-step="4">
+          <div class="swiz-step-dot">4</div>
+          <div class="swiz-step-dot-label">Durum</div>
+        </div>
+      </div>
 
-      <!-- Kontrat Bilgileri -->
-      <div class="msec">
+      <!-- ══ ADIM 1: Kontrat Bilgileri ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Kontrat Bilgileri
@@ -10423,17 +10663,22 @@ input.iban-input {
           </div>
           <div id="kira-gun-kisa-ay-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
         </div>
-        <div class="form-row" style="margin-bottom:0">
+        <div class="form-row cols-2">
           <div>
             <label>Para Birimi</label>
             <select id="kira-para-birimi-manual" onchange="onKiraPbManualChange();updateModalMoneyWraps('modal-kira', this.value)"></select>
           </div>
           <div id="kira-pb-manual-wrap" style="display:none"></div>
         </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div><label>Açıklama</label><input id="kira-aciklama" placeholder="örn. Dükkan kirası..."></div>
+        </div>
+      </div>
       </div>
 
-      <!-- Ödeme Yöntemi -->
-      <div class="msec">
+      <!-- ══ ADIM 2: Ödeme Yöntemi ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Ödeme Yöntemi
@@ -10519,13 +10764,12 @@ input.iban-input {
             </div>
           </div>
         </div>
-        <div class="form-row" style="margin-bottom:0">
-          <div><label>Açıklama</label><input id="kira-aciklama" placeholder="örn. Dükkan kirası..."></div>
-        </div>
+      </div>
       </div>
 
-      <!-- Depozito -->
-      <div class="msec">
+      <!-- ══ ADIM 3: Depozito ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label violet">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
           Depozito
@@ -10580,9 +10824,11 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
-      <!-- Durum -->
-      <div class="msec" style="margin-bottom:0">
+      <!-- ══ ADIM 4: Durum & Özet ══ -->
+      <div class="swiz-step-panel" data-step-panel="4">
+      <div class="msec">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Durum
@@ -10599,10 +10845,21 @@ input.iban-input {
         </div>
       </div>
 
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Özet
+        </div>
+        <div id="kira-ozet-icerik"></div>
+      </div>
+      </div>
+
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-kira')">İptal</button>
-      <button class="btn btn-primary" onclick="saveKira()">Kaydet</button>
+      <button class="btn btn-ghost" id="kira-step-cancel-btn" onclick="closeModal('modal-kira')">İptal</button>
+      <button class="btn btn-ghost" id="kira-step-back-btn" onclick="kiraStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="kira-step-next-btn" onclick="kiraStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="kira-step-save-btn" onclick="saveKira()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -10623,7 +10880,26 @@ input.iban-input {
     <div class="modal-body">
       <input type="checkbox" id="maas-pasif" style="display:none">
 
-      <!-- Gelir Bilgileri -->
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="maas-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Gelir &amp; Dönem</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Ödeme Yöntemi</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Durum &amp; Özet</div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 1: Gelir Bilgileri + Dönem ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
       <div class="msec">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -10665,8 +10941,7 @@ input.iban-input {
         </div>
       </div>
 
-      <!-- Dönem -->
-      <div class="msec">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label sky">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Dönem
@@ -10679,9 +10954,11 @@ input.iban-input {
           <div><label>Ödeme Tarihi <span style="color:var(--danger)">*</span></label><input id="maas-tekseferlik-tarih" type="date"></div>
         </div>
       </div>
+      </div>
 
-      <!-- Ödeme / Tahsilat Yöntemi -->
-      <div class="msec">
+      <!-- ══ ADIM 2: Ödeme / Tahsilat Yöntemi ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           Ödeme / Tahsilat Yöntemi
@@ -10734,8 +11011,7 @@ input.iban-input {
               <div class="kt-field" id="maas-iban-field" style="display:none">
                 <label>IBAN <span class="kt-label-sub">(kişinin IBAN'larından seç)</span></label>
                 <div class="kt-input-row">
-                  <input id="maas-karsi-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
-                    oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
+                  <input id="maas-karsi-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" oninput="this.value=this.value.replace(/\s+/g,'').toUpperCase()" readonly>
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -10754,8 +11030,7 @@ input.iban-input {
               <div class="kt-field">
                 <label>IBAN <span class="kt-label-sub">(isteğe bağlı)</span></label>
                 <div class="kt-input-row">
-                  <input id="maas-karsi-iban-manuel" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" 
-                    oninput="syncMaasManuelIban()">
+                  <input id="maas-karsi-iban-manuel" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" oninput="syncMaasManuelIban()">
                   <button class="btn btn-ghost btn-icon" onclick="copyFieldIban('maas-karsi-iban-manuel')" title="IBAN'ı Kopyala">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
@@ -10765,9 +11040,11 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
-      <!-- Durum -->
-      <div class="msec" style="margin-bottom:0">
+      <!-- ══ ADIM 3: Durum & Özet ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Durum
@@ -10783,11 +11060,21 @@ input.iban-input {
           </label>
         </div>
       </div>
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Özet
+        </div>
+        <div id="maas-ozet-icerik"></div>
+      </div>
+      </div>
 
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-maas')">İptal</button>
-      <button class="btn btn-primary" onclick="saveMaas()">Kaydet</button>
+      <button class="btn btn-ghost" id="maas-step-cancel-btn" onclick="closeModal('modal-maas')">İptal</button>
+      <button class="btn btn-ghost" id="maas-step-back-btn" onclick="maasStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="maas-step-next-btn" onclick="maasStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="maas-step-save-btn" onclick="saveMaas()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -10854,8 +11141,36 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-hesap')">✕</button>
     </div>
     <div class="modal-body">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="hesap-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">IBAN &amp; Banka</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Hesap Bilgileri</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">KMH</div>
+        </div>
+        <div class="swiz-step-line" data-line="3"></div>
+        <div class="swiz-step-dot-wrap" data-step="4">
+          <div class="swiz-step-dot">4</div>
+          <div class="swiz-step-dot-label">İzleme &amp; Notlar</div>
+        </div>
+        <div class="swiz-step-line" data-line="4"></div>
+        <div class="swiz-step-dot-wrap" data-step="5">
+          <div class="swiz-step-dot">5</div>
+          <div class="swiz-step-dot-label">Özet</div>
+        </div>
+      </div>
 
-      <!-- IBAN Çözümleme -->
+      <!-- ══ ADIM 1: IBAN Çözümleme ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
       <div class="msec">
         <div class="msec-label sky">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
@@ -10863,7 +11178,7 @@ input.iban-input {
         </div>
         <div class="form-row" style="margin-bottom:0">
           <div>
-            <label>IBAN <span style="color:var(--text3);font-size:10px">(TR ile başlayan 26 hane — otomatik çözümlenir)</span></label>
+            <label>IBAN <span style="color:var(--text3);font-size:10px">(TR ile başlayan 26 hane — otomatik çözümlenir, opsiyonel)</span></label>
             <input id="hesap-iban" class="iban-input" placeholder="TR00 0000 0000 0000 0000 0000 00" oninput="onIbanInput()" >
             <div id="hesap-iban-status" style="font-size:11px;margin-top:4px"></div>
           </div>
@@ -10884,42 +11199,53 @@ input.iban-input {
         </div>
       </div>
 
-      <!-- Hesap Bilgileri -->
-      <div class="msec">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label gold">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+          Banka
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label>Banka <span style="color:var(--danger)">*</span></label>
+            <select id="hesap-banka"></select>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- ══ ADIM 2: Hesap Bilgileri ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Hesap Bilgileri
         </div>
         <div class="form-row cols-2">
           <div>
-            <label>Banka <span style="color:var(--danger)">*</span></label>
-            <select id="hesap-banka"></select>
-          </div>
-          <div>
             <label>Hesap Adı / Takma Ad <span style="color:var(--text3);font-size:10px">(boş = otomatik)</span></label>
             <input id="hesap-ad" placeholder="örn. Maaş Hesabı, Ana Hesap...">
           </div>
-        </div>
-        <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Hesap Türü</label>
             <select id="hesap-tur"></select>
           </div>
+        </div>
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div>
             <label>Mevcut Bakiye</label>
             <div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="hesap-bakiye" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div>
           </div>
-        </div>
-        <div class="form-row" style="margin-bottom:0;margin-top:10px">
           <div>
             <label>Para Birimi <span style="color:var(--danger)">*</span></label>
             <select id="hesap-para-birimi" onchange="updateModalMoneyWraps('modal-hesap', this.value)"></select>
           </div>
         </div>
       </div>
+      </div>
 
-      <!-- KMH -->
-      <div class="msec">
+      <!-- ══ ADIM 3: KMH ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label warn">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
           Kredili Mevduat Hesabı (KMH)
@@ -10952,9 +11278,11 @@ input.iban-input {
           <div id="hesap-kmh-gecmis-liste" style="max-height:180px;overflow-y:auto"></div>
         </div>
       </div>
+      </div>
 
-      <!-- Ek Bilgiler -->
-      <div class="msec" style="margin-bottom:0">
+      <!-- ══ ADIM 4: Ek Bilgiler & Bakiye İzleme ══ -->
+      <div class="swiz-step-panel" data-step-panel="4">
+      <div class="msec">
         <div class="msec-label">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Ek Bilgiler
@@ -10982,7 +11310,6 @@ input.iban-input {
         </div>
       </div>
 
-      <!-- Bakiye İzleme -->
       <div class="msec" style="margin-bottom:0">
         <div class="msec-label teal">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
@@ -11001,11 +11328,27 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
+
+      <!-- ══ ADIM 5: Özet & Onay ══ -->
+      <div class="swiz-step-panel" data-step-panel="5">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Özet &amp; Onay
+        </div>
+        <div id="hesap-ozet-icerik">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+      </div>
 
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-hesap')">İptal</button>
-      <button class="btn btn-primary" onclick="saveHesap()">Kaydet</button>
+      <button class="btn btn-ghost" id="hesap-step-cancel-btn" onclick="closeModal('modal-hesap')">İptal</button>
+      <button class="btn btn-ghost" id="hesap-step-back-btn" onclick="hesapStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="hesap-step-next-btn" onclick="hesapStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="hesap-step-save-btn" onclick="saveHesap()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -11155,9 +11498,27 @@ input.iban-input {
       <button class="close-btn" onclick="closeModal('modal-elden')">✕</button>
     </div>
     <div class="modal-body">
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="elden-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">İşlem Bilgileri</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Tutar</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Ödeme Yöntemi</div>
+        </div>
+      </div>
 
-      <!-- İşlem Bilgileri -->
-      <div class="msec">
+      <!-- ══ ADIM 1: İşlem Bilgileri ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
         <div class="msec-label rose">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           İşlem Bilgileri
@@ -11166,11 +11527,21 @@ input.iban-input {
           <div><label>Tarih</label><input id="elden-tarih" type="date"></div>
           <div><label>Tür</label><select id="elden-tur" onchange="onEldenTurChange()"><option value="gider">Gider</option><option value="gelir">Gelir</option></select></div>
         </div>
-        <div class="form-row cols-2">
+        <div class="form-row cols-2" style="margin-bottom:0">
           <div><label>Açıklama</label><input id="elden-aciklama" placeholder="örn. Market alışverişi"></div>
           <div><label>Kategori <span style="color:var(--text3);font-size:10px">(isteğe bağlı)</span></label>
             <select id="elden-kategori"><option value="" disabled hidden>— Seçiniz —</option></select>
           </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- ══ ADIM 2: Tutar ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label gold">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/></svg>
+          Tutar
         </div>
         <div class="form-row" style="margin-bottom:8px">
           <div id="elden-pb-wrap">
@@ -11185,8 +11556,10 @@ input.iban-input {
           <div><label>Tutar <span style="color:var(--danger)">*</span></label><div class="money-wrap" data-symbol="₺" data-code="TRY"><input id="elden-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00"></div></div>
         </div>
       </div>
+      </div>
 
-      <!-- Ödeme / Tahsilat Yöntemi -->
+      <!-- ══ ADIM 3: Ödeme / Tahsilat Yöntemi ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
       <div class="msec" style="margin-bottom:0">
         <div class="msec-label gold">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
@@ -11270,11 +11643,14 @@ input.iban-input {
           </div>
         </div>
       </div>
+      </div>
 
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-elden')">İptal</button>
-      <button class="btn btn-primary" onclick="saveElden()">Kaydet</button>
+      <button class="btn btn-ghost" id="elden-step-cancel-btn" onclick="closeModal('modal-elden')">İptal</button>
+      <button class="btn btn-ghost" id="elden-step-back-btn" onclick="eldenStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="elden-step-next-btn" onclick="eldenStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="elden-step-save-btn" onclick="saveElden()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -11329,12 +11705,27 @@ input.iban-input {
           Banka Bilgileri
         </div>
         <div class="form-row"><div><label>Tam Ad <span style="color:var(--danger)">*</span></label><input id="banka-tam" placeholder="örn. Türkiye Garanti Bankası A.Ş."></div></div>
-        <div class="form-row"><div><label>Kısa Ad <span style="color:var(--danger)">*</span></label><input id="banka-kisa" placeholder="örn. Garanti BBVA"></div></div>
+        <div class="form-row cols-2">
+          <div><label>Kısa Ad <span style="color:var(--danger)">*</span></label><input id="banka-kisa" placeholder="örn. Garanti BBVA"></div>
+          <div><label>İkon / Emoji <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="banka-ikon" placeholder="🏛️" maxlength="4" style="font-size:20px;text-align:center;width:64px;flex-shrink:0">
+              <div id="banka-ikon-oneri" style="font-size:11px;color:var(--text3);line-height:1.4">IBAN kodu girince otomatik önerilir</div>
+            </div>
+          </div>
+        </div>
         <div class="form-row" style="margin-bottom:0">
           <div>
             <label>IBAN Kodu <span style="color:var(--text3);font-size:10px">(4 hane)</span></label>
-            <input id="banka-iban-kod" placeholder="örn. 0062" maxlength="4" style="font-family:var(--mono);letter-spacing:.08em">
+            <input id="banka-iban-kod" placeholder="örn. 0062" maxlength="4" style="font-family:var(--mono);letter-spacing:.08em" oninput="onBankaIbanKodInput()">
             <div style="font-size:10px;color:var(--text3);margin-top:3px">IBAN'ın 5.–8. hanesi</div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0;margin-top:10px">
+          <div>
+            <label>Logo <span style="color:var(--text3);font-size:10px">(opsiyonel — select'lerde gösterilir)</span></label>
+            <div class="altyapi-logo-picker" id="banka-logo-picker"></div>
+            <input type="hidden" id="banka-logo" value="">
           </div>
         </div>
       </div>
@@ -11549,32 +11940,65 @@ input.iban-input {
       </div>
       <button class="close-btn" onclick="closeModal('modal-kart-odeme')">✕</button>
     </div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="modal-body">
       <input type="hidden" id="kart-odeme-kart-id">
       <input type="hidden" id="kart-odeme-pb">
       <input type="hidden" id="kart-odeme-donem-key">
-      <div id="kart-odeme-info" class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface2)"></div>
-      <div>
-        <label class="has-required">Ödeme Tutarı</label>
-        <div class="money-wrap" id="kart-odeme-tutar-wrap" data-symbol="₺" data-code="TRY">
-          <input id="kart-odeme-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="kart-odeme-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Tutar &amp; Tarih</div>
+        </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Ödeme Hesabı</div>
+        </div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Özet</div>
         </div>
       </div>
-      <div>
-        <label class="has-required">Ödeme Tarihi</label>
-        <input id="kart-odeme-tarih" type="date">
+
+      <!-- ══ ADIM 1: Tutar & Tarih ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+        <div id="kart-odeme-info" class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface2);margin-bottom:14px"></div>
+        <div style="margin-bottom:14px">
+          <label class="has-required">Ödeme Tutarı</label>
+          <div class="money-wrap" id="kart-odeme-tutar-wrap" data-symbol="₺" data-code="TRY">
+            <input id="kart-odeme-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+          </div>
+        </div>
+        <div>
+          <label class="has-required">Ödeme Tarihi</label>
+          <input id="kart-odeme-tarih" type="date">
+        </div>
       </div>
-      <div>
-        <label class="has-required">Ödeme Yapılan Hesap</label>
-        <select id="kart-odeme-hesap" onchange="onKartOdemeHesapChange()">
-          <option value="" disabled hidden>— Hesap seçiniz —</option>
-        </select>
-        <div id="kart-odeme-hesap-bakiye" class="exk-acc-meta" style="margin-top:4px"></div>
+
+      <!-- ══ ADIM 2: Ödeme Hesabı ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+        <div>
+          <label class="has-required">Ödeme Yapılan Hesap</label>
+          <select id="kart-odeme-hesap" onchange="onKartOdemeHesapChange()">
+            <option value="" disabled hidden>— Hesap seçiniz —</option>
+          </select>
+          <div id="kart-odeme-hesap-bakiye" class="exk-acc-meta" style="margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 3: Özet & Onay ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+        <div id="kart-odeme-ozet-icerik"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-kart-odeme')">İptal</button>
-      <button class="btn btn-primary" onclick="saveKartOdeme()">💳 Ödemeyi Kaydet</button>
+      <button class="btn btn-ghost" id="kart-odeme-step-cancel-btn" onclick="closeModal('modal-kart-odeme')">İptal</button>
+      <button class="btn btn-ghost" id="kart-odeme-step-back-btn" onclick="kartOdemeStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="kart-odeme-step-next-btn" onclick="kartOdemeStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="kart-odeme-step-save-btn" onclick="saveKartOdeme()" style="display:none">💳 Ödemeyi Kaydet</button>
     </div>
   </div>
 </div>
@@ -13079,10 +13503,11 @@ document.querySelectorAll('.modal-bg').forEach(m => {
 
 // ========== KARTLAR ==========
 function populateKartModal(kart=null) {
+  kartStepGoto(1);
   const titleEl = document.getElementById('kart-modal-title');
   if (titleEl) titleEl.textContent = kart ? 'Kart Düzenle' : 'Kart Ekle';
   const bankaEl = document.getElementById('kart-banka');
-  bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
+  bankaEl.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${bankaOptionMetin(b)}</option>`).join('');
   const tipEl = document.getElementById('kart-tip');
   tipEl.innerHTML = DB.urunTipler.map(t=>`<option value="${t.id}">${t.ad} (${t.kod})</option>`).join('');
   fillKartAltyapiSelect(kart ? kart.altyapiId||'' : '');
@@ -13332,6 +13757,99 @@ function extreTypeChange() {
 
 
 let editKartId = null;
+// ── Kart Modal: Step Wizard ──────────────────────────────────────────
+let _kartCurrentStep = 1;
+const KART_STEP_COUNT = 6;
+
+function kartStepGoto(step) {
+  step = Math.max(1, Math.min(KART_STEP_COUNT, step));
+  _kartCurrentStep = step;
+  const modal = document.getElementById('modal-kart');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('kart-step-back-btn');
+  const nextBtn = document.getElementById('kart-step-next-btn');
+  const saveBtn = document.getElementById('kart-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < KART_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === KART_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === KART_STEP_COUNT) _kartOzetDoldur();
+}
+
+function _kartValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'kart-banka', msg:'Banka seçimi zorunlu'},
+      {id:'kart-tip',   msg:'Ürün tipi seçimi zorunlu'},
+      {id:'kart-ad',    msg:'Kart adı zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function kartStepNext() {
+  if (!_kartValidateStep(_kartCurrentStep)) return;
+  kartStepGoto(_kartCurrentStep + 1);
+}
+
+function kartStepBack() {
+  kartStepGoto(_kartCurrentStep - 1);
+}
+
+function _kartOzetDoldur() {
+  const bankaSel = document.getElementById('kart-banka');
+  const bankaObj = bankaSel ? (DB.bankalar||[]).find(b=>b.id===bankaSel.value) : null;
+  const tipSel = document.getElementById('kart-tip');
+  const tipTxt = tipSel ? (tipSel.options[tipSel.selectedIndex]?.text || '—') : '—';
+  const ad = (document.getElementById('kart-ad')||{}).value.trim() || '—';
+  const no = (document.getElementById('kart-no')||{}).value.trim();
+  const limit = getMoneyInput('kart-limit') || 0;
+  const grupSel = document.getElementById('kart-ortak-grup');
+  const grupTxt = grupSel && grupSel.value ? (grupSel.options[grupSel.selectedIndex]?.text || '—') : 'Yok';
+  const curVal = getKartCurGridValue();
+  const curTxt = (curVal.paraBirimleri||[]).join(', ') + ` (varsayılan: ${curVal.varsayilanParaBirimi})`;
+  const extraTip = (document.getElementById('kart-extre-tip')||{}).value;
+  const extraTxt = extraTip === 'hafta'
+    ? `Hafta bazlı`
+    : `Her ayın ${(document.getElementById('kart-extre-gun')||{}).value || '—'}. günü`;
+  const odemeSure = (document.getElementById('kart-odeme-sure')||{}).value || '—';
+
+  const satir = (label, val, valStyle='') => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11.5px;color:var(--text2)">${label}</span>
+      <span style="font-size:12.5px;font-weight:600;color:var(--text);font-family:var(--mono);${valStyle}">${val}</span>
+    </div>`;
+
+  const ozetEl = document.getElementById('kart-ozet-icerik');
+  if (!ozetEl) return;
+  ozetEl.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:12px">
+      ${satir('Banka', bankaObj ? bankaObj.kisa : '—')}
+      ${satir('Ürün Tipi', `<span style="font-family:inherit">${tipTxt}</span>`)}
+      ${satir('Kart/Hesap Adı', `<span style="font-family:inherit">${ad}</span>`)}
+      ${no ? satir('Son 4 Hane', no) : ''}
+      ${satir('Toplam Limit', fmtCur(limit, curVal.varsayilanParaBirimi||'TRY'))}
+      ${satir('Ortak Limit Grubu', `<span style="font-family:inherit">${grupTxt}</span>`)}
+      ${satir('Para Birimleri', `<span style="font-family:inherit;font-size:11px">${curTxt}</span>`)}
+      ${satir('Ekstre Kesimi', `<span style="font-family:inherit">${extraTxt}</span>`)}
+      ${satir('Ödeme Süresi', odemeSure + ' gün sonrası')}
+    </div>`;
+}
+
 function saveKart() {
   const kart = {
     id: editKartId || uid(),
@@ -15824,6 +16342,7 @@ function editIslem(id) {
 
 function openNakitAvansModal(kartId) {
   editNaId = null;
+  naStepGoto(1);
   const titleEl = document.getElementById('na-modal-title');
   if(titleEl) titleEl.textContent = 'Nakit Avans';
   const subEl = document.getElementById('na-modal-subtitle');
@@ -16087,6 +16606,59 @@ function resetNaTaksit(btn, idx, origTarih, origTutar) {
   const tu = row.querySelector('[data-na-taksit-field="tutar"]');
   if(ti) ti.value = origTarih;
   if(tu) { tu.value = origTutar; onNaTaksitChange(tu); }
+}
+
+// ── Nakit Avans Modal: Step Wizard ──────────────────────────────────────
+let _naCurrentStep = 1;
+const NA_STEP_COUNT = 3;
+
+function naStepGoto(step) {
+  step = Math.max(1, Math.min(NA_STEP_COUNT, step));
+  _naCurrentStep = step;
+  const modal = document.getElementById('modal-nakit-avans');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('na-step-back-btn');
+  const nextBtn = document.getElementById('na-step-next-btn');
+  const saveBtn = document.getElementById('na-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < NA_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === NA_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === NA_STEP_COUNT) calcNakitAvans();
+}
+
+function _naValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'na-kart',  msg:'Kart seçiniz'},
+      {id:'na-tarih', msg:'İşlem tarihi zorunlu'},
+      {id:'na-tutar', msg:'Çekilecek tutar zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function naStepNext() {
+  if (!_naValidateStep(_naCurrentStep)) return;
+  naStepGoto(_naCurrentStep + 1);
+}
+
+function naStepBack() {
+  naStepGoto(_naCurrentStep - 1);
 }
 
 function saveNakitAvans() {
@@ -17221,6 +17793,7 @@ function openKartOdemeModal(kartId, pb, donemKey, toplamBorc, borcSifirIzin) {
     + (odemeDt ? `<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text3)">Son Ödeme Tarihi</span><span class="mono">${fmtDate(localDateStr(odemeDt))}</span></div>` : '')
     + (toplamBorc <= 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">ℹ️ Borç yoksa ödeme tutarı gelecek ekstre borcundan mahsup edilir</div>` : '');
 
+  kartOdemeStepGoto(1);
   openModal('modal-kart-odeme');
 }
 
@@ -17237,6 +17810,107 @@ function onKartOdemeHesapChange() {
   if(kmh>0) txt += ` · Kullanılabilir: ${fmtCur(bakiye + kmh, pb)} (KMH dahil)`;
   out.textContent = txt;
   out.style.color = bakiye<0 ? 'var(--danger)' : 'var(--text3)';
+}
+
+// ── Kart Ödeme Modal: Step Wizard ──────────────────────────────────────
+let _kartOdemeCurrentStep = 1;
+const KART_ODEME_STEP_COUNT = 3;
+
+function kartOdemeStepGoto(step) {
+  step = Math.max(1, Math.min(KART_ODEME_STEP_COUNT, step));
+  _kartOdemeCurrentStep = step;
+  const modal = document.getElementById('modal-kart-odeme');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('kart-odeme-step-back-btn');
+  const nextBtn = document.getElementById('kart-odeme-step-next-btn');
+  const saveBtn = document.getElementById('kart-odeme-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < KART_ODEME_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === KART_ODEME_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === KART_ODEME_STEP_COUNT) _kartOdemeOzetDoldur();
+}
+
+function _kartOdemeValidateStep(step) {
+  if (step === 1) {
+    const tutar = getMoneyInput('kart-odeme-tutar') || 0;
+    if (!tutar || tutar <= 0) { showToast('Geçerli bir tutar giriniz', 'error'); _markFieldError('kart-odeme-tutar'); return false; }
+    const tarih = document.getElementById('kart-odeme-tarih').value;
+    if (!tarih) { showToast('Tarih giriniz', 'error'); _markFieldError('kart-odeme-tarih'); return false; }
+    return true;
+  }
+  if (step === 2) {
+    const hesapId = (document.getElementById('kart-odeme-hesap')||{}).value || '';
+    if (!hesapId) {
+      showToast('Ödeme yapılacak hesabı seçiniz', 'error');
+      _markFieldError('kart-odeme-hesap');
+      return false;
+    }
+    const tutar = getMoneyInput('kart-odeme-tutar') || 0;
+    const pb = (document.getElementById('kart-odeme-pb')||{}).value || 'TRY';
+    const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+    if (hesap) {
+      const bakiye = hesap.bakiye || 0;
+      const kmhLimit = hesap.kmhLimit || 0;
+      const kullanilab = bakiye + kmhLimit;
+      if (kullanilab < tutar) {
+        const bakiyeStr = fmtCur(bakiye, hesap.paraBirimi||'TRY');
+        const kmhStr = kmhLimit > 0 ? ` + KMH ${fmtCur(kmhLimit, hesap.paraBirimi||'TRY')}` : '';
+        showToast(`Yetersiz bakiye! ${hesap.ad}: ${bakiyeStr}${kmhStr} mevcut, ${fmtCur(tutar, pb)} gerekiyor`, 'error');
+        return false;
+      }
+    }
+    return true;
+  }
+  return true;
+}
+
+function kartOdemeStepNext() {
+  if (!_kartOdemeValidateStep(_kartOdemeCurrentStep)) return;
+  kartOdemeStepGoto(_kartOdemeCurrentStep + 1);
+}
+
+function kartOdemeStepBack() {
+  kartOdemeStepGoto(_kartOdemeCurrentStep - 1);
+}
+
+function _kartOdemeOzetDoldur() {
+  const kartId = (document.getElementById('kart-odeme-kart-id')||{}).value || '';
+  const kart = (DB.kartlar||[]).find(k=>k.id===kartId);
+  const pb = (document.getElementById('kart-odeme-pb')||{}).value || 'TRY';
+  const tutar = getMoneyInput('kart-odeme-tutar') || 0;
+  const tarih = (document.getElementById('kart-odeme-tarih')||{}).value || '—';
+  const hesapId = (document.getElementById('kart-odeme-hesap')||{}).value || '';
+  const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
+
+  const satir = (label, val, valStyle='') => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11.5px;color:var(--text2)">${label}</span>
+      <span style="font-size:12.5px;font-weight:600;color:var(--text);font-family:var(--mono);${valStyle}">${val}</span>
+    </div>`;
+
+  const ozetEl = document.getElementById('kart-odeme-ozet-icerik');
+  if (!ozetEl) return;
+  ozetEl.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      ${satir('Kart', `<span style="font-family:inherit">${kart ? kart.ad : '—'}</span>`)}
+      ${satir('Ödeme Tutarı', fmtCur(tutar, pb), 'color:var(--gold);font-weight:700')}
+      ${satir('Ödeme Tarihi', fmtDate ? fmtDate(tarih) : tarih)}
+      ${satir('Ödeme Yapılan Hesap', `<span style="font-family:inherit">${hesap ? hesap.ad : '—'}</span>`)}
+    </div>`;
 }
 
 function saveKartOdeme() {
@@ -17438,23 +18112,18 @@ function deleteOzelExtre(kartId, ay) {
 
 // ========== MEVDUAT ==========
 function onMevHesapChange() {
-  const hesapId = document.getElementById('mev-hesap-id').value;
+  const hesapId = (document.getElementById('mev-hesap-id')||{}).value || '';
   const displayWrap = document.getElementById('mev-banka-display');
   const displayText = document.getElementById('mev-banka-ad-text');
   const hiddenInp = document.getElementById('mev-banka-hidden');
-  const ibanWrap = document.getElementById('mev-iban-mevcut-wrap');
-  const ibanVal = document.getElementById('mev-iban-mevcut-val');
   if(!hesapId) {
     if(displayWrap) displayWrap.style.display='none';
     if(hiddenInp) hiddenInp.value='';
-    if(ibanWrap) ibanWrap.style.display='none';
-    if(ibanVal) ibanVal.value='';
+    _updateMevTutarBakiyeHint();
     return;
   }
   const hesap = (DB.hesaplar||[]).find(h=>h.id===hesapId);
   if(!hesap) return;
-  if(ibanVal) ibanVal.value = hesap.iban || '';
-  if(ibanWrap) ibanWrap.style.display = hesap.iban ? 'block' : 'none';
   if(hesap.banka) {
     const bankaObj = (DB.bankalar||[]).find(b=>b.id===hesap.banka);
     if(bankaObj) {
@@ -17462,9 +18131,13 @@ function onMevHesapChange() {
       if(displayWrap) { displayWrap.style.display='flex'; const lbl = displayWrap.querySelector('span:last-child'); if(lbl) lbl.textContent='Hesaptan algılandı'; }
       if(hiddenInp) hiddenInp.value = hesap.banka;
     }
+  } else {
+    if(displayWrap) displayWrap.style.display='none';
+    if(hiddenInp) hiddenInp.value='';
   }
   const curSel = document.getElementById('mev-para-birimi');
   if(curSel && hesap.paraBirimi) curSel.value = hesap.paraBirimi;
+  _updateMevTutarBakiyeHint();
 }
 
 // ── Mevduat Modal: Step Wizard ──────────────────────────────────────────
@@ -17513,31 +18186,20 @@ function _mevValidateStep(step) {
   const otoAktif = otoToggle && otoToggle.checked;
 
   if (step === 1) {
-    if (otoAktif && !editMevduatId) {
-      const kaynakSelEl = document.getElementById('mev-kaynak-hesap-id');
-      const kaynakIdCheck = (kaynakSelEl || {}).value || '';
-      if (!kaynakIdCheck) {
-        showToast('Lütfen paranın alınacağı hesabı seçin', 'error');
-        _markFieldError('mev-kaynak-hesap-id');
-        if (kaynakSelEl) { kaynakSelEl.scrollIntoView({behavior:'smooth', block:'center'}); kaynakSelEl.focus(); }
-        return false;
-      }
-    } else if (!otoAktif) {
-      const hesapSel = document.getElementById('mev-hesap-id');
-      const hesapVal = (hesapSel || {}).value || '';
-      if (!hesapVal) {
-        showToast('Lütfen mevcut hesap seçin', 'error');
-        _markFieldError('mev-hesap-id');
-        if (hesapSel) { hesapSel.scrollIntoView({behavior:'smooth', block:'center'}); hesapSel.focus(); }
-        return false;
-      }
+    // Her iki modda da hesap seçimi zorunlu (mev-hesap-id)
+    const hesapSel = document.getElementById('mev-hesap-id');
+    const hesapVal = (hesapSel || {}).value || '';
+    if (!hesapVal) {
+      const mesaj = otoAktif ? 'Paranın alınacağı hesabı seçin' : 'Vadeli hesap seçin';
+      showToast(mesaj, 'error');
+      _markFieldError('mev-hesap-id');
+      if (hesapSel) { hesapSel.scrollIntoView({behavior:'smooth', block:'center'}); hesapSel.focus(); }
+      return false;
     }
     const tutar = getMoneyInput('mev-tutar') || 0;
     if (!tutar) { showToast('Lütfen tutar girin', 'error'); _markFieldError('mev-tutar'); return false; }
     if (otoAktif && !editMevduatId) {
-      const kaynakSelEl2 = document.getElementById('mev-kaynak-hesap-id');
-      const kaynakIdCheck2 = (kaynakSelEl2 || {}).value || '';
-      const kaynakHesapCheck = (DB.hesaplar||[]).find(h=>h.id===kaynakIdCheck2);
+      const kaynakHesapCheck = (DB.hesaplar||[]).find(h=>h.id===hesapVal);
       if (kaynakHesapCheck && tutar > (kaynakHesapCheck.bakiye||0)) {
         showToast(`Yetersiz bakiye — ${kaynakHesapCheck.ad} hesabında ${fmtCur(kaynakHesapCheck.bakiye||0, kaynakHesapCheck.paraBirimi||'TRY')} bulunuyor`, 'error');
         _markFieldError('mev-tutar');
@@ -17596,8 +18258,7 @@ function _mevOzetDoldur() {
   const otoAktif = otoToggle && otoToggle.checked;
   let hesapBilgi = '—';
   if (otoAktif) {
-    const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-    const kaynakId = (kaynakSel||{}).value || '';
+    const kaynakId = (document.getElementById('mev-hesap-id')||{}).value || '';
     const h = (DB.hesaplar||[]).find(x=>x.id===kaynakId);
     if (h) hesapBilgi = h.ad + (h.banka ? (' — ' + ((DB.bankalar||[]).find(b=>b.id===h.banka)||{}).kisa||'') : '');
     hesapBilgi += ' <span style="font-size:10px;color:var(--teal);background:rgba(45,212,191,.1);padding:1px 6px;border-radius:5px;margin-left:4px">Yeni vadeli hesap oluşturulacak</span>';
@@ -17668,10 +18329,6 @@ function populateMevduatModal() {
   const otoToggle = document.getElementById('mev-oto-hesap');
   if(otoToggle) { otoToggle.checked = false; onMevOtoHesapToggle(); }
 
-  // Kaynak hesap sıfırla
-  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  if(kaynakSel) { kaynakSel.innerHTML = ''; phSet(kaynakSel, 'Seçin (isteğe bağlı)…', ''); }
-
   // Banka hesap select (mevcut)
   _fillMevHesapSel('');
   // Vadesiz hesap select
@@ -17722,9 +18379,8 @@ function vadeliyeKoy(hesapId) {
   if(otoToggle) { otoToggle.checked = true; onMevOtoHesapToggle(); }
 
   // Kaynak hesabı bu hesaba ayarla → banka & para birimi otomatik algılanır
-  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  if(kaynakSel) { kaynakSel.value = hesapId; onMevKaynakHesapChange(); }
-
+  const hesapSelV = document.getElementById('mev-hesap-id');
+  if(hesapSelV) { hesapSelV.value = hesapId; onMevHesapChange(); }
   // Tutar = hesabın tüm bakiyesi
   setMoneyInput('mev-tutar', hesap.bakiye);
 
@@ -17767,8 +18423,8 @@ function gunlukVadeliyeKoy(hesapId) {
   if(otoToggle) { otoToggle.checked = true; onMevOtoHesapToggle(); }
 
   // Kaynak hesabı bu hesaba ayarla → banka & para birimi otomatik algılanır
-  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  if(kaynakSel) { kaynakSel.value = hesapId; onMevKaynakHesapChange(); }
+  const hesapSelG = document.getElementById('mev-hesap-id');
+  if(hesapSelG) { hesapSelG.value = hesapId; onMevHesapChange(); }
 
   // Tutar = hesabın tüm bakiyesi
   setMoneyInput('mev-tutar', hesap.bakiye);
@@ -17823,11 +18479,16 @@ function _fillMevHesapSel(selectedId) {
   const hesapSel = document.getElementById('mev-hesap-id');
   if(!hesapSel) return;
   const secilenPb = (document.getElementById('mev-para-birimi')||{}).value || '';
-  let aktifler = (DB.hesaplar||[]).filter(h=>h.durum==='aktif');
+  const otoToggle = document.getElementById('mev-oto-hesap');
+  const otoAktif = otoToggle && otoToggle.checked;
+  // Toggle KAPALI: sadece VADELİ hesaplar; Toggle AÇIK: vadesiz hesaplar (kaynak)
+  let aktifler = (DB.hesaplar||[]).filter(h => h.durum==='aktif' && (otoAktif ? h.tur !== 'vadeli' : h.tur === 'vadeli'));
   if(secilenPb) aktifler = aktifler.filter(h=>(h.paraBirimi||'TRY') === secilenPb);
   hesapSel.innerHTML = aktifler.map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
-  const bosMsg = secilenPb ? `— ${secilenPb} cinsinden aktif hesap bulunamadı —` : '— Aktif hesap bulunamadı —';
-  phSet(hesapSel, 'Hesap seçin…', selectedId||'', bosMsg);
+  const bosMsg = otoAktif
+    ? (secilenPb ? `— ${secilenPb} cinsinden vadesiz hesap bulunamadı —` : '— Vadesiz hesap bulunamadı —')
+    : (secilenPb ? `— ${secilenPb} cinsinden vadeli hesap bulunamadı —` : '— Vadeli hesap bulunamadı —');
+  phSet(hesapSel, otoAktif ? 'Kaynak hesap seçin…' : 'Vadeli hesap seçin…', selectedId||'', bosMsg);
 }
 
 function onMevStratejiChange() {
@@ -17880,34 +18541,33 @@ function _fillMevVadesizSel(selectedId, bankaId) {
 function onMevOtoHesapToggle() {
   const checked = document.getElementById('mev-oto-hesap').checked;
   const otoWrap = document.getElementById('mev-oto-hesap-wrap');
-  const mevcutWrap = document.getElementById('mev-mevcut-hesap-wrap');
-  const ibanMevcutWrap = document.getElementById('mev-iban-mevcut-wrap');
-  const kaynakWrap = document.getElementById('mev-kaynak-hesap-wrap');
-  if(otoWrap) otoWrap.style.display = checked ? 'block' : 'none';
-  if(mevcutWrap) mevcutWrap.style.display = checked ? 'none' : 'block';
-  if(kaynakWrap) kaynakWrap.style.display = checked ? 'block' : 'none';
+  const hesapLabel = document.getElementById('mev-hesap-label');
+  const hesapSel = document.getElementById('mev-hesap-id');
+  const dw = document.getElementById('mev-banka-display');
+  const hid = document.getElementById('mev-banka-hidden');
 
-  if(checked) {
-    // Kaynak hesap listesini doldur (tüm aktif vadesiz hesaplar)
-    _fillMevKaynakSel('');
-    // Banka pill gizle
-    const dw = document.getElementById('mev-banka-display');
-    if(dw) dw.style.display='none';
-    const hid = document.getElementById('mev-banka-hidden');
-    if(hid) hid.value = '';
-  } else {
-    if(ibanMevcutWrap) ibanMevcutWrap.style.display = 'none';
-    const ibanVal = document.getElementById('mev-iban-mevcut-val');
-    if(ibanVal) ibanVal.value = '';
-    const hesapSel = document.getElementById('mev-hesap-id');
-    if(hesapSel) hesapSel.value = '';
-    const dw = document.getElementById('mev-banka-display');
-    if(dw) dw.style.display='none';
-    const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-    if(kaynakSel) kaynakSel.value = '';
-    const hiddenInp = document.getElementById('mev-banka-hidden');
-    if(hiddenInp) hiddenInp.value = '';
+  // Yeni hesap adı + IBAN alanı: sadece oto=açık modda
+  if(otoWrap) otoWrap.style.display = checked ? 'block' : 'none';
+
+  // Etiket güncelle
+  if(hesapLabel) hesapLabel.innerHTML = checked
+    ? 'Paranın Alınacağı Hesap <span style="color:var(--danger)">*</span>'
+    : 'Vadeli Hesap <span style="color:var(--danger)">*</span>';
+
+  // Placeholder güncelle
+  if(hesapSel) {
+    const ph = hesapSel.querySelector('option[value=""][disabled]');
+    if(ph) ph.textContent = checked ? '— Kaynak hesap seçin (zorunlu) —' : '— Vadeli hesap seçin (zorunlu) —';
+    hesapSel.value = '';
   }
+  if(dw) dw.style.display='none';
+  if(hid) hid.value = '';
+  if(checked) {
+    const ibanM = document.getElementById('mev-iban-manuel');
+    if(ibanM) ibanM.value = '';
+  }
+  // Listeyi moda göre yeniden doldur
+  _fillMevHesapSel('');
   _updateMevTutarBakiyeHint();
 }
 
@@ -18035,8 +18695,8 @@ function _updateMevTutarBakiyeHint() {
   if(!btn || !hint) return;
   const otoToggle = document.getElementById('mev-oto-hesap');
   const otoAktif = otoToggle && otoToggle.checked;
-  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  const hesapId = kaynakSel ? kaynakSel.value : '';
+  const hesapSel = document.getElementById('mev-hesap-id');
+  const hesapId = hesapSel ? hesapSel.value : '';
   const hesap = (otoAktif && hesapId) ? (DB.hesaplar||[]).find(h=>h.id===hesapId) : null;
   if(!hesap) {
     btn.style.display = 'none';
@@ -18059,8 +18719,8 @@ function _updateMevTutarBakiyeHint() {
 
 // "Bakiyenin Tümünü Kullan" butonu — seçili kaynak hesabın tüm bakiyesini tutara yazar
 function mevTutarTumunuKullan() {
-  const kaynakSel = document.getElementById('mev-kaynak-hesap-id');
-  const hesapId = kaynakSel ? kaynakSel.value : '';
+  const hesapSel = document.getElementById('mev-hesap-id');
+  const hesapId = hesapSel ? hesapSel.value : '';
   const hesap = hesapId ? (DB.hesaplar||[]).find(h=>h.id===hesapId) : null;
   if(!hesap) { showToast('Önce paranın alınacağı hesabı seçin', 'error'); return; }
   if(!(hesap.bakiye > 0)) { showToast('Hesap bakiyesi 0 veya negatif', 'error'); return; }
@@ -18088,29 +18748,23 @@ function saveMevduat() {
   if(!tutar) { showToast('Lütfen tutar girin', 'error'); return; }
   if(!vade)  { showToast('Lütfen vade (gün) girin', 'error'); return; }
   if(!bas)   { showToast('Lütfen başlangıç tarihi girin', 'error'); return; }
+
+  // Her iki modda da hesap seçimi zorunlu
+  const hesapSelCheck = (document.getElementById('mev-hesap-id')||{}).value || '';
+  if(!hesapSelCheck) {
+    const mesaj = otoAktif ? 'Lütfen paranın alınacağı hesabı seçin' : 'Lütfen vadeli hesap seçin';
+    showToast(mesaj, 'error');
+    _markFieldError('mev-hesap-id');
+    return;
+  }
   if(otoAktif && !editMevduatId) {
-    const kaynakIdCheck = (document.getElementById('mev-kaynak-hesap-id')||{}).value || '';
-    if(!kaynakIdCheck) {
-      showToast('Lütfen paranın alınacağı hesabı seçin', 'error');
-      _markFieldError('mev-kaynak-hesap-id');
-      const kaynakSelEl = document.getElementById('mev-kaynak-hesap-id');
-      if(kaynakSelEl) { kaynakSelEl.scrollIntoView({behavior:'smooth', block:'center'}); kaynakSelEl.focus(); }
-      return;
-    }
     // Girilen tutar, kaynak hesabın bakiyesini aşıyor mu?
-    const kaynakHesapCheck = (DB.hesaplar||[]).find(h=>h.id===kaynakIdCheck);
+    const kaynakHesapCheck = (DB.hesaplar||[]).find(h=>h.id===hesapSelCheck);
     if(kaynakHesapCheck && tutar > (kaynakHesapCheck.bakiye||0)) {
       showToast(`Yetersiz bakiye — ${kaynakHesapCheck.ad} hesabında ${fmtCur(kaynakHesapCheck.bakiye||0, kaynakHesapCheck.paraBirimi||'TRY')} bulunuyor`, 'error');
       _markFieldError('mev-tutar');
       const tutarEl = document.getElementById('mev-tutar');
       if(tutarEl) { tutarEl.scrollIntoView({behavior:'smooth', block:'center'}); tutarEl.focus(); }
-      return;
-    }
-  } else if(!otoAktif && !editMevduatId) {
-    const hesapSelCheck = (document.getElementById('mev-hesap-id')||{}).value || '';
-    if(!hesapSelCheck) {
-      showToast('Lütfen mevcut hesap seçin', 'error');
-      _markFieldError('mev-hesap-id');
       return;
     }
   }
@@ -18130,7 +18784,7 @@ function saveMevduat() {
   let hesapId = null;
 
   if(otoAktif && !editMevduatId) {
-    const kaynakId = (document.getElementById('mev-kaynak-hesap-id')||{}).value || '';
+    const kaynakId = hesapSelCheck; // mev-hesap-id oto modunda kaynak hesaptır
     const kaynakHesap = kaynakId ? (DB.hesaplar||[]).find(h=>h.id===kaynakId) : null;
     // Banka: kaynak hesaptan al, yoksa hidden input'tan
     const bankaId = (kaynakHesap && kaynakHesap.banka) ||
@@ -18141,6 +18795,7 @@ function saveMevduat() {
     let adInp = (document.getElementById('mev-oto-hesap-ad')||{}).value.trim();
     if(!adInp) adInp = _mevGunlukMod ? `${bankaKisa} Günlük Vadeli ${paraBirimi}`.trim() || 'Günlük Vadeli Hesap' : `${bankaKisa} Vadeli ${paraBirimi}`.trim() || 'Vadeli Hesap';
 
+    const ibanManuel = ((document.getElementById('mev-iban-manuel')||{}).value || '').replace(/\s/g,'').toUpperCase();
     const yeniHesap = {
       id: uid(),
       banka: bankaId,
@@ -18148,7 +18803,7 @@ function saveMevduat() {
       tur: 'vadeli',
       paraBirimi,
       bakiye: tutar,
-      iban: '',
+      iban: ibanManuel,
       bankaKodu: '',
       subeKodu:  '',
       hesapNo:   '',
@@ -18160,10 +18815,10 @@ function saveMevduat() {
     DB.hesaplar.push(yeniHesap);
     hesapId = yeniHesap.id;
   } else {
-    hesapId = (document.getElementById('mev-hesap-id')||{}).value || null;
+    hesapId = hesapSelCheck || null;
   }
 
-  const kaynakHesapId = otoAktif ? ((document.getElementById('mev-kaynak-hesap-id')||{}).value || null) : null;
+  const kaynakHesapId = otoAktif ? (hesapSelCheck || null) : null;
   const vadesizHesapId = (document.getElementById('mev-vadesiz-hesap-id')||{}).value || null;
   const strateji = (document.getElementById('mev-strateji')||{}).value || '';
 
@@ -18533,13 +19188,54 @@ function toggleKiraDepozito() {
 // ========== KİRA ==========
 let editKiraId = null;
 
-function openBankaModal() {
-  editBankaId = null;
-  document.getElementById('banka-modal-title').textContent = 'Banka Ekle';
-  document.getElementById('banka-tam').value = '';
-  document.getElementById('banka-kisa').value = '';
-  document.getElementById('banka-iban-kod').value = '';
+function openBankaModal(id=null) {
+  editBankaId = id || null;
+  document.getElementById('banka-modal-title').textContent = id ? 'Banka Düzenle' : 'Banka Ekle';
+  const b = id ? (DB.bankalar||[]).find(x=>x.id===id) : null;
+  document.getElementById('banka-tam').value      = b?.tam || '';
+  document.getElementById('banka-kisa').value     = b?.kisa || '';
+  document.getElementById('banka-iban-kod').value = b?.ibanKod || '';
+  document.getElementById('banka-ikon').value     = b?.ikon || '';
+  const kodPad = (b?.ibanKod || '').padStart(4,'0');
+  const startLogo = b?.logo || (b ? bankaLogoByKod(kodPad) : '') || '';
+  document.getElementById('banka-logo').value = startLogo;
+  _renderBankaLogoPicker(startLogo);
+  onBankaIbanKodInput(); // öneri güncelle
   openModal('modal-banka');
+}
+
+// Logo seçici grid'ini render eder (16 hazır banka logosu + "Logo Yok")
+function _renderBankaLogoPicker(selectedSvg) {
+  const picker = document.getElementById('banka-logo-picker');
+  if(!picker) return;
+  picker.innerHTML = BANKA_LOGOLAR.map((logo, i) => {
+    const isSelected = logo.svg === selectedSvg || (logo.id === 'none' && !selectedSvg);
+    return `<div class="altyapi-logo-picker-item${isSelected ? ' selected' : ''}"
+      onclick="_pickBankaLogo(${i})"
+      title="${logo.ad}">
+      ${logo.svg
+        ? `<span style="display:flex;align-items:center;justify-content:center;width:40px;height:24px">${logo.svg}</span>`
+        : `<span style="width:40px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:18px">✕</span>`
+      }
+      <span>${logo.ad}</span>
+    </div>`;
+  }).join('');
+}
+
+// Picker'daki bir öğeye tıklanınca çağrılır — index üzerinden çalışır,
+// böylece logo markup'ı (img/svg + tırnaklar) HTML attribute'a gömülmez.
+function _pickBankaLogo(idx) {
+  const logo = BANKA_LOGOLAR[idx];
+  _selectBankaLogo(logo ? logo.svg : '');
+}
+
+function _selectBankaLogo(svg) {
+  document.getElementById('banka-logo').value = svg || '';
+  document.querySelectorAll('#banka-logo-picker .altyapi-logo-picker-item').forEach((el, i) => {
+    const logo = BANKA_LOGOLAR[i];
+    const match = logo.svg === svg || (logo.id === 'none' && !svg);
+    el.classList.toggle('selected', match);
+  });
 }
 
 // ========== HESAP TÜRLERİ CRUD ==========
@@ -18620,6 +19316,7 @@ function openTatilModal() {
 
 function openEldenModal() {
   editEldenId = null;
+  eldenStepGoto(1);
   document.getElementById('elden-modal-title').textContent = 'Elden Ödeme Ekle';
   document.getElementById('elden-tarih').value = localDateStr(new Date());
   document.getElementById('elden-tur').value = 'gider';
@@ -18659,6 +19356,7 @@ function openEldenModal() {
 
 function openKiraModal(id=null) {
   editKiraId = id;
+  kiraStepGoto(1);
   document.getElementById('kira-modal-title').textContent = id ? 'Kontrat Düzenle' : 'Kira Kontratı Ekle';
 
   if(id) {
@@ -18794,6 +19492,89 @@ function openKiraModal(id=null) {
   }
   bindMoneyInputs(document.getElementById('modal-kira'));
   openModal('modal-kira');
+}
+
+// ── Kira Modal: Step Wizard ──────────────────────────────────────────
+let _kiraCurrentStep = 1;
+const KIRA_STEP_COUNT = 4;
+
+function kiraStepGoto(step) {
+  step = Math.max(1, Math.min(KIRA_STEP_COUNT, step));
+  _kiraCurrentStep = step;
+  const modal = document.getElementById('modal-kira');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('kira-step-back-btn');
+  const nextBtn = document.getElementById('kira-step-next-btn');
+  const saveBtn = document.getElementById('kira-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < KIRA_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === KIRA_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === KIRA_STEP_COUNT) _kiraOzetDoldur();
+}
+
+function _kiraValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'kira-baslangic', msg:'Başlangıç tarihi zorunlu'},
+      {id:'kira-bitis',     msg:'Bitiş tarihi zorunlu'},
+      {id:'kira-tutar',     msg:'Aylık tutar zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function kiraStepNext() {
+  if (!_kiraValidateStep(_kiraCurrentStep)) return;
+  kiraStepGoto(_kiraCurrentStep + 1);
+}
+
+function kiraStepBack() {
+  kiraStepGoto(_kiraCurrentStep - 1);
+}
+
+function _kiraOzetDoldur() {
+  const tur = (document.getElementById('kira-tur')||{}).value || 'gelir';
+  const tutar = getMoneyInput('kira-tutar') || 0;
+  const pb = (document.getElementById('kira-para-birimi-manual')||{}).value || 'TRY';
+  const bas = (document.getElementById('kira-baslangic')||{}).value || '—';
+  const bit = (document.getElementById('kira-bitis')||{}).value || '—';
+  const gun = (document.getElementById('kira-gun')||{}).value || '—';
+  const yontem = (document.getElementById('kira-yontem')||{}).value || 'nakit';
+  const depVar = document.getElementById('kira-depozito-var')?.checked;
+  const depTutar = depVar ? (getMoneyInput('kira-depozito-tutar')||0) : 0;
+  const depPb = (document.getElementById('kira-depozito-pb')||{}).value || pb;
+  const pasif = document.getElementById('kira-pasif')?.checked;
+
+  const satir = (lbl, val) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:11.5px;color:var(--text2)">${lbl}</span>
+    <span style="font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)">${val}</span></div>`;
+
+  const el = document.getElementById('kira-ozet-icerik');
+  if (!el) return;
+  el.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+    ${satir('Tür', tur === 'gelir' ? '📈 Gelir' : '📉 Gider')}
+    ${satir('Aylık Tutar', fmtCur(tutar, pb))}
+    ${satir('Dönem', `<span style="font-family:inherit">${fmtDate?fmtDate(bas):bas} → ${fmtDate?fmtDate(bit):bit}</span>`)}
+    ${gun !== '—' ? satir('Ödeme Günü', `Her ayın ${gun}. günü`) : ''}
+    ${satir('Ödeme Yöntemi', yontem === 'havale' ? '🏦 Havale/EFT' : '💵 Nakit')}
+    ${depVar ? satir('Depozito', fmtCur(depTutar, depPb)) : ''}
+    ${pasif ? satir('Durum', '⏸ Pasif') : satir('Durum', '✅ Aktif')}
+  </div>`;
 }
 
 function saveKira() {
@@ -18980,6 +19761,7 @@ function renderKira() {
 // ========== MAAŞ ==========
 function openMaasModal() {
   editMaasId = null;
+  maasStepGoto(1);
   document.getElementById('maas-modal-title').textContent = 'Maaş Geliri Ekle';
   document.getElementById('maas-aciklama').value = '';
   setMoneyInput('maas-tutar', '');
@@ -19195,6 +19977,97 @@ function showToast(msg, type='success') {
   }, 2800);
 }
 
+// ── Maaş Modal: Step Wizard ──────────────────────────────────────────
+let _maasCurrentStep = 1;
+const MAAS_STEP_COUNT = 3;
+
+function maasStepGoto(step) {
+  step = Math.max(1, Math.min(MAAS_STEP_COUNT, step));
+  _maasCurrentStep = step;
+  const modal = document.getElementById('modal-maas');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('maas-step-back-btn');
+  const nextBtn = document.getElementById('maas-step-next-btn');
+  const saveBtn = document.getElementById('maas-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < MAAS_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === MAAS_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === MAAS_STEP_COUNT) _maasOzetDoldur();
+}
+
+function _maasValidateStep(step) {
+  if (step === 1) {
+    const tur = (document.getElementById('maas-tur')||{}).value || 'surekli';
+    const fields = [
+      {id:'maas-aciklama', msg:'Açıklama zorunlu'},
+      {id:'maas-tutar',    msg:'Tutar zorunlu'},
+    ];
+    if (tur === 'surekli') {
+      fields.push({id:'maas-baslangic', msg:'Başlangıç tarihi zorunlu'});
+    } else {
+      fields.push({id:'maas-tekseferlik-tarih', msg:'Ödeme tarihi zorunlu'});
+    }
+    if (!validateRequiredFields(fields)) return false;
+    return true;
+  }
+  return true;
+}
+
+function maasStepNext() {
+  if (!_maasValidateStep(_maasCurrentStep)) return;
+  maasStepGoto(_maasCurrentStep + 1);
+}
+
+function maasStepBack() {
+  maasStepGoto(_maasCurrentStep - 1);
+}
+
+function _maasOzetDoldur() {
+  const aciklama = (document.getElementById('maas-aciklama')||{}).value.trim() || '—';
+  const tutar = getMoneyInput('maas-tutar') || 0;
+  const pb = (document.getElementById('maas-para-birimi-manual')||{}).value || defaultCurrency || 'TRY';
+  const tur = (document.getElementById('maas-tur')||{}).value || 'surekli';
+  const gun = (document.getElementById('maas-gun')||{}).value || '';
+  const bas = (document.getElementById('maas-baslangic')||{}).value || '';
+  const bit = (document.getElementById('maas-bitis')||{}).value || '';
+  const tekTarih = (document.getElementById('maas-tekseferlik-tarih')||{}).value || '';
+  const yontem = (document.getElementById('maas-yontem')||{}).value || 'nakit';
+  const pasif = document.getElementById('maas-pasif-visible')?.checked;
+
+  const satir = (lbl, val) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:11.5px;color:var(--text2)">${lbl}</span>
+    <span style="font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)">${val}</span></div>`;
+
+  const fmtD = d => d ? (typeof fmtDate === 'function' ? fmtDate(d) : d) : '—';
+
+  const el = document.getElementById('maas-ozet-icerik');
+  if (!el) return;
+  el.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+    ${satir('Açıklama', `<span style="font-family:inherit">${aciklama}</span>`)}
+    ${satir('Tutar', fmtCur(tutar, pb))}
+    ${satir('Tür', tur === 'surekli' ? '🔄 Sürekli (Aylık)' : '1️⃣ Tek Seferlik')}
+    ${tur === 'surekli' && gun ? satir('Ödeme Günü', `Her ayın ${gun}. günü`) : ''}
+    ${tur === 'surekli' ? satir('Dönem', `<span style="font-family:inherit">${fmtD(bas)} → ${bit ? fmtD(bit) : 'Süresiz'}</span>`) : ''}
+    ${tur === 'tekseferlik' ? satir('Ödeme Tarihi', fmtD(tekTarih)) : ''}
+    ${satir('Ödeme Yöntemi', yontem === 'havale' ? '🏦 Havale/EFT' : '💵 Nakit')}
+    ${pasif ? satir('Durum', '⏸ Pasif') : satir('Durum', '✅ Aktif')}
+  </div>`;
+}
+
 function saveMaas() {
   // Tüm validasyonlar burada — checkManuelKarsiTarafAndSave öncesinde
   const _maas_acik0 = document.getElementById('maas-aciklama').value.trim();
@@ -19272,6 +20145,7 @@ function _doSaveMaas() {
 
 function editMaas(id) {
   editMaasId = id;
+  maasStepGoto(1);
   const m = DB.maaslar.find(x=>x.id===id);
   if(!m) return;
   document.getElementById('maas-modal-title').textContent = 'Maaş Düzenle';
@@ -19667,6 +20541,7 @@ function calcKmhKredi(preserveManuel=false) {
 let editKmhKrediId = null;
 function openKmhKrediModal(id=null) {
   editKmhKrediId = id;
+  kmhKrediStepGoto(1);
   const sel = document.getElementById('kmhkredi-kmh');
   const kmhKartlar = getKmhKartlar();
 
@@ -19709,6 +20584,64 @@ function openKmhKrediModal(id=null) {
     document.getElementById('kmhkredi-preview').textContent = 'Değerleri girin, taksit otomatik hesaplanacak.';
   }
   openModal('modal-kmhkredi');
+}
+
+// ── KMH Kredi Modal: Step Wizard ──────────────────────────────────────
+let _kmhKrediCurrentStep = 1;
+const KMHKREDI_STEP_COUNT = 4;
+
+function kmhKrediStepGoto(step) {
+  step = Math.max(1, Math.min(KMHKREDI_STEP_COUNT, step));
+  _kmhKrediCurrentStep = step;
+  const modal = document.getElementById('modal-kmhkredi');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('kmhkredi-step-back-btn');
+  const nextBtn = document.getElementById('kmhkredi-step-next-btn');
+  const saveBtn = document.getElementById('kmhkredi-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < KMHKREDI_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === KMHKREDI_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === KMHKREDI_STEP_COUNT) calcKmhKredi(true);
+}
+
+function _kmhKrediValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([{id:'kmhkredi-kmh', msg:'KMH hesabı seçiniz'}])) return false;
+    return true;
+  }
+  if (step === 2) {
+    if (!validateRequiredFields([
+      {id:'kmhkredi-anapara',    msg:'Ana para zorunlu'},
+      {id:'kmhkredi-faiz',       msg:'Faiz oranı zorunlu'},
+      {id:'kmhkredi-vade',       msg:'Vade zorunlu'},
+      {id:'kmhkredi-ilk-ekstre', msg:'İlk ekstre tarihi zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function kmhKrediStepNext() {
+  if (!_kmhKrediValidateStep(_kmhKrediCurrentStep)) return;
+  kmhKrediStepGoto(_kmhKrediCurrentStep + 1);
+}
+
+function kmhKrediStepBack() {
+  kmhKrediStepGoto(_kmhKrediCurrentStep - 1);
 }
 
 function saveKmhKredi() {
@@ -20034,8 +20967,9 @@ function calcKredi(preserveManuel=false) {
 let editKrediId = null;
 function openKrediModal(id=null) {
   editKrediId = id;
+  krediStepGoto(1);
   const bankaSel = document.getElementById('kredi-banka');
-  bankaSel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
+  bankaSel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${bankaOptionMetin(b)}</option>`).join('');
   phSet(bankaSel, 'Banka seçin…', '', '— Banka bulunamadı —');
 
   // Kredi türü dropdown'u DB.krediTipleri'nden doldur
@@ -20075,6 +21009,67 @@ function openKrediModal(id=null) {
     document.getElementById('kredi-preview').textContent = 'Değerleri girin, taksit otomatik hesaplanacak.';
   }
   openModal('modal-kredi');
+}
+
+// ── Kredi Modal: Step Wizard ──────────────────────────────────────────
+let _krediCurrentStep = 1;
+const KREDI_STEP_COUNT = 4;
+
+function krediStepGoto(step) {
+  step = Math.max(1, Math.min(KREDI_STEP_COUNT, step));
+  _krediCurrentStep = step;
+  const modal = document.getElementById('modal-kredi');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('kredi-step-back-btn');
+  const nextBtn = document.getElementById('kredi-step-next-btn');
+  const saveBtn = document.getElementById('kredi-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < KREDI_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === KREDI_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === KREDI_STEP_COUNT) calcKredi(true);
+}
+
+function _krediValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'kredi-banka', msg:'Banka seçimi zorunlu'},
+      {id:'kredi-tur',   msg:'Kredi türü zorunlu'}
+    ])) return false;
+    return true;
+  }
+  if (step === 2) {
+    if (!validateRequiredFields([
+      {id:'kredi-anapara',    msg:'Ana para zorunlu'},
+      {id:'kredi-faiz',       msg:'Faiz oranı zorunlu'},
+      {id:'kredi-vade',       msg:'Vade zorunlu'},
+      {id:'kredi-ilk-taksit', msg:'İlk taksit tarihi zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function krediStepNext() {
+  if (!_krediValidateStep(_krediCurrentStep)) return;
+  krediStepGoto(_krediCurrentStep + 1);
+}
+
+function krediStepBack() {
+  krediStepGoto(_krediCurrentStep - 1);
 }
 
 function saveKredi() {
@@ -20290,6 +21285,58 @@ function renderKredi() {
 
 // ========== ELDEN ==========
 let editEldenId = null;
+// ── Elden Ödeme Modal: Step Wizard ──────────────────────────────────────
+let _eldenCurrentStep = 1;
+const ELDEN_STEP_COUNT = 3;
+
+function eldenStepGoto(step) {
+  step = Math.max(1, Math.min(ELDEN_STEP_COUNT, step));
+  _eldenCurrentStep = step;
+  const modal = document.getElementById('modal-elden');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('elden-step-back-btn');
+  const nextBtn = document.getElementById('elden-step-next-btn');
+  const saveBtn = document.getElementById('elden-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < ELDEN_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === ELDEN_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+}
+
+function _eldenValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([{id:'elden-tarih', msg:'Tarih giriniz'}])) return false;
+    return true;
+  }
+  if (step === 2) {
+    if (!validateRequiredFields([{id:'elden-tutar', msg:'Tutar giriniz'}])) return false;
+    return true;
+  }
+  return true;
+}
+
+function eldenStepNext() {
+  if (!_eldenValidateStep(_eldenCurrentStep)) return;
+  eldenStepGoto(_eldenCurrentStep + 1);
+}
+
+function eldenStepBack() {
+  eldenStepGoto(_eldenCurrentStep - 1);
+}
+
 function saveElden() {
   // Önce validasyon
   const _elden_tur0 = document.getElementById('elden-tur').value;
@@ -20379,6 +21426,7 @@ function _doSaveElden() {
 
 function editElden(id) {
   editEldenId = id;
+  eldenStepGoto(1);
   const e = DB.eldenler.find(x=>x.id===id);
   if(!e) return;
   document.getElementById('elden-modal-title').textContent = 'Kayıt Düzenle';
@@ -20639,21 +21687,89 @@ function editBanka(id) {
   document.getElementById('modal-banka').classList.add('open'); document.body.classList.add('modal-open'); _sidebarDim(true);
 }
 
+function onBankaIbanKodInput() {
+  const kod = (document.getElementById('banka-iban-kod')||{}).value?.trim().padStart(4,'0') || '';
+  const ikonInput = document.getElementById('banka-ikon');
+  const oneriDiv = document.getElementById('banka-ikon-oneri');
+  const preset = BANK_ICON_MAP[kod];
+  if (preset && ikonInput && !ikonInput.value) {
+    if (oneriDiv) oneriDiv.innerHTML = `<span style="font-size:18px">${preset.emoji}</span> <span style="color:var(--teal)">${preset.label} için önerildi — değiştirmek için üstteki kutuya yazın</span>`;
+  } else if (oneriDiv) {
+    oneriDiv.textContent = preset ? '' : (kod.length === 4 ? 'Bu IBAN kodu için ön tanımlı ikon yok' : 'IBAN kodu girince otomatik önerilir');
+  }
+  // Kullanıcı henüz manuel bir logo seçmediyse, tanınan IBAN koduna göre
+  // logo rozetini otomatik öner/seç.
+  const logoInput = document.getElementById('banka-logo');
+  const presetLogo = bankaLogoByKod(kod);
+  if (logoInput && presetLogo && !logoInput.value) {
+    _selectBankaLogo(presetLogo);
+  }
+}
+
 function saveBanka() {
-  const tam = document.getElementById('banka-tam').value.trim();
-  const kisa = document.getElementById('banka-kisa').value.trim();
+  const tam     = document.getElementById('banka-tam').value.trim();
+  const kisa    = document.getElementById('banka-kisa').value.trim();
   const ibanKod = document.getElementById('banka-iban-kod').value.trim();
+  // Kullanıcı emoji girmediyse, IBAN koduna göre preset emoji kullan
+  const ikonInput = (document.getElementById('banka-ikon')||{}).value?.trim() || '';
+  const kodPad = ibanKod.padStart(4,'0');
+  const ikon = ikonInput || (BANK_ICON_MAP[kodPad]?.emoji) || '';
+  const logo = (document.getElementById('banka-logo')||{}).value || '';
   if(!validateRequiredFields([{id:'banka-tam',msg:'Tam ad zorunlu'},{id:'banka-kisa',msg:'Kısa ad zorunlu'}])) return;
   if(editBankaId) {
     const idx = DB.bankalar.findIndex(b=>b.id===editBankaId);
-    if(idx>=0) DB.bankalar[idx]={...DB.bankalar[idx], tam, kisa, ibanKod};
+    if(idx>=0) DB.bankalar[idx]={...DB.bankalar[idx], tam, kisa, ibanKod, ikon, logo};
   } else {
-    DB.bankalar.push({id:uid(), tam, kisa, ibanKod});
+    DB.bankalar.push({id:uid(), tam, kisa, ibanKod, ikon, logo});
   }
   editBankaId = null;
   saveData();
   closeModal('modal-banka');
   renderTanimlamalar();
+}
+
+// Türkiye'deki 16 büyük bankayı (tam ad, kısa ad, IBAN kodu, logo) tek
+// tıkla önceden tanımlı listeden ekler. IBAN koduyla zaten kayıtlı olanlar
+// atlanır / logosu eksikse tamamlanır.
+const PRESET_BANKALAR = [
+  { tam:'Türkiye Cumhuriyeti Ziraat Bankası A.Ş.', kisa:'Ziraat Bankası', ibanKod:'0010' },
+  { tam:'Türkiye Vakıflar Bankası T.A.O.',          kisa:'VakıfBank',      ibanKod:'0015' },
+  { tam:'Türkiye İş Bankası A.Ş.',                  kisa:'İş Bankası',     ibanKod:'0064' },
+  { tam:'Türkiye Garanti Bankası A.Ş.',             kisa:'Garanti BBVA',   ibanKod:'0062' },
+  { tam:'Akbank T.A.Ş.',                            kisa:'Akbank',         ibanKod:'0046' },
+  { tam:'Türk Ekonomi Bankası A.Ş.',                kisa:'TEB',            ibanKod:'0032' },
+  { tam:'QNB Bank A.Ş.',                            kisa:'QNB',            ibanKod:'0111' },
+  { tam:'Denizbank A.Ş.',                           kisa:'DenizBank',      ibanKod:'0134' },
+  { tam:'Yapı ve Kredi Bankası A.Ş.',               kisa:'Yapı Kredi',     ibanKod:'0067' },
+  { tam:'Burgan Bank A.Ş.',                         kisa:'ON',             ibanKod:'0147' },
+  { tam:'Enpara Bank A.Ş.',                         kisa:'Enpara',         ibanKod:'0157' },
+  { tam:'Kuveyt Türk Katılım Bankası A.Ş.',         kisa:'Kuveyt Türk',    ibanKod:'0205' },
+  { tam:'Aktif Yatırım Bankası A.Ş.',               kisa:'N Kolay',        ibanKod:'0143' },
+  { tam:'ING Bank A.Ş.',                            kisa:'ING',            ibanKod:'0099' },
+  { tam:'Colendi Bank A.Ş.',                        kisa:'ColendiBank',    ibanKod:'0158' },
+  { tam:'Fibabanka A.Ş.',                           kisa:'Fibabanka',      ibanKod:'0106' },
+];
+
+function seedPresetBankalar() {
+  if(!DB.bankalar) DB.bankalar = [];
+  let eklenen = 0, tamamlanan = 0;
+  PRESET_BANKALAR.forEach(p => {
+    const logo = bankaLogoByKod(p.ibanKod) || '';
+    const mevcut = DB.bankalar.find(b => b.ibanKod === p.ibanKod);
+    if(mevcut) {
+      if(!mevcut.logo && logo) { mevcut.logo = logo; tamamlanan++; }
+    } else {
+      DB.bankalar.push({ id: uid(), tam: p.tam, kisa: p.kisa, ibanKod: p.ibanKod, ikon: '', logo });
+      eklenen++;
+    }
+  });
+  if(!eklenen && !tamamlanan) {
+    showToast('16 banka zaten kayıtlı ve logoları tam', 'success');
+    return;
+  }
+  saveData();
+  renderTanimlamalar();
+  showToast(`${eklenen} banka eklendi${tamamlanan ? `, ${tamamlanan} bankanın logosu tamamlandı` : ''}`, 'success');
 }
 
 function deleteBanka(id) {
@@ -20673,7 +21789,7 @@ function exportBankalarJSON() {
     tip: 'finans-bankalar',
     surum: 1,
     tarih: new Date().toISOString(),
-    bankalar: list.map(b => ({ tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod || '' })),
+    bankalar: list.map(b => ({ tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod || '', ikon: b.ikon || '', logo: b.logo || '' })),
     subeler: list.reduce((acc, b) => {
       if(b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length) {
         acc[b.ibanKod] = DB.subeler[b.ibanKod];
@@ -20722,7 +21838,9 @@ function importBankalarJSON(event) {
       .map(b => ({
         tam: (b.tam || b.kisa || '').toString().trim(),
         kisa: (b.kisa || b.tam || '').toString().trim(),
-        ibanKod: (b.ibanKod || b.kod || '').toString().trim()
+        ibanKod: (b.ibanKod || b.kod || '').toString().trim(),
+        ikon: (b.ikon || '').toString().trim(),
+        logo: (b.logo || '').toString().trim()
       }));
 
     if(!temizler.length) {
@@ -20740,9 +21858,11 @@ function importBankalarJSON(event) {
         if(mevcut) {
           mevcut.tam = b.tam || mevcut.tam;
           mevcut.kisa = b.kisa || mevcut.kisa;
+          mevcut.ikon = b.ikon || mevcut.ikon;
+          mevcut.logo = b.logo || mevcut.logo || bankaLogoByKod(b.ibanKod) || '';
           guncellenen++;
         } else {
-          DB.bankalar.push({ id: uid(), tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod });
+          DB.bankalar.push({ id: uid(), tam: b.tam, kisa: b.kisa, ibanKod: b.ibanKod, ikon: b.ikon || '', logo: b.logo || bankaLogoByKod(b.ibanKod) || '' });
           eklenen++;
         }
       });
@@ -22436,18 +23556,23 @@ function renderTanimlamalar() {
   renderKisilerGrid();
   loadCorsProxyWorkerInput();
 
-  document.getElementById('banka-tbody').innerHTML = (DB.bankalar||[]).map((b,i)=>`<tr>
+  document.getElementById('banka-tbody').innerHTML = (DB.bankalar||[]).map((b,i)=>{
+    const ikon = bankaIkonObj(b);
+    const ikonHtml = ikon.svg
+      ? `<span class="bank-logo" style="width:30px;height:22px;margin-right:6px;vertical-align:middle">${ikon.svg}</span>`
+      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-size:18px;background:${ikon.bg};margin-right:6px;vertical-align:middle">${ikon.emoji}</span>`;
+    return `<tr>
     <td class="mono">${i+1}</td>
-    <td>${b.tam || b.kisa || '—'}</td>
-    <td>${b.kisa || b.tam || '—'}</td>
+    <td>${ikonHtml}<span style="vertical-align:middle">${b.tam || b.kisa || '—'}</span></td>
+    <td><b>${b.kisa || b.tam || '—'}</b></td>
     <td class="mono" style="letter-spacing:.05em;color:var(--accent)">${b.ibanKod||'<span style="color:var(--text3)">—</span>'}</td>
     <td style="font-size:11px;color:var(--text3)">${b.ibanKod && DB.subeler && DB.subeler[b.ibanKod] && DB.subeler[b.ibanKod].length ? DB.subeler[b.ibanKod].length + ' şube' : '—'}</td>
     <td style="white-space:nowrap">
       <button class="btn btn-ghost btn-sm btn-act" onclick="openSubeModal('${b.id}')" style="margin-right:4px" title="Şube Tanımlamaları"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="10" y="8" width="5" height="5" rx="1"/><rect x="5" y="2" width="6" height="4" rx="1"/><path d="M8 6v2M3.5 8V7a4.5 4.5 0 0 1 9 0v1"/></svg></button>
-      <button class="btn btn-ghost btn-sm btn-act" onclick="editBanka('${b.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
+      <button class="btn btn-ghost btn-sm btn-act" onclick="openBankaModal('${b.id}')" style="margin-right:4px"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><path d="M11.5 2.5a1.414 1.414 0 0 1 2 2L5 13H2v-3L11.5 2.5z"/></svg></button>
       <button class="btn btn-danger btn-sm btn-act" onclick="deleteBanka('${b.id}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:block"><polyline points="3,5 13,5"/><path d="M6 5V3h4v2M5 5l1 9h4l1-9"/></svg></button>
     </td>
-  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
+  </tr>`;}).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px">Kayıt yok</td></tr>';
 
   document.getElementById('urun-tip-tbody').innerHTML = (DB.urunTipler||[]).map(t=>`<tr>
     <td>${t.ad}</td>
@@ -23221,6 +24346,7 @@ function pbKaynakEkle() {
 
 function openParaBirimiModal(kod=null) {
   editParaBirimiKod = kod;
+  pbStepGoto(1);
   _pbTestJsonCache = {};
   const title = document.getElementById('para-birimi-modal-title');
   const setBase = (cfg, k) => {
@@ -23281,6 +24407,58 @@ function setGosterimParaBirimi(code) {
 }
 
 function editParaBirimi(kod) { openParaBirimiModal(kod); }
+
+// ── Para Birimi Modal: Step Wizard ──────────────────────────────────────
+let _pbCurrentStep = 1;
+const PB_STEP_COUNT = 3;
+
+function pbStepGoto(step) {
+  step = Math.max(1, Math.min(PB_STEP_COUNT, step));
+  _pbCurrentStep = step;
+  const modal = document.getElementById('modal-para-birimi');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('pb-step-back-btn');
+  const nextBtn = document.getElementById('pb-step-next-btn');
+  const saveBtn = document.getElementById('pb-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < PB_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === PB_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+}
+
+function _pbValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'pb-kod',    msg:'Para birimi kodu zorunlu (örn. EUR)'},
+      {id:'pb-sembol', msg:'Sembol zorunlu (örn. €)'},
+      {id:'pb-ad',     msg:'Para birimi adı zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function pbStepNext() {
+  if (!_pbValidateStep(_pbCurrentStep)) return;
+  pbStepGoto(_pbCurrentStep + 1);
+}
+
+function pbStepBack() {
+  pbStepGoto(_pbCurrentStep - 1);
+}
 
 function saveParaBirimi() {
   const kod = document.getElementById('pb-kod').value.trim().toUpperCase();
@@ -26113,9 +27291,85 @@ function fmtCurShort(n, currency) {
 
 // ========== HESAP SELECT HELPERS ==========
 // Tüm "Hesap Seçin" dropdown'larında ortak görünüm: Banka - Hesap Adı - IBAN son 4 hane - Bakiye - Para Birimi
+// ── Banka İkon/Logo Sistemi ──────────────────────────────────────────
+// ibanKod → {emoji, renk, bg} — pre-set Türk bankaları
+const BANK_ICON_MAP = {
+  '0010': { emoji:'🏦', renk:'#e30613', bg:'rgba(227,6,19,.13)',  label:'Ziraat'       },
+  '0015': { emoji:'💛', renk:'#ffc200', bg:'rgba(255,194,0,.15)', label:'VakıfBank'     },
+  '0064': { emoji:'🔵', renk:'#003087', bg:'rgba(0,48,135,.12)',  label:'İş Bankası'    },
+  '0062': { emoji:'🟩', renk:'#007f3e', bg:'rgba(0,127,62,.12)',  label:'Garanti BBVA'  },
+  '0046': { emoji:'🔴', renk:'#e8192c', bg:'rgba(232,25,44,.13)', label:'Akbank'        },
+  '0032': { emoji:'🟦', renk:'#003478', bg:'rgba(0,52,120,.12)',  label:'TEB'           },
+  '0111': { emoji:'🟪', renk:'#6e1d8c', bg:'rgba(110,29,140,.12)',label:'QNB'           },
+  '0134': { emoji:'🌊', renk:'#00adef', bg:'rgba(0,173,239,.13)', label:'DenizBank'     },
+  '0067': { emoji:'⚫', renk:'#1a1a1a', bg:'rgba(30,30,30,.12)',  label:'Yapı Kredi'    },
+  '0147': { emoji:'🟠', renk:'#ff6900', bg:'rgba(255,105,0,.13)', label:'ON'            },
+  '0157': { emoji:'🟢', renk:'#00c08b', bg:'rgba(0,192,139,.13)', label:'Enpara'        },
+  '0205': { emoji:'🕌', renk:'#4b8f2a', bg:'rgba(75,143,42,.12)', label:'Kuveyt Türk'   },
+  '0143': { emoji:'💜', renk:'#7c2ab8', bg:'rgba(124,42,184,.13)',label:'N Kolay'       },
+  '0099': { emoji:'🔶', renk:'#ff6200', bg:'rgba(255,98,0,.13)',  label:'ING'           },
+  '0158': { emoji:'⭕', renk:'#e63946', bg:'rgba(230,57,70,.13)', label:'ColendiBank'   },
+  '0106': { emoji:'🟧', renk:'#f4a100', bg:'rgba(244,161,0,.13)', label:'Fibabanka'     },
+};
+
+// ── Banka Logo Rozetleri (SVG) ── Türkiye'deki başlıca 16 banka için
+// stilize, marka renklerine yakın rozet logolar. ibanKod → svg eşlemesi.
+// Not: Gerçek marka logotype'ları yerine sade, tanınabilir renk+kısaltma
+// rozetleri kullanılır (kartAltyapı logoları ile aynı üslup).
+const BANKA_LOGOLAR = [
+  { kod:'0010', id:'ziraat', ad:'Ziraat Bankası', domain:'ziraatbank.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/ziraatbank.com.tr?size=80" alt="Ziraat Bankası" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#E30613;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">ZİRAAT</span></span>` },
+  { kod:'0015', id:'vakifbank', ad:'VakıfBank', domain:'vakifbank.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/vakifbank.com.tr?size=80" alt="VakıfBank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#FFC200;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">VAKIF</span></span>` },
+  { kod:'0064', id:'isbankasi', ad:'İş Bankası', domain:'isbank.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/isbank.com.tr?size=80" alt="İş Bankası" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#003DA5;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">İŞ</span></span>` },
+  { kod:'0062', id:'garanti', ad:'Garanti BBVA', domain:'garantibbva.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/garantibbva.com.tr?size=80" alt="Garanti BBVA" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00857C;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">GRT</span></span>` },
+  { kod:'0046', id:'akbank', ad:'Akbank', domain:'akbank.com', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/akbank.com?size=80" alt="Akbank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#EC1C2E;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">AK</span></span>` },
+  { kod:'0032', id:'teb', ad:'TEB', domain:'teb.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/teb.com.tr?size=80" alt="TEB" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00447C;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">TEB</span></span>` },
+  { kod:'0111', id:'qnb', ad:'QNB', domain:'qnb.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/qnb.com.tr?size=80" alt="QNB" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#4B0E3D;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">QNB</span></span>` },
+  { kod:'0134', id:'denizbank', ad:'DenizBank', domain:'denizbank.com', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/denizbank.com?size=80" alt="DenizBank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#0093D0;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">DNZ</span></span>` },
+  { kod:'0067', id:'yapikredi', ad:'Yapı Kredi', domain:'yapikredi.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/yapikredi.com.tr?size=80" alt="Yapı Kredi" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00205B;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">YKB</span></span>` },
+  { kod:'0147', id:'on', ad:'ON (Burgan Bank)', domain:'on.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/on.com.tr?size=80" alt="ON (Burgan Bank)" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#FF6900;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">ON</span></span>` },
+  { kod:'0157', id:'enpara', ad:'Enpara', domain:'enpara.com', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/enpara.com?size=80" alt="Enpara" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00C08B;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">ENP</span></span>` },
+  { kod:'0205', id:'kuveytturk', ad:'Kuveyt Türk', domain:'kuveytturk.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/kuveytturk.com.tr?size=80" alt="Kuveyt Türk" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00954A;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">KT</span></span>` },
+  { kod:'0143', id:'nkolay', ad:'N Kolay', domain:'nkolay.com', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/nkolay.com?size=80" alt="N Kolay" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#7C2AB8;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">N</span></span>` },
+  { kod:'0099', id:'ing', ad:'ING', domain:'ing.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/ing.com.tr?size=80" alt="ING" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#FF6200;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">ING</span></span>` },
+  { kod:'0158', id:'colendi', ad:'ColendiBank', domain:'colendibank.com', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/colendibank.com?size=80" alt="ColendiBank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#FF4B3E;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">CLN</span></span>` },
+  { kod:'0106', id:'fibabanka', ad:'Fibabanka', domain:'fibabanka.com.tr', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://logo.clearbit.com/fibabanka.com.tr?size=80" alt="Fibabanka" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#F7941D;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">FIBA</span></span>` },
+  { kod:'',     id:'none',    ad:'Logo Yok', svg:null }
+];
+
+// ibanKod'a göre önceden tanımlı logo SVG'sini döner (yoksa null)
+function bankaLogoByKod(kod) {
+  const k = (kod||'').padStart(4,'0');
+  const found = BANKA_LOGOLAR.find(l => l.kod === k);
+  return found ? found.svg : null;
+}
+
+// Banka için ikon objesi döner (kayıtlı logo/emoji varsa onu, yoksa ibanKod'a göre)
+function bankaIkonObj(b) {
+  if(!b) return { emoji:'🏛️', renk:'var(--accent)', bg:'rgba(99,102,241,.1)', svg:null };
+  const kod = (b.ibanKod||'').padStart(4,'0');
+  const preset = BANK_ICON_MAP[kod];
+  const svg = (b.logo || bankaLogoByKod(kod)) || null;
+  if(b.ikon) return { emoji: b.ikon, renk: preset?.renk || 'var(--accent)', bg: preset?.bg || 'rgba(99,102,241,.1)', svg };
+  return { ...(preset || { emoji:'🏛️', renk:'var(--accent)', bg:'rgba(99,102,241,.1)' }), svg };
+}
+
+// <option> için metin (select'lerde emoji prefix olarak kullanılır)
+function bankaOptionMetin(b) {
+  if(!b) return '';
+  const ikon = bankaIkonObj(b);
+  return `${ikon.emoji} ${b.kisa}`;
+}
+
+// Banka adı göster (ID ile)
+function bankaKisaById(id) {
+  const b = (DB.bankalar||[]).find(x=>x.id===id);
+  return b ? bankaOptionMetin(b) : (id || '-');
+}
+
 function hesapOptionMetin(h) {
   if(!h) return '';
-  const banka = ((DB.bankalar||[]).find(b=>b.id===h.banka)||{}).kisa || '';
+  const bankaObj = (DB.bankalar||[]).find(b=>b.id===h.banka) || null;
+  const bankaGoster = bankaObj ? bankaOptionMetin(bankaObj) : '';
   const pb = h.paraBirimi || 'TRY';
   const bakiye = h.bakiye || 0;
   const kmhLimit = h.kmhLimit || 0;
@@ -26131,7 +27385,7 @@ function hesapOptionMetin(h) {
   }
   const ibanTemiz = (h.iban||'').replace(/\s/g,'');
   const ibanSon = ibanTemiz.length >= 4 ? '····'+ibanTemiz.slice(-4) : '';
-  const parcalar = [banka, h.ad || 'Hesap', ibanSon, bakiyeGosterim, pb].filter(Boolean);
+  const parcalar = [bankaGoster, h.ad || 'Hesap', ibanSon, bakiyeGosterim, pb].filter(Boolean);
   return parcalar.join(' - ');
 }
 
@@ -26876,6 +28130,7 @@ let hesapFiltre = '';
 
 function openHesapModal(id=null) {
   editHesapId = id;
+  hesapStepGoto(1);
   document.getElementById('hesap-modal-title').textContent = id ? 'Hesap Düzenle' : 'Banka Hesabı Ekle';
 
   // Hesap türü select — tanımlamalardan doldur
@@ -26888,7 +28143,7 @@ function openHesapModal(id=null) {
 
   // Banka select
   const sel = document.getElementById('hesap-banka');
-  sel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${b.kisa}</option>`).join('');
+  sel.innerHTML = DB.bankalar.map(b=>`<option value="${b.id}">${bankaOptionMetin(b)}</option>`).join('');
   phSet(sel, 'Banka seçin…', '', '— Banka bulunamadı —');
 
   // Para birimi select — her zaman yeniden doldur
@@ -26959,6 +28214,108 @@ function openHesapModal(id=null) {
   }
   bindMoneyInputs(document.getElementById('modal-hesap'));
   openModal('modal-hesap');
+}
+
+// ── Hesap Modal: Step Wizard ──────────────────────────────────────────
+let _hesapCurrentStep = 1;
+const HESAP_STEP_COUNT = 5;
+
+function hesapStepGoto(step) {
+  step = Math.max(1, Math.min(HESAP_STEP_COUNT, step));
+  _hesapCurrentStep = step;
+  const modal = document.getElementById('modal-hesap');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('hesap-step-back-btn');
+  const nextBtn = document.getElementById('hesap-step-next-btn');
+  const saveBtn = document.getElementById('hesap-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < HESAP_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === HESAP_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === HESAP_STEP_COUNT) _hesapOzetDoldur();
+}
+
+function _hesapValidateStep(step) {
+  if (step === 1) {
+    const bankaSel = document.getElementById('hesap-banka');
+    if (!bankaSel || !bankaSel.value) {
+      showToast('Banka seçiniz', 'error');
+      _markFieldError('hesap-banka');
+      return false;
+    }
+    return true;
+  }
+  if (step === 2) {
+    const pbSel = document.getElementById('hesap-para-birimi');
+    if (!pbSel || !pbSel.value) {
+      showToast('Para birimi seçiniz', 'error');
+      _markFieldError('hesap-para-birimi');
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+
+function hesapStepNext() {
+  if (!_hesapValidateStep(_hesapCurrentStep)) return;
+  hesapStepGoto(_hesapCurrentStep + 1);
+}
+
+function hesapStepBack() {
+  hesapStepGoto(_hesapCurrentStep - 1);
+}
+
+function _hesapOzetDoldur() {
+  const bankaSel = document.getElementById('hesap-banka');
+  const bankaObj = bankaSel ? (DB.bankalar||[]).find(b=>b.id===bankaSel.value) : null;
+  const ad = (document.getElementById('hesap-ad')||{}).value.trim() || '(otomatik)';
+  const turSel = document.getElementById('hesap-tur');
+  const turAd = turSel ? (turSel.options[turSel.selectedIndex]?.text || turSel.value) : '—';
+  const pb = (document.getElementById('hesap-para-birimi')||{}).value || 'TRY';
+  const bakiye = getMoneyInput('hesap-bakiye') || 0;
+  const iban = (document.getElementById('hesap-iban')||{}).value || '—';
+  const kmhToggle = document.getElementById('hesap-kmh-toggle');
+  const kmhAktif = kmhToggle && kmhToggle.checked;
+  const kmhLimit = kmhAktif ? (getMoneyInput('hesap-kmh-limit')||0) : 0;
+  const durum = (document.getElementById('hesap-durum')||{}).value || 'aktif';
+  const minBakiye = document.getElementById('hesap-min-bakiye').value.trim();
+  const hedefBakiye = document.getElementById('hesap-hedef-bakiye').value.trim();
+
+  const satir = (label, val, valStyle='') => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11.5px;color:var(--text2)">${label}</span>
+      <span style="font-size:12.5px;font-weight:600;color:var(--text);font-family:var(--mono);${valStyle}">${val}</span>
+    </div>`;
+
+  const ozetEl = document.getElementById('hesap-ozet-icerik');
+  if (!ozetEl) return;
+  ozetEl.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:12px">
+      ${satir('Banka', bankaObj ? bankaObj.kisa : '—')}
+      ${satir('Hesap Adı', `<span style="font-family:inherit">${ad}</span>`)}
+      ${satir('Hesap Türü', `<span style="font-family:inherit">${turAd}</span>`)}
+      ${satir('Para Birimi', pb)}
+      ${satir('Mevcut Bakiye', fmtCur(bakiye, pb))}
+      ${satir('IBAN', `<span style="font-size:11px">${iban}</span>`)}
+      ${satir('KMH', kmhAktif ? fmtCur(kmhLimit, pb) + ' limit' : 'Pasif')}
+      ${satir('Durum', durum.charAt(0).toUpperCase()+durum.slice(1))}
+      ${minBakiye ? satir('Min. Bakiye Eşiği', fmtCur(parseFloat(minBakiye)||0, pb)) : ''}
+      ${hedefBakiye ? satir('Hedef Bakiye', fmtCur(parseFloat(hedefBakiye)||0, pb)) : ''}
+    </div>`;
 }
 
 function saveHesap() {
@@ -31997,71 +33354,142 @@ window.entegre = {
       </div>
       <button class="close-btn" onclick="closeModal('modal-abonelik')">✕</button>
     </div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="modal-body">
       <div class="req-error-banner" id="ab-error-banner" style="display:none"></div>
-      <div style="display:flex;gap:12px">
-        <div style="flex:2">
-          <label class="has-required">Abonelik Adı</label>
-          <input id="ab-ad" placeholder="örn. Netflix, Elektrik Faturası…">
+
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="ab-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Kimlik &amp; Kategori</div>
         </div>
-        <div style="flex:1">
-          <label>İkon / Emoji</label>
-          <input id="ab-ikon" placeholder="📺" style="font-size:20px;text-align:center" maxlength="4">
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Tutar &amp; Takvim</div>
         </div>
-      </div>
-      <div style="display:flex;gap:12px">
-        <div style="flex:1">
-          <label class="has-required">Kategori</label>
-          <select id="ab-kategori"><option value="" disabled selected hidden>— Kategori seçin —</option></select>
-        </div>
-        <div style="flex:1">
-          <label class="has-required">Periyot</label>
-          <select id="ab-periyot">
-            <option value="" disabled selected hidden>— Periyot seçin —</option>
-            <option value="haftalik">Haftalık</option>
-            <option value="aylik">Aylık</option>
-            <option value="3aylik">3 Aylık</option>
-            <option value="6aylik">6 Aylık</option>
-            <option value="yillik">Yıllık</option>
-          </select>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Özet</div>
         </div>
       </div>
-      <div>
-        <label class="has-required">Tutar</label>
-        <div class="money-wrap" data-symbol="₺" data-code="TRY">
-          <input id="ab-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+
+      <!-- ══ ADIM 1: Ad, İkon, Kategori ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label sky">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Kimlik &amp; Kategori
+        </div>
+        <div class="form-row cols-2">
+          <div style="flex:2">
+            <label class="has-required">Abonelik Adı</label>
+            <input id="ab-ad" placeholder="örn. Netflix, Elektrik Faturası…">
+          </div>
+          <div style="flex:1">
+            <label>İkon / Emoji</label>
+            <input id="ab-ikon" placeholder="📺" style="font-size:20px;text-align:center" maxlength="4">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label class="has-required">Kategori</label>
+            <select id="ab-kategori"><option value="" disabled selected hidden>— Kategori seçin —</option></select>
+          </div>
         </div>
       </div>
-      <div>
-        <label>Para Birimi</label>
-        <select id="ab-para-birimi" onchange="(function(){const w=document.querySelector('#modal-abonelik .money-wrap');if(w){const cfg=(typeof CURRENCY_CONFIG!=='undefined'&&CURRENCY_CONFIG[this.value])||{};w.dataset.symbol=cfg.symbol||(this.value==='TRY'?'₺':this.value);w.dataset.code=this.value;}}).call(this)">
-            <option value="TRY">TRY ₺</option>
-            <option value="USD">USD $</option>
-            <option value="EUR">EUR €</option>
-          </select>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:160px">
-          <label class="has-required">İlk / Sonraki Ödeme Tarihi</label>
-          <input id="ab-tarih" type="date">
+
+      <!-- ══ ADIM 2: Tutar, Periyot, Tarih, Hesap, Not, Pasif ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+      <div class="msec">
+        <div class="msec-label gold">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/></svg>
+          Tutar &amp; Periyot
         </div>
-        <div style="flex:1 1 100%">
-          <label class="has-required">Bağlı Hesap</label>
-          <select id="ab-hesap"><option value="" disabled selected hidden>— Hesap seçin —</option></select>
+        <div class="form-row cols-2">
+          <div>
+            <label class="has-required">Tutar</label>
+            <div class="money-wrap" data-symbol="₺" data-code="TRY">
+              <input id="ab-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+            </div>
+          </div>
+          <div>
+            <label>Para Birimi</label>
+            <select id="ab-para-birimi" onchange="(function(){const w=document.querySelector('#modal-abonelik .money-wrap');if(w){const cfg=(typeof CURRENCY_CONFIG!=='undefined'&&CURRENCY_CONFIG[this.value])||{};w.dataset.symbol=cfg.symbol||(this.value==='TRY'?'₺':this.value);w.dataset.code=this.value;}}).call(this)">
+              <option value="TRY">TRY ₺</option>
+              <option value="USD">USD $</option>
+              <option value="EUR">EUR €</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label class="has-required">Periyot</label>
+            <select id="ab-periyot">
+              <option value="" disabled selected hidden>— Periyot seçin —</option>
+              <option value="haftalik">Haftalık</option>
+              <option value="aylik">Aylık</option>
+              <option value="3aylik">3 Aylık</option>
+              <option value="6aylik">6 Aylık</option>
+              <option value="yillik">Yıllık</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div>
-        <label>Not <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
-        <input id="ab-not" placeholder="Açıklama veya hatırlatma notu…">
+
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Takvim &amp; Hesap
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label class="has-required">İlk / Sonraki Ödeme Tarihi</label>
+            <input id="ab-tarih" type="date">
+          </div>
+          <div>
+            <label class="has-required">Bağlı Hesap</label>
+            <select id="ab-hesap"><option value="" disabled selected hidden>— Hesap seçin —</option></select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <div>
+            <label>Not <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+            <input id="ab-not" placeholder="Açıklama veya hatırlatma notu…">
+          </div>
+        </div>
+        <div class="modal-toggle-row" style="margin-top:10px;margin-bottom:0">
+          <div>
+            <div class="modal-toggle-row-title">Pasif</div>
+            <div class="modal-toggle-row-sub">Geçici durdur, silmeden devre dışı bırak</div>
+          </div>
+          <label class="toggle-switch" style="flex-shrink:0;margin-left:14px">
+            <input type="checkbox" id="ab-pasif">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-        <input type="checkbox" id="ab-pasif" style="width:16px;height:16px">
-        <span style="font-size:13px">Pasif (geçici durdur, silme)</span>
-      </label>
+      </div>
+
+      <!-- ══ ADIM 3: Özet ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+      <div class="msec" style="margin-bottom:0">
+        <div class="msec-label teal">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Özet &amp; Onay
+        </div>
+        <div id="ab-ozet-icerik"></div>
+      </div>
+      </div>
+
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-abonelik')">İptal</button>
-      <button class="btn btn-primary" onclick="saveAbonelik()">Kaydet</button>
+      <button class="btn btn-ghost" id="ab-step-cancel-btn" onclick="closeModal('modal-abonelik')">İptal</button>
+      <button class="btn btn-ghost" id="ab-step-back-btn" onclick="abStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="ab-step-next-btn" onclick="abStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="ab-step-save-btn" onclick="saveAbonelik()" style="display:none">Kaydet</button>
     </div>
   </div>
 </div>
@@ -32096,6 +33524,7 @@ function abAylikTutar(ab) {
 
 function openAbonelikModal(id=null) {
   editAbonelikId = id;
+  abStepGoto(1);
   document.getElementById('abonelik-modal-title').textContent = id ? 'Abonelik Düzenle' : 'Abonelik Ekle';
   const ab = id ? (DB.abonelikler||[]).find(x=>x.id===id) : null;
   document.getElementById('ab-ad').value = ab?.ad || '';
@@ -32120,6 +33549,102 @@ function openAbonelikModal(id=null) {
   hSel.innerHTML = (DB.hesaplar||[]).filter(h=>h.durum==='aktif' && h.tur !== 'vadeli').map(h=>`<option value="${h.id}">${hesapOptionMetin(h)}</option>`).join('');
   phSet(hSel, 'Hesap seçin…', ab?.hesapId || '', '— Aktif hesap bulunamadı —');
   openModal('modal-abonelik');
+}
+
+// ── Abonelik Modal: Step Wizard ──────────────────────────────────────
+let _abCurrentStep = 1;
+const AB_STEP_COUNT = 3;
+
+function abStepGoto(step) {
+  step = Math.max(1, Math.min(AB_STEP_COUNT, step));
+  _abCurrentStep = step;
+  const modal = document.getElementById('modal-abonelik');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('ab-step-back-btn');
+  const nextBtn = document.getElementById('ab-step-next-btn');
+  const saveBtn = document.getElementById('ab-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < AB_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === AB_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === AB_STEP_COUNT) _abOzetDoldur();
+}
+
+function _abValidateStep(step) {
+  if (step === 1) {
+    if (!validateRequiredFields([
+      {id:'ab-ad',       msg:'Abonelik adı zorunlu'},
+      {id:'ab-kategori', msg:'Kategori zorunlu'}
+    ])) return false;
+    return true;
+  }
+  if (step === 2) {
+    if (!validateRequiredFields([
+      {id:'ab-tutar',  msg:'Tutar zorunlu'},
+      {id:'ab-periyot',msg:'Periyot zorunlu'},
+      {id:'ab-tarih',  msg:'Ödeme tarihi zorunlu'},
+      {id:'ab-hesap',  msg:'Bağlı hesap zorunlu'}
+    ])) return false;
+    return true;
+  }
+  return true;
+}
+
+function abStepNext() {
+  if (!_abValidateStep(_abCurrentStep)) return;
+  abStepGoto(_abCurrentStep + 1);
+}
+
+function abStepBack() {
+  abStepGoto(_abCurrentStep - 1);
+}
+
+function _abOzetDoldur() {
+  const ad      = (document.getElementById('ab-ad')||{}).value.trim() || '—';
+  const ikon    = (document.getElementById('ab-ikon')||{}).value.trim() || '🔄';
+  const kat     = (document.getElementById('ab-kategori')||{}).value || '—';
+  const tutar   = getMoneyInput('ab-tutar') || 0;
+  const pb      = (document.getElementById('ab-para-birimi')||{}).value || 'TRY';
+  const periyotSel = document.getElementById('ab-periyot');
+  const periyotTxt = periyotSel ? (periyotSel.options[periyotSel.selectedIndex]?.text || '—') : '—';
+  const tarih   = (document.getElementById('ab-tarih')||{}).value || '';
+  const hesapSel = document.getElementById('ab-hesap');
+  const hesapTxt = hesapSel ? (hesapSel.options[hesapSel.selectedIndex]?.text || '—') : '—';
+  const not     = (document.getElementById('ab-not')||{}).value.trim();
+  const pasif   = document.getElementById('ab-pasif')?.checked;
+
+  const aylik = tutar * ({haftalik:52/12,aylik:1,'3aylik':1/3,'6aylik':1/6,yillik:1/12}[periyotSel?.value]||1);
+
+  const satir = (lbl, val) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:11.5px;color:var(--text2)">${lbl}</span>
+    <span style="font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)">${val}</span></div>`;
+
+  const el = document.getElementById('ab-ozet-icerik');
+  if (!el) return;
+  el.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+    ${satir('Abonelik', `<span style="font-family:inherit">${ikon} ${ad}</span>`)}
+    ${satir('Kategori', `<span style="font-family:inherit">${kat}</span>`)}
+    ${satir('Tutar', fmtCur(tutar, pb))}
+    ${satir('Periyot', `<span style="font-family:inherit">${periyotTxt}</span>`)}
+    ${satir('Aylık Eşdeğer', fmtCur(aylik, pb))}
+    ${satir('İlk / Sonraki Ödeme', typeof fmtDate === 'function' ? fmtDate(tarih) : tarih)}
+    ${satir('Bağlı Hesap', `<span style="font-family:inherit">${hesapTxt}</span>`)}
+    ${not ? satir('Not', `<span style="font-family:inherit">${not}</span>`) : ''}
+    ${pasif ? satir('Durum', '⏸ Pasif') : satir('Durum', '✅ Aktif')}
+  </div>`;
 }
 
 function saveAbonelik() {
@@ -33265,81 +34790,107 @@ window.entEldenYansit = function(eldenId, durum, tutar) {
     </div>
     <div class="modal-body">
 
-      <!-- ── KAYNAK ─────────────────────────────────────────────── -->
-      <div class="msec">
-        <div class="msec-label blue">Kaynak</div>
-        <div class="form-row" style="align-items:flex-end">
-          <div id="transfer-kaynak-hesap-wrap">
-            <label>Hesap <span style="color:var(--danger)">*</span></label>
-            <select id="transfer-kaynak" onchange="onTransferKaynakChange()">
-              <option value="" disabled selected hidden>— Hesap Seçin —</option>
-            </select>
-          </div>
+      <!-- ══ ADIM GÖSTERGESİ ══ -->
+      <div class="swiz-steps-bar" id="transfer-steps-bar">
+        <div class="swiz-step-dot-wrap is-active" data-step="1">
+          <div class="swiz-step-dot">1</div>
+          <div class="swiz-step-dot-label">Kaynak &amp; Hedef</div>
         </div>
-        <div id="transfer-kaynak-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
-      </div>
-
-      <!-- ── KAYNAK/HEDEF DEĞİŞTİR ───────────────────────────────── -->
-      <div class="transfer-swap-row">
-        <button type="button" id="transfer-swap-btn" class="transfer-swap-btn" onclick="swapTransferHesaplar()" title="Kaynak ve hedefi değiştir">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3v15M7.5 18l-3.5-3.5M7.5 18l3.5-3.5"/><path d="M16.5 21V6M16.5 6l-3.5 3.5M16.5 6l3.5 3.5"/></svg>
-        </button>
-      </div>
-
-      <!-- ── HEDEF ─────────────────────────────────────────────── -->
-      <div class="msec">
-        <div class="msec-label teal">Hedef</div>
-        <div class="form-row" style="align-items:flex-end">
-          <div id="transfer-hedef-hesap-wrap">
-            <label>Hesap <span style="color:var(--danger)">*</span></label>
-            <select id="transfer-hedef" onchange="onTransferHedefChange()">
-              <option value="" disabled selected hidden>— Hesap Seçin —</option>
-            </select>
-          </div>
+        <div class="swiz-step-line" data-line="1"></div>
+        <div class="swiz-step-dot-wrap" data-step="2">
+          <div class="swiz-step-dot">2</div>
+          <div class="swiz-step-dot-label">Tutar &amp; Tarih</div>
         </div>
-        <div id="transfer-hedef-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+        <div class="swiz-step-line" data-line="2"></div>
+        <div class="swiz-step-dot-wrap" data-step="3">
+          <div class="swiz-step-dot">3</div>
+          <div class="swiz-step-dot-label">Özet</div>
+        </div>
       </div>
 
-      <!-- ── TUTAR & TARİH ─────────────────────────────────────── -->
-      <div class="msec">
-        <div class="msec-label">Tutar & Tarih</div>
-        <div class="form-row cols-2">
-          <div>
-            <label>Tutar <span style="color:var(--danger)">*</span></label>
-            <div class="money-wrap" data-symbol="₺" data-code="TRY" id="transfer-tutar-wrap">
-              <input id="transfer-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+      <!-- ══ ADIM 1: Kaynak & Hedef ══ -->
+      <div class="swiz-step-panel is-active" data-step-panel="1">
+        <div class="msec">
+          <div class="msec-label blue">Kaynak</div>
+          <div class="form-row" style="align-items:flex-end">
+            <div id="transfer-kaynak-hesap-wrap">
+              <label>Hesap <span style="color:var(--danger)">*</span></label>
+              <select id="transfer-kaynak" onchange="onTransferKaynakChange()">
+                <option value="" disabled selected hidden>— Hesap Seçin —</option>
+              </select>
             </div>
           </div>
-          <div>
-            <label>Tarih <span style="color:var(--danger)">*</span></label>
-            <input id="transfer-tarih" type="date" required>
-          </div>
+          <div id="transfer-kaynak-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
         </div>
-        <div class="form-row" style="margin-bottom:0">
-          <div>
-            <label>Açıklama <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
-            <input id="transfer-aciklama" type="text" placeholder="örn. Birikime transfer">
+        <div class="transfer-swap-row">
+          <button type="button" id="transfer-swap-btn" class="transfer-swap-btn" onclick="swapTransferHesaplar()" title="Kaynak ve hedefi değiştir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 3v15M7.5 18l-3.5-3.5M7.5 18l3.5-3.5"/><path d="M16.5 21V6M16.5 6l-3.5 3.5M16.5 6l3.5 3.5"/></svg>
+          </button>
+        </div>
+        <div class="msec" style="margin-bottom:0">
+          <div class="msec-label teal">Hedef</div>
+          <div class="form-row" style="align-items:flex-end">
+            <div id="transfer-hedef-hesap-wrap">
+              <label>Hesap <span style="color:var(--danger)">*</span></label>
+              <select id="transfer-hedef" onchange="onTransferHedefChange()">
+                <option value="" disabled selected hidden>— Hesap Seçin —</option>
+              </select>
+            </div>
+          </div>
+          <div id="transfer-hedef-bilgi" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ══ ADIM 2: Tutar & Tarih ══ -->
+      <div class="swiz-step-panel" data-step-panel="2">
+        <div class="msec" style="margin-bottom:0">
+          <div class="msec-label">Tutar &amp; Tarih</div>
+          <div class="form-row cols-2">
+            <div>
+              <label>Tutar <span style="color:var(--danger)">*</span></label>
+              <div class="money-wrap" data-symbol="₺" data-code="TRY" id="transfer-tutar-wrap">
+                <input id="transfer-tutar" type="text" class="money-input" data-decimals="2" placeholder="0,00">
+              </div>
+            </div>
+            <div>
+              <label>Tarih <span style="color:var(--danger)">*</span></label>
+              <input id="transfer-tarih" type="date" required>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <div>
+              <label>Açıklama <span style="color:var(--text3);font-size:10px">(opsiyonel)</span></label>
+              <input id="transfer-aciklama" type="text" placeholder="örn. Birikime transfer">
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ── TRANSFER LOGU ─────────────────────────────────────── -->
-      <div class="msec" style="margin-bottom:0">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="msec-label" style="margin-bottom:0">📋 Son Transferler</div>
-          <select id="transfer-log-filtre" onchange="renderTransferLog()" style="font-size:11px;padding:4px 28px 4px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8eaa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .15s,box-shadow .15s;outline:none;" onfocus="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 2px var(--gold-glow)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
-            <option value="">Tümü</option>
-          </select>
+      <!-- ══ ADIM 3: Özet + Son Transferler ══ -->
+      <div class="swiz-step-panel" data-step-panel="3">
+        <div class="msec">
+          <div class="msec-label teal">Transfer Özeti</div>
+          <div id="transfer-ozet-icerik"></div>
         </div>
-        <div id="transfer-log-liste" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
-          <div style="color:var(--text3);font-size:12px;padding:8px">Henüz transfer yok</div>
+        <div class="msec" style="margin-bottom:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div class="msec-label" style="margin-bottom:0">📋 Son Transferler</div>
+            <select id="transfer-log-filtre" onchange="renderTransferLog()" style="font-size:11px;padding:4px 28px 4px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8eaa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 9px center;outline:none;">
+              <option value="">Tümü</option>
+            </select>
+          </div>
+          <div id="transfer-log-liste" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+            <div style="color:var(--text3);font-size:12px;padding:8px">Henüz transfer yok</div>
+          </div>
         </div>
       </div>
 
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-transfer')">İptal</button>
-      <button class="btn btn-primary" onclick="saveTransfer()">💸 Transferi Gerçekleştir</button>
+      <button class="btn btn-ghost" id="transfer-step-cancel-btn" onclick="closeModal('modal-transfer')">İptal</button>
+      <button class="btn btn-ghost" id="transfer-step-back-btn" onclick="transferStepBack()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="transfer-step-next-btn" onclick="transferStepNext()">İleri →</button>
+      <button class="btn btn-primary" id="transfer-step-save-btn" onclick="saveTransfer()" style="display:none">💸 Transferi Gerçekleştir</button>
     </div>
   </div>
 </div>
@@ -33369,6 +34920,7 @@ function openTransferModal(kaynakHesapId) {
     }
   }
 
+  transferStepGoto(1);
   const inp = document.getElementById('transfer-tarih');
   if (inp) inp.value = localDateStr(new Date());
   document.getElementById('transfer-kaynak-bilgi').innerHTML = '';
@@ -33655,6 +35207,102 @@ function onTransferHedefChange() {
 }
 
 // ── Kaydet ───────────────────────────────────────────────────
+// ── Transfer Modal: Step Wizard ──────────────────────────────────────
+let _transferCurrentStep = 1;
+const TRANSFER_STEP_COUNT = 3;
+
+function transferStepGoto(step) {
+  step = Math.max(1, Math.min(TRANSFER_STEP_COUNT, step));
+  _transferCurrentStep = step;
+  const modal = document.getElementById('modal-transfer');
+  if (!modal) return;
+  modal.querySelectorAll('.swiz-step-panel').forEach(p => {
+    p.classList.toggle('is-active', Number(p.dataset.stepPanel) === step);
+  });
+  modal.querySelectorAll('.swiz-step-dot-wrap').forEach(w => {
+    const n = Number(w.dataset.step);
+    w.classList.toggle('is-active', n === step);
+    w.classList.toggle('is-done', n < step);
+  });
+  modal.querySelectorAll('.swiz-step-line').forEach(l => {
+    const n = Number(l.dataset.line);
+    l.classList.toggle('is-done', n < step);
+  });
+  const backBtn = document.getElementById('transfer-step-back-btn');
+  const nextBtn = document.getElementById('transfer-step-next-btn');
+  const saveBtn = document.getElementById('transfer-step-save-btn');
+  if (backBtn) backBtn.style.display = step > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = step < TRANSFER_STEP_COUNT ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = step === TRANSFER_STEP_COUNT ? '' : 'none';
+  const body = modal.querySelector('.modal-body');
+  if (body) body.scrollTop = 0;
+  if (step === TRANSFER_STEP_COUNT) { _transferOzetDoldur(); renderTransferLog(); }
+}
+
+function _transferValidateStep(step) {
+  if (step === 1) {
+    const kaynak = (document.getElementById('transfer-kaynak')||{}).value || '';
+    const hedef  = (document.getElementById('transfer-hedef')||{}).value  || '';
+    if (!kaynak) { showToast('Kaynak hesap seçiniz', 'error'); _markFieldError('transfer-kaynak'); return false; }
+    if (!hedef)  { showToast('Hedef hesap seçiniz', 'error'); _markFieldError('transfer-hedef');  return false; }
+    if (kaynak === hedef) { showToast('Kaynak ve hedef aynı olamaz', 'error'); return false; }
+    return true;
+  }
+  if (step === 2) {
+    const tutar = getMoneyInput('transfer-tutar') || 0;
+    if (!tutar || tutar <= 0) { showToast('Geçerli bir tutar giriniz', 'error'); _markFieldError('transfer-tutar'); return false; }
+    const tarih = (document.getElementById('transfer-tarih')||{}).value || '';
+    if (!tarih) { showToast('Tarih giriniz', 'error'); _markFieldError('transfer-tarih'); return false; }
+    return true;
+  }
+  return true;
+}
+
+function transferStepNext() {
+  if (!_transferValidateStep(_transferCurrentStep)) return;
+  transferStepGoto(_transferCurrentStep + 1);
+}
+
+function transferStepBack() {
+  transferStepGoto(_transferCurrentStep - 1);
+}
+
+function _transferOzetDoldur() {
+  const kaynakVal = (document.getElementById('transfer-kaynak')||{}).value || '';
+  const hedefVal  = (document.getElementById('transfer-hedef')||{}).value  || '';
+  const tutar = getMoneyInput('transfer-tutar') || 0;
+  const tarih = (document.getElementById('transfer-tarih')||{}).value || '';
+  const aciklama = (document.getElementById('transfer-aciklama')||{}).value.trim() || '—';
+
+  const getLabel = (val) => {
+    if (!val) return '—';
+    if (val.startsWith('nakit:')) return '💵 Nakit — ' + val.slice(6);
+    const h = (DB.hesaplar||[]).find(x=>x.id===val);
+    return h ? h.ad : '—';
+  };
+  const getPb = (val) => {
+    if (!val) return 'TRY';
+    if (val.startsWith('nakit:')) return val.slice(6);
+    const h = (DB.hesaplar||[]).find(x=>x.id===val);
+    return h ? (h.paraBirimi||'TRY') : 'TRY';
+  };
+
+  const pb = getPb(kaynakVal);
+  const satir = (lbl, val) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+    <span style="font-size:11.5px;color:var(--text2)">${lbl}</span>
+    <span style="font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)">${val}</span></div>`;
+
+  const el = document.getElementById('transfer-ozet-icerik');
+  if (!el) return;
+  el.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+    ${satir('Kaynak', `<span style="font-family:inherit">${getLabel(kaynakVal)}</span>`)}
+    ${satir('Hedef', `<span style="font-family:inherit">${getLabel(hedefVal)}</span>`)}
+    ${satir('Tutar', fmtCur(tutar, pb))}
+    ${satir('Tarih', typeof fmtDate === 'function' ? fmtDate(tarih) : tarih)}
+    ${aciklama !== '—' ? satir('Açıklama', `<span style="font-family:inherit">${aciklama}</span>`) : ''}
+  </div>`;
+}
+
 function saveTransfer() {
   const tutar    = getMoneyInput('transfer-tutar');
   const tarih    = document.getElementById('transfer-tarih').value;
@@ -35650,13 +37298,16 @@ function _altyapiChipLabel(o) {
   return altyapi ? altyapi.ad : o.text.trim();
 }
 
-// ── Banka chip HTML'i: banka kısa adı ──────────────────────────────
-// Sadece kısa ad; varsa ikon emoji ilerleyen sürümde eklenebilir.
+// ── Banka chip HTML'i: logo rozeti (varsa) + banka kısa adı ─────────
 function _bankaChipHtml(o) {
   const id = o.value;
   const banka = (typeof DB !== 'undefined' && DB.bankalar || []).find(b => b.id === id);
   const ad = banka ? banka.kisa : o.text.trim();
-  return `<span class="bank-icon">🏦</span><span>${ad}</span>`;
+  const ikon = banka ? bankaIkonObj(banka) : null;
+  const ikonHtml = ikon && ikon.svg
+    ? `<span class="bank-logo">${ikon.svg}</span>`
+    : `<span class="bank-icon">${ikon ? ikon.emoji : '🏦'}</span>`;
+  return `${ikonHtml}<span>${ad}</span>`;
 }
 function _bankaChipLabel(o) {
   const banka = (typeof DB !== 'undefined' && DB.bankalar || []).find(b => b.id === o.value);
