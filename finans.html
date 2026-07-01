@@ -956,6 +956,16 @@ html[data-theme="light"] select:focus {
   background-size: auto, 10px 6px !important;
 }
 input[type=checkbox] { width: auto; accent-color: var(--gold); }
+/* Salt-okunur / otomatik dolan alanlar (ör. IBAN'dan türetilen banka kodu):
+   düzenlenebilir gibi görünen altın glow/hover'ı bastır, "kilitli" hissi ver. */
+input[readonly], input[disabled] {
+  cursor: default;
+}
+input[readonly]:hover, input[readonly]:focus,
+input[disabled]:hover, input[disabled]:focus {
+  border-color: var(--border);
+  box-shadow: none;
+}
 /* IBAN inputları: sabit uzunluklu mono metin (TR00 0000 0000 0000 0000 0000 00 — 32 karakter)
    dar ekranlarda sığması için biraz daha küçük font + dar padding kullanır. */
 .iban-input {
@@ -1769,7 +1779,7 @@ html[data-theme="light"] .sc-empty-hint {
 .sc-popup-trigger-btn {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
   padding: 9px 12px;
@@ -1777,15 +1787,32 @@ html[data-theme="light"] .sc-empty-hint {
   font-family: var(--sans);
   font-weight: 500;
   color: var(--text);
-  background: var(--surface2);
+  background: linear-gradient(180deg, var(--surface2), var(--surface1) 130%);
   border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
-  transition: border-color .13s, background .13s, transform .08s;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .15s, background .15s, transform .08s, box-shadow .15s;
 }
-.sc-popup-trigger-btn:hover { border-color: var(--gold); background: var(--surface3); }
-.sc-popup-trigger-btn:active { transform: scale(.985); }
+.sc-popup-trigger-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120px 40px at 0% 0%, var(--gold-glow), transparent 70%);
+  opacity: 0;
+  transition: opacity .18s;
+  pointer-events: none;
+}
+.sc-popup-trigger-btn:hover {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, var(--surface3), var(--surface2) 130%);
+  box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 1px rgba(196,154,60,.08);
+  transform: translateY(-1px);
+}
+.sc-popup-trigger-btn:hover::before { opacity: 1; }
+.sc-popup-trigger-btn:active { transform: scale(.985) translateY(0); }
 .sc-popup-trigger-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .sc-popup-trigger-btn .sc-popup-placeholder { color: var(--text3); font-weight: 400; }
 .sc-popup-trigger-btn .sc-popup-trigger-chevron {
@@ -1793,9 +1820,30 @@ html[data-theme="light"] .sc-empty-hint {
   width: 15px; height: 15px;
   flex-shrink: 0;
   color: var(--text3);
-  transition: transform .15s;
+  transition: transform .18s, color .15s;
 }
-.sc-popup-trigger-btn .bank-logo { width: 26px; height: 18px; }
+.sc-popup-trigger-btn:hover .sc-popup-trigger-chevron { color: var(--gold); transform: translateY(1px); }
+.sc-popup-trigger-btn .bank-logo {
+  width: 27px; height: 19px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06) inset;
+}
+.sc-popup-trigger-btn.sc-is-empty {
+  border-style: dashed;
+  border-color: var(--border2);
+}
+.sc-popup-trigger-btn.sc-is-empty:hover {
+  border-style: solid;
+}
+.sc-popup-trigger-btn.sc-has-value {
+  border-left: 2px solid var(--gold);
+  padding-left: 11px;
+}
+@keyframes scTriggerFlash {
+  0%   { box-shadow: 0 0 0 0 var(--gold-glow); background: linear-gradient(180deg, var(--gold-glow), var(--surface1) 130%); }
+  60%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.sc-popup-trigger-btn.sc-just-selected { animation: scTriggerFlash .55s ease-out; }
 .sc-popup-trigger-btn .sc-chip-label,
 .sc-popup-trigger-btn > span:not(.bank-logo):not(.bank-icon):not(.sc-popup-trigger-chevron) {
   overflow: hidden;
@@ -1831,15 +1879,15 @@ html[data-theme="light"] .sc-empty-hint {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0,0,0,.72);
-  backdrop-filter: blur(10px) saturate(1.4);
+  background: radial-gradient(120% 90% at 50% 0%, rgba(30,25,10,.55), rgba(0,0,0,.8) 70%);
+  backdrop-filter: blur(14px) saturate(1.5);
 }
 .sc-popup-overlay.open { display: flex; animation: modalBgIn .1s ease; }
 @keyframes scPopupPanelIn {
   from { opacity: 0; transform: translateY(10px) scale(.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.sc-popup-overlay.open .sc-popup-panel { animation: scPopupPanelIn .16s cubic-bezier(.2,.9,.3,1.2); }
+.sc-popup-overlay.open .sc-popup-panel { animation: scPopupPanelIn .18s cubic-bezier(.2,.9,.3,1.2); }
 @media (max-width: 640px) {
   @keyframes scPopupPanelInMobile {
     from { opacity: 0; transform: translateY(24px); }
@@ -1862,38 +1910,61 @@ html[data-theme="light"] .sc-empty-hint {
   max-height: 66vh;
   display: flex;
   flex-direction: column;
-  background: var(--surface1);
+  background: linear-gradient(180deg, var(--surface2) 0%, var(--surface1) 55%);
   border: 1px solid var(--border2);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.02) inset;
+  position: relative;
+  box-shadow: 0 30px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset, 0 0 40px -12px rgba(196,154,60,.18);
+}
+.sc-popup-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: .8;
 }
 .sc-popup-head {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 10px 9px;
+  padding: 12px 11px 10px;
   border-bottom: 1px solid var(--border2);
+  background: linear-gradient(180deg, rgba(196,154,60,.05), transparent);
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
 .sc-popup-title { font-size: 13px; font-weight: 700; color: var(--text); margin-right: 1px; white-space: nowrap; letter-spacing: -.01em; }
 .sc-popup-search-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
+.sc-popup-search-wrap::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  width: 13px; height: 13px;
+  pointer-events: none;
+  background: var(--text3);
+  opacity: .7;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") center/contain no-repeat;
+  transition: background .13s;
+}
+.sc-popup-search-wrap:focus-within::before { background: var(--gold); opacity: 1; }
 .sc-popup-search {
   width: 100%;
   box-sizing: border-box;
-  padding: 7px 28px 7px 10px;
+  padding: 8px 28px 8px 29px;
   font-size: 12.5px;
   font-family: var(--sans);
   color: var(--text);
   background: var(--surface2);
   border: 1px solid var(--border2);
-  border-radius: 8px;
+  border-radius: 9px;
   outline: none;
-  transition: border-color .13s;
+  transition: border-color .13s, box-shadow .13s, background .13s;
 }
-.sc-popup-search:focus { border-color: var(--gold); }
+.sc-popup-search:focus { border-color: var(--gold); background: var(--surface3); box-shadow: 0 0 0 3px var(--gold-glow); }
 .sc-popup-clear-btn {
   position: absolute;
   right: 5px;
@@ -1919,19 +1990,28 @@ html[data-theme="light"] .sc-empty-hint {
   display: flex; align-items: center; justify-content: center;
   border: none; background: var(--surface2); color: var(--text2);
   border-radius: 50%; cursor: pointer; font-size: 12px;
-  transition: background .12s, color .12s, transform .1s;
+  transition: background .15s, color .15s, transform .18s;
 }
-.sc-popup-close:hover { background: var(--surface3); color: var(--text); transform: scale(1.06); }
+.sc-popup-close:hover { background: var(--danger-glow, rgba(239,68,68,.12)); color: var(--danger, #ef4444); transform: rotate(90deg); }
 .sc-popup-count {
   max-height: 0;
   overflow: hidden;
   padding: 0 12px;
-  font-size: 10.5px;
-  color: var(--text3);
   flex-shrink: 0;
   transition: max-height .12s ease, padding .12s ease;
 }
-.sc-popup-count.show { max-height: 20px; padding: 6px 12px 0; }
+.sc-popup-count.show { max-height: 24px; padding: 7px 12px 2px; }
+.sc-popup-count::before {
+  content: attr(data-txt);
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--gold);
+  background: var(--gold-glow);
+  border-radius: 99px;
+  padding: 2px 8px;
+}
 .sc-popup-list {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1939,35 +2019,62 @@ html[data-theme="light"] .sc-empty-hint {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
 }
+.sc-popup-list::-webkit-scrollbar { width: 7px; }
+.sc-popup-list::-webkit-scrollbar-track { background: transparent; }
+.sc-popup-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+.sc-popup-list::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 .sc-popup-group-hdr {
-  padding: 8px 7px 3px;
+  padding: 9px 7px 4px;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-popup-group-hdr::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border2), transparent);
 }
 .sc-popup-group-hdr:first-child { padding-top: 1px; }
 .sc-popup-item {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7.5px 9px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 9px;
   cursor: pointer;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--text2);
   border: 1px solid transparent;
-  transition: background .12s, border-color .12s, transform .08s;
+  position: relative;
+  transition: background .13s, border-color .13s, transform .1s, box-shadow .13s;
   animation: scPopupItemIn .14s ease backwards;
+}
+.sc-popup-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 14%; bottom: 14%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gold);
+  opacity: 0;
+  transform: scaleY(.4);
+  transition: opacity .13s, transform .13s;
 }
 @keyframes scPopupItemIn {
   from { opacity: 0; transform: translateY(3px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.sc-popup-item:hover { background: var(--surface2); }
+.sc-popup-item:hover { background: var(--surface2); transform: translateX(1px); }
 .sc-popup-item:active { transform: scale(.98); }
 .sc-popup-item.sc-popup-kbd-focus {
   background: var(--surface2);
@@ -1975,19 +2082,28 @@ html[data-theme="light"] .sc-empty-hint {
   box-shadow: 0 0 0 2px var(--surface1), 0 0 0 3px var(--gold);
 }
 .sc-popup-item.sc-popup-active {
-  background: var(--gold-glow);
+  background: linear-gradient(90deg, var(--gold-glow), transparent 130%);
   border-color: var(--gold);
   color: var(--gold);
+  box-shadow: 0 2px 10px -4px rgba(196,154,60,.4);
 }
-.sc-popup-item .bank-logo { width: 30px; height: 20px; }
+.sc-popup-item.sc-popup-active::before { opacity: 1; transform: scaleY(1); }
+.sc-popup-item .bank-logo {
+  width: 31px; height: 21px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06) inset;
+  transition: transform .15s;
+}
+.sc-popup-item:hover .bank-logo { transform: scale(1.05); }
 .sc-popup-item-check {
   margin-left: auto;
   flex-shrink: 0;
   width: 15px; height: 15px;
   color: var(--gold);
   opacity: 0;
+  transform: scale(.5);
+  transition: opacity .16s, transform .2s cubic-bezier(.34,1.6,.64,1);
 }
-.sc-popup-item.sc-popup-active .sc-popup-item-check { opacity: 1; }
+.sc-popup-item.sc-popup-active .sc-popup-item-check { opacity: 1; transform: scale(1); }
 .sc-popup-item mark.sc-popup-mark {
   background: var(--gold-glow);
   color: var(--gold);
@@ -1996,11 +2112,19 @@ html[data-theme="light"] .sc-empty-hint {
   font-weight: 700;
 }
 .sc-popup-empty {
-  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 30px 12px 26px;
   text-align: center;
   font-size: 12.5px;
-  font-style: italic;
   color: var(--text3);
+}
+.sc-popup-empty svg {
+  width: 30px; height: 30px;
+  color: var(--text3);
+  opacity: .45;
 }
 @media (max-width: 640px) {
   .sc-popup-overlay { align-items: flex-end; padding: 0; }
@@ -2249,17 +2373,23 @@ html[data-theme="light"] .sc-chip.sc-kart.sc-active {
   max-width: 100%;
 }
 .hc-main .hc-sub {
-  font-size: 10.5px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 600;
   font-family: var(--mono);
   color: var(--text3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  letter-spacing: .01em;
+  opacity: .85;
 }
 .sc-popup-item.sc-popup-active .hc-main .hc-name,
 .sc-popup-item.sc-popup-active .hc-main .hc-sub { color: inherit; }
+.hc-main .hc-sub .hc-pos { color: var(--teal); }
+.hc-main .hc-sub .hc-neg { color: var(--danger); }
+.sc-popup-item.sc-popup-active .hc-main .hc-sub .hc-pos,
+.sc-popup-item.sc-popup-active .hc-main .hc-sub .hc-neg { color: inherit; }
 
 /* ── Kart altyapısı logo badge (Visa/MC/Troy/AMEX) ─────────────── */
 .sc-chip.sc-altyapi {
@@ -2307,32 +2437,54 @@ html[data-theme="light"] .sc-chip.sc-altyapi:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 8px 6px 7px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 9px 6px 8px;
+  border-radius: 10px;
   border: 1.5px solid var(--border2);
-  background: var(--surface2);
+  background: linear-gradient(180deg, var(--surface2), var(--surface1) 140%);
   cursor: pointer;
-  transition: border-color .15s, background .15s;
+  position: relative;
+  transition: border-color .15s, background .15s, transform .13s, box-shadow .15s;
   font-size: 10px;
   color: var(--text3);
   font-weight: 500;
   user-select: none;
 }
 .altyapi-logo-picker-item:hover {
-  border-color: var(--border-active);
+  border-color: var(--gold);
   background: var(--surface3);
   color: var(--text2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -6px rgba(0,0,0,.4);
 }
 .altyapi-logo-picker-item.selected {
   border-color: var(--gold);
-  background: var(--gold-glow);
+  background: linear-gradient(180deg, var(--gold-glow), transparent 160%);
   color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), 0 4px 16px -4px rgba(196,154,60,.45);
 }
+.altyapi-logo-picker-item.selected::after {
+  content: '';
+  position: absolute;
+  top: -5px; right: -5px;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px var(--surface1);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/62% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/62% no-repeat;
+  animation: logoPickCheckIn .22s cubic-bezier(.34,1.6,.64,1);
+}
+@keyframes logoPickCheckIn {
+  from { opacity: 0; transform: scale(.3); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.altyapi-logo-picker-item:active { transform: scale(.96); }
 .altyapi-logo-picker-item svg,
 .altyapi-logo-picker-item img {
   width: 40px;
   height: 24px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
 .altyapi-logo-picker-item span {
   font-size: 9.5px;
@@ -2362,9 +2514,25 @@ html[data-theme="light"] .sc-chip.sc-altyapi:hover {
   flex-shrink: 0;
   overflow: hidden;
   background: rgba(255,255,255,.07);
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.05) inset;
 }
 .bank-logo svg, .bank-logo img { width: 100%; height: 100%; object-fit: contain; display:block; }
 .bank-logo-picker-lg .bank-logo { width: 40px; height: 24px; border-radius: 6px; }
+/* Logosu olmayan banka/nakit için dairesel avatar rozeti (emoji fallback) */
+.sc-popup-trigger-btn .bank-icon,
+.sc-popup-item .bank-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px; height: 27px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+  background: radial-gradient(circle at 30% 25%, var(--surface3), var(--surface2) 75%);
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.05) inset;
+}
+.sc-popup-item .bank-icon { width: 30px; height: 30px; font-size: 15px; }
 
 /* ── form-row içinde kart chip hücresi tam genişlik ─────────────── */
 .form-row > div:has(.sc-wrap .sc-kart),
@@ -29486,6 +29654,14 @@ let gAccessToken  = null;
 let gDriveFileId  = null;
 let gSaveTimer    = null;
 let gDirty        = false; // Drive'a yazılmamış yerel değişiklik var mı?
+// İlk Drive yüklemesi (gDriveLoadFromDrive) tamamlanmadan HİÇBİR şekilde Drive'a
+// yazma izni verilmez. Token localStorage'dan SENKRON restore edildiği için
+// gDriveReady() sayfa açılır açılmaz true dönebiliyor — ama gerçek veri henüz
+// ASENKRON olarak gelmemiş olabilir (DB hâlâ loadData()'nın boş iskeleti).
+// Bu aradaki boşlukta tetiklenen herhangi bir saveData() (örn. bir filtre
+// render'ı) eskiden bu boş/eksik DB'yi Drive'a yazıp gerçek veriyi SİLİYORDU —
+// "bağlandıktan sonra tüm verileri siliyor" bug'ının asıl kök nedeni buydu.
+let gInitialLoadDone = false;
 
 function gDriveReady() {
   return !!gAccessToken;
@@ -29660,6 +29836,7 @@ function gDriveSignOut() {
   if (gAccessToken && typeof google !== 'undefined' && google.accounts) google.accounts.oauth2.revoke(gAccessToken);
   gAccessToken  = null;
   gDriveFileId  = null;
+  gInitialLoadDone = false;
   localStorage.removeItem('gdrive_token');
   document.getElementById('gdrive-user-panel').style.display   = 'none';
   document.getElementById('gdrive-signin-panel').style.display = '';
@@ -29691,11 +29868,13 @@ async function gDriveFindFile() {
 
 async function gDriveLoadFromDrive() {
   if (!gDriveReady()) return;
+  gInitialLoadDone = false; // her yeni yükleme denemesinde guard'ı yeniden kur (ör. çıkış/tekrar giriş)
   gDriveSetStatus('Yükleniyor...', 'var(--accent)');
   try {
     const file = await gDriveFindFile();
     if (!file) {
       // Drive'da henüz dosya yok — boş veri ile devam et, kullanıcı veri girdikçe oluşacak
+      gInitialLoadDone = true; // gerçekten "yeni kullanıcı" tespit edildi — artık Drive'a yazmak güvenli
       gDriveSetStatus('Hazır (yeni)', 'var(--success, #4ade80)');
       setTimeout(() => gDriveSetStatus('Hazır', 'var(--text3)'), 3000);
       if(typeof tcmbKurGunlukKontrolEt === 'function') tcmbKurGunlukKontrolEt();
@@ -29705,10 +29884,16 @@ async function gDriveLoadFromDrive() {
     const res = await gApiFetch(
       'https://www.googleapis.com/drive/v3/files/' + file.id + '?alt=media'
     );
-    if (!res) return;
+    if (!res) {
+      // 401/yetkilendirme sorunu — gAccessToken zaten null'landı (gApiFetch içinde),
+      // bir sonraki gDriveReady() kontrolü false dönecek ve kayıt denemeleri zaten durur.
+      gInitialLoadDone = true;
+      return;
+    }
     const remoteDB = await res.json();
     // applyMigrations içinde FORMAT_CONFIG ve currency da uygulanır
     DB = applyMigrations(remoteDB);
+    gInitialLoadDone = true; // gerçek veri başarıyla geldi — artık Drive'a yazmak güvenli
     gDirty = false; // taze veri geldi, yereldeki "kaydedilmemiş değişiklik" durumu artık geçersiz
     // Drive'dan taze veri geldi — sayfa filtrelerini de güncel DB'ye göre yeniden uygula
     _islemFiltreRestored = false;
@@ -29729,6 +29914,10 @@ async function gDriveLoadFromDrive() {
     console.error('Drive load error:', e);
     gDriveSetStatus('Yükleme hatası', 'var(--danger)');
     if(typeof showToast==='function') showToast('Google Drive yükleme hatası: ' + (e.message||e), 'error');
+    // Yükleme başarısız oldu bile olsa guard'ı serbest bırak — aksi halde ağ hatası
+    // durumunda gDriveSaveNow sonsuza dek 800ms'de bir boşuna deneyip durur ve
+    // kullanıcının yerel değişiklikleri hiçbir zaman Drive'a gidemez.
+    gInitialLoadDone = true;
   }
 }
 
@@ -29737,6 +29926,15 @@ let gSaveRetryTimer = null;
 
 async function gDriveSaveNow() {
   if (!gDriveReady()) return;
+  if (!gInitialLoadDone) {
+    // İlk yükleme (gDriveLoadFromDrive) henüz tamamlanmadı — bu noktada Drive'a
+    // yazmak, oradaki GERÇEK veriyi henüz gelmemiş/boş yerel state ile ezme
+    // riski taşır. Kısa bir süre sonra tekrar dene; yükleme tamamlanınca
+    // (veya gerçekten "yeni kullanıcı, dosya yok" tespit edilince) izin verilir.
+    clearTimeout(gSaveRetryTimer);
+    gSaveRetryTimer = setTimeout(gDriveSaveNow, 800);
+    return;
+  }
   if (gSaving) return; // aynı anda iki kayıt göndermeyelim, bir sonrakini bekleyelim
   gSaving = true;
   gDriveSetStatus('Kaydediliyor...', 'var(--accent)');
@@ -37369,6 +37567,7 @@ function selectToChips(sel, opts) {
   if (!sel || sel._chipsApplied) return;
   sel._chipsApplied = true;
   opts = opts || {};
+  let _justSelected = false; // popup'tan yeni seçim yapıldı mı — bir sonraki render'da kısa onay flaşı göster
 
   // Wrapper — bir kere oluşturulur, içeriği _renderScChips ile (yeniden) doldurulur
   const wrap = document.createElement('div');
@@ -37415,6 +37614,8 @@ function selectToChips(sel, opts) {
         ? (opts.htmlFn ? opts.htmlFn(curOpt) : `<span>${getLabel(curOpt)}</span>`)
         : `<span class="sc-popup-placeholder">${opts.placeholder || 'Seçin…'}</span>`)
         + '<svg class="sc-popup-trigger-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+      btn.classList.add(curOpt ? 'sc-has-value' : 'sc-is-empty');
+      if (_justSelected) { btn.classList.add('sc-just-selected'); _justSelected = false; }
       const hasOptGroups = sel.querySelectorAll('optgroup').length > 0;
       const groupOf = hasOptGroups
         ? (o) => {
@@ -37432,7 +37633,7 @@ function selectToChips(sel, opts) {
           groupOf,
           currentVal: getCurrentVal(),
           triggerBtn: btn,
-          onSelect: (val) => { setVal(val); render(); }
+          onSelect: (val) => { _justSelected = true; setVal(val); render(); }
         });
       });
       wrap.innerHTML = '';
@@ -37669,11 +37870,15 @@ function _renderScSearchPopupList(query) {
   const listEl = document.getElementById('sc-search-popup-list');
   const countEl = document.getElementById('sc-search-popup-count');
 
-  countEl.textContent = q ? `${filtered.length} sonuç` : '';
+  countEl.textContent = '';
+  countEl.dataset.txt = q ? `${filtered.length} sonuç` : '';
   countEl.classList.toggle('show', !!q);
 
   if (!filtered.length) {
-    listEl.innerHTML = '<div class="sc-popup-empty">Sonuç bulunamadı</div>';
+    listEl.innerHTML = `<div class="sc-popup-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6" stroke-width="1.4"/></svg>
+      <span>Sonuç bulunamadı</span>
+    </div>`;
     countEl.classList.toggle('show', !!q);
     _scPopupRenderList = [];
     _scPopupFocusIdx = -1;
@@ -38032,10 +38237,12 @@ function _hesapChipHtml(o) {
     ? `<span class="bank-logo">${ikon.svg}</span>`
     : `<span class="bank-icon">${ikon ? ikon.emoji : '🏦'}</span>`;
   const pb = h.paraBirimi || 'TRY';
-  const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(h.bakiye || 0, pb) : `${h.bakiye || 0} ${pb}`;
+  const bakiyeVal = h.bakiye || 0;
+  const bakiyeStr = typeof fmtCur === 'function' ? fmtCur(bakiyeVal, pb) : `${bakiyeVal} ${pb}`;
+  const bakiyeCls = bakiyeVal < 0 ? 'hc-neg' : 'hc-pos';
   const ibanTemiz = (h.iban || '').replace(/\s/g, '');
   const ibanSon = ibanTemiz.length >= 4 ? '····' + ibanTemiz.slice(-4) : '';
-  const subParts = [ibanSon, bakiyeStr].filter(Boolean);
+  const subParts = [ibanSon, bakiyeStr ? `<span class="${bakiyeCls}">${bakiyeStr}</span>` : ''].filter(Boolean);
   return ikonHtml
        + `<span class="hc-main"><span class="hc-name">${h.ad || 'Hesap'}</span>`
        + (subParts.length ? `<span class="hc-sub">${subParts.join(' · ')}</span>` : '')
