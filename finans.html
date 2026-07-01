@@ -4192,12 +4192,13 @@ body::before {
     radial-gradient(ellipse 50% 50% at 60%  40%,  rgba(167,139,250,.03) 0%, transparent 60%),
     radial-gradient(ellipse 35% 35% at 85%  5%,   rgba(56,189,248,.03)  0%, transparent 55%),
     radial-gradient(ellipse 40% 30% at 20%  80%,  rgba(251,113,133,.02) 0%, transparent 60%);
-  animation: auroraShift 20s ease-in-out infinite alternate;
-}
-@keyframes auroraShift {
-  0%   { opacity: .8; }
-  50%  { opacity: 1; }
-  100% { opacity: .85; }
+  /* NOT: önceden bu katman "auroraShift 20s infinite alternate" ile sürekli
+     opacity animasyonu yapıyordu. Bu, tüm ekranı kaplayan bir arka plan
+     olduğu için, üstündeki onlarca backdrop-filter (sidebar/topbar/modal/
+     kart blur'ları) her karede yeniden hesaplanmak zorunda kalıyordu —
+     uygulamanın her yerinde sürekli GPU/compositor yükü yaratıyordu.
+     Animasyon kaldırıldı, görsel olarak aynı sabit değere sabitlendi. */
+  opacity: .92;
 }
 /* ── SIDEBAR — Premium glass ─────────────────────────────── */
 .sidebar { background: rgba(8,10,20,.96); border-right: 1px solid rgba(255,255,255,.055); backdrop-filter: var(--blur-glass); box-shadow: 4px 0 40px rgba(0,0,0,.5), 1px 0 0 rgba(255,255,255,.03); contain: strict; clip-path: inset(0); }
