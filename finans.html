@@ -27457,7 +27457,7 @@ const BANKA_LOGOLAR = [
   { kod:'0064', id:'isbankasi', ad:'İş Bankası', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%BCrkiye_%C4%B0%C5%9F_Bankas%C4%B1_logo.svg" alt="İş Bankası" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#003DA5;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">İŞ</span></span>` },
   { kod:'0062', id:'garanti', ad:'Garanti BBVA', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Garanti_BBVA_2019.svg" alt="Garanti BBVA" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00857C;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">GRT</span></span>` },
   { kod:'0046', id:'akbank', ad:'Akbank', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Akbank_logo.svg" alt="Akbank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#EC1C2E;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">AK</span></span>` },
-  { kod:'0032', id:'teb', ad:'TEB', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/TEB%20logo.svg" alt="TEB" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00A19A;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">TEB</span></span>` },
+  { kod:'0032', id:'teb', ad:'TEB', svg:`<svg viewBox="0 0 40 24" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="24" rx="4" fill="#00A19A"/><text x="20" y="16" text-anchor="middle" font-family="Arial,sans-serif" font-size="10.5" font-weight="800" fill="#FFFFFF" letter-spacing=".5">TEB</text></svg>` },
   { kod:'0111', id:'qnb', ad:'QNB', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/QNB_Logo.svg" alt="QNB" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#4B0E3D;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">QNB</span></span>` },
   { kod:'0134', id:'denizbank', ad:'DenizBank', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/DenizBank_logo.svg" alt="DenizBank" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#0093D0;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">DNZ</span></span>` },
   { kod:'0067', id:'yapikredi', ad:'Yapı Kredi', svg:`<span style="position:relative;width:100%;height:100%;display:flex"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Yap%C4%B1_kredi_logo.png" alt="Yapı Kredi" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:#00205B;color:#fff;font-weight:800;font-size:9px;font-family:Arial,sans-serif;border-radius:4px;letter-spacing:.2px">YKB</span></span>` },
@@ -35410,6 +35410,50 @@ function transferStepBack() {
   transferStepGoto(_transferCurrentStep - 1);
 }
 
+function _transferOzetHesapKarti(val, baslik) {
+  const bosKart = `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface3);border:1px dashed var(--border2);border-radius:10px">
+    <span style="font-size:11.5px;color:var(--text3);font-style:italic">Seçilmedi</span>
+  </div>`;
+  if (!val) return bosKart;
+
+  // Nakit
+  if (val.startsWith('nakit:')) {
+    const pb = val.slice(6);
+    const cfg = (typeof CURRENCY_CONFIG !== 'undefined' && CURRENCY_CONFIG[pb]) || {};
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:10px">
+      <span style="width:32px;height:32px;border-radius:8px;background:var(--surface4);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💵</span>
+      <div style="min-width:0">
+        <div style="font-size:12.5px;font-weight:700;color:var(--text)">Nakit</div>
+        <div style="font-size:10.5px;color:var(--text3)">${cfg.flag||''} ${pb}</div>
+      </div>
+    </div>`;
+  }
+
+  // Hesap
+  const h = (DB.hesaplar||[]).find(x=>x.id===val);
+  if (!h) return bosKart;
+  const bankaObj = (DB.bankalar||[]).find(b=>b.id===h.banka) || null;
+  const ikon = bankaIkonObj(bankaObj);
+  const logoHtml = ikon.svg
+    ? `<span class="bank-logo" style="width:32px;height:32px;border-radius:8px;flex-shrink:0">${ikon.svg}</span>`
+    : `<span style="width:32px;height:32px;border-radius:8px;background:${ikon.bg||'var(--surface4)'};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${ikon.emoji||'🏦'}</span>`;
+  const ibanTemiz = (h.iban||'').replace(/\s+/g,'');
+  const ibanSon = ibanTemiz.length >= 4 ? '····' + ibanTemiz.slice(-4) : null;
+  const pb = h.paraBirimi || 'TRY';
+  const bakiye = typeof fmtCur === 'function' ? fmtCur(h.bakiye||0, pb) : `${h.bakiye||0} ${pb}`;
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:10px">
+    ${logoHtml}
+    <div style="min-width:0;flex:1">
+      <div style="font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.ad}</div>
+      <div style="font-size:10.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${bankaObj ? bankaObj.kisa : '—'}${ibanSon ? ' · '+ibanSon : ''}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div class="mono" style="font-size:12px;font-weight:700;color:${(h.bakiye||0)>=0?'var(--teal)':'var(--danger)'}">${bakiye}</div>
+      <div style="font-size:9.5px;color:var(--text3)">Bakiye</div>
+    </div>
+  </div>`;
+}
+
 function _transferOzetDoldur() {
   const kaynakVal = (document.getElementById('transfer-kaynak')||{}).value || '';
   const hedefVal  = (document.getElementById('transfer-hedef')||{}).value  || '';
@@ -35417,12 +35461,6 @@ function _transferOzetDoldur() {
   const tarih = (document.getElementById('transfer-tarih')||{}).value || '';
   const aciklama = (document.getElementById('transfer-aciklama')||{}).value.trim() || '—';
 
-  const getLabel = (val) => {
-    if (!val) return '—';
-    if (val.startsWith('nakit:')) return '💵 Nakit — ' + val.slice(6);
-    const h = (DB.hesaplar||[]).find(x=>x.id===val);
-    return h ? h.ad : '—';
-  };
   const getPb = (val) => {
     if (!val) return 'TRY';
     if (val.startsWith('nakit:')) return val.slice(6);
@@ -35437,13 +35475,23 @@ function _transferOzetDoldur() {
 
   const el = document.getElementById('transfer-ozet-icerik');
   if (!el) return;
-  el.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
-    ${satir('Kaynak', `<span style="font-family:inherit">${getLabel(kaynakVal)}</span>`)}
-    ${satir('Hedef', `<span style="font-family:inherit">${getLabel(hedefVal)}</span>`)}
-    ${satir('Tutar', fmtCur(tutar, pb))}
-    ${satir('Tarih', typeof fmtDate === 'function' ? fmtDate(tarih) : tarih)}
-    ${aciklama !== '—' ? satir('Açıklama', `<span style="font-family:inherit">${aciklama}</span>`) : ''}
-  </div>`;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Kaynak</div>
+        ${_transferOzetHesapKarti(kaynakVal)}
+      </div>
+      <div style="display:flex;justify-content:center;color:var(--text3);font-size:14px;margin:-2px 0">↓</div>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Hedef</div>
+        ${_transferOzetHesapKarti(hedefVal)}
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px">
+      ${satir('Tutar', fmtCur(tutar, pb))}
+      ${satir('Tarih', typeof fmtDate === 'function' ? fmtDate(tarih) : tarih)}
+      ${aciklama !== '—' ? satir('Açıklama', `<span style="font-family:inherit">${aciklama}</span>`) : ''}
+    </div>`;
 }
 
 function saveTransfer() {
@@ -37425,10 +37473,10 @@ const ALTYAPI_LOGOLAR = [
     id: 'mastercard',
     ad: 'Mastercard',
     svg: `<svg viewBox="0 0 40 24" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="24" rx="3" fill="#252525"/>
-      <circle cx="15" cy="12" r="7" fill="#EB001B"/>
-      <circle cx="25" cy="12" r="7" fill="#F79E1B"/>
-      <path d="M20 6.8a7 7 0 0 1 0 10.4A7 7 0 0 1 20 6.8z" fill="#FF5F00"/>
+      <rect width="40" height="24" rx="3" fill="#FFFFFF"/>
+      <circle cx="16" cy="12" r="7" fill="#EB001B"/>
+      <circle cx="24" cy="12" r="7" fill="#F79E1B"/>
+      <path d="M20 6.2a7 7 0 0 1 0 11.6A7 7 0 0 1 20 6.2z" fill="#FF5F00"/>
     </svg>`
   },
   {
@@ -37451,9 +37499,11 @@ const ALTYAPI_LOGOLAR = [
     id: 'unionpay',
     ad: 'UnionPay',
     svg: `<svg viewBox="0 0 40 24" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="24" rx="3" fill="#CF0A2C"/>
-      <rect x="16" y="0" width="24" height="24" rx="3" fill="#003087"/>
-      <text x="20" y="16" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#FFFFFF">银联</text>
+      <rect width="40" height="24" rx="3" fill="#00447C"/>
+      <rect x="0" y="19" width="13.34" height="5" fill="#E21836"/>
+      <rect x="13.33" y="19" width="13.34" height="5" fill="#00447C"/>
+      <rect x="26.66" y="19" width="13.34" height="5" fill="#00A651"/>
+      <text x="20" y="13.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="6" font-weight="800" fill="#FFFFFF">UnionPay</text>
     </svg>`
   },
   {
